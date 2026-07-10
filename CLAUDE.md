@@ -51,6 +51,21 @@ designing anything; it is the source of truth. Code map + API:
 
 ## What's next (agreed ambitions, in rough order)
 
+- **Folk disclosure audit (user-flagged, do first):** be very careful what
+  folk/NPC *descriptions* reveal on player surfaces. The `/table` whitelist
+  controls which fields go out, but a backstory string itself can leak the
+  hidden layer (e.g. hints of Jory's incompetence). Likely fix: split folk
+  cards into a player-safe public description and GM-only notes, and audit
+  the seeded backstories in `data/characters.json` for leaks.
+- **Table view return control (user-flagged):** there is no button to get
+  from `/table` back to the GM console. Add a discreet one — it must stay
+  visually quiet since `/table` is projected for players.
+- **Table view card navigation (user-specified interaction):** replace the
+  section layout with big horizontal cards acting as buttons, proportionally
+  arranged so adding a card compresses the others to fit. Clicking a card
+  slides it to the left into a "landing zone" showing a stack of cards with
+  the current selection on top, revealing that card's contents; pressing the
+  stacked card returns to the horizontal card view.
 - Board screen: a projectable mood/status route in front of the table —
   reuse the `/table` whitelist pattern; likely shows town art + key stats.
 - ComfyUI portrait generation: local API calls to the GM's 5090; the working

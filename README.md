@@ -71,6 +71,7 @@ stopped (or live; the GM console re-reads on refresh):
 
 Per the spec's build phases, plus ambitions agreed at the table:
 
+- **Next up**: a folk-description disclosure audit (backstory text must not leak the hidden layer onto player surfaces), a discreet way back from `/table` to the console, and a new table-view navigation: big horizontal section cards that slide into a stacked "landing zone" when opened (see CLAUDE.md for the full interaction).
 - **Phase 3 — The Map**: hex overlay on the GM's scanned map (deferred until the scan is available).
 - **Phase 4 — Dice & depth**: in-app 4d6−1d6 roller with a reveal moment; building improvement flow; library building migration.
 - **Board screen**: a mood/status display in front of the table (another whitelisted route, like `/table`).
