@@ -1,0 +1,127 @@
+[
+  {
+    "id": "chr_garrick",
+    "name": "Garrick",
+    "role": "Foreman, the Lumber Camp",
+    "status": "alive",
+    "backstory": "A broad, quiet man who was a sawyer's apprentice before the crossing. Counts his crew twice at dusk. Smells of pine pitch and never raises his voice.",
+    "portrait": null,
+    "publicTraits": true,
+    "traits": {
+      "Agility": 0,
+      "Strength": 2,
+      "Finesse": 1,
+      "Instinct": 1,
+      "Presence": 0,
+      "Knowledge": 0
+    },
+    "aptitudes": {
+      "lumber_camp": 2
+    },
+    "hidden": {
+      "inspiration": 0,
+      "penalty": 0,
+      "notes": ""
+    }
+  },
+  {
+    "id": "chr_lyra",
+    "name": "Lyra",
+    "role": "Foreman, the Hunter's Lodge",
+    "status": "alive",
+    "backstory": "Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else.",
+    "portrait": null,
+    "publicTraits": true,
+    "traits": {
+      "Agility": 2,
+      "Strength": 0,
+      "Finesse": 1,
+      "Instinct": 2,
+      "Presence": -1,
+      "Knowledge": 0
+    },
+    "aptitudes": {
+      "hunters_lodge": 2
+    },
+    "hidden": {
+      "inspiration": 0,
+      "penalty": 0,
+      "notes": ""
+    }
+  },
+  {
+    "id": "chr_jory",
+    "name": "Jory",
+    "role": "Foreman, the Bunkhouse",
+    "status": "alive",
+    "backstory": "Warm, tireless, everyone's friend. Talks a fine plan and swears by his joinery. The bunkhouse walls have a lean to them, but no one has the heart to say so.",
+    "portrait": null,
+    "publicTraits": true,
+    "traits": {
+      "Agility": 0,
+      "Strength": 1,
+      "Finesse": 0,
+      "Instinct": 0,
+      "Presence": 2,
+      "Knowledge": 1
+    },
+    "aptitudes": {
+      "bunkhouse": 2
+    },
+    "hidden": {
+      "inspiration": 0,
+      "penalty": -2,
+      "notes": "Genuinely incompetent beneath the confident presentation (spec §8C). Pitch openly with his stated competence; the ledger quietly applies the truth. The players' discovery of this is a designed story — protect it."
+    }
+  },
+  {
+    "id": "chr_calder",
+    "name": "Calder",
+    "role": "Foreman, the Watchtower",
+    "status": "alive",
+    "backstory": "A soldier once, somewhere he doesn't name. Sleeps in the afternoon so he can walk the palisade at night. Keeps a list of everything he's seen move in the dark.",
+    "portrait": null,
+    "publicTraits": true,
+    "traits": {
+      "Agility": 1,
+      "Strength": 1,
+      "Finesse": 0,
+      "Instinct": 2,
+      "Presence": 0,
+      "Knowledge": 0
+    },
+    "aptitudes": {
+      "watchtower": 2
+    },
+    "hidden": {
+      "inspiration": 0,
+      "penalty": 0,
+      "notes": ""
+    }
+  },
+  {
+    "id": "chr_ellory",
+    "name": "Ellory",
+    "role": "Foreman, the Storehouse",
+    "status": "alive",
+    "backstory": "Was a harbor clerk's daughter and it shows: chalk marks on every barrel, a tally for every sack. The settlement eats in winter because Ellory counts in autumn.",
+    "portrait": null,
+    "publicTraits": true,
+    "traits": {
+      "Agility": 0,
+      "Strength": 0,
+      "Finesse": 2,
+      "Instinct": 0,
+      "Presence": 1,
+      "Knowledge": 2
+    },
+    "aptitudes": {
+      "storehouse": 2
+    },
+    "hidden": {
+      "inspiration": 0,
+      "penalty": 0,
+      "notes": ""
+    }
+  }
+]

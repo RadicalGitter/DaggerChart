@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cross into the New World — The Settlement</title>
+<link rel="stylesheet" href="/shared/ledger.css">
+<link rel="stylesheet" href="/shared/lamplight.css">
+<style>
+  .wrap { max-width: 760px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
+  header { text-align: center; margin-bottom: 1rem; }
+  header h1 { font-size: 1.6rem; }
+  .progress { display: flex; justify-content: center; gap: 0.45rem; margin: 0.8rem 0 1.4rem; flex-wrap: wrap; }
+  .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    border: 1.5px solid #6b5c42; background: transparent;
+  }
+  .dot.done { background: #6b5c42; }
+  .dot.now { background: #d4b86a; border-color: #d4b86a; }
+  .step-title { text-align: center; }
+  .step-sub { text-align: center; color: #a89877; font-size: 0.95rem; margin-bottom: 1.2rem; }
+  .options { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.7rem; }
+  .options.wide { grid-template-columns: 1fr; }
+  .pick h3 { font-size: 1.05rem; margin-bottom: 0.2rem; }
+  .pick .desc { font-size: 0.85rem; color: #a89877; }
+  .featline { font-size: 0.88rem; margin: 0.4rem 0; }
+  .featline strong { color: #d4b86a; font-weight: 600; }
+  .navbtns {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, #211b14 35%);
+    padding: 1.2rem 1rem 1rem;
+  }
+  .navbtns .inner { max-width: 760px; margin: 0 auto; display: flex; justify-content: space-between; gap: 0.8rem; }
+  .navbtns button { padding: 0.6rem 1.6rem; font-size: 1rem; }
+  .formrow { display: flex; gap: 0.6rem; align-items: center; margin: 0.7rem 0; flex-wrap: wrap; }
+  .formrow label { min-width: 130px; color: #a89877; }
+  .formrow input[type=text] { flex: 1; min-width: 200px; }
+  .trait-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.7rem; }
+  .trait-cell { text-align: center; }
+  .trait-cell select { font-size: 1.2rem; width: 80px; text-align: center; margin-top: 0.3rem; }
+  .warn { color: #c96a4f; text-align: center; margin-top: 0.8rem; font-size: 0.9rem; min-height: 1.3em; }
+  .statline { display: flex; justify-content: center; gap: 1.6rem; flex-wrap: wrap; margin: 1rem 0; }
+  .statline .stat { text-align: center; }
+  .statline .value { font-size: 1.6rem; font-weight: 600; }
+  textarea { background: #2b2318; }
+  .qa { margin-bottom: 1rem; }
+  .qa .q { font-size: 0.92rem; margin-bottom: 0.3rem; }
+  .count-note { text-align: center; color: #a89877; font-size: 0.9rem; margin-top: 0.6rem; }
+  .review h3 { color: #d4b86a; font-size: 1rem; margin-top: 1.1rem; }
+  .review p { margin: 0.2rem 0; font-size: 0.95rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 data-i18n="create.title">Cross into the New World</h1>
+    <div class="smallcaps" data-i18n="create.subtitle">The Settlement — character creation</div>
+  </header>
+  <div class="progress" id="progress"></div>
+  <div id="step"></div>
+  <div class="warn" id="warn"></div>
+</div>
+<div class="navbtns">
+  <div class="inner">
+    <button class="quiet" id="btn-back">Back</button>
+    <button id="btn-next">Onward</button>
+  </div>
+</div>
+<script type="module" src="create.js"></script>
+</body>
+</html>

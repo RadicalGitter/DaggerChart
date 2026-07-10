@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Character — The Settlement</title>
+<link rel="stylesheet" href="/shared/ledger.css">
+<link rel="stylesheet" href="/shared/lamplight.css">
+<style>
+  .wrap { max-width: 680px; margin: 0 auto; padding: 1.4rem 1rem 3rem; }
+  header { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; }
+  header .portrait { width: 84px; height: 84px; font-size: 2rem; }
+  header h1 { font-size: 1.5rem; margin-bottom: 0.1rem; }
+  .traits-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin: 1rem 0; }
+  .trait-tile { text-align: center; padding: 0.6rem 0.3rem; }
+  .trait-tile .v { font-size: 1.5rem; font-weight: 600; }
+  .vitals { display: grid; gap: 0.8rem; margin: 1rem 0; }
+  .vital { display: flex; align-items: center; gap: 0.9rem; }
+  .vital .smallcaps { min-width: 70px; }
+  .defenses { display: flex; justify-content: space-around; text-align: center; margin: 1rem 0; }
+  .defenses .value { font-size: 1.5rem; font-weight: 600; }
+  .sheet-section { margin-top: 1.4rem; }
+  .sheet-section > .smallcaps { display: block; text-align: center; margin-bottom: 0.6rem; font-size: 0.95rem; }
+  .featline { font-size: 0.9rem; margin: 0.45rem 0; }
+  .featline strong { color: #d4b86a; }
+  table.ledger td, table.ledger th { border-bottom-color: #3a2f1e; font-size: 0.9rem; }
+  table.ledger th { color: #a89877; }
+  .qa { margin-bottom: 0.8rem; }
+  .qa .q { color: #a89877; font-size: 0.88rem; }
+  ul { padding-left: 1.2rem; margin: 0.3rem 0; }
+  li { font-size: 0.92rem; }
+  .cardstack { display: grid; gap: 0.7rem; }
+  .hand-sub { font-variant: small-caps; letter-spacing: 0.06em; color: #a89877; margin: 0.9rem 0 0.5rem; }
+  .hand-actions { margin-top: 0.6rem; display: flex; gap: 0.5rem; }
+  .hand-actions button { font-size: 0.85rem; padding: 0.3rem 0.8rem; }
+  button.quiet.grave { color: #c96a4f; border-color: #6b4438; }
+</style>
+</head>
+<body>
+<div class="wrap" id="sheet"><p class="smallcaps" style="text-align:center;" data-i18n="sheet.loading">Opening the ledger…</p></div>
+<script type="module" src="/character/sheet.js"></script>
+</body>
+</html>

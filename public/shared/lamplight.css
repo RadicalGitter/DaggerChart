@@ -1,0 +1,71 @@
+/* Lamplight — the player-facing dark theme. Load after ledger.css. */
+
+body {
+  background: #211b14;
+  color: #e8dfcc;
+}
+
+.card {
+  background: #2b2318;
+  border: 1px solid #453824;
+  box-shadow: none;
+  color: inherit;
+}
+
+.muted, .card .muted { color: #a89877; }
+.smallcaps { color: #a89877; }
+.rule { border-top-color: #3a2f1e; }
+.grave { color: #c96a4f; }
+.good { color: #9fb27a; }
+.gold-text { color: #d4b86a; }
+
+.pill { border-color: #6b5c42; color: #c9ba97; }
+
+button {
+  background: #7c3626;
+  border-color: #2e130c;
+  color: #f0e6ce;
+}
+button:hover { background: #9a5a49; }
+button.quiet {
+  background: transparent;
+  color: #c9ba97;
+  border-color: #6b5c42;
+}
+button.quiet:hover { background: #2b2318; }
+
+input, select, textarea {
+  background: #2b2318;
+  border-color: #6b5c42;
+  color: #e8dfcc;
+}
+input:focus, select:focus, textarea:focus { outline-color: #d4b86a; }
+
+.divider {
+  border: 0; height: 1px; margin: 1.6rem auto; width: 70%;
+  background: linear-gradient(90deg, transparent, #6b5c42, transparent);
+}
+
+.portrait {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: #3a2f1e; border: 1px solid #6b5c42;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; color: #c9ba97; flex: none; overflow: hidden;
+}
+.portrait img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Selectable option cards (creator) */
+.pick { cursor: pointer; transition: border-color 0.15s; }
+.pick:hover { border-color: #8a7550; }
+.pick.selected { border-color: #d4b86a; box-shadow: 0 0 0 1px #d4b86a; }
+
+/* Tap pips (sheet) */
+.pips { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.pip {
+  width: 22px; height: 22px; border-radius: 4px;
+  border: 1.5px solid #8a7550; background: transparent; cursor: pointer;
+  padding: 0;
+}
+.pip.hope { border-radius: 50%; }
+.pip.marked { background: #b8934a; border-color: #d4b86a; }
+.pip.marked.harm { background: #8a3b28; border-color: #c96a4f; }

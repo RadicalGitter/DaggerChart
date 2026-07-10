@@ -1,0 +1,68 @@
+{
+  "name": "The Settlement",
+  "population": 50,
+  "season": {
+    "name": "Spring",
+    "year": 1
+  },
+  "chronicleNotes": "",
+  "resources": {
+    "Lumber": 0,
+    "Food": 0,
+    "Morale": 0,
+    "Security": 0,
+    "Supplies": 0
+  },
+  "buildings": {
+    "lumber_camp": {
+      "id": "lumber_camp",
+      "name": "The Lumber Camp",
+      "resource": "Lumber",
+      "level": 1,
+      "foremanId": "chr_garrick",
+      "spent": [],
+      "effects": [],
+      "producedTotal": 0
+    },
+    "hunters_lodge": {
+      "id": "hunters_lodge",
+      "name": "The Hunter's Lodge",
+      "resource": "Food",
+      "level": 1,
+      "foremanId": "chr_lyra",
+      "spent": [],
+      "effects": [],
+      "producedTotal": 0
+    },
+    "bunkhouse": {
+      "id": "bunkhouse",
+      "name": "The Bunkhouse",
+      "resource": "Morale",
+      "level": 1,
+      "foremanId": "chr_jory",
+      "spent": [],
+      "effects": [],
+      "producedTotal": 0
+    },
+    "watchtower": {
+      "id": "watchtower",
+      "name": "The Watchtower",
+      "resource": "Security",
+      "level": 1,
+      "foremanId": "chr_calder",
+      "spent": [],
+      "effects": [],
+      "producedTotal": 0
+    },
+    "storehouse": {
+      "id": "storehouse",
+      "name": "The Storehouse",
+      "resource": "Supplies",
+      "level": 1,
+      "foremanId": "chr_ellory",
+      "spent": [],
+      "effects": [],
+      "producedTotal": 0
+    }
+  }
+}

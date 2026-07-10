@@ -1,0 +1,13 @@
+{
+  "name": "the-settlement",
+  "version": "0.1.0",
+  "description": "GM-side settlement management tool for a West Marches-style Daggerheart campaign",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  }
+}

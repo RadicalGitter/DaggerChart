@@ -1,0 +1,95 @@
+# Architecture
+
+Boring on purpose: Node + Express, no build step, vanilla ES-module frontend,
+pretty-printed JSON on disk. One machine (the GM's), players connect over LAN.
+
+```
+server/
+  index.js    routes, SSE stream, static serving
+  state.js    domain logic: roll resolution, modifiers, season, log
+  store.js    atomic JSON read/write (tmp+rename), timestamped backups
+  views.js    audience whitelists: gmView() and tableView()
+public/
+  shared/     ledger.css (light GM theme), lamplight.css (dark player theme), i18n.js
+  gm/         GM console (sections: downtime, buildings, folk, party, stores, ledger, settlement)
+  table/      read-only projectable dashboard
+  create/     character creation wizard
+  character/  live character sheet + hand manager
+  board/      the Drafting Board (infinite canvas, plates, pins)
+data/         all persistent state (see README)
+docs/         this file, the design spec, ComfyUI workflow
+```
+
+## Server
+
+- **`store.js`** — `loadJson(name, fallback)` / `saveJson(name, obj)`; writes are
+  atomic (write `.tmp`, rename). `snapshot()` copies every `data/*.json` into
+  `data/backups/<timestamp>/`; called on each downtime resolution. `DATA_DIR`
+  env var overrides the data directory (used by tests/scratch runs).
+- **`state.js`** — owns the mutable `state` (settlement, characters, pcs, log,
+  event tables). `resolveDowntime(buildingId, raw, effort)` implements §5 of the
+  spec exactly: raw −2..23 validated, modifiers summed, clamp 0–30, spent-number
+  tracking per building, stockpile wipe on 0, standing `effect` capture, log
+  entry, snapshot. `modifierBreakdown()` returns visible modifiers itemized and
+  hidden ones only as part of the total (spoiler rule §8B).
+- **`views.js`** — **the** spoiler boundary. `tableView()` builds the player
+  payload from an explicit whitelist; hidden fields and unfired event text never
+  leave the server on `/api/table`. Never render player surfaces from `gmView()`.
+- **`index.js`** — routes below, plus `GET /api/stream` (SSE). Mutating
+  endpoints call `broadcast()` so open pages refresh; `PUT /api/board`
+  deliberately does *not* broadcast (would echo the GM's own board edits back).
+
+## API
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/state` | full GM state (private) |
+| `GET /api/table` | whitelisted player payload |
+| `GET /api/stream` | SSE; any broadcast → clients refetch |
+| `GET /api/downtime/preview?building=id` | foreman + modifier breakdown before rolling |
+| `POST /api/downtime/resolve` | `{buildingId, raw, effort}` → single entry revealed |
+| `POST /api/season/advance` | Spring→Summer→Autumn→Winter, year++ |
+| `POST /api/resources/adjust` | `{resource, delta, reason}` (audited) |
+| `PUT /api/settlement` | population, chronicle text |
+| `PUT /api/buildings/:id` | level, foreman assignment |
+| `POST/PUT /api/characters[/:id]` | folk (NPC) cards incl. hidden layer |
+| `POST /api/log`, `POST /api/log/:id/publish` | chronicle notes, publish to table |
+| `GET /api/reference` | SRD creation data (classes, ancestries, cards…) |
+| `GET/POST/PUT/DELETE /api/party[/:id]` | player characters |
+| `GET/PUT /api/board` | drafting-board document `{items, pins}` |
+
+`PUT /api/party/:id` merges partial bodies (the sheet PUTs single fields like
+`{hp: 3}`); if `level` changes it shifts damage thresholds by the same delta.
+
+## Frontend conventions
+
+- No framework, no build. Each page is `index.html` + one JS module; shared
+  code only in `public/shared/`.
+- **Themes:** GM surfaces use `ledger.css` (light, steward's-ledger). Player
+  surfaces use `lamplight.css` (dark). Tone per spec §2: quiet, warm, no
+  gamified fanfare; microcopy per §12.
+- **Live updates:** pages listen to `/api/stream` and refetch (debounced).
+  Character plates on the board update as players tap their sheets.
+- **i18n** (`shared/i18n.js`): per-device language (localStorage, EN/SV).
+  Game terms (Hope, Stress, Evasion, Loadout…) stay English to match the
+  physical cards; UI phrasing translates; the long-press glossary explains
+  terms in the chosen language. `t(key)` strings, `TERMS` glossary,
+  `termify(escapedText)` auto-links capitalized game terms inside rules text,
+  `initI18n()` wires the toggle + popovers. GM console is English-only for now.
+- **Hand manager** (`character/sheet.js`): Loadout (max 5) / Vault per SRD;
+  acquiring filters reference cards by the PC's class domains and level.
+
+## The roll system (do not "improve")
+
+`4d6 − 1d6` raw (−2..23, bell-shaped) + building level + foreman aptitude
++ player effort (+1) + hidden inspiration (−1..+2) + hidden penalty, clamped
+0–30. The log-normal reward curve (2→3→5→8→13→20) is sacred. A future in-app
+roller must simulate the actual dice, never a flat 0–30.
+
+## Testing pattern
+
+Run a scratch instance against a copy of `data/` with `DATA_DIR` pointing at a
+temp dir, and use dummy event tables there. Never resolve rolls against the
+real tables during development — it both spends event numbers and risks
+printing unrevealed event text. Clean up test PCs/log entries if you touch the
+real data dir. `.claude/launch.json` starts the dev server for browser preview.

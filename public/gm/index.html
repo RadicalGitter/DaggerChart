@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Settlement — GM Console</title>
+<link rel="stylesheet" href="/shared/ledger.css">
+<style>
+  .layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+  nav {
+    background: var(--paper-inset);
+    border-right: 1px solid var(--rule-strong);
+    padding: 1.5rem 0;
+  }
+  nav .title { padding: 0 1.2rem 1rem; border-bottom: 1px solid var(--rule); margin-bottom: 1rem; }
+  nav .title h1 { font-size: 1.15rem; }
+  nav a {
+    display: block;
+    padding: 0.5rem 1.2rem;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-variant: small-caps;
+    letter-spacing: 0.06em;
+  }
+  nav a.active { color: var(--oxblood); border-right: 3px solid var(--oxblood); background: var(--paper); }
+  nav a:hover { color: var(--ink); }
+  main { padding: 2rem 2.5rem; max-width: 980px; }
+  section[hidden] { display: none; }
+
+  /* Downtime runner */
+  .building-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem; }
+  .building-pick { cursor: pointer; }
+  .building-pick:hover { border-color: var(--rule-strong); }
+  .building-pick.selected { border-color: var(--oxblood); box-shadow: 0 0 0 1px var(--oxblood); }
+  .modline { display: flex; justify-content: space-between; padding: 0.2rem 0; }
+  .modline.total { border-top: 1px solid var(--rule); font-weight: 600; margin-top: 0.3rem; padding-top: 0.4rem; }
+  #resolve-result { margin-top: 1.5rem; }
+  .result-number {
+    font-size: 3rem;
+    line-height: 1;
+    font-weight: 600;
+  }
+  .result-tier { font-variant: small-caps; letter-spacing: 0.1em; font-size: 1.1rem; }
+  .event-text { font-size: 1.05rem; margin: 0.8rem 0; }
+  details.bookkeeping summary { cursor: pointer; color: var(--ink-faint); font-size: 0.85rem; }
+
+  /* Folk */
+  .folk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.9rem; }
+  .portrait {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--paper-inset); border: 1px solid var(--rule-strong);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; color: var(--ink-soft); flex: none;
+    overflow: hidden;
+  }
+  .portrait img { width: 100%; height: 100%; object-fit: cover; }
+  .folk-head { display: flex; gap: 0.8rem; align-items: center; }
+  .traits { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
+  details.gm-only { margin-top: 0.7rem; }
+  details.gm-only summary { cursor: pointer; color: var(--ink-faint); font-size: 0.82rem; font-variant: small-caps; }
+  details.gm-only .inner { background: var(--paper-inset); border-radius: 3px; padding: 0.6rem 0.8rem; margin-top: 0.4rem; font-size: 0.9rem; }
+
+  .formrow { display: flex; gap: 0.6rem; align-items: center; margin: 0.4rem 0; flex-wrap: wrap; }
+  .formrow label { min-width: 110px; color: var(--ink-soft); font-size: 0.9rem; }
+  .num { width: 70px; }
+  .stat-strip { display: flex; gap: 1.4rem; flex-wrap: wrap; }
+  .stat-strip .stat { text-align: center; }
+  .stat-strip .stat .value { font-size: 1.7rem; font-weight: 600; }
+  #toast {
+    position: fixed; bottom: 1.2rem; right: 1.2rem;
+    background: var(--ink); color: var(--paper); padding: 0.6rem 1rem; border-radius: 4px;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; max-width: 340px;
+  }
+  #toast.show { opacity: 0.95; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav>
+    <div class="title">
+      <h1 id="nav-name">The Settlement</h1>
+      <div class="smallcaps" id="nav-season">—</div>
+    </div>
+    <a href="#season" data-nav="season" class="active">The Season</a>
+    <a href="#stores" data-nav="stores">Stores</a>
+    <a href="#buildings" data-nav="buildings">Buildings</a>
+    <a href="#folk" data-nav="folk">Folk</a>
+    <a href="#party" data-nav="party">The Party</a>
+    <a href="#ledger" data-nav="ledger">Ledger</a>
+    <a href="#town" data-nav="town">Settlement</a>
+    <hr class="rule" style="margin: 1rem 1.2rem;">
+    <a href="/board" target="_blank" style="font-size:0.85rem;">The drafting board ↗</a>
+    <a href="/table" target="_blank" style="font-size:0.85rem;">Open the table view ↗</a>
+  </nav>
+  <main>
+    <section id="sec-season">
+      <h2>Resolve the season</h2>
+      <p class="muted">Pick a building, enter the raw dice (4d6 − 1d6), and open the ledger.</p>
+      <div class="building-grid" id="dt-buildings"></div>
+      <div id="dt-panel" hidden>
+        <hr class="rule">
+        <div class="card" style="max-width: 480px;">
+          <h3 id="dt-title"></h3>
+          <div id="dt-mods"></div>
+          <details class="bookkeeping" id="dt-hidden-details">
+            <summary>bookkeeping</summary>
+            <div id="dt-hidden"></div>
+          </details>
+          <hr class="rule">
+          <div class="formrow">
+            <label>Player effort</label>
+            <input type="checkbox" id="dt-effort"> <span class="muted" style="font-size:0.85rem;">a PC meaningfully pitched in (+1)</span>
+          </div>
+          <div class="formrow">
+            <label>Raw dice</label>
+            <input type="number" class="num" id="dt-raw" min="-2" max="23" placeholder="−2…23">
+            <button id="dt-resolve">Resolve the season</button>
+          </div>
+        </div>
+        <div id="resolve-result"></div>
+      </div>
+    </section>
+
+    <section id="sec-stores" hidden>
+      <h2>Stores</h2>
+      <div class="stat-strip" id="stores-strip" style="margin-bottom:1.2rem;"></div>
+      <div class="card" style="max-width: 520px;">
+        <h3>Adjust the stores</h3>
+        <div class="formrow"><label>Resource</label><select id="adj-resource"></select></div>
+        <div class="formrow"><label>Change</label><input type="number" class="num" id="adj-delta" placeholder="±"></div>
+        <div class="formrow"><label>Reason</label><input type="text" id="adj-reason" style="flex:1" placeholder="everything is auditable"></div>
+        <div class="formrow"><label></label><button id="adj-apply" class="quiet">Enter into the ledger</button></div>
+      </div>
+    </section>
+
+    <section id="sec-buildings" hidden>
+      <h2>Buildings</h2>
+      <table class="ledger" id="buildings-table"></table>
+    </section>
+
+    <section id="sec-folk" hidden>
+      <h2>Folk</h2>
+      <div class="folk-grid" id="folk-grid"></div>
+      <hr class="rule">
+      <button id="folk-new" class="quiet">A stranger arrives…</button>
+      <div id="folk-editor"></div>
+    </section>
+
+    <section id="sec-party" hidden>
+      <h2>The Party</h2>
+      <p class="muted">Players create characters at <a href="/create" target="_blank">/create</a> — on their own phones, from your Wi-Fi.</p>
+      <table class="ledger" id="party-table"></table>
+    </section>
+
+    <section id="sec-ledger" hidden>
+      <h2>The Ledger</h2>
+      <div class="formrow">
+        <button id="season-advance" class="quiet">The season turns</button>
+        <span class="muted" id="ledger-season"></span>
+      </div>
+      <div class="card" style="margin: 1rem 0; max-width: 640px;">
+        <div class="formrow">
+          <input type="text" id="note-text" style="flex:1" placeholder="Write a chronicle entry…">
+          <label style="min-width:auto;"><input type="checkbox" id="note-publish"> publish</label>
+          <button id="note-add" class="quiet">Enter</button>
+        </div>
+      </div>
+      <table class="ledger" id="log-table"></table>
+    </section>
+
+    <section id="sec-town" hidden>
+      <h2>Settlement</h2>
+      <div class="card" style="max-width: 520px;">
+        <div class="formrow"><label>Name</label><input type="text" id="town-name" style="flex:1"></div>
+        <div class="formrow"><label>Population</label><input type="number" class="num" id="town-pop"></div>
+        <div class="formrow" style="align-items:flex-start;"><label>Chronicle</label><textarea id="town-notes" rows="8" placeholder="The town's free-text chronicle — yours alone."></textarea></div>
+        <div class="formrow"><label></label><button id="town-save" class="quiet">Save</button></div>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="toast"></div>
+<script type="module" src="gm.js"></script>
+</body>
+</html>
