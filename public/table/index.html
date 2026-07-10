@@ -12,7 +12,7 @@
     color: #e8dfcc;
     font-size: 18px;
   }
-  .wrap { max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem; }
   header { text-align: center; margin-bottom: 2rem; }
   header h1 { font-size: 2.2rem; letter-spacing: 0.02em; }
   header .smallcaps { color: #a89877; font-size: 1rem; }
@@ -24,7 +24,40 @@
   .stat { text-align: center; }
   .stat .value { font-size: 2.2rem; font-weight: 600; color: #f0e6ce; }
   .stat .smallcaps { color: #a89877; }
-  h2.smallcaps { text-align: center; font-size: 1rem; color: #a89877; margin-bottom: 1.2rem; }
+
+  /* --- the deck: big section cards, or a docked stack + open panel --- */
+  .deck-area { display: flex; align-items: flex-start; gap: 1.6rem; }
+  .deck { position: relative; flex: 1 1 auto; }
+  .deck-area.docked .deck { flex: 0 0 auto; }
+
+  .big-card {
+    position: absolute; left: 0; top: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.7rem; padding: 1rem;
+    background: #2b2318; border: 1px solid #453824; border-radius: 12px;
+    color: inherit; font: inherit; cursor: pointer;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+    transition: transform 0.45s cubic-bezier(0.22, 0.9, 0.3, 1),
+                width 0.45s cubic-bezier(0.22, 0.9, 0.3, 1),
+                height 0.45s cubic-bezier(0.22, 0.9, 0.3, 1),
+                border-color 0.2s;
+    overflow: hidden;
+  }
+  .deck.no-anim .big-card { transition: none; }
+  .big-card:hover { border-color: #8a7550; background: #2b2318; }
+  .big-card.on-top { border-color: #d4b86a; }
+  .bc-title { font-size: 1.05rem; color: #c9ba97; letter-spacing: 0.06em; }
+  .bc-count { font-size: 3.2rem; font-weight: 600; color: #f0e6ce; line-height: 1; transition: opacity 0.25s; }
+  .bc-rule { width: 42px; height: 1px; background: linear-gradient(90deg, transparent, #6b5c42, transparent); transition: opacity 0.25s; }
+  .docked .bc-count, .docked .bc-rule { opacity: 0; }
+
+  .panel { flex: 1 1 auto; min-width: 0; animation: panel-in 0.4s ease 0.18s both; }
+  .panel[hidden] { display: none; }
+  @keyframes panel-in {
+    from { opacity: 0; transform: translateX(14px); }
+    to { opacity: 1; transform: none; }
+  }
+
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1rem; }
   .card {
     background: #2b2318; border: 1px solid #453824; box-shadow: none; color: inherit;
@@ -44,6 +77,15 @@
   .chronicle .entry { padding: 0.8rem 0; border-bottom: 1px solid #3a2f1e; }
   .chronicle .season { color: #a89877; font-variant: small-caps; font-size: 0.9rem; }
   .empty { text-align: center; color: #a89877; font-style: italic; }
+
+  /* The steward's door back to the console. Deliberately quiet — this screen
+     is projected for the table. */
+  .steward-door {
+    position: fixed; right: 0.8rem; bottom: 0.6rem; z-index: 98;
+    color: #6b5c42; opacity: 0.35; font-size: 1.15rem;
+    text-decoration: none; transition: opacity 0.2s;
+  }
+  .steward-door:hover { opacity: 0.85; }
 </style>
 </head>
 <body>
@@ -56,17 +98,31 @@
   <div class="stat-strip" id="t-stats"></div>
 
   <hr class="divider">
-  <h2 class="smallcaps" data-i18n="table.town">The Town</h2>
-  <div class="grid" id="t-buildings"></div>
 
-  <hr class="divider">
-  <h2 class="smallcaps" data-i18n="table.folk">Folk of Note</h2>
-  <div class="grid" id="t-folk"></div>
-
-  <hr class="divider">
-  <h2 class="smallcaps" data-i18n="table.chronicle">The Chronicle</h2>
-  <div class="chronicle" id="t-chronicle"></div>
+  <div class="deck-area" id="deck-area">
+    <div class="deck no-anim" id="deck">
+      <button class="big-card" data-card="town">
+        <div class="bc-title smallcaps" data-i18n="table.town">The Town</div>
+        <div class="bc-rule"></div>
+        <div class="bc-count" id="count-town">—</div>
+      </button>
+      <button class="big-card" data-card="folk">
+        <div class="bc-title smallcaps" data-i18n="table.folk">Folk of Note</div>
+        <div class="bc-rule"></div>
+        <div class="bc-count" id="count-folk">—</div>
+      </button>
+      <button class="big-card" data-card="chronicle">
+        <div class="bc-title smallcaps" data-i18n="table.chronicle">The Chronicle</div>
+        <div class="bc-rule"></div>
+        <div class="bc-count" id="count-chronicle">—</div>
+      </button>
+    </div>
+    <section class="panel" id="panel" hidden>
+      <div id="panel-body"></div>
+    </section>
+  </div>
 </div>
+<a class="steward-door" href="/gm" aria-label="ledger">&#10087;</a>
 <script type="module" src="table.js"></script>
 </body>
 </html>

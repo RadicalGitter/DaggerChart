@@ -48,30 +48,41 @@ designing anything; it is the source of truth. Code map + API:
 - SRD reference data lives in `data/daggerheart/reference.json` (from
   daggersearch/daggerheart-data, DPCGL license). 189 domain cards, all levels.
 - Hex map (Phase 3) deferred until the GM supplies the scanned map.
+- Folk cards are split for spoiler safety: `description` is player-facing and
+  goes to `/table` word for word — keep anything players shouldn't know out of
+  it. GM-only truth about a person lives in `hidden.notes`. There is no
+  `backstory` field anymore.
+- The same split governs People (non-villager NPCs, `data/people.json`) and
+  Places (`data/places.json`): public `description`, private `hidden.notes`,
+  plus a `revealed` flag gating whether the entry reaches the players' journal
+  at all. `loreView()` in `server/views.js` is the whitelist. The village is
+  the fixed place `place_village`; moving an NPC is just changing `placeId`.
+- Player notes (`data/notes.json`) belong to a PC (`pcId`); `scope` is
+  `"group"` or `"personal"`. Personal notes leave the server only for
+  `?pc=<owner>` — there's no auth, it's trust plus not-shipping-by-default.
+- The ComfyUI portrait request on People saves `portraitPrompt` and returns a
+  stub message; wiring comes later. Places will get their own workflow later.
+- `/table` navigation is the card deck: a proportional row of big section
+  cards; opening one docks the deck into a stack (selection on top) beside the
+  content panel; pressing the stack returns. New sections = one `.big-card`
+  button in `public/table/index.html` plus an entry in `SECTIONS` in
+  `table.js`; the layout compresses automatically. The ❧ link (bottom right)
+  is the quiet door back to `/gm`.
+
+- `/screen` is the projector in front of the table (the drafting board owns
+  `/board`): it shows exactly one thing, chosen by the GM — a mood image,
+  a folk/person/place card, the stores, the buildings, or free text.
+  `screenView()` resolves the projection at read time through the public
+  whitelists, so even deliberately shown unrevealed entries expose only
+  public fields. "Show at the table" buttons live on GM cards; the Screen
+  section in `/gm` holds the forms and the darken control.
 
 ## What's next (agreed ambitions, in rough order)
-
-- **Folk disclosure audit (user-flagged, do first):** be very careful what
-  folk/NPC *descriptions* reveal on player surfaces. The `/table` whitelist
-  controls which fields go out, but a backstory string itself can leak the
-  hidden layer (e.g. hints of Jory's incompetence). Likely fix: split folk
-  cards into a player-safe public description and GM-only notes, and audit
-  the seeded backstories in `data/characters.json` for leaks.
-- **Table view return control (user-flagged):** there is no button to get
-  from `/table` back to the GM console. Add a discreet one — it must stay
-  visually quiet since `/table` is projected for players.
-- **Table view card navigation (user-specified interaction):** replace the
-  section layout with big horizontal cards acting as buttons, proportionally
-  arranged so adding a card compresses the others to fit. Clicking a card
-  slides it to the left into a "landing zone" showing a stack of cards with
-  the current selection on top, revealing that card's contents; pressing the
-  stacked card returns to the horizontal card view.
-- Board screen: a projectable mood/status route in front of the table —
-  reuse the `/table` whitelist pattern; likely shows town art + key stats.
-- ComfyUI portrait generation: local API calls to the GM's 5090; the working
-  portrait workflow is `docs/comfyui/waidrin-portraits-workflow.json`
-  ("Waidrin Portraits"). Players would generate portraits from `/create`
-  with prompt + toggles/sliders influencing the model.
+- ComfyUI wiring: the GM-side request UI exists on People cards (prompt saved
+  to `portraitPrompt`, `POST /api/people/:id/portrait` is a stub) — connect it
+  to the local 5090 using `docs/comfyui/waidrin-portraits-workflow.json`
+  ("Waidrin Portraits"). Later: players generate portraits from `/create`
+  with prompt + toggles/sliders, and a new workflow for Places images.
 - In-app 4d6−1d6 roller with a reveal moment (Phase 4; simulate real dice,
   never flat 0–30).
 - Magic item cards: print-ready fronts matching the physical deck; scalable

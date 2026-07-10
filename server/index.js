@@ -1,8 +1,8 @@
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { state, persist, addLog, advanceSeason, resolveDowntime, modifierBreakdown } from "./state.js";
-import { gmView, tableView } from "./views.js";
+import { state, persist, addLog, advanceSeason, resolveDowntime, modifierBreakdown, seasonLabel } from "./state.js";
+import { gmView, tableView, loreView, screenView } from "./views.js";
 import { loadJson, saveJson } from "./store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -17,6 +17,9 @@ app.use("/board", express.static(path.join(PUBLIC, "board")));
 app.use("/table", express.static(path.join(PUBLIC, "table")));
 app.use("/create", express.static(path.join(PUBLIC, "create")));
 app.use("/character", express.static(path.join(PUBLIC, "character")));
+app.use("/journal", express.static(path.join(PUBLIC, "journal")));
+app.use("/screen", express.static(path.join(PUBLIC, "screen")));
+app.use("/screen", express.static(path.join(PUBLIC, "screen")));
 // /character/<id> serves the sheet shell; the page reads the id from the URL.
 app.get("/character/:id", (_req, res) => res.sendFile(path.join(PUBLIC, "character", "index.html")));
 app.get("/", (_req, res) => res.redirect("/gm"));
@@ -190,7 +193,7 @@ app.post("/api/characters", guard((req, res) => {
     name: c.name.trim(),
     role: c.role || "",
     status: c.status || "alive",
-    backstory: c.backstory || "",
+    description: c.description || "",
     portrait: c.portrait || null,
     publicTraits: !!c.publicTraits,
     traits: c.traits || {},
@@ -211,6 +214,206 @@ app.put("/api/characters/:id", guard((req, res) => {
   persist();
   broadcast();
   res.json(state.characters[i]);
+}));
+
+// --- people & places (the wider world; player journal reads via /api/lore) ---
+
+function findPlace(id) {
+  return state.places.find((p) => p.id === id) || null;
+}
+
+app.post("/api/people", guard((req, res) => {
+  const b = req.body;
+  if (!b.name || !b.name.trim()) throw new Error("A name is required.");
+  if (b.placeId && !findPlace(b.placeId)) throw new Error("Unknown place.");
+  const person = {
+    id: `ppl_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    name: b.name.trim(),
+    role: b.role || "",
+    status: b.status || "alive",
+    description: b.description || "",
+    portrait: b.portrait || null,
+    portraitPrompt: b.portraitPrompt || "",
+    placeId: b.placeId || null,
+    items: Array.isArray(b.items) ? b.items : [],
+    revealed: b.revealed !== false,
+    hidden: { notes: "", ...(b.hidden || {}) }
+  };
+  state.people.push(person);
+  persist();
+  broadcast();
+  res.json(person);
+}));
+
+app.put("/api/people/:id", guard((req, res) => {
+  const i = state.people.findIndex((p) => p.id === req.params.id);
+  if (i === -1) throw new Error("Unknown person.");
+  if (req.body.placeId && !findPlace(req.body.placeId)) throw new Error("Unknown place.");
+  const prev = state.people[i];
+  state.people[i] = { ...prev, ...req.body, id: prev.id, hidden: { ...prev.hidden, ...(req.body.hidden || {}) } };
+  persist();
+  broadcast();
+  res.json(state.people[i]);
+}));
+
+app.delete("/api/people/:id", guard((req, res) => {
+  const i = state.people.findIndex((p) => p.id === req.params.id);
+  if (i === -1) throw new Error("Unknown person.");
+  const [gone] = state.people.splice(i, 1);
+  state.notes = state.notes.filter((n) => !(n.kind === "person" && n.refId === gone.id));
+  persist();
+  broadcast();
+  res.json({ removed: gone.name });
+}));
+
+// ComfyUI portrait request. Not wired yet — the prompt is kept so the request
+// can be replayed once the workshop is connected (docs/comfyui/).
+app.post("/api/people/:id/portrait", guard((req, res) => {
+  const person = state.people.find((p) => p.id === req.params.id);
+  if (!person) throw new Error("Unknown person.");
+  person.portraitPrompt = (req.body.prompt || "").trim();
+  persist();
+  res.json({
+    queued: false,
+    message: "The portrait workshop isn't connected yet. The prompt is saved and will be used once ComfyUI is wired in."
+  });
+}));
+
+app.post("/api/places", guard((req, res) => {
+  const b = req.body;
+  if (!b.name || !b.name.trim()) throw new Error("A name is required.");
+  const place = {
+    id: `place_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    name: b.name.trim(),
+    kind: b.kind || "",
+    description: b.description || "",
+    portrait: b.portrait || null,
+    revealed: b.revealed !== false,
+    fixed: false,
+    hidden: { notes: "", ...(b.hidden || {}) }
+  };
+  state.places.push(place);
+  persist();
+  broadcast();
+  res.json(place);
+}));
+
+app.put("/api/places/:id", guard((req, res) => {
+  const i = state.places.findIndex((p) => p.id === req.params.id);
+  if (i === -1) throw new Error("Unknown place.");
+  const prev = state.places[i];
+  state.places[i] = {
+    ...prev,
+    ...req.body,
+    id: prev.id,
+    fixed: prev.fixed,
+    hidden: { ...prev.hidden, ...(req.body.hidden || {}) }
+  };
+  persist();
+  broadcast();
+  res.json(state.places[i]);
+}));
+
+app.delete("/api/places/:id", guard((req, res) => {
+  const i = state.places.findIndex((p) => p.id === req.params.id);
+  if (i === -1) throw new Error("Unknown place.");
+  if (state.places[i].fixed) throw new Error("The settlement itself stays on the map.");
+  const [gone] = state.places.splice(i, 1);
+  for (const person of state.people) {
+    if (person.placeId === gone.id) person.placeId = null;
+  }
+  state.notes = state.notes.filter((n) => !(n.kind === "place" && n.refId === gone.id));
+  persist();
+  broadcast();
+  res.json({ removed: gone.name });
+}));
+
+// --- the table screen: GM projects, everyone sees ---
+
+app.get("/api/screen", (_req, res) => res.json(screenView()));
+
+const SCREEN_TYPES = new Set(["image", "text", "stores", "buildings", "folk", "person", "place"]);
+
+app.put("/api/screen", guard((req, res) => {
+  const { type, refId, url, caption, title, body } = req.body;
+  if (type === null) {
+    state.screen.current = null;
+  } else {
+    if (!SCREEN_TYPES.has(type)) throw new Error("Nothing of that kind fits on the screen.");
+    if (type === "image" && (!url || !url.trim())) throw new Error("An image needs a URL.");
+    if (type === "text" && !(title || "").trim() && !(body || "").trim()) throw new Error("Write something first.");
+    if (type === "folk" && !state.characters.find((c) => c.id === refId)) throw new Error("Unknown folk.");
+    if (type === "person" && !state.people.find((p) => p.id === refId)) throw new Error("Unknown person.");
+    if (type === "place" && !state.places.find((p) => p.id === refId)) throw new Error("Unknown place.");
+    state.screen.current = {
+      type,
+      refId: refId || null,
+      url: (url || "").trim() || null,
+      caption: (caption || "").trim(),
+      title: (title || "").trim(),
+      body: (body || "").trim(),
+      setAt: new Date().toISOString()
+    };
+  }
+  persist();
+  broadcast();
+  res.json({ ok: true, current: state.screen.current });
+}));
+
+// --- player journal & notes ---
+
+app.get("/api/lore", (req, res) => res.json(loreView(req.query.pc || null)));
+
+const NOTE_KINDS = new Set(["journal", "person", "place"]);
+
+app.post("/api/notes", guard((req, res) => {
+  const { kind, refId, scope, pcId, text } = req.body;
+  if (!NOTE_KINDS.has(kind)) throw new Error("Unknown kind of note.");
+  if (!text || !text.trim()) throw new Error("Write something first.");
+  const pc = state.pcs.find((p) => p.id === pcId);
+  if (!pc) throw new Error("Whose note is this? No such character.");
+  if (kind === "person" && !state.people.find((p) => p.id === refId && p.revealed))
+    throw new Error("Unknown person.");
+  if (kind === "place" && !state.places.find((p) => p.id === refId && p.revealed))
+    throw new Error("Unknown place.");
+  const note = {
+    id: `note_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    kind,
+    refId: kind === "journal" ? null : refId,
+    scope: scope === "personal" ? "personal" : "group",
+    pcId,
+    author: pc.name,
+    text: text.trim(),
+    season: seasonLabel(),
+    ts: new Date().toISOString(),
+    updated: null
+  };
+  state.notes.push(note);
+  persist();
+  broadcast();
+  res.json(note);
+}));
+
+app.put("/api/notes/:id", guard((req, res) => {
+  const note = state.notes.find((n) => n.id === req.params.id);
+  if (!note) throw new Error("No such note.");
+  if (note.pcId !== req.body.pcId) throw new Error("Only the hand that wrote it may change it.");
+  if (typeof req.body.text === "string" && req.body.text.trim()) note.text = req.body.text.trim();
+  if (req.body.scope === "personal" || req.body.scope === "group") note.scope = req.body.scope;
+  note.updated = new Date().toISOString();
+  persist();
+  broadcast();
+  res.json(note);
+}));
+
+app.delete("/api/notes/:id", guard((req, res) => {
+  const i = state.notes.findIndex((n) => n.id === req.params.id);
+  if (i === -1) throw new Error("No such note.");
+  if (state.notes[i].pcId !== req.query.pc) throw new Error("Only the hand that wrote it may strike it.");
+  state.notes.splice(i, 1);
+  persist();
+  broadcast();
+  res.json({ ok: true });
 }));
 
 app.post("/api/log", guard((req, res) => {

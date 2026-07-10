@@ -4,7 +4,7 @@
     "name": "Garrick",
     "role": "Foreman, the Lumber Camp",
     "status": "alive",
-    "backstory": "A broad, quiet man who was a sawyer's apprentice before the crossing. Counts his crew twice at dusk. Smells of pine pitch and never raises his voice.",
+    "description": "A broad, quiet man who was a sawyer's apprentice before the crossing. Counts his crew twice at dusk. Smells of pine pitch and never raises his voice.",
     "portrait": null,
     "publicTraits": true,
     "traits": {
@@ -29,7 +29,7 @@
     "name": "Lyra",
     "role": "Foreman, the Hunter's Lodge",
     "status": "alive",
-    "backstory": "Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else.",
+    "description": "Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else.",
     "portrait": null,
     "publicTraits": true,
     "traits": {
@@ -54,7 +54,7 @@
     "name": "Jory",
     "role": "Foreman, the Bunkhouse",
     "status": "alive",
-    "backstory": "Warm, tireless, everyone's friend. Talks a fine plan and swears by his joinery. The bunkhouse walls have a lean to them, but no one has the heart to say so.",
+    "description": "Warm, tireless, everyone's friend. Talks a fine plan and swears by his joinery. The bunkhouse fire burns late with his stories, and no one sits alone at it.",
     "portrait": null,
     "publicTraits": true,
     "traits": {
@@ -71,7 +71,7 @@
     "hidden": {
       "inspiration": 0,
       "penalty": -2,
-      "notes": "Genuinely incompetent beneath the confident presentation (spec §8C). Pitch openly with his stated competence; the ledger quietly applies the truth. The players' discovery of this is a designed story — protect it."
+      "notes": "Genuinely incompetent beneath the confident presentation (spec §8C). The bunkhouse walls have a lean to them; no one has the heart to say so. Pitch openly with his stated competence; the ledger quietly applies the truth. The players' discovery of this is a designed story — protect it."
     }
   },
   {
@@ -79,7 +79,7 @@
     "name": "Calder",
     "role": "Foreman, the Watchtower",
     "status": "alive",
-    "backstory": "A soldier once, somewhere he doesn't name. Sleeps in the afternoon so he can walk the palisade at night. Keeps a list of everything he's seen move in the dark.",
+    "description": "A soldier once, somewhere he doesn't name. Sleeps in the afternoon so he can walk the palisade at night. Keeps a list of everything he's seen move in the dark.",
     "portrait": null,
     "publicTraits": true,
     "traits": {
@@ -104,7 +104,7 @@
     "name": "Ellory",
     "role": "Foreman, the Storehouse",
     "status": "alive",
-    "backstory": "Was a harbor clerk's daughter and it shows: chalk marks on every barrel, a tally for every sack. The settlement eats in winter because Ellory counts in autumn.",
+    "description": "Was a harbor clerk's daughter and it shows: chalk marks on every barrel, a tally for every sack. The settlement eats in winter because Ellory counts in autumn.",
     "portrait": null,
     "publicTraits": true,
     "traits": {

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Settlement — Journal</title>
+<link rel="stylesheet" href="/shared/ledger.css">
+<link rel="stylesheet" href="/shared/lamplight.css">
+<style>
+  body { font-size: 17px; }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 2rem 1.2rem 4rem; }
+  header { text-align: center; margin-bottom: 1.4rem; }
+  header h1 { font-size: 1.7rem; letter-spacing: 0.02em; }
+  header .smallcaps { font-size: 0.95rem; }
+  #j-switch { color: #a89877; font-size: 0.8rem; text-decoration: none; border-bottom: 1px dotted #6b5c42; }
+
+  /* picker */
+  #picker { text-align: center; padding-top: 3rem; }
+  #picker .pick-list { display: flex; flex-direction: column; gap: 0.7rem; max-width: 380px; margin: 1.5rem auto; }
+  #picker button { font-size: 1.05rem; padding: 0.8rem; }
+
+  /* tab bar */
+  .tabbar {
+    display: flex; align-items: center; gap: 0.3rem;
+    border-bottom: 1px solid #453824; margin-bottom: 1.2rem; padding-bottom: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .tabbar button {
+    background: transparent; border: 0; color: #a89877;
+    font-variant: small-caps; letter-spacing: 0.07em; font-size: 1rem;
+    padding: 0.3rem 0.7rem; cursor: pointer;
+  }
+  .tabbar button:hover { background: transparent; color: #e8dfcc; }
+  .tabbar button.on { color: #d4b86a; border-bottom: 2px solid #d4b86a; }
+  #j-search {
+    margin-left: auto; width: 190px; font-size: 0.9rem;
+    border-radius: 999px; padding: 0.35rem 0.9rem;
+  }
+
+  /* notes & entries */
+  .entry-card { margin-bottom: 1rem; }
+  .note-meta { display: flex; gap: 0.6rem; align-items: baseline; flex-wrap: wrap; }
+  .note-meta .season { color: #d4b86a; font-variant: small-caps; font-size: 0.85rem; }
+  .note-meta .who { color: #a89877; font-size: 0.82rem; }
+  .note-meta .mine { color: #9fb27a; font-size: 0.78rem; font-style: italic; }
+  .note-text { white-space: pre-wrap; margin: 0.35rem 0; font-size: 0.95rem; }
+  .note-tools { display: flex; gap: 0.5rem; }
+  .note-tools button { background: transparent; border: 0; color: #6b5c42; font-size: 0.78rem; padding: 0; cursor: pointer; }
+  .note-tools button:hover { color: #c9ba97; background: transparent; }
+  .note-row { padding: 0.55rem 0; border-bottom: 1px solid #3a2f1e; }
+  .note-row:last-child { border-bottom: 0; }
+
+  .composer textarea { width: 100%; font: inherit; font-size: 0.95rem; resize: vertical; }
+  .composer .row { display: flex; gap: 0.6rem; align-items: center; margin-top: 0.45rem; flex-wrap: wrap; }
+  .scope-seg { display: inline-flex; border: 1px solid #6b5c42; border-radius: 999px; overflow: hidden; }
+  .scope-seg button {
+    background: transparent; border: 0; color: #a89877;
+    font-size: 0.78rem; padding: 0.25rem 0.75rem; cursor: pointer;
+  }
+  .scope-seg button.on { background: #3a2f1e; color: #d4b86a; }
+  .composer .write { margin-left: auto; }
+
+  /* lore cards */
+  .lore-card { margin-bottom: 1.1rem; }
+  .lore-head { display: flex; gap: 0.9rem; align-items: center; }
+  .lore-link { color: #d4b86a; text-decoration: none; border-bottom: 1px dotted #8a7550; cursor: pointer; }
+  .items { margin: 0.3rem 0 0.2rem 1.1rem; font-size: 0.88rem; padding: 0; }
+  .items li { margin: 0.15rem 0; }
+  .lore-notes { margin-top: 0.6rem; border-top: 1px solid #3a2f1e; padding-top: 0.4rem; }
+  .lore-notes > .smallcaps { font-size: 0.8rem; }
+  .empty { text-align: center; color: #a89877; font-style: italic; padding: 1.5rem 0; }
+
+  .flash { animation: flash 1.6s ease; }
+  @keyframes flash {
+    0% { border-color: #d4b86a; box-shadow: 0 0 0 1px #d4b86a; }
+    100% { border-color: #453824; box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="picker" hidden>
+    <h1 data-i18n="journal.title">The Journal</h1>
+    <p class="smallcaps" data-i18n="journal.pick">Whose journal is this?</p>
+    <div class="pick-list" id="pick-list"></div>
+  </div>
+
+  <div id="app" hidden>
+    <header>
+      <h1 data-i18n="journal.title">The Journal</h1>
+      <div class="smallcaps"><span id="j-pc"></span> · <span id="j-season">—</span></div>
+      <a href="#" id="j-switch" data-i18n="journal.notyou">Not you? Choose another.</a>
+    </header>
+    <div class="tabbar">
+      <button data-tab="journal" class="on" data-i18n="journal.tab.journal">Journal</button>
+      <button data-tab="people" data-i18n="journal.tab.people">People</button>
+      <button data-tab="places" data-i18n="journal.tab.places">Places</button>
+      <input type="search" id="j-search">
+    </div>
+    <div id="tab-body"></div>
+  </div>
+</div>
+<script type="module" src="journal.js"></script>
+</body>
+</html>

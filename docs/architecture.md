@@ -8,13 +8,14 @@ server/
   index.js    routes, SSE stream, static serving
   state.js    domain logic: roll resolution, modifiers, season, log
   store.js    atomic JSON read/write (tmp+rename), timestamped backups
-  views.js    audience whitelists: gmView() and tableView()
+  views.js    audience whitelists: gmView(), tableView(), loreView()
 public/
   shared/     ledger.css (light GM theme), lamplight.css (dark player theme), i18n.js
-  gm/         GM console (sections: downtime, buildings, folk, party, stores, ledger, settlement)
-  table/      read-only projectable dashboard
+  gm/         GM console (sections: downtime, buildings, folk, people, places, party, stores, ledger, settlement)
+  table/      read-only projectable dashboard (card-deck navigation)
   create/     character creation wizard
   character/  live character sheet + hand manager
+  journal/    players' journal: notes on people, places, and days
   board/      the Drafting Board (infinite canvas, plates, pins)
 data/         all persistent state (see README)
 docs/         this file, the design spec, ComfyUI workflow
@@ -32,9 +33,12 @@ docs/         this file, the design spec, ComfyUI workflow
   tracking per building, stockpile wipe on 0, standing `effect` capture, log
   entry, snapshot. `modifierBreakdown()` returns visible modifiers itemized and
   hidden ones only as part of the total (spoiler rule §8B).
-- **`views.js`** — **the** spoiler boundary. `tableView()` builds the player
-  payload from an explicit whitelist; hidden fields and unfired event text never
-  leave the server on `/api/table`. Never render player surfaces from `gmView()`.
+- **`views.js`** — **the** spoiler boundary. `tableView()` and `loreView()`
+  build player payloads from explicit whitelists; hidden fields, unrevealed
+  people/places, and unfired event text never leave the server on `/api/table`
+  or `/api/lore`. A person standing in an unrevealed place gets `placeId: null`.
+  Personal notes ship only when the request carries the owner's `?pc=`.
+  Never render player surfaces from `gmView()`.
 - **`index.js`** — routes below, plus `GET /api/stream` (SSE). Mutating
   endpoints call `broadcast()` so open pages refresh; `PUT /api/board`
   deliberately does *not* broadcast (would echo the GM's own board edits back).
@@ -57,6 +61,12 @@ docs/         this file, the design spec, ComfyUI workflow
 | `GET /api/reference` | SRD creation data (classes, ancestries, cards…) |
 | `GET/POST/PUT/DELETE /api/party[/:id]` | player characters |
 | `GET/PUT /api/board` | drafting-board document `{items, pins}` |
+| `POST/PUT/DELETE /api/people[/:id]` | wider-world NPCs: description public, `hidden.notes` private, `placeId` moves them, `items` carried, `revealed` gates player visibility |
+| `POST /api/people/:id/portrait` | ComfyUI request stub — saves `portraitPrompt`, returns "not wired yet" |
+| `POST/PUT/DELETE /api/places[/:id]` | places; the village (`place_village`, `fixed`) cannot be deleted |
+| `GET /api/lore?pc=id` | whitelisted journal payload: revealed people/places, group notes + that PC's personal notes |
+| `GET/PUT /api/screen` | the table screen: GM projects one thing (image/card/stores/buildings/text, `type: null` darkens); GET resolves through `screenView()` whitelists |
+| `POST/PUT/DELETE /api/notes[/:id]` | player notes (journal/person/place, group/personal); edits and strikes require the author's `pcId` |
 
 `PUT /api/party/:id` merges partial bodies (the sheet PUTs single fields like
 `{hp: 3}`); if `level` changes it shifts damage thresholds by the same delta.

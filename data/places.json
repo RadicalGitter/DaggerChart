@@ -1,0 +1,14 @@
+[
+  {
+    "id": "place_village",
+    "name": "The Settlement",
+    "kind": "home",
+    "description": "The town itself — fifty souls and counting, a palisade against the dark.",
+    "portrait": null,
+    "revealed": true,
+    "fixed": true,
+    "hidden": {
+      "notes": ""
+    }
+  }
+]

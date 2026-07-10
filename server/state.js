@@ -12,11 +12,26 @@ const DEFAULT_SETTLEMENT = {
   buildings: {}
 };
 
+const DEFAULT_VILLAGE = {
+  id: "place_village",
+  name: "The Settlement",
+  kind: "home",
+  description: "The town itself — fifty souls and counting, a palisade against the dark.",
+  portrait: null,
+  revealed: true,
+  fixed: true,
+  hidden: { notes: "" }
+};
+
 export const state = {
   settlement: loadJson("settlement.json", DEFAULT_SETTLEMENT),
   characters: loadJson("characters.json", []),
   pcs: loadJson("pcs.json", []),
   log: loadJson("log.json", []),
+  people: loadJson("people.json", []),
+  places: loadJson("places.json", [DEFAULT_VILLAGE]),
+  notes: loadJson("notes.json", []),
+  screen: loadJson("screen.json", { current: null }),
   tables: loadEventTables(),
   reference: loadJson("daggerheart/reference.json", null)
 };
@@ -46,6 +61,10 @@ export function persist() {
   saveJson("characters.json", state.characters);
   saveJson("pcs.json", state.pcs);
   saveJson("log.json", state.log);
+  saveJson("people.json", state.people);
+  saveJson("places.json", state.places);
+  saveJson("notes.json", state.notes);
+  saveJson("screen.json", state.screen);
 }
 
 export function getCharacter(id) {

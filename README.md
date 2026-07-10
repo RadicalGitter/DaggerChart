@@ -35,8 +35,10 @@ whitelisted server-side regardless).
 | `/gm` | GM (private) | Console: downtime runner, buildings, folk, stores, ledger, settlement |
 | `/board` | GM (private) | The Drafting Board — infinite pan/zoom whiteboard with live stat plates, counters, notes, and pinned camera views |
 | `/table` | everyone (projectable) | Read-only town dashboard: population, stores, buildings, folk of note, published chronicle |
+| `/screen` | everyone (projector) | The table screen: shows the one thing the GM projects — mood images, NPC portraits, cards, stores, free text |
 | `/create` | players | Guided Daggerheart character creation (all SRD data local) |
 | `/character/:id` | one player each | Live character sheet: tap-to-mark HP/Stress/Hope/Armor, Loadout/Vault hand manager |
+| `/journal` | players | The party's journal: notes on people and places the GM reveals, plus a season-stamped diary — each note "for my eyes" or "for the table" |
 
 Player-facing pages have an EN/SV language toggle (top right, per device) and
 long-press glossary popovers on underlined game terms.
@@ -61,6 +63,9 @@ stopped (or live; the GM console re-reads on refresh):
 - `settlement.json` — population, season, buildings (level, foreman, spent event numbers, effects)
 - `characters.json` — the folk (NPCs), including the GM-only hidden layer
 - `pcs.json` — player characters from the creator
+- `people.json` — the wider world's NPCs (not villagers): public description, GM-only notes, carried items, current place
+- `places.json` — the map beyond the palisade; the settlement itself is the fixed first entry
+- `notes.json` — the players' notes and journal entries
 - `log.json` — the season ledger; entries carry a `published` flag
 - `board.json` — drafting-board plates and pins
 - `event-tables/*.json` — **do not open** (see above)
@@ -71,7 +76,6 @@ stopped (or live; the GM console re-reads on refresh):
 
 Per the spec's build phases, plus ambitions agreed at the table:
 
-- **Next up**: a folk-description disclosure audit (backstory text must not leak the hidden layer onto player surfaces), a discreet way back from `/table` to the console, and a new table-view navigation: big horizontal section cards that slide into a stacked "landing zone" when opened (see CLAUDE.md for the full interaction).
 - **Phase 3 — The Map**: hex overlay on the GM's scanned map (deferred until the scan is available).
 - **Phase 4 — Dice & depth**: in-app 4d6−1d6 roller with a reveal moment; building improvement flow; library building migration.
 - **Board screen**: a mood/status display in front of the table (another whitelisted route, like `/table`).

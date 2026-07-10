@@ -85,12 +85,16 @@
     <a href="#stores" data-nav="stores">Stores</a>
     <a href="#buildings" data-nav="buildings">Buildings</a>
     <a href="#folk" data-nav="folk">Folk</a>
+    <a href="#people" data-nav="people">People</a>
+    <a href="#places" data-nav="places">Places</a>
     <a href="#party" data-nav="party">The Party</a>
     <a href="#ledger" data-nav="ledger">Ledger</a>
+    <a href="#screen" data-nav="screen">The Screen</a>
     <a href="#town" data-nav="town">Settlement</a>
     <hr class="rule" style="margin: 1rem 1.2rem;">
     <a href="/board" target="_blank" style="font-size:0.85rem;">The drafting board ↗</a>
     <a href="/table" target="_blank" style="font-size:0.85rem;">Open the table view ↗</a>
+    <a href="/screen" target="_blank" style="font-size:0.85rem;">Open the screen ↗</a>
   </nav>
   <main>
     <section id="sec-season">
@@ -146,6 +150,24 @@
       <div id="folk-editor"></div>
     </section>
 
+    <section id="sec-people" hidden>
+      <h2>People</h2>
+      <p class="muted">The wider world's characters — not villagers. Revealed entries appear in the players' journal, description word for word.</p>
+      <div class="folk-grid" id="people-grid"></div>
+      <hr class="rule">
+      <button id="people-new" class="quiet">Word of someone new…</button>
+      <div id="people-editor"></div>
+    </section>
+
+    <section id="sec-places" hidden>
+      <h2>Places</h2>
+      <p class="muted">The map beyond the palisade. Revealed entries appear in the players' journal; people can be moved between places from their card.</p>
+      <div class="folk-grid" id="places-grid"></div>
+      <hr class="rule">
+      <button id="places-new" class="quiet">Mark a place on the map…</button>
+      <div id="places-editor"></div>
+    </section>
+
     <section id="sec-party" hidden>
       <h2>The Party</h2>
       <p class="muted">Players create characters at <a href="/create" target="_blank">/create</a> — on their own phones, from your Wi-Fi.</p>
@@ -166,6 +188,34 @@
         </div>
       </div>
       <table class="ledger" id="log-table"></table>
+    </section>
+
+    <section id="sec-screen" hidden>
+      <h2>The Screen</h2>
+      <p class="muted">A projector surface at <a href="/screen" target="_blank">/screen</a> — it shows one thing at a time, chosen here. The "show at the table" buttons on folk, people, and places land here too.</p>
+      <div class="card" style="max-width:640px;">
+        <div class="formrow"><label>Now showing</label><span id="screen-now" class="muted">—</span></div>
+        <div class="formrow"><label></label><button id="screen-clear" class="quiet">Darken the screen</button></div>
+      </div>
+      <div class="card" style="max-width:640px; margin-top:1rem;">
+        <h3>An image</h3>
+        <div class="formrow"><label>URL</label><input type="text" id="screen-img-url" style="flex:1" placeholder="/portraits/… or https://…"></div>
+        <div class="formrow"><label>Caption</label><input type="text" id="screen-img-cap" style="flex:1" placeholder="(optional)"></div>
+        <div class="formrow"><label></label><button id="screen-img-show" class="quiet">Show at the table</button></div>
+      </div>
+      <div class="card" style="max-width:640px; margin-top:1rem;">
+        <h3>Words</h3>
+        <div class="formrow"><label>Title</label><input type="text" id="screen-txt-title" style="flex:1"></div>
+        <div class="formrow" style="align-items:flex-start;"><label>Body</label><textarea id="screen-txt-body" rows="3" style="flex:1"></textarea></div>
+        <div class="formrow"><label></label><button id="screen-txt-show" class="quiet">Show at the table</button></div>
+      </div>
+      <div class="card" style="max-width:640px; margin-top:1rem;">
+        <h3>The ledgers</h3>
+        <div class="formrow">
+          <button id="screen-stores" class="quiet">Show the stores</button>
+          <button id="screen-buildings" class="quiet">Show the buildings</button>
+        </div>
+      </div>
     </section>
 
     <section id="sec-town" hidden>
