@@ -28,6 +28,10 @@ npm install
 npm start          # → http://localhost:4626
 ```
 
+On Windows, double-click **Start The Settlement.vbs** instead: it starts the
+server with no console window and leaves a keeper icon in the system tray —
+right-click it to open the ledger/table or to close the settlement down.
+
 Players on the same Wi-Fi can reach the server at `http://<this-machine's-ip>:4626`.
 There is no auth — the table runs on trust (and the player dashboard is
 whitelisted server-side regardless).

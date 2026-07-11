@@ -24,6 +24,21 @@ page, and becomes a pannable physical spread on narrow screens.
 This route is deliberately not linked as the default and does not replace or
 modify `/table`.
 
+### Aged tome — `/tome`
+
+A weathered variant of the physical book: cracked leather, foxed and frayed
+parchment (SVG displacement filters), candlelight flicker, dust motes, and a
+faint breathing motion. Navigation is by **keepsakes** rather than tabs —
+real objects stuffed between the pages (a frayed ribbon, a raven feather, a
+torn parchment scrap, a pressed flower, a bone charm on a cord), each with a
+small handwritten label. A keepsake keeps its resting height on the fore-edge
+when it migrates to the left edge, like a real bookmark keeps its page.
+
+Keepsakes are defined in the `KEEPSAKES` registry in `public/tome/tome.js` —
+one entry per object (art, label placement, sway). **Future player
+customization should resolve a player's choice to a key in this registry**;
+nothing else needs to change. All motion respects `prefers-reduced-motion`.
+
 ## Shared contract
 
 Every player-shell visual must preserve these boundaries:

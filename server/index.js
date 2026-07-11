@@ -17,10 +17,10 @@ app.use("/board", express.static(path.join(PUBLIC, "board")));
 app.use("/login", express.static(path.join(PUBLIC, "login")));
 app.use("/table", express.static(path.join(PUBLIC, "table")));
 app.use("/table-book", express.static(path.join(PUBLIC, "table-book")));
+app.use("/tome", express.static(path.join(PUBLIC, "tome")));
 app.use("/create", express.static(path.join(PUBLIC, "create")));
 app.use("/character", express.static(path.join(PUBLIC, "character")));
 app.use("/journal", express.static(path.join(PUBLIC, "journal")));
-app.use("/screen", express.static(path.join(PUBLIC, "screen")));
 app.use("/screen", express.static(path.join(PUBLIC, "screen")));
 // /character/<id> serves the sheet shell; the page reads the id from the URL.
 app.get("/character/:id", (_req, res) => res.sendFile(path.join(PUBLIC, "character", "index.html")));

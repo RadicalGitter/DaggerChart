@@ -14,7 +14,9 @@ public/
   gm/         GM console (sections: downtime, buildings, folk, people, places, party, stores, ledger, settlement)
   login/      trusted-table identity chooser (GM, projector, PCs, creator)
   table/      read-only projectable dashboard (card-deck navigation)
-  table-book/ standalone physical-book experiment using the same player API
+  table-book/ standalone physical-book shell variant (same player API)
+  tome/       aged-tome shell variant: keepsake bookmarks (see player-shell-visuals.md)
+  screen/     the projector client (renders whatever the GM casts via /api/screen)
   create/     character creation wizard
   character/  live character sheet + hand manager
   journal/    players' journal: notes on people, places, and days

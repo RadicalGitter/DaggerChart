@@ -1,5 +1,5 @@
 :root {
-  --user-height: clamp(300px, 33vw, 380px);
+  --user-height: clamp(180px, 18vw, 225px);
   --leather: #542b24;
   --leather-deep: #2c1713;
   --brass: #c5a762;
@@ -27,10 +27,10 @@ body {
 
 .login-shell {
   position: relative; width: min(1180px, calc(100% - 2rem));
-  margin: 0 auto; padding: 2.4rem 0 4rem;
+  margin: 0 auto; padding: clamp(1rem, 2.5vh, 2rem) 0 0.75rem;
 }
 
-.login-head { text-align: center; margin-bottom: 2rem; }
+.login-head { text-align: center; margin-bottom: clamp(0.8rem, 2vh, 1.35rem); }
 .settlement-name {
   color: #8f7f61; font-variant: small-caps; letter-spacing: 0.16em;
   font-size: 0.78rem; margin-bottom: 0.5rem;
@@ -42,7 +42,7 @@ body {
 .login-sub { margin: 0.35rem 0; color: #b5a482; font-style: italic; }
 .season { color: #75684f; font-variant: small-caps; letter-spacing: 0.1em; font-size: 0.78rem; }
 
-.identity-stack { display: flex; flex-direction: column; gap: 1.35rem; }
+.identity-stack { display: flex; flex-direction: column; gap: clamp(0.65rem, 1.4vh, 1rem); }
 
 .identity-card {
   position: relative; isolation: isolate; overflow: hidden;
@@ -59,10 +59,11 @@ body {
 .enter-mark { color: #b99c5c; font-size: 2rem; transition: transform 200ms; }
 .identity-card:hover .enter-mark { transform: translateX(5px); }
 
+.gm-stage { position: relative; height: clamp(190px, 24vw, 270px); }
 .gm-card {
-  width: 100%; height: var(--user-height);
-  display: grid; grid-template-columns: minmax(170px, 32%) 1fr auto;
-  align-items: center; gap: clamp(1.2rem, 4vw, 3.5rem); padding: clamp(1.5rem, 4vw, 3.5rem);
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  display: grid; grid-template-columns: minmax(105px, 23%) 1fr auto;
+  align-items: start; gap: clamp(1rem, 3vw, 2.4rem); padding: clamp(1.15rem, 2.5vw, 2rem);
   background:
     radial-gradient(circle at 76% 18%, rgba(255,226,166,0.08), transparent 25%),
     repeating-linear-gradient(92deg, rgba(255,255,255,0.012) 0 2px, transparent 2px 8px),
@@ -75,22 +76,25 @@ body {
   box-shadow: inset 0 0 0 5px rgba(25,11,9,0.32), inset 0 0 0 6px rgba(205,164,81,0.12);
 }
 .gm-sigil {
-  width: min(230px, 100%); aspect-ratio: 1; justify-self: center;
+  width: min(125px, 70%); aspect-ratio: 1; justify-self: center;
   display: grid; place-items: center; transform: rotate(45deg) scale(0.72);
   border: 1px solid rgba(220,183,96,0.66); color: #e1c681;
   box-shadow: inset 0 0 0 8px rgba(40,16,13,0.55), inset 0 0 0 9px rgba(220,183,96,0.22);
-  font-size: clamp(1.8rem, 5vw, 3.3rem); letter-spacing: 0.08em;
+  font-size: clamp(1.4rem, 3vw, 2.2rem); letter-spacing: 0.08em;
 }
 .gm-sigil > span { transform: rotate(-45deg); line-height: 1; font-variant: small-caps; }
+.gm-card .identity-copy { padding-top: 0.25rem; }
 
 .projector-card {
-  align-self: center; width: 66.6667%; height: calc(var(--user-height) * 0.6667);
+  position: absolute; z-index: 3; left: 50%; bottom: 14px; transform: translateX(-50%);
+  width: 62%; height: 48%;
   display: grid; grid-template-columns: 28% 1fr auto; align-items: center;
   gap: clamp(0.9rem, 3vw, 2rem); padding: clamp(1rem, 3vw, 2.1rem);
   background:
     radial-gradient(circle at 25% 50%, rgba(218,189,120,0.09), transparent 25%),
     linear-gradient(145deg, #30271d, #211b14 58%, #17120e);
 }
+.projector-card:hover { transform: translateX(-50%) translateY(-3px); }
 .projector-lens {
   width: min(120px, 75%); aspect-ratio: 4 / 3; justify-self: center;
   display: grid; place-items: center; border: 1px solid #8b7349; border-radius: 5px;
@@ -104,14 +108,14 @@ body {
 .projector-card .identity-copy span { font-size: 0.82rem; }
 
 .players-heading {
-  display: flex; align-items: center; gap: 1rem; margin: 0.7rem 0 -0.25rem;
+  display: flex; align-items: center; gap: 1rem; margin: 0.15rem 0 -0.15rem;
   color: #9f8c68; font-variant: small-caps; letter-spacing: 0.11em; font-size: 0.85rem;
 }
 .heading-rule { height: 1px; flex: 1; background: linear-gradient(90deg, #5f4d34, transparent); }
 
 .player-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 1rem;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: clamp(0.55rem, 1vw, 0.85rem);
 }
 
 .player-card {
@@ -148,25 +152,34 @@ body {
 .create-card .player-copy { padding: 1rem; }
 .create-card .player-copy strong { margin-top: 1rem; }
 
-.trust-note { margin: 1.7rem 0 0; text-align: center; color: #6f624c; font-size: 0.75rem; font-style: italic; }
+.trust-note { margin: 0.85rem 0 0; text-align: center; color: #6f624c; font-size: 0.75rem; font-style: italic; }
 #lang-toggle { z-index: 20; color: #8e8066; }
 
 @media (max-width: 720px) {
-  :root { --user-height: 270px; }
-  .login-shell { width: min(100% - 1rem, 680px); padding-top: 1.3rem; }
-  .login-head { margin-bottom: 1.25rem; }
-  .gm-card { grid-template-columns: 34% 1fr auto; padding: 1rem; gap: 0.6rem; }
-  .gm-sigil { width: 145px; }
+  :root { --user-height: clamp(130px, 36vw, 160px); }
+  .login-shell { width: min(100% - 1rem, 680px); padding-top: 0.75rem; }
+  .login-head { margin-bottom: 0.65rem; }
+  .login-head h1 { font-size: clamp(1.45rem, 6.5vw, 2rem); }
+  .login-sub { font-size: 0.85rem; }
+  .gm-stage { height: clamp(140px, 39vw, 175px); }
+  .gm-card { grid-template-columns: 21% 1fr auto; padding: 0.85rem; gap: 0.55rem; }
+  .gm-sigil { width: 72px; }
+  .gm-card .identity-copy strong { font-size: 1.25rem; }
   .projector-card { grid-template-columns: 30% 1fr auto; }
   .player-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
+  .create-card .create-mark { font-size: 3.4rem; }
 }
 
 @media (max-width: 430px) {
   .identity-copy span { font-size: 0.75rem; }
-  .gm-card { grid-template-columns: 31% 1fr auto; }
-  .gm-sigil { width: 120px; font-size: 1.7rem; }
-  .projector-card { padding: 0.8rem; }
-  .projector-lens { width: 75px; }
+  .gm-card { grid-template-columns: 18% 1fr auto; }
+  .gm-sigil { width: 58px; font-size: 1.25rem; }
+  .gm-card .identity-copy span { display: none; }
+  .projector-card { width: 68%; height: 52%; padding: 0.65rem; }
+  .projector-lens { width: 52px; }
+  .projector-card .identity-copy strong { font-size: 0.98rem; }
+  .projector-card .identity-copy span { display: none; }
+  .projector-card .enter-mark { font-size: 1.4rem; }
   .player-copy { padding: 0.9rem 0.75rem; }
   .player-copy strong { font-size: 1.05rem; }
 }

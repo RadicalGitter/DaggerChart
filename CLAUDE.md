@@ -100,6 +100,12 @@ designing anything; it is the source of truth. Code map + API:
   section in `/gm` holds the forms and the darken control.
 
 ## What's next (agreed ambitions, in rough order)
+- **Five planned features have full backend implementation plans in
+  [docs/master-plan.md](docs/master-plan.md)** — Fear/Hope tracker, GM
+  overlay + hotbar, GM↔player private messages, session perspectives with
+  Opus retelling, rules wiki. Read the plan (and its Shared foundations
+  section) before starting any of them; the GM will add design objectives
+  per feature when picked up.
 - ComfyUI wiring: the GM-side request UI exists on People cards (prompt saved
   to `portraitPrompt`, `POST /api/people/:id/portrait` is a stub) — connect it
   to the local 5090 using `docs/comfyui/waidrin-portraits-workflow.json`
