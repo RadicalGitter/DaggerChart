@@ -13,6 +13,7 @@ public/
   shared/     ledger.css (light GM theme), lamplight.css (dark player theme), i18n.js
   gm/         GM console (sections: downtime, buildings, folk, people, places, party, stores, ledger, settlement)
   table/      read-only projectable dashboard (card-deck navigation)
+  table-book/ standalone physical-book experiment using the same player API
   create/     character creation wizard
   character/  live character sheet + hand manager
   journal/    players' journal: notes on people, places, and days
@@ -65,6 +66,8 @@ docs/         this file, the design spec, ComfyUI workflow
 | `POST /api/people/:id/portrait` | ComfyUI request stub — saves `portraitPrompt`, returns "not wired yet" |
 | `POST/PUT/DELETE /api/places[/:id]` | places; the village (`place_village`, `fixed`) cannot be deleted |
 | `GET /api/lore?pc=id` | whitelisted journal payload: revealed people/places, group notes + that PC's personal notes |
+| `GET /api/journal-doodles/:pcId` | the chosen PC's three transparent journal drawing layers |
+| `PUT /api/journal-doodles/:pcId/:page` | save normalized pen/eraser strokes for Journal, People, or Places |
 | `GET/PUT /api/screen` | the table screen: GM projects one thing (image/card/stores/buildings/text, `type: null` darkens); GET resolves through `screenView()` whitelists |
 | `POST/PUT/DELETE /api/notes[/:id]` | player notes (journal/person/place, group/personal); edits and strikes require the author's `pcId` |
 
@@ -80,6 +83,9 @@ docs/         this file, the design spec, ComfyUI workflow
   gamified fanfare; microcopy per §12.
 - **Live updates:** pages listen to `/api/stream` and refetch (debounced).
   Character plates on the board update as players tap their sheets.
+- **Player-shell visuals:** `/table` is canonical; standalone alternates such
+  as `/table-book` share `/api/table`, SSE, `settlement-pc`, and the existing
+  embeds. See [player-shell-visuals.md](player-shell-visuals.md).
 - **i18n** (`shared/i18n.js`): per-device language (localStorage, EN/SV).
   Game terms (Hope, Stress, Evasion, Loadout…) stay English to match the
   physical cards; UI phrasing translates; the long-press glossary explains

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Settlement — Book prototype</title>
+<link rel="stylesheet" href="/shared/ledger.css">
+<link rel="stylesheet" href="book.css">
+</head>
+<body>
+  <div class="room-glow" aria-hidden="true"></div>
+
+  <header class="folio-head">
+    <div class="folio-season" id="folio-season">—</div>
+    <div class="folio-stores" id="folio-stores"></div>
+  </header>
+
+  <main class="book-viewport" id="book-viewport">
+    <div class="book-scale" id="book-scale">
+      <div class="tome" id="tome" data-state="closed">
+        <div class="book-shadow" aria-hidden="true"></div>
+        <div class="back-board" aria-hidden="true"></div>
+        <div class="page-block" aria-hidden="true"></div>
+
+        <section class="paper paper-left" aria-label="Left page">
+          <button class="close-book" id="close-book" type="button" data-i18n="table.book.close">Close the book</button>
+          <div class="paper-scroll left-content" id="left-content"></div>
+          <span class="page-number" id="left-number"></span>
+        </section>
+
+        <section class="paper paper-right" aria-label="Right page">
+          <div class="paper-scroll right-content" id="right-content"></div>
+          <span class="page-number" id="right-number"></span>
+        </section>
+
+        <button class="front-cover" id="front-cover" type="button" aria-label="Open the book">
+          <span class="cover-face cover-front">
+            <span class="cover-tooling" aria-hidden="true"></span>
+            <span class="cover-spine" aria-hidden="true"></span>
+            <span class="cover-title" id="cover-title">The Settlement</span>
+            <span class="cover-rule" aria-hidden="true"></span>
+            <span class="cover-subtitle" data-i18n="table.book.subtitle">A ledger kept by lamplight</span>
+            <span class="cover-seal" aria-hidden="true"><span>S</span></span>
+            <span class="cover-season" id="cover-season">—</span>
+            <span class="cover-hint" data-i18n="table.book.choose">Choose a bookmark</span>
+          </span>
+          <span class="cover-face cover-inside" aria-hidden="true">
+            <span class="inside-frame"></span>
+          </span>
+        </button>
+
+        <div class="turn-sheet" id="turn-sheet" hidden aria-hidden="true">
+          <span class="turn-face turn-front"></span>
+          <span class="turn-face turn-back"></span>
+        </div>
+
+        <nav class="bookmarks" id="bookmarks" aria-label="Book chapters"></nav>
+      </div>
+    </div>
+  </main>
+
+  <p class="book-instruction" id="book-instruction" data-i18n="table.book.choose">Choose a bookmark</p>
+  <a class="steward-door" href="/gm" aria-label="ledger">&#10087;</a>
+
+  <script type="module" src="book.js"></script>
+</body>
+</html>

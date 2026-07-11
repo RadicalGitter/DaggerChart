@@ -31,6 +31,7 @@ export const state = {
   people: loadJson("people.json", []),
   places: loadJson("places.json", [DEFAULT_VILLAGE]),
   notes: loadJson("notes.json", []),
+  journalDoodles: loadJson("journal-doodles.json", {}),
   screen: loadJson("screen.json", { current: null }),
   tables: loadEventTables(),
   reference: loadJson("daggerheart/reference.json", null)
@@ -64,6 +65,7 @@ export function persist() {
   saveJson("people.json", state.people);
   saveJson("places.json", state.places);
   saveJson("notes.json", state.notes);
+  saveJson("journal-doodles.json", state.journalDoodles);
   saveJson("screen.json", state.screen);
 }
 

@@ -1,4 +1,4 @@
-# CLAUDE.md — working rules for this repo
+# AGENTS.md — working rules for this repo
 
 Read [docs/settlement-design-spec.md](docs/settlement-design-spec.md) before
 designing anything; it is the source of truth. Code map + API:
@@ -34,7 +34,7 @@ designing anything; it is the source of truth. Code map + API:
 - i18n: game terms stay English (match the physical cards); UI phrasing has
   EN/SV strings in `public/shared/i18n.js`; long-press glossary (`TERMS`)
   explains terms per language. New player-facing strings need both languages.
-- After changes, verify in the browser preview (`.claude/launch.json`,
+- After changes, verify in the browser preview (`.Codex/launch.json`,
   server name `settlement`, port 4626) and clean up any test PCs, log
   entries, or board plates you created in real data.
 

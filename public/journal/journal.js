@@ -12,6 +12,10 @@ let PCID = null;
 let TAB = "journal";
 let QUERY = "";
 let editingId = null;
+let DOODLES = { journal: [], people: [], places: [] };
+let doodleTool = null;
+let activeStroke = null;
+let doodleObserver = null;
 
 // name → entry links, longest names first so "Old Mill Road" wins over "Old Mill"
 let LINK_RE = null;
@@ -54,6 +58,19 @@ async function api(path, opts = {}) {
 const fetchLore = async () => {
   LORE = await api(`/api/lore${PCID ? `?pc=${encodeURIComponent(PCID)}` : ""}`);
   rebuildLinker();
+};
+
+const fetchDoodles = async () => {
+  if (!PCID) {
+    DOODLES = { journal: [], people: [], places: [] };
+    return;
+  }
+  const saved = await api(`/api/journal-doodles/${encodeURIComponent(PCID)}`);
+  DOODLES = {
+    journal: Array.isArray(saved.journal) ? saved.journal : [],
+    people: Array.isArray(saved.people) ? saved.people : [],
+    places: Array.isArray(saved.places) ? saved.places : []
+  };
 };
 
 const me = () => LORE.party.find((p) => p.id === PCID) || null;
@@ -235,9 +252,11 @@ function renderTab() {
     b.classList.toggle("on", b.dataset.tab === TAB);
   }
   const body = $("#tab-body");
-  body.innerHTML = TAB === "journal" ? renderJournalTab() : TAB === "people" ? renderPeopleTab() : renderPlacesTab();
+  const page = TAB === "journal" ? renderJournalTab() : TAB === "people" ? renderPeopleTab() : renderPlacesTab();
+  body.innerHTML = `<div class="page-content">${page}</div><canvas class="doodle-layer" aria-hidden="true"></canvas>`;
   wireTabBody();
   restoreDrafts(saved);
+  wireDoodleLayer();
 }
 
 function renderAll() {
@@ -245,6 +264,155 @@ function renderAll() {
   $("#j-pc").textContent = my ? my.name : "";
   $("#j-season").textContent = seasonLabel(LORE.seasonLabel);
   renderTab();
+}
+
+// --- the transparent doodle layer: one normalized vector page per chapter ---
+
+function drawStroke(ctx, stroke, width, height) {
+  if (!stroke.points?.length) return;
+  const scale = Math.min(width, height);
+  ctx.save();
+  ctx.globalCompositeOperation = stroke.tool === "eraser" ? "destination-out" : "source-over";
+  ctx.strokeStyle = stroke.tool === "eraser" ? "rgba(0,0,0,1)" : "#c6a86a";
+  ctx.fillStyle = ctx.strokeStyle;
+  ctx.lineWidth = Math.max(1.5, stroke.width * scale);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  const points = stroke.points;
+  if (points.length === 1) {
+    ctx.beginPath();
+    ctx.arc(points[0][0] * width, points[0][1] * height, ctx.lineWidth / 2, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(points[0][0] * width, points[0][1] * height);
+    for (let i = 1; i < points.length; i += 1) ctx.lineTo(points[i][0] * width, points[i][1] * height);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function redrawDoodles() {
+  const canvas = $(".doodle-layer");
+  if (!canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+  const ratio = Math.min(window.devicePixelRatio || 1, 2);
+  const pixelWidth = Math.max(1, Math.round(rect.width * ratio));
+  const pixelHeight = Math.max(1, Math.round(rect.height * ratio));
+  if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+    canvas.width = pixelWidth;
+    canvas.height = pixelHeight;
+  }
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  ctx.clearRect(0, 0, rect.width, rect.height);
+  for (const stroke of DOODLES[TAB] || []) drawStroke(ctx, stroke, rect.width, rect.height);
+}
+
+function updateDoodleControls() {
+  const body = $("#tab-body");
+  body.classList.toggle("doodling", !!doodleTool);
+  body.classList.toggle("erasing", doodleTool === "eraser");
+  for (const button of document.querySelectorAll("[data-doodle]")) {
+    button.classList.toggle("on", button.dataset.doodle === doodleTool);
+    if (button.dataset.doodle === "off") button.hidden = !doodleTool;
+  }
+}
+
+function setDoodleTool(next) {
+  doodleTool = next === "off" || next === doodleTool ? null : next;
+  activeStroke = null;
+  updateDoodleControls();
+}
+
+async function saveDoodlePage() {
+  if (!PCID) return;
+  try {
+    await api(`/api/journal-doodles/${encodeURIComponent(PCID)}/${TAB}`, {
+      method: "PUT",
+      body: { strokes: DOODLES[TAB] || [] }
+    });
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+function pointOnCanvas(event, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  return [
+    Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)),
+    Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height))
+  ];
+}
+
+function wireDoodleLayer() {
+  const canvas = $(".doodle-layer");
+  if (!canvas) return;
+  doodleObserver?.disconnect();
+  doodleObserver = new ResizeObserver(() => requestAnimationFrame(redrawDoodles));
+  doodleObserver.observe($("#tab-body"));
+
+  canvas.addEventListener("pointerdown", (event) => {
+    if (!doodleTool) return;
+    event.preventDefault();
+    canvas.setPointerCapture(event.pointerId);
+    activeStroke = {
+      tool: doodleTool,
+      width: doodleTool === "eraser" ? 0.028 : 0.004,
+      points: [pointOnCanvas(event, canvas)]
+    };
+    DOODLES[TAB].push(activeStroke);
+    redrawDoodles();
+  });
+  canvas.addEventListener("pointermove", (event) => {
+    if (!activeStroke || !canvas.hasPointerCapture(event.pointerId)) return;
+    const point = pointOnCanvas(event, canvas);
+    const previous = activeStroke.points[activeStroke.points.length - 1];
+    const distance = (point[0] - previous[0]) ** 2 + (point[1] - previous[1]) ** 2;
+    if (distance < 0.000004) return;
+    activeStroke.points.push(point);
+    redrawDoodles();
+  });
+  const finishStroke = (event) => {
+    if (!activeStroke) return;
+    if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    activeStroke = null;
+    saveDoodlePage();
+  };
+  canvas.addEventListener("pointerup", finishStroke);
+  canvas.addEventListener("pointercancel", finishStroke);
+  updateDoodleControls();
+  requestAnimationFrame(redrawDoodles);
+}
+
+let turnTimer = null;
+function turnTo(nextTab, afterTurn) {
+  if (nextTab === TAB) {
+    renderTab();
+    if (afterTurn) afterTurn();
+    return;
+  }
+  const body = $("#tab-body");
+  setDoodleTool(null);
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  clearTimeout(turnTimer);
+  body.classList.remove("page-turn-in");
+  if (reduced) {
+    TAB = nextTab;
+    renderTab();
+    if (afterTurn) afterTurn();
+    return;
+  }
+  body.classList.add("page-turn-out");
+  turnTimer = setTimeout(() => {
+    TAB = nextTab;
+    renderTab();
+    body.classList.remove("page-turn-out");
+    void body.offsetWidth;
+    body.classList.add("page-turn-in");
+    if (afterTurn) afterTurn();
+  }, 150);
 }
 
 // --- wiring ---
@@ -325,22 +493,32 @@ document.addEventListener("click", (e) => {
   if (!link) return;
   e.preventDefault();
   const [kind, id] = link.dataset.goto.split(":");
-  TAB = kind === "person" ? "people" : "places";
+  const nextTab = kind === "person" ? "people" : "places";
   QUERY = "";
   $("#j-search").value = "";
-  renderTab();
-  const target = document.getElementById(`entry-${kind}-${id}`);
-  if (target) {
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
-    target.classList.remove("flash");
-    void target.offsetWidth;
-    target.classList.add("flash");
-  }
+  turnTo(nextTab, () => {
+    const target = document.getElementById(`entry-${kind}-${id}`);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      target.classList.remove("flash");
+      void target.offsetWidth;
+      target.classList.add("flash");
+    }
+  });
 });
 
 for (const b of document.querySelectorAll(".tabbar [data-tab]")) {
-  b.onclick = () => { TAB = b.dataset.tab; renderTab(); };
+  b.onclick = () => turnTo(b.dataset.tab);
 }
+for (const b of document.querySelectorAll("[data-doodle]")) {
+  b.onclick = () => setDoodleTool(b.dataset.doodle);
+}
+
+// Masthead-as-home: the title returns to the Journal tab from anywhere.
+$("#app header h1").addEventListener("click", () => {
+  if (TAB === "journal") { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+  turnTo("journal");
+});
 
 $("#j-search").addEventListener("input", () => {
   QUERY = $("#j-search").value.trim();
@@ -362,9 +540,10 @@ function showPicker() {
   for (const b of document.querySelectorAll("[data-pick]")) {
     b.onclick = async () => {
       PCID = b.dataset.pick;
-      localStorage.setItem("settlement-journal-pc", PCID);
+      localStorage.setItem("settlement-pc", PCID);
       history.replaceState(null, "", `/journal/?pc=${encodeURIComponent(PCID)}`);
       await fetchLore();
+      await fetchDoodles();
       $("#picker").hidden = true;
       $("#app").hidden = false;
       renderAll();
@@ -382,13 +561,21 @@ $("#j-switch").addEventListener("click", (e) => {
 initI18n();
 $("#j-search").placeholder = t("journal.search");
 
+const params = new URLSearchParams(location.search);
+// Inside the shell the masthead belongs to the shell — hide our own chrome.
+if (params.has("embed")) document.body.classList.add("embed");
+
 (async () => {
-  PCID = new URLSearchParams(location.search).get("pc") || localStorage.getItem("settlement-journal-pc");
+  // One identity per device, shared with the shell (migrates the old key).
+  PCID = params.get("pc")
+    || localStorage.getItem("settlement-pc")
+    || localStorage.getItem("settlement-journal-pc");
   await fetchLore();
   if (!PCID || !me()) {
     PCID = null;
     showPicker();
   } else {
+    await fetchDoodles();
     $("#app").hidden = false;
     renderAll();
   }

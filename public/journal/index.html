@@ -7,10 +7,59 @@
 <link rel="stylesheet" href="/shared/ledger.css">
 <link rel="stylesheet" href="/shared/lamplight.css">
 <style>
-  body { font-size: 17px; }
-  .wrap { max-width: 780px; margin: 0 auto; padding: 2rem 1.2rem 4rem; }
+  body {
+    --bookmark-journal: #713e34;
+    --bookmark-people: #46513a;
+    --bookmark-places: #665035;
+    min-height: 100vh; font-size: 17px;
+    background:
+      radial-gradient(circle at 50% -18%, rgba(105, 78, 43, 0.22), transparent 42%),
+      linear-gradient(110deg, #18120e, #211b14 20%, #211b14 80%, #18120e);
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 2rem 1.2rem 4rem; }
+
+  /* A restrained bound-volume frame: dark leather, a blind-tooled inset
+     rule, and just enough brass warmth to catch the lamplight. */
+  #app, #picker {
+    position: relative; isolation: isolate;
+    padding: 1.65rem 1.75rem 2rem;
+    background:
+      linear-gradient(100deg, rgba(0, 0, 0, 0.2), transparent 12%, transparent 88%, rgba(0, 0, 0, 0.18)),
+      linear-gradient(180deg, #2a2118, #241c14);
+    border: 1px solid #5d492e; border-radius: 10px;
+    box-shadow:
+      0 18px 42px rgba(0, 0, 0, 0.3),
+      inset 0 0 0 3px #1d1711,
+      inset 0 0 0 4px rgba(132, 105, 62, 0.28),
+      inset 18px 0 26px rgba(0, 0, 0, 0.1);
+  }
+  #app::before, #picker::before {
+    content: ""; position: absolute; inset: 8px; z-index: -1;
+    border: 1px solid rgba(155, 125, 73, 0.24); border-radius: 5px;
+    pointer-events: none;
+  }
+  #app::after, #picker::after {
+    content: ""; position: absolute; left: 22%; right: 22%; top: 8px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212, 184, 106, 0.48), transparent);
+    pointer-events: none;
+  }
   header { text-align: center; margin-bottom: 1.4rem; }
   header h1 { font-size: 1.7rem; letter-spacing: 0.02em; }
+  header::after {
+    content: ""; display: block; width: 180px; max-width: 55%; height: 3px;
+    margin: 1rem auto 0;
+    border-top: 1px solid rgba(212, 184, 106, 0.5);
+    border-bottom: 1px solid rgba(93, 73, 46, 0.7);
+  }
+  /* Masthead-as-home, same convention as the table view. */
+  #app header h1 { cursor: pointer; transition: color 0.2s; }
+  #app header h1:hover { color: #d4b86a; }
+
+  /* Embedded in the shell: the shell owns the masthead and identity. */
+  body.embed #app header { display: none; }
+  body.embed .wrap { padding: 0.8rem 0.4rem 2rem; }
+  body.embed #lang-toggle { display: none; }
   header .smallcaps { font-size: 0.95rem; }
   #j-switch { color: #a89877; font-size: 0.8rem; text-decoration: none; border-bottom: 1px dotted #6b5c42; }
 
@@ -21,36 +70,108 @@
 
   /* tab bar */
   .tabbar {
-    display: flex; align-items: center; gap: 0.3rem;
-    border-bottom: 1px solid #453824; margin-bottom: 1.2rem; padding-bottom: 0.6rem;
+    display: flex; align-items: flex-end; gap: 0.4rem;
+    border-bottom: 1px solid #6b5638; margin-bottom: 1.2rem; padding-bottom: 0.6rem;
+    box-shadow: 0 1px 0 rgba(17, 12, 8, 0.7);
     flex-wrap: wrap;
   }
-  .tabbar button {
-    background: transparent; border: 0; color: #a89877;
+  .tabbar > button[data-tab] {
+    --bookmark: #51402d;
+    min-width: 86px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bookmark) 78%, #fff 22%), var(--bookmark));
+    border: 0; color: #dfd1b3;
     font-variant: small-caps; letter-spacing: 0.07em; font-size: 1rem;
-    padding: 0.3rem 0.7rem; cursor: pointer;
+    padding: 0.48rem 0.75rem 0.7rem; cursor: pointer;
+    clip-path: polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%);
+    box-shadow: inset 0 1px rgba(255, 245, 211, 0.13);
+    transform: translateY(4px);
+    transition: color 0.18s, filter 0.18s, transform 0.18s;
   }
-  .tabbar button:hover { background: transparent; color: #e8dfcc; }
-  .tabbar button.on { color: #d4b86a; border-bottom: 2px solid #d4b86a; }
+  .tabbar > button[data-tab="journal"] { --bookmark: var(--bookmark-journal); }
+  .tabbar > button[data-tab="people"] { --bookmark: var(--bookmark-people); }
+  .tabbar > button[data-tab="places"] { --bookmark: var(--bookmark-places); }
+  .tabbar > button[data-tab]:hover { color: #fff2d1; filter: brightness(1.16); transform: translateY(2px); }
+  .tabbar > button[data-tab].on {
+    color: #fff0c5; filter: brightness(1.14); transform: translateY(0);
+    text-shadow: 0 1px 8px rgba(212, 184, 106, 0.18);
+  }
   #j-search {
     margin-left: auto; width: 190px; font-size: 0.9rem;
     border-radius: 999px; padding: 0.35rem 0.9rem;
   }
+  .doodle-tools {
+    display: inline-flex; gap: 0.25rem; margin-left: auto; padding-left: 0.35rem;
+    border-left: 1px solid #5d492e;
+  }
+  .doodle-tools button {
+    min-width: auto; padding: 0.3rem 0.55rem;
+    background: rgba(42, 33, 24, 0.65); color: #c9ba97;
+    border: 1px solid #6b5c42; border-radius: 3px;
+    clip-path: none; transform: none;
+    font-size: 0.76rem; font-variant: small-caps; letter-spacing: 0.05em;
+  }
+  .doodle-tools button:hover { background: #3a2f1e; color: #f0e6ce; transform: none; filter: none; }
+  .doodle-tools button.on {
+    background: #684236; border-color: #d4b86a; color: #fff0c5;
+    box-shadow: inset 0 0 0 1px rgba(18, 12, 8, 0.45);
+  }
+
+  /* The page block is a dark folio rather than bright parchment, preserving
+     the lamplight palette while making the journal read as a physical tome. */
+  #tab-body {
+    position: relative; min-height: 250px; padding: 1rem;
+    border: 1px solid #4c3c28; border-radius: 5px;
+    background:
+      linear-gradient(90deg, rgba(0, 0, 0, 0.1), transparent 5%, transparent 95%, rgba(0, 0, 0, 0.08)),
+      #261e16;
+    box-shadow:
+      inset 8px 0 16px rgba(0, 0, 0, 0.1),
+      inset -1px 0 rgba(218, 190, 132, 0.08),
+      0 7px 18px rgba(0, 0, 0, 0.13);
+    transform-origin: left center;
+    backface-visibility: hidden;
+  }
+  .page-content { position: relative; z-index: 1; }
+  .doodle-layer {
+    position: absolute; inset: 0; z-index: 2;
+    width: 100%; height: 100%; touch-action: none;
+    pointer-events: none;
+  }
+  #tab-body.doodling .doodle-layer { pointer-events: auto; cursor: crosshair; }
+  #tab-body.erasing .doodle-layer { cursor: cell; }
+  #tab-body.page-turn-out { animation: page-turn-out 150ms ease-in both; pointer-events: none; }
+  #tab-body.page-turn-in { animation: page-turn-in 320ms cubic-bezier(0.2, 0.75, 0.25, 1) both; }
+  @keyframes page-turn-out {
+    to { opacity: 0.18; transform: perspective(1200px) rotateY(-9deg) translateX(-10px); filter: brightness(0.72); }
+  }
+  @keyframes page-turn-in {
+    from { opacity: 0.16; transform: perspective(1200px) rotateY(11deg) translateX(14px); filter: brightness(0.74); }
+    to { opacity: 1; transform: none; filter: none; }
+  }
 
   /* notes & entries */
   .entry-card { margin-bottom: 1rem; }
+  .composer-card, .entry-card, .lore-card {
+    background: linear-gradient(150deg, #30271c, #292117);
+    border-color: #58462d;
+    box-shadow: inset 0 1px rgba(232, 223, 204, 0.035), 0 5px 15px rgba(0, 0, 0, 0.12);
+  }
   .note-meta { display: flex; gap: 0.6rem; align-items: baseline; flex-wrap: wrap; }
   .note-meta .season { color: #d4b86a; font-variant: small-caps; font-size: 0.85rem; }
   .note-meta .who { color: #a89877; font-size: 0.82rem; }
   .note-meta .mine { color: #9fb27a; font-size: 0.78rem; font-style: italic; }
   .note-text { white-space: pre-wrap; margin: 0.35rem 0; font-size: 0.95rem; }
   .note-tools { display: flex; gap: 0.5rem; }
-  .note-tools button { background: transparent; border: 0; color: #6b5c42; font-size: 0.78rem; padding: 0; cursor: pointer; }
-  .note-tools button:hover { color: #c9ba97; background: transparent; }
+  .note-tools button { background: transparent; border: 0; color: #a89877; font-size: 0.78rem; padding: 0; cursor: pointer; }
+  .note-tools button:hover { color: #e8dfcc; background: transparent; }
   .note-row { padding: 0.55rem 0; border-bottom: 1px solid #3a2f1e; }
   .note-row:last-child { border-bottom: 0; }
 
-  .composer textarea { width: 100%; font: inherit; font-size: 0.95rem; resize: vertical; }
+  .composer textarea {
+    width: 100%; font: inherit; font-size: 0.95rem; resize: vertical;
+    background: #211a13; border-color: #745f40;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
   .composer .row { display: flex; gap: 0.6rem; align-items: center; margin-top: 0.45rem; flex-wrap: wrap; }
   .scope-seg { display: inline-flex; border: 1px solid #6b5c42; border-radius: 999px; overflow: hidden; }
   .scope-seg button {
@@ -75,6 +196,26 @@
     0% { border-color: #d4b86a; box-shadow: 0 0 0 1px #d4b86a; }
     100% { border-color: #453824; box-shadow: none; }
   }
+
+  button:focus-visible, a:focus-visible {
+    outline: 2px solid #d4b86a; outline-offset: 3px;
+  }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 0.7rem 0.45rem 2rem; }
+    #app, #picker { padding: 1.2rem 0.85rem 1.5rem; border-radius: 7px; }
+    #app::before, #picker::before { inset: 6px; }
+    .tabbar { gap: 0.18rem; }
+    .tabbar > button[data-tab] { min-width: 0; flex: 1 1 30%; padding-inline: 0.45rem; }
+    .doodle-tools { order: 2; width: auto; margin: 0.45rem 0 0; padding-left: 0; border-left: 0; }
+    #tab-body { padding: 0.65rem; }
+    #j-search { order: 3; width: 100%; margin: 0.45rem 0 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #tab-body.page-turn-out, #tab-body.page-turn-in { animation: none; }
+    .tabbar > button[data-tab] { transition: none; }
+  }
 </style>
 </head>
 <body>
@@ -95,6 +236,11 @@
       <button data-tab="journal" class="on" data-i18n="journal.tab.journal">Journal</button>
       <button data-tab="people" data-i18n="journal.tab.people">People</button>
       <button data-tab="places" data-i18n="journal.tab.places">Places</button>
+      <span class="doodle-tools">
+        <button type="button" data-doodle="pen" data-i18n="journal.pen">Pen</button>
+        <button type="button" data-doodle="eraser" data-i18n="journal.wiper">Wiper</button>
+        <button type="button" data-doodle="off" data-i18n="journal.putaway" hidden>Put away</button>
+      </span>
       <input type="search" id="j-search">
     </div>
     <div id="tab-body"></div>

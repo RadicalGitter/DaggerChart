@@ -196,6 +196,8 @@ export function tableView() {
     resources: state.settlement.resources,
     buildings,
     characters,
-    chronicle
+    chronicle,
+    // The shell's Character card: names only, so a device can say who it is.
+    party: state.pcs.map((p) => ({ id: p.id, name: p.name, player: p.player || "" }))
   };
 }

@@ -6,7 +6,9 @@ the tool tracks state and reveals results; the GM narrates.
 
 The design source of truth is [docs/settlement-design-spec.md](docs/settlement-design-spec.md).
 The code map and API live in [docs/architecture.md](docs/architecture.md).
-Working rules for AI-assisted development are in [CLAUDE.md](CLAUDE.md).
+The alternate player-shell contract lives in
+[docs/player-shell-visuals.md](docs/player-shell-visuals.md). Working rules for
+AI-assisted development are in [AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md).
 
 ## ⚠️ Spoiler safety (read first)
 
@@ -34,7 +36,8 @@ whitelisted server-side regardless).
 |---|---|---|
 | `/gm` | GM (private) | Console: downtime runner, buildings, folk, stores, ledger, settlement |
 | `/board` | GM (private) | The Drafting Board — infinite pan/zoom whiteboard with live stat plates, counters, notes, and pinned camera views |
-| `/table` | everyone (projectable) | Read-only town dashboard: population, stores, buildings, folk of note, published chronicle |
+| `/table` | players (the shell) | The player viewport: town dashboard plus Journal and Your Character as cards in the same deck — a device picks its character once and is remembered. Bare `/` lands here |
+| `/table-book` | players (optional visual) | Standalone physical-tome version of the player shell: closed leather cover, edge bookmarks, animated opening and directional page turns. It does not replace `/table`. |
 | `/screen` | everyone (projector) | The table screen: shows the one thing the GM projects — mood images, NPC portraits, cards, stores, free text |
 | `/create` | players | Guided Daggerheart character creation (all SRD data local) |
 | `/character/:id` | one player each | Live character sheet: tap-to-mark HP/Stress/Hope/Armor, Loadout/Vault hand manager |
@@ -66,6 +69,7 @@ stopped (or live; the GM console re-reads on refresh):
 - `people.json` — the wider world's NPCs (not villagers): public description, GM-only notes, carried items, current place
 - `places.json` — the map beyond the palisade; the settlement itself is the fixed first entry
 - `notes.json` — the players' notes and journal entries
+- `journal-doodles.json` — per-PC pen and eraser layers for the Journal, People, and Places chapters
 - `log.json` — the season ledger; entries carry a `published` flag
 - `board.json` — drafting-board plates and pins
 - `event-tables/*.json` — **do not open** (see above)

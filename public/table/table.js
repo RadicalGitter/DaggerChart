@@ -15,6 +15,17 @@ const TRAITS = ["Agility", "Strength", "Finesse", "Instinct", "Presence", "Knowl
 
 let data = null;
 let selected = null; // key of the open card, or null for the horizontal row
+let panelKey = null; // what the panel currently holds (embeds must not be re-rendered)
+let panelOverride = null; // character card: "picker" | "create" forced views
+
+// One identity per device, shared with the journal and the creator.
+const getPC = () =>
+  localStorage.getItem("settlement-pc") || localStorage.getItem("settlement-journal-pc");
+const setPC = (id) => localStorage.setItem("settlement-pc", id);
+const myPC = () => {
+  const id = getPC();
+  return (id && data?.party?.find((p) => p.id === id)) || null;
+};
 
 const SECTIONS = {
   town: {
@@ -72,6 +83,80 @@ const SECTIONS = {
   }
 };
 
+// --- the embedded panels (journal, character) ---
+
+function pickerHtml() {
+  return `<div class="who">
+    <div class="smallcaps" style="text-align:center; font-size:1rem;">${t("table.whoareyou")}</div>
+    ${(data.party || [])
+      .map(
+        (p) => `<button data-pick="${p.id}">${esc(p.name)}${p.player ? ` <span style="opacity:0.7; font-size:0.85rem;">· ${esc(p.player)}</span>` : ""}</button>`
+      )
+      .join("")}
+    <button class="quiet cross" data-create>${t("create.title")} →</button>
+  </div>`;
+}
+
+// What the panel should hold right now. Embeds carry a stable key so live
+// refreshes never reload their iframes mid-use.
+function desiredPanel() {
+  if (selected === null) return null;
+  if (selected === "journal") {
+    const pc = getPC();
+    return {
+      key: `journal:${pc || ""}`,
+      html: `<iframe src="/journal/?embed=1${pc ? `&pc=${encodeURIComponent(pc)}` : ""}"></iframe>`
+    };
+  }
+  if (selected === "character") {
+    if (panelOverride === "create")
+      return { key: "create", html: `<iframe src="/create/"></iframe>` };
+    const pc = panelOverride === "picker" ? null : myPC();
+    if (pc)
+      return {
+        key: `char:${pc.id}`,
+        html: `<a class="switch-pc" data-switch>${t("journal.notyou")}</a><iframe src="/character/${encodeURIComponent(pc.id)}"></iframe>`
+      };
+    return { key: "picker", html: pickerHtml() };
+  }
+  return { key: `${selected}`, html: SECTIONS[selected].render(data), volatile: true };
+}
+
+function updatePanel() {
+  const want = desiredPanel();
+  const body = $("#panel-body");
+  if (!want) {
+    $("#panel").hidden = true;
+    panelKey = null;
+    return;
+  }
+  $("#panel").hidden = false;
+  if (!want.volatile && want.key === panelKey) return;
+  body.innerHTML = want.html;
+  panelKey = want.key;
+  for (const b of body.querySelectorAll("[data-pick]")) {
+    b.onclick = () => { setPC(b.dataset.pick); panelOverride = null; renderFaces(); updatePanel(); };
+  }
+  const create = body.querySelector("[data-create]");
+  if (create) create.onclick = () => { panelOverride = "create"; updatePanel(); };
+  const sw = body.querySelector("[data-switch]");
+  if (sw) sw.onclick = () => { panelOverride = "picker"; updatePanel(); };
+}
+
+// The creator or the journal (inside their iframes) may claim the identity;
+// storage events reach us here without reloading anything.
+window.addEventListener("storage", (e) => {
+  if (e.key !== "settlement-pc") return;
+  renderFaces();
+  if (panelOverride === "create" && getPC()) {
+    // The creator already sent its iframe on to the new sheet — keep it.
+    panelOverride = null;
+    panelKey = `char:${getPC()}`;
+    return;
+  }
+  updatePanel();
+});
+
 // --- deck geometry ---
 
 function layoutDeck() {
@@ -80,11 +165,29 @@ function layoutDeck() {
   const cards = [...deck.querySelectorAll(".big-card")];
   const n = cards.length;
   const docked = selected !== null;
+  const narrow = window.innerWidth < 640; // players' phones
   area.classList.toggle("docked", docked);
+  area.classList.toggle("stacked", docked && narrow);
+  deck.classList.toggle("banners", !docked && narrow);
 
   if (!docked) {
-    const gap = 18;
     deck.style.width = "100%";
+    if (narrow) {
+      // A column of banners instead of a row of tall cards.
+      const h = 64, gap = 10;
+      const w = deck.clientWidth;
+      deck.style.height = `${n * h + (n - 1) * gap}px`;
+      cards.forEach((el, i) => {
+        el.style.width = `${w}px`;
+        el.style.height = `${h}px`;
+        el.style.transform = `translate(0px, ${i * (h + gap)}px)`;
+        el.style.zIndex = 1;
+        el.classList.remove("on-top");
+        el.setAttribute("aria-expanded", "false");
+      });
+      return;
+    }
+    const gap = 18;
     const w = Math.floor((deck.clientWidth - gap * (n - 1)) / n);
     const h = Math.round(Math.max(240, Math.min(440, window.innerHeight * 0.46)));
     deck.style.height = `${h}px`;
@@ -98,8 +201,9 @@ function layoutDeck() {
     });
   } else {
     // The landing zone: every card in one stack, the open one on top,
-    // the rest peeking out beneath it.
-    const w = 190, h = 150, step = 12;
+    // the rest peeking out beneath it. On phones the stack shrinks and
+    // sits above the panel instead of beside it.
+    const w = narrow ? 150 : 190, h = narrow ? 92 : 150, step = narrow ? 8 : 12;
     deck.style.width = `${w + step * (n - 1)}px`;
     deck.style.height = `${h + step * (n - 1)}px`;
     let behind = 1;
@@ -118,14 +222,16 @@ function layoutDeck() {
 
 function openCard(key) {
   selected = key;
-  $("#panel-body").innerHTML = SECTIONS[key].render(data);
-  $("#panel").hidden = false;
+  panelOverride = null;
+  panelKey = null;
+  updatePanel();
   layoutDeck();
 }
 
 function closePanel() {
   selected = null;
-  $("#panel").hidden = true;
+  panelOverride = null;
+  updatePanel();
   layoutDeck();
 }
 
@@ -135,6 +241,13 @@ for (const el of document.querySelectorAll(".big-card")) {
     else closePanel(); // pressing the stack returns to the row
   });
 }
+
+// The masthead is the banner home: pressing the town's name always returns
+// to the card row, no matter which card is open.
+$("#t-name").addEventListener("click", () => { if (selected !== null) closePanel(); });
+$("#t-name").addEventListener("keydown", (e) => {
+  if ((e.key === "Enter" || e.key === " ") && selected !== null) { e.preventDefault(); closePanel(); }
+});
 
 let resizeRaf = null;
 window.addEventListener("resize", () => {
@@ -158,12 +271,20 @@ async function render() {
     })
     .join("");
 
+  renderFaces();
+  updatePanel();
+  layoutDeck();
+}
+
+function renderFaces() {
+  if (!data) return;
   for (const [key, sec] of Object.entries(SECTIONS)) {
     const el = $(`#count-${key}`);
     if (el) el.textContent = sec.count(data);
   }
-  if (selected !== null) $("#panel-body").innerHTML = SECTIONS[selected].render(data);
-  layoutDeck();
+  const pc = myPC();
+  $("#count-character").textContent = pc ? pc.name[0].toUpperCase() : "?";
+  $("#sub-character").textContent = pc ? pc.name : t("table.whoareyou");
 }
 
 initI18n();

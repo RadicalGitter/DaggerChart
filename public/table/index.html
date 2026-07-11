@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Settlement</title>
 <link rel="stylesheet" href="/shared/ledger.css">
+<link rel="stylesheet" href="/shared/lamplight.css">
 <style>
   /* The table view: lamplight over dark wood. Projection-friendly. */
   body {
@@ -15,6 +16,10 @@
   .wrap { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem; }
   header { text-align: center; margin-bottom: 2rem; }
   header h1 { font-size: 2.2rem; letter-spacing: 0.02em; }
+  /* The masthead is the way home: press the town's name anywhere to return
+     to the card row (same idea as a site banner). */
+  #t-name { cursor: pointer; transition: color 0.2s; }
+  #t-name:hover { color: #d4b86a; }
   header .smallcaps { color: #a89877; font-size: 1rem; }
   .divider {
     border: 0; height: 1px; margin: 2rem auto; width: 60%;
@@ -53,6 +58,29 @@
 
   .panel { flex: 1 1 auto; min-width: 0; animation: panel-in 0.4s ease 0.18s both; }
   .panel[hidden] { display: none; }
+  .bc-sub { font-size: 0.85rem; color: #a89877; }
+
+  /* Journal / sheet / creator live inside the panel, same origin, no chrome. */
+  .panel iframe {
+    width: 100%; height: calc(100vh - 150px); min-height: 420px;
+    border: 0; border-radius: 12px; background: transparent;
+  }
+
+  /* the character picker */
+  .who { max-width: 420px; margin: 0 auto; display: flex; flex-direction: column; gap: 0.7rem; }
+  .who button { font-size: 1.05rem; padding: 0.8rem; }
+  .who .cross { margin-top: 0.6rem; }
+  .switch-pc {
+    display: inline-block; margin-bottom: 0.5rem; color: #a89877; font-size: 0.8rem;
+    text-decoration: none; border-bottom: 1px dotted #6b5c42; cursor: pointer;
+  }
+
+  /* Narrow screens (players' phones): the row becomes a column of banners,
+     the docked stack sits above the panel instead of beside it. */
+  .deck.banners .big-card { flex-direction: row; justify-content: flex-start; gap: 0.9rem; padding: 0 1.1rem; }
+  .deck.banners .bc-rule { display: none; }
+  .deck.banners .bc-count { font-size: 1.6rem; }
+  .deck-area.stacked { flex-direction: column; }
   @keyframes panel-in {
     from { opacity: 0; transform: translateX(14px); }
     to { opacity: 1; transform: none; }
@@ -91,7 +119,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1 id="t-name">The Settlement</h1>
+    <h1 id="t-name" role="button" tabindex="0" title="">The Settlement</h1>
     <div class="smallcaps" id="t-season">—</div>
   </header>
 
@@ -115,6 +143,17 @@
         <div class="bc-title smallcaps" data-i18n="table.chronicle">The Chronicle</div>
         <div class="bc-rule"></div>
         <div class="bc-count" id="count-chronicle">—</div>
+      </button>
+      <button class="big-card" data-card="journal">
+        <div class="bc-title smallcaps" data-i18n="journal.title">The Journal</div>
+        <div class="bc-rule"></div>
+        <div class="bc-count" id="count-journal">✎</div>
+      </button>
+      <button class="big-card" data-card="character">
+        <div class="bc-title smallcaps" data-i18n="table.character">Your Character</div>
+        <div class="bc-rule"></div>
+        <div class="bc-count" id="count-character">?</div>
+        <div class="bc-sub smallcaps" id="sub-character"></div>
       </button>
     </div>
     <section class="panel" id="panel" hidden>

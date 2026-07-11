@@ -15,6 +15,7 @@ app.use("/shared", express.static(path.join(PUBLIC, "shared")));
 app.use("/gm", express.static(path.join(PUBLIC, "gm")));
 app.use("/board", express.static(path.join(PUBLIC, "board")));
 app.use("/table", express.static(path.join(PUBLIC, "table")));
+app.use("/table-book", express.static(path.join(PUBLIC, "table-book")));
 app.use("/create", express.static(path.join(PUBLIC, "create")));
 app.use("/character", express.static(path.join(PUBLIC, "character")));
 app.use("/journal", express.static(path.join(PUBLIC, "journal")));
@@ -22,7 +23,8 @@ app.use("/screen", express.static(path.join(PUBLIC, "screen")));
 app.use("/screen", express.static(path.join(PUBLIC, "screen")));
 // /character/<id> serves the sheet shell; the page reads the id from the URL.
 app.get("/character/:id", (_req, res) => res.sendFile(path.join(PUBLIC, "character", "index.html")));
-app.get("/", (_req, res) => res.redirect("/gm"));
+// The bare address is for the table: players get the shell, the GM knows /gm.
+app.get("/", (_req, res) => res.redirect("/table"));
 
 // --- live updates (SSE): table view & future board screen refresh on change ---
 const clients = new Set();
@@ -101,6 +103,7 @@ app.delete("/api/party/:id", guard((req, res) => {
   const i = state.pcs.findIndex((p) => p.id === req.params.id);
   if (i === -1) throw new Error("No such character.");
   const [gone] = state.pcs.splice(i, 1);
+  delete state.journalDoodles[gone.id];
   persist();
   broadcast();
   res.json({ removed: gone.name });
@@ -365,6 +368,41 @@ app.put("/api/screen", guard((req, res) => {
 app.get("/api/lore", (req, res) => res.json(loreView(req.query.pc || null)));
 
 const NOTE_KINDS = new Set(["journal", "person", "place"]);
+const DOODLE_PAGES = new Set(["journal", "people", "places"]);
+
+function cleanDoodleStrokes(value) {
+  if (!Array.isArray(value) || value.length > 300) throw new Error("That page holds too many marks.");
+  let pointCount = 0;
+  return value.map((stroke) => {
+    if (!stroke || (stroke.tool !== "pen" && stroke.tool !== "eraser")) throw new Error("Unknown drawing tool.");
+    if (!Array.isArray(stroke.points) || stroke.points.length < 1) throw new Error("A mark needs a path.");
+    pointCount += stroke.points.length;
+    if (pointCount > 12000) throw new Error("That page holds too many marks.");
+    const points = stroke.points.map((point) => {
+      if (!Array.isArray(point) || point.length !== 2 || !point.every(Number.isFinite)) throw new Error("A mark has an invalid point.");
+      return point.map((n) => Math.max(0, Math.min(1, Math.round(n * 10000) / 10000)));
+    });
+    const fallbackWidth = stroke.tool === "eraser" ? 0.025 : 0.0035;
+    const width = Number.isFinite(stroke.width) ? Math.max(0.001, Math.min(0.08, stroke.width)) : fallbackWidth;
+    return { tool: stroke.tool, width, points };
+  });
+}
+
+app.get("/api/journal-doodles/:pcId", guard((req, res) => {
+  if (!state.pcs.some((p) => p.id === req.params.pcId)) throw new Error("No such character.");
+  res.json(state.journalDoodles[req.params.pcId] || { journal: [], people: [], places: [] });
+}));
+
+app.put("/api/journal-doodles/:pcId/:page", guard((req, res) => {
+  const { pcId, page } = req.params;
+  if (!state.pcs.some((p) => p.id === pcId)) throw new Error("No such character.");
+  if (!DOODLE_PAGES.has(page)) throw new Error("No such journal page.");
+  const strokes = cleanDoodleStrokes(req.body.strokes);
+  state.journalDoodles[pcId] ||= { journal: [], people: [], places: [] };
+  state.journalDoodles[pcId][page] = strokes;
+  persist();
+  res.json({ ok: true, strokes: strokes.length });
+}));
 
 app.post("/api/notes", guard((req, res) => {
   const { kind, refId, scope, pcId, text } = req.body;

@@ -448,6 +448,8 @@ $("#btn-next").onclick = async () => {
     });
     const pc = await res.json();
     if (!res.ok) throw new Error(pc.error || "Something went wrong.");
+    // This device now knows who its player is (shared with the shell & journal).
+    localStorage.setItem("settlement-pc", pc.id);
     window.location.href = `/character/${pc.id}`;
   } catch (e) {
     $("#warn").textContent = e.message;
