@@ -450,7 +450,9 @@ $("#btn-next").onclick = async () => {
     if (!res.ok) throw new Error(pc.error || "Something went wrong.");
     // This device now knows who its player is (shared with the shell & journal).
     localStorage.setItem("settlement-pc", pc.id);
-    window.location.href = `/character/${pc.id}`;
+    const requestedReturn = new URLSearchParams(location.search).get("return");
+    const allowedReturns = new Set(["/login", "/table", "/table-book"]);
+    window.location.href = allowedReturns.has(requestedReturn) ? requestedReturn : `/character/${pc.id}`;
   } catch (e) {
     $("#warn").textContent = e.message;
   }

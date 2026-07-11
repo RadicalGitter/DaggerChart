@@ -14,6 +14,7 @@ app.use(express.json());
 app.use("/shared", express.static(path.join(PUBLIC, "shared")));
 app.use("/gm", express.static(path.join(PUBLIC, "gm")));
 app.use("/board", express.static(path.join(PUBLIC, "board")));
+app.use("/login", express.static(path.join(PUBLIC, "login")));
 app.use("/table", express.static(path.join(PUBLIC, "table")));
 app.use("/table-book", express.static(path.join(PUBLIC, "table-book")));
 app.use("/create", express.static(path.join(PUBLIC, "create")));
@@ -23,8 +24,9 @@ app.use("/screen", express.static(path.join(PUBLIC, "screen")));
 app.use("/screen", express.static(path.join(PUBLIC, "screen")));
 // /character/<id> serves the sheet shell; the page reads the id from the URL.
 app.get("/character/:id", (_req, res) => res.sendFile(path.join(PUBLIC, "character", "index.html")));
-// The bare address is for the table: players get the shell, the GM knows /gm.
-app.get("/", (_req, res) => res.redirect("/table"));
+// The bare address is the trusted-table identity chooser. No passwords;
+// choosing a PC only sets this device's settlement-pc identity.
+app.get("/", (_req, res) => res.redirect("/login"));
 
 // --- live updates (SSE): table view & future board screen refresh on change ---
 const clients = new Set();

@@ -8,9 +8,9 @@ must not fork campaign state or widen what reaches the browser.
 
 ### Card deck — `/table`
 
-The canonical player shell. Bare `/` still redirects here. Five large cards
-open the Town, Folk of Note, Chronicle, Journal, and Character sections. On
-narrow screens the cards become banner rows.
+The canonical player shell. The login chooser enters this visual by default.
+Five large cards open the Town, Folk of Note, Chronicle, Journal, and Character
+sections. On narrow screens the cards become banner rows.
 
 ### Physical tome — `/table-book`
 
@@ -47,7 +47,8 @@ Every player-shell visual must preserve these boundaries:
 
 Until a visual chooser is designed, add each experiment as its own directory
 under `public/` and its own static route in `server/index.js`. Do not change the
-bare `/` redirect or replace `/table` without an explicit product decision.
+login's default player destination or replace `/table` without an explicit
+product decision.
 
 A new visual is ready for comparison when it:
 

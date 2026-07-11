@@ -12,6 +12,7 @@ server/
 public/
   shared/     ledger.css (light GM theme), lamplight.css (dark player theme), i18n.js
   gm/         GM console (sections: downtime, buildings, folk, people, places, party, stores, ledger, settlement)
+  login/      trusted-table identity chooser (GM, projector, PCs, creator)
   table/      read-only projectable dashboard (card-deck navigation)
   table-book/ standalone physical-book experiment using the same player API
   create/     character creation wizard
@@ -86,6 +87,9 @@ docs/         this file, the design spec, ComfyUI workflow
 - **Player-shell visuals:** `/table` is canonical; standalone alternates such
   as `/table-book` share `/api/table`, SSE, `settlement-pc`, and the existing
   embeds. See [player-shell-visuals.md](player-shell-visuals.md).
+- **Identity:** bare `/` redirects to `/login`. A PC choice writes only
+  `settlement-pc`; GM and projector choices set no player identity. See
+  [player-identity.md](player-identity.md).
 - **i18n** (`shared/i18n.js`): per-device language (localStorage, EN/SV).
   Game terms (Hope, Stress, Evasion, Loadout…) stay English to match the
   physical cards; UI phrasing translates; the long-press glossary explains

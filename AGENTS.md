@@ -40,7 +40,10 @@ designing anything; it is the source of truth. Code map + API:
 
 ## Decisions already made (don't relitigate)
 
-- One trusted table: no auth, no accounts; players reach the server over LAN.
+- One trusted table: no auth, no passwords; players reach the server over LAN.
+  Bare `/` opens `/login`, an identity chooser rather than a security boundary:
+  GM opens `/gm`, projector opens `/screen`, and a PC choice stores
+  `settlement-pc` before entering `/table`. See `docs/player-identity.md`.
 - PCs (players' characters) *are* in scope despite spec §10 — the user
   expanded scope deliberately: creator at `/create`, live sheets at
   `/character/:id`, Loadout/Vault hand manager. Town-side hidden-layer rules
@@ -79,7 +82,7 @@ designing anything; it is the source of truth. Code map + API:
   all set it; storage events keep the shell in sync). Embed panels carry a
   stable `panelKey` so SSE refreshes never reload an iframe mid-use. Under
   640px the deck lays out as banner rows and the docked stack sits above the
-  panel. Bare `/` redirects to `/table`; the GM types `/gm`.
+  panel. The login chooser enters `/table` by default.
 - `/table-book` is a standalone alternate shell, not a replacement for
   `/table`. It renders a closed front-facing cover with right-edge bookmarks;
   opening a chapter reveals a two-page spread, migrates earlier bookmarks to

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Choose your place — The Settlement</title>
+<link rel="stylesheet" href="/shared/ledger.css">
+<link rel="stylesheet" href="/shared/lamplight.css">
+<link rel="stylesheet" href="login.css">
+</head>
+<body>
+  <div class="room-grain" aria-hidden="true"></div>
+  <main class="login-shell">
+    <header class="login-head">
+      <div class="settlement-name" id="settlement-name">The Settlement</div>
+      <h1 data-i18n="login.title">Whose hand opens the ledger?</h1>
+      <p class="login-sub" data-i18n="login.subtitle">Choose your place at the table</p>
+      <div class="season" id="settlement-season">—</div>
+    </header>
+
+    <section class="identity-stack">
+      <a class="identity-card gm-card" href="/gm">
+        <span class="card-tooling" aria-hidden="true"></span>
+        <span class="gm-sigil" aria-hidden="true"><span>GM</span></span>
+        <span class="identity-copy">
+          <strong data-i18n="login.gm">Game Master</strong>
+          <span data-i18n="login.gm.sub">Open the steward's ledger</span>
+        </span>
+        <span class="enter-mark" aria-hidden="true">→</span>
+      </a>
+
+      <a class="identity-card projector-card" href="/screen">
+        <span class="projector-lens" aria-hidden="true"><span></span></span>
+        <span class="identity-copy">
+          <strong data-i18n="login.projector">Projector Screen</strong>
+          <span data-i18n="login.projector.sub">What the table is shown</span>
+        </span>
+        <span class="enter-mark" aria-hidden="true">→</span>
+      </a>
+
+      <div class="players-heading">
+        <span data-i18n="login.players">Player characters</span>
+        <span class="heading-rule" aria-hidden="true"></span>
+      </div>
+      <div class="player-grid" id="player-grid"></div>
+    </section>
+
+    <p class="trust-note" data-i18n="login.trust">No passwords. This only remembers the character on this device.</p>
+  </main>
+  <script type="module" src="login.js"></script>
+</body>
+</html>
