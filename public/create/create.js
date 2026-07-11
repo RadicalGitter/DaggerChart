@@ -448,6 +448,7 @@ $("#btn-next").onclick = async () => {
     });
     const pc = await res.json();
     if (!res.ok) throw new Error(pc.error || "Something went wrong.");
+    sessionStorage.removeItem(DRAFT_KEY); // signed — the stash has served
     // This device now knows who its player is (shared with the shell & journal).
     localStorage.setItem("settlement-pc", pc.id);
     const requestedReturn = new URLSearchParams(location.search).get("return");
@@ -458,6 +459,27 @@ $("#btn-next").onclick = async () => {
   }
 };
 
+// ---------- draft stash ----------
+// The language toggle works by reloading the page (see shared/i18n.js), and
+// mid-creation refreshes happen. Stash the draft per tab so a reload lands
+// exactly where the player was; signing the ledger clears it.
+const DRAFT_KEY = "settlement-create-draft";
+
+window.addEventListener("beforeunload", () => {
+  if (!REF) return;
+  try { steps[step].collect?.(); } catch { /* half-filled steps still stash */ }
+  sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ step, draft }));
+});
+
+function restoreDraft() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(DRAFT_KEY));
+    if (!saved || typeof saved.step !== "number") return;
+    Object.assign(draft, saved.draft);
+    step = Math.max(0, Math.min(steps.length - 1, saved.step));
+  } catch { /* a bad stash never blocks creation */ }
+}
+
 // ---------- boot ----------
 initI18n();
 Promise.all([
@@ -467,5 +489,6 @@ Promise.all([
   if (ref.error) { $("#step").innerHTML = `<p class="warn">${esc(ref.error)}</p>`; return; }
   REF = ref;
   PARTY = party;
+  restoreDraft();
   rerender();
 });
