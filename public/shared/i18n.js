@@ -578,12 +578,14 @@ function wireTerms() {
     document.addEventListener(ev, () => clearTimeout(pressTimer));
   }
   // Desktop nicety: a plain click also opens it (labels aren't otherwise clickable).
+  // Capture phase: terms often live inside clickable cards whose handlers
+  // re-render the page — measure the anchor before it can be detached.
   document.addEventListener("click", (e) => {
     const el = e.target.closest("[data-term]");
     if (suppressClick) { suppressClick = false; e.preventDefault(); e.stopPropagation(); return; }
     if (el) showTerm(el.dataset.term, el);
     else hideTerm();
-  });
+  }, true);
   document.addEventListener("contextmenu", (e) => {
     if (e.target.closest("[data-term]")) e.preventDefault();
   });
