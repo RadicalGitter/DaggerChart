@@ -1,8 +1,6 @@
 # The Settlement
 
-A locally-run GM tool for a West Marches–style **Daggerheart** campaign: ~50 settlers
-building a town in an unexplored world. It is a steward's ledger, not a 4X game —
-the tool tracks state and reveals results; the GM narrates.
+A locally-run GM tool for **Daggerheart** campaign dungeon-mastering. Currently written for a Westmarches-style campaign, but this can be easily tweaked.
 
 The design source of truth is [docs/settlement-design-spec.md](docs/settlement-design-spec.md).
 The code map and API live in [docs/architecture.md](docs/architecture.md).
@@ -11,15 +9,6 @@ The alternate player-shell contract lives in
 identity is documented in [docs/player-identity.md](docs/player-identity.md).
 Working rules for AI-assisted development are in [AGENTS.md](AGENTS.md) and
 [CLAUDE.md](CLAUDE.md).
-
-## ⚠️ Spoiler safety (read first)
-
-**The GM has deliberately not read the event tables.** The files under
-`data/event-tables/` contain 155+ unrevealed events that are meant to surprise
-the GM at the table. **Do not open them, print them, or diff them.** The app is
-built so that only the single rolled entry is ever revealed. Anything — a
-screen, a log, an error message, a code review — that exposes unrolled event
-text is a critical bug. See §8 of the design spec.
 
 ## Quick start
 
