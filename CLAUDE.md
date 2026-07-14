@@ -127,4 +127,3 @@ designing anything; it is the source of truth. Code map + API:
   to building cards for a physical "live board".
 - Sheet personalization: per-class layouts, bookmarkable stats, click-tracked
   shortcut tray on sheets; GM-side custom groupings.
-- Glossary/domain-card plate type for the drafting board (`/board`).
