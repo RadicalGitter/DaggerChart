@@ -7,6 +7,7 @@ import { gmView, tableView, loreView, screenView, partyListView, playerCharacter
 import { loadJson, saveJson } from "./store.js";
 import { addInventoryItem, consumables, grantConsumable, inventoryEntry, updateInventoryItem, useInventoryItem } from "./inventory.js";
 import { clearTelemetry, recordTelemetryBatch, telemetryView } from "./telemetry.js";
+import { retellSession } from "./retell.js";
 import {
   musicView,
   characterThemeView,
@@ -35,6 +36,46 @@ const isActivePc = (pc) => pc?.active !== false;
 const isPlayablePc = (pc) => isActivePc(pc) && isActiveCampaign(pc?.campaignId);
 const activePcById = (id) => state.pcs.find((pc) => pc.id === id && isPlayablePc(pc)) || null;
 const currentActivePcs = () => state.pcs.filter((pc) => isPlayablePc(pc) && pc.campaignId === state.campaigns.currentId);
+const SESSION_TEXT_LIMITS = { gmSummary: 12000, gmHighlight: 4000, perspective: 12000, retelling: 30000 };
+const SESSION_TEXT_LABELS = {
+  gmSummary: "The factual summary",
+  gmHighlight: "The point of emphasis",
+  perspective: "The perspective",
+  retelling: "The retelling"
+};
+
+function cleanSessionText(value, field, required = false) {
+  if (typeof value !== "string") {
+    if (required) throw new Error(`${SESSION_TEXT_LABELS[field] || field} is required.`);
+    return "";
+  }
+  const text = value.trim();
+  if (required && !text) throw new Error(`${SESSION_TEXT_LABELS[field] || field} is required.`);
+  const limit = SESSION_TEXT_LIMITS[field] || 12000;
+  if (text.length > limit) throw new Error(`${SESSION_TEXT_LABELS[field] || field} is too long.`);
+  return text;
+}
+
+function sessionById(id) {
+  return state.sessions.find((session) => session.id === id) || null;
+}
+
+function currentSessionById(id) {
+  const session = sessionById(id);
+  if (!session || session.campaignId !== state.campaigns.currentId) throw new Error("No such session in the current campaign.");
+  return session;
+}
+
+function sessionParticipants(value, campaignId, activeOnly = false) {
+  if (!Array.isArray(value)) throw new Error("Choose the characters who were there.");
+  const ids = [...new Set(value.map(String))];
+  if (!ids.length) throw new Error("Choose at least one character.");
+  for (const id of ids) {
+    const pc = state.pcs.find((candidate) => candidate.id === id && candidate.campaignId === campaignId);
+    if (!pc || (activeOnly && !isPlayablePc(pc))) throw new Error("A chosen character is not available in this campaign.");
+  }
+  return ids;
+}
 
 const app = express();
 app.use(express.json({ limit: "8mb" }));
@@ -872,6 +913,165 @@ app.put("/api/screen", guard((req, res) => {
   persist();
   broadcast();
   res.json({ ok: true, current: state.screen.current });
+}));
+
+// --- session perspectives and reviewed retellings ---
+
+app.post("/api/sessions", guard((req, res) => {
+  const campaignId = state.campaigns.currentId;
+  if (state.sessions.some((session) => session.campaignId === campaignId && session.status !== "published")) {
+    throw new Error("Finish the open session before beginning another.");
+  }
+  const defaultParticipants = currentActivePcs().map((pc) => pc.id);
+  const participants = sessionParticipants(
+    req.body?.participants === undefined ? defaultParticipants : req.body.participants,
+    campaignId,
+    true
+  );
+  const previousNumbers = state.sessions
+    .filter((session) => session.campaignId === campaignId)
+    .map((session) => Number(session.number) || 0);
+  const now = new Date();
+  const session = {
+    id: `ses_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+    campaignId,
+    number: Math.max(0, ...previousNumbers) + 1,
+    date: now.toISOString().slice(0, 10),
+    seasonLabel: seasonLabel(),
+    status: "gathering",
+    participants,
+    gmSummary: "",
+    gmHighlight: "",
+    perspectives: [],
+    retelling: null,
+    error: null,
+    transcript: null,
+    createdAt: now.toISOString()
+  };
+  state.sessions.push(session);
+  persist();
+  broadcast();
+  res.status(201).json(session);
+}));
+
+app.put("/api/sessions/:id", guard((req, res) => {
+  const session = currentSessionById(req.params.id);
+  const gathering = session.status === "gathering" || session.status === "failed";
+  if (req.body.gmSummary !== undefined) session.gmSummary = cleanSessionText(req.body.gmSummary, "gmSummary");
+  if (req.body.gmHighlight !== undefined) session.gmHighlight = cleanSessionText(req.body.gmHighlight, "gmHighlight");
+  if (req.body.participants !== undefined) {
+    if (!gathering) throw new Error("Participants are fixed while the chronicler is working or awaiting review.");
+    session.participants = sessionParticipants(req.body.participants, session.campaignId);
+  }
+  if (req.body.retellingText !== undefined) {
+    if (session.status !== "review") throw new Error("There is no retelling awaiting review.");
+    const text = cleanSessionText(req.body.retellingText, "retelling", true);
+    session.retelling = { ...(session.retelling || {}), text, editedAt: new Date().toISOString() };
+  }
+  persist();
+  broadcast();
+  res.json(session);
+}));
+
+app.post("/api/sessions/:id/perspectives", guard((req, res) => {
+  const session = sessionById(req.params.id);
+  const pc = activePcById(req.body?.pcId);
+  if (!session || !pc || session.campaignId !== pc.campaignId) throw new Error("No such session for this character.");
+  if (session.status !== "gathering" && session.status !== "failed") throw new Error("This account has already gone to the chronicler.");
+  if (!(session.participants || []).includes(pc.id)) throw new Error("This character was not marked present for the session.");
+  const text = cleanSessionText(req.body?.text, "perspective", true);
+  const perspective = {
+    pcId: pc.id,
+    author: pc.name,
+    text,
+    ts: new Date().toISOString()
+  };
+  session.perspectives ||= [];
+  const existing = (session.perspectives || []).findIndex((entry) => entry.pcId === pc.id);
+  if (existing === -1) session.perspectives.push(perspective);
+  else session.perspectives[existing] = perspective;
+  persist();
+  broadcast();
+  res.json({ ok: true, perspective });
+}));
+
+app.post("/api/sessions/:id/retell", guard((req, res) => {
+  const session = currentSessionById(req.params.id);
+  if (session.status !== "gathering" && session.status !== "failed") throw new Error("This session is not ready to send.");
+  session.gmSummary = cleanSessionText(session.gmSummary, "gmSummary", true);
+  session.gmHighlight = cleanSessionText(session.gmHighlight, "gmHighlight", true);
+  const perspectives = (session.participants || []).map((pcId) => {
+    const perspective = (session.perspectives || []).find((entry) => entry.pcId === pcId && entry.text);
+    if (!perspective) throw new Error("Wait for every chosen character to write their perspective.");
+    return {
+      author: state.pcs.find((pc) => pc.id === pcId)?.name || perspective.author || "A companion",
+      text: perspective.text
+    };
+  });
+  const previousRetellings = state.sessions
+    .filter((entry) => entry.campaignId === session.campaignId && entry.status === "published" && entry.retelling?.text)
+    .map((entry) => ({
+      number: entry.number,
+      seasonLabel: entry.seasonLabel,
+      text: entry.retelling.text
+    }));
+  const bundle = {
+    session: {
+      number: session.number,
+      date: session.date,
+      seasonLabel: session.seasonLabel,
+      gmSummary: session.gmSummary,
+      gmHighlight: session.gmHighlight
+    },
+    perspectives,
+    previousRetellings
+  };
+
+  session.status = "retelling";
+  session.error = null;
+  persist();
+  broadcast();
+  res.status(202).json({ ok: true, status: session.status });
+
+  void retellSession(bundle).then((retelling) => {
+    const current = sessionById(session.id);
+    if (!current || current.status !== "retelling") return;
+    current.retelling = retelling;
+    current.status = "review";
+    current.error = null;
+    persist();
+    broadcast();
+  }).catch((error) => {
+    const current = sessionById(session.id);
+    if (!current || current.status !== "retelling") return;
+    current.status = "failed";
+    current.error = String(error?.message || "The chronicler could not answer.").slice(0, 300);
+    persist();
+    broadcast();
+    console.warn(`Session ${current.number} retelling failed: ${current.error}`);
+  });
+}));
+
+app.post("/api/sessions/:id/publish", guard((req, res) => {
+  const session = currentSessionById(req.params.id);
+  if (session.status !== "review" || !session.retelling?.text?.trim()) throw new Error("Review the retelling before publishing it.");
+  const text = cleanSessionText(session.retelling.text, "retelling", true);
+  session.retelling.text = text;
+  session.status = "published";
+  session.error = null;
+  session.publishedAt = new Date().toISOString();
+  const firstLine = text.split(/\r?\n/).find((line) => line.trim())?.trim().slice(0, 240) || `Session ${session.number}`;
+  addLog({
+    type: "retelling",
+    campaignId: session.campaignId,
+    season: session.seasonLabel,
+    summary: firstLine,
+    publishedText: text,
+    published: true
+  });
+  persist();
+  broadcast();
+  res.json({ ok: true, status: session.status });
 }));
 
 // --- player journal & notes ---

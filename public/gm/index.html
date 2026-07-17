@@ -151,6 +151,64 @@
   .campaign-actions button:disabled { opacity: .38; cursor: not-allowed; }
   .campaign-create { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .55rem; margin-top: .8rem; }
   .campaign-create input { min-width: 0; }
+  .session-opening {
+    max-width: 820px; display: grid; grid-template-columns: minmax(0, 1fr) auto;
+    gap: .8rem 1rem; align-items: end; margin: 1rem 0 1.4rem; padding: 1rem 0;
+    border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule-strong);
+  }
+  .session-opening-copy strong { display: block; font-family: Georgia, serif; font-size: 1.05rem; }
+  .session-opening-copy span { color: var(--ink-faint); font-size: .78rem; }
+  .session-roster {
+    grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: .45rem; margin: 0; padding: 0; border: 0;
+  }
+  .session-roster[hidden] { display: none; }
+  .session-roster legend { margin-bottom: .45rem; color: var(--ink-faint); font-size: .72rem; font-variant: small-caps; }
+  .session-roster label {
+    display: flex; align-items: center; gap: .5rem; min-width: 0; padding: .48rem .55rem;
+    border: 1px solid var(--rule); border-radius: 4px; background: var(--paper-inset); font-size: .82rem;
+  }
+  .session-roster label span { min-width: 0; overflow-wrap: anywhere; }
+  .session-sheet {
+    max-width: 820px; margin: 0 0 1.2rem; padding: 1.15rem 1.2rem 1.25rem;
+    border: 1px solid var(--rule-strong); border-left: 4px solid var(--oxblood); border-radius: 5px;
+    background: linear-gradient(105deg, var(--paper-inset), var(--paper));
+    box-shadow: 0 5px 14px rgba(58, 40, 25, .06);
+  }
+  .session-sheet[data-status="published"] { border-left-color: var(--green); }
+  .session-head { display: flex; align-items: center; gap: .75rem; margin-bottom: .9rem; }
+  .session-number {
+    display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 38px;
+    border: 1px solid var(--oxblood); border-radius: 50%; color: var(--oxblood);
+    font: 700 .85rem Georgia, serif;
+  }
+  .session-title { min-width: 0; flex: 1; }
+  .session-title strong { display: block; font-family: Georgia, serif; font-size: 1.05rem; }
+  .session-title span { display: block; color: var(--ink-faint); font-size: .72rem; font-variant: small-caps; }
+  .session-stamp {
+    padding: .26rem .46rem; border: 1px solid currentColor; color: var(--oxblood);
+    font-size: .66rem; font-weight: 700; font-variant: small-caps; transform: rotate(-1deg);
+  }
+  .session-stamp.review { color: var(--green); }
+  .session-stamp.retelling { color: #67531f; }
+  .session-fields { display: grid; grid-template-columns: minmax(0, 2fr) minmax(210px, 1fr); gap: .85rem; }
+  .session-fields label { min-width: 0; color: var(--ink-faint); font-size: .72rem; font-variant: small-caps; }
+  .session-fields textarea { display: block; width: 100%; box-sizing: border-box; margin-top: .3rem; resize: vertical; }
+  .perspective-seals { display: flex; flex-wrap: wrap; gap: .45rem; margin: .9rem 0; }
+  .perspective-seal {
+    display: inline-flex; align-items: center; gap: .4rem; padding: .3rem .55rem;
+    border: 1px solid var(--rule); border-radius: 999px; color: var(--ink-faint); font-size: .75rem;
+  }
+  .perspective-seal::before { content: ""; width: 8px; height: 8px; border: 1px solid currentColor; border-radius: 50%; }
+  .perspective-seal.complete { color: var(--green); border-color: color-mix(in srgb, var(--green) 52%, var(--rule)); }
+  .perspective-seal.complete::before { background: var(--green); box-shadow: inset 0 0 0 2px var(--paper); }
+  .session-actions { display: flex; align-items: center; gap: .55rem; flex-wrap: wrap; margin-top: .85rem; }
+  .session-actions .status-note { margin-left: auto; color: var(--ink-faint); font-size: .75rem; }
+  .session-error { margin: .75rem 0; padding: .55rem .7rem; border-left: 3px solid var(--grave); background: var(--paper); color: var(--grave); font-size: .82rem; }
+  .retelling-review { width: 100%; min-height: 290px; box-sizing: border-box; line-height: 1.55; resize: vertical; }
+  .published-sessions { max-width: 820px; margin-top: 1.4rem; }
+  .published-sessions > summary { cursor: pointer; color: var(--ink-faint); font-variant: small-caps; }
+  .published-excerpt { white-space: pre-wrap; font-size: .88rem; line-height: 1.48; }
   .feedback-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 1rem; }
   .feedback-ticket img { display: block; width: 100%; max-height: 360px; object-fit: contain; border: 1px solid var(--rule-strong); background: #17120c; }
   .feedback-meta { margin: .55rem 0; color: var(--ink-soft); font-size: .78rem; }
@@ -234,6 +292,12 @@
     .campaign-actions { grid-column: 2; justify-content: flex-start; }
     .campaign-ledger-head { display: block; }
     .campaign-ledger-head span { display: block; margin-top: .2rem; }
+    .session-opening { grid-template-columns: 1fr; align-items: stretch; }
+    .session-opening > button { justify-self: start; }
+    .session-fields { grid-template-columns: 1fr; }
+    .session-sheet { padding: 1rem .85rem 1.1rem; }
+    .session-stamp { font-size: .6rem; }
+    .session-actions .status-note { width: 100%; margin-left: 0; }
   }
 </style>
 </head>
@@ -251,6 +315,7 @@
     <a href="#people" data-nav="people">People</a>
     <a href="#places" data-nav="places">Places</a>
     <a href="#party" data-nav="party">Party</a>
+    <a href="#sessions" data-nav="sessions">Sessions</a>
     <a href="#ux" data-nav="ux">UX map</a>
     <a href="#feedback" data-nav="feedback">Feedback</a>
     <a href="#ledger" data-nav="ledger">Ledger</a>
@@ -383,6 +448,22 @@
         <div class="formrow"><label></label><button id="paper-deliver" class="quiet">Deliver the paper</button><label style="min-width:auto;"><input id="paper-project" type="checkbox"> show it on the projector</label></div>
         <div class="paper-ledger" id="paper-ledger"></div>
       </div>
+    </section>
+
+    <section id="sec-sessions" hidden>
+      <h2>Session chronicle</h2>
+      <p class="muted">Gather what mattered from everyone who was there. Nothing is published until you review the finished account.</p>
+      <div class="session-opening">
+        <div class="session-opening-copy">
+          <strong id="session-campaign-name">Current campaign</strong>
+          <span id="session-opening-note">Mark who was at the table, then open their writing prompt.</span>
+        </div>
+        <button type="button" class="quiet" id="session-open">The session ends</button>
+        <fieldset class="session-roster" id="session-new-roster">
+          <legend>Who was at the table</legend>
+        </fieldset>
+      </div>
+      <div id="sessions-list"></div>
     </section>
 
     <section id="sec-ledger" hidden>

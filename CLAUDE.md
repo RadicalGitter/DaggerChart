@@ -152,14 +152,17 @@ designing anything; it is the source of truth. Code map + API:
   retain all active-campaign PCs so `/login` can group bubbles and personal
   shells can recognize a chosen seat. Archiving hides access without deleting
   campaign-owned records.
+- Session perspectives persist in `data/sessions.json`. The GM **Sessions**
+  folio gathers attendance, summary, emphasis, and reviews returned text;
+  players write only their own draft under the Journal's **Chronicle**
+  bookmark. `loreView()` exposes completion booleans and published accounts,
+  never other drafts or GM fields. `server/retell.js` is the only Anthropic
+  consumer and reads `ANTHROPIC_API_KEY` from `.env.local`/the environment.
 
 ## What's next (agreed ambitions, in rough order)
-- **The remaining planned features have backend implementation plans in
-  [docs/master-plan.md](docs/master-plan.md).** Read its Shared foundations
-  before starting one; character lifecycle (feature 7), the Fear/Hope tracker
-  (feature 1), GM quick tools (feature 2), and private messages (feature 3) are
-  built. Features 5 (rules) and 6 (campaigns) are also built; feature 4, the
-  campaign-scoped session chronicler, is the remaining planned feature.
+- **All seven backend-first features in
+  [docs/master-plan.md](docs/master-plan.md) are built.** Keep that document as
+  architecture and acceptance context for incremental upgrades.
 - ComfyUI wiring: the GM-side request UI exists on People cards (prompt saved
   to `portraitPrompt`, `POST /api/people/:id/portrait` is a stub) — connect it
   to the local 5090 using `docs/comfyui/waidrin-portraits-workflow.json`

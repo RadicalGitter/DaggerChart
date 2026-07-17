@@ -7,13 +7,14 @@ pretty-printed JSON on disk. One machine (the GM's), players connect over LAN.
 server/
   index.js    routes, SSE stream, static serving
   music.js    song metadata, playlists, character themes, Suno provider boundary
+  retell.js   isolated Anthropic prompt and retry boundary for session accounts
   telemetry.js bounded, content-free local UX aggregation
   state.js    domain logic: roll resolution, modifiers, season, log
   store.js    atomic JSON read/write (unique tmp+rename), timestamped backups
   views.js    audience whitelists for GM, shells, lore, PCs, and messages
 public/
   shared/     themes, i18n, session pools, GM tools/messages, rules search, player chat, feedback and UX collectors
-  gm/         GM console (campaign controls, correspondence, quick table, feedback queue, and UX review map)
+  gm/         GM console (campaign/session controls, correspondence, quick table, feedback queue, and UX review map)
   login/      trusted-table chooser: finished-character bubbles + draft side view
   player/     player root: identity switcher and visual-tool shelf
   table/      general arcana-card shell over six player sections, including Rules
@@ -24,7 +25,7 @@ public/
   character/  live character sheet + hand manager
   music/      GM music desk: bubble library, prompt tag board, generation controls
   rules/      searchable public SRD table reference
-  journal/    players' journal: notes on people, places, and days
+  journal/    players' Chronicle accounts and notes on people, places, and days
   board/      named Main/HUD drafting boards (infinite canvas, plates, pins)
 data/         all persistent state (see README)
 docs/         this file, the design spec, ComfyUI workflow
@@ -42,6 +43,8 @@ docs/         this file, the design spec, ComfyUI workflow
   recorded sessions, characters, PCs, messages, log, event tables).
   `campaigns.json` identifies the current campaign; boot seeds it from the
   settlement name and adopts legacy PCs, drafts, sessions, and log entries.
+  An interrupted `retelling` session becomes retryable `failed` state on boot
+  because network work cannot survive a process restart.
   `session.json` holds the bounded 0..12 Fear pool and
   its player-visibility switch. `resolveDowntime(buildingId, raw, effort)` implements §5 of the
   spec exactly: raw −2..23 validated, modifiers summed, clamp 0–30, spent-number
@@ -62,6 +65,10 @@ docs/         this file, the design spec, ComfyUI workflow
   `identities` whitelist carries all active-campaign PCs for trusted seat
   selection without mixing their Hope into the current table. Never render
   player surfaces from `gmView()`.
+  Session views follow the same split: `gmView()` carries current-campaign
+  working records, while `loreView(pcId)` exposes only that PC's perspective,
+  participant completion booleans, coarse status, and published accounts from
+  their campaign.
 - **`index.js`** — routes below, plus `GET /api/stream` (SSE). Mutating
   endpoints call `broadcast()` so open pages refresh. Named drafting-board PUTs
   deliberately do *not* broadcast (would echo the GM's own edits back); when
@@ -75,6 +82,12 @@ docs/         this file, the design spec, ComfyUI workflow
   `Visseren/Suno Mirror`; published themes are copied to
   `Visseren/Character Themes/<Character Name>`. See
   [music-integration.md](music-integration.md).
+- **`retell.js`** — builds the Anthropic prompt exclusively from the GM's
+  shareable summary/emphasis, chosen player perspectives, and earlier
+  published same-campaign retellings. It uses `ANTHROPIC_API_KEY` from the
+  environment, defaults `RETELL_MODEL` to `claude-opus-4-8`, times out after
+  60 seconds, and retries one 429/5xx response. See
+  [session-retellings.md](session-retellings.md).
 - **`telemetry.js`** — owns gitignored `telemetry.json`, validates the fixed
   player-surface whitelist, and aggregates bounded route/mode/viewport timing
   and click candidates without content or identity. See
@@ -90,6 +103,11 @@ docs/         this file, the design spec, ComfyUI workflow
 | `PUT /api/campaigns/:id` | rename or archive/restore a campaign; the current campaign cannot be archived |
 | `PUT /api/campaigns/current` | switch the active campaign used by party, chronicle, downtime, group delivery, and music surfaces |
 | `PUT /api/session` | set bounded Fear and/or its player visibility; persists and broadcasts |
+| `POST /api/sessions` | open one current-campaign gathering record with chosen active participants |
+| `PUT /api/sessions/:id` | edit GM fields/attendance while gathering or returned text during review |
+| `POST /api/sessions/:id/perspectives` | create or replace only that participating active PC's perspective |
+| `POST /api/sessions/:id/retell` | asynchronously send the explicit player-known bundle; never publishes automatically |
+| `POST /api/sessions/:id/publish` | publish the GM-reviewed account into the campaign chronicle |
 | `GET /api/messages?pc=id` | one active PC's private GM thread only |
 | `GET /api/messages/gm` | all PC threads and per-thread unread counts for GM surfaces |
 | `POST /api/messages` | send validated GM/PC text; stamps sender read state, persists, broadcasts |
@@ -169,6 +187,11 @@ Consumable reactions; see [inventory.md](inventory.md).
   dock for the current `settlement-pc`. It fetches only `/api/messages?pc=`,
   marks the player side read on open, and sends with `Ctrl+Enter`; EN/SV labels
   live in `shared/i18n.js`.
+- **Session chronicle:** GM **Sessions** is a gathering/review folio with
+  attendance, completion seals, separate factual/emphasis fields, and an
+  explicit publication gate. The Journal's fourth physical bookmark shows a
+  draft-safe EN/SV perspective composer and published accounts. Chronicle
+  drawing tools stay disabled; active text entry survives SSE refreshes.
 - **Rules reference:** `/rules` ranks client-side search as title prefix,
   title substring, keyword, path, then body. Hashes are stable rule IDs;
   `seeAlso` supplies curated links and escaped body text passes through

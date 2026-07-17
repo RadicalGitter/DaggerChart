@@ -9,6 +9,7 @@
 <style>
   body {
     --bookmark-journal: #713e34;
+    --bookmark-chronicle: #3f5154;
     --bookmark-people: #46513a;
     --bookmark-places: #665035;
     min-height: 100vh; font-size: 17px;
@@ -88,6 +89,12 @@
     transition: color 0.18s, filter 0.18s, transform 0.18s;
   }
   .tabbar > button[data-tab="journal"] { --bookmark: var(--bookmark-journal); }
+  .tabbar > button[data-tab="chronicle"] { --bookmark: var(--bookmark-chronicle); }
+  .tabbar > button[data-tab="chronicle"] { position: relative; }
+  .tabbar > button[data-tab="chronicle"].awaiting::after {
+    content: ""; position: absolute; right: .48rem; top: .38rem; width: 7px; height: 7px;
+    border-radius: 50%; background: #d6b66d; box-shadow: 0 0 0 2px rgba(30, 23, 16, .55);
+  }
   .tabbar > button[data-tab="people"] { --bookmark: var(--bookmark-people); }
   .tabbar > button[data-tab="places"] { --bookmark: var(--bookmark-places); }
   .tabbar > button[data-tab]:hover { color: #fff2d1; filter: brightness(1.16); transform: translateY(2px); }
@@ -103,6 +110,7 @@
     display: inline-flex; gap: 0.25rem; margin-left: auto; padding-left: 0.35rem;
     border-left: 1px solid #5d492e;
   }
+  .doodle-tools[hidden] { display: none; }
   .doodle-tools button {
     min-width: auto; padding: 0.3rem 0.55rem;
     background: rgba(42, 33, 24, 0.65); color: #c9ba97;
@@ -181,6 +189,50 @@
   .scope-seg button.on { background: #3a2f1e; color: #d4b86a; }
   .composer .write { margin-left: auto; }
 
+  /* session chronicle */
+  .chronicle-prompt {
+    position: relative; overflow: hidden; margin-bottom: 1.1rem;
+    border-left: 3px solid #b79458;
+  }
+  .chronicle-prompt::after {
+    content: ""; position: absolute; right: -34px; top: -34px; width: 82px; height: 82px;
+    border: 1px solid rgba(183, 148, 88, .22); border-radius: 50%;
+    box-shadow: inset 0 0 0 8px rgba(183, 148, 88, .035);
+    pointer-events: none;
+  }
+  .chronicle-head { display: flex; align-items: center; gap: .75rem; margin-bottom: .75rem; }
+  .chronicle-number {
+    display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 42px;
+    border: 1px solid #b79458; border-radius: 50%; color: #e3c98d; font: 700 .88rem Georgia, serif;
+    box-shadow: inset 0 0 0 4px rgba(183, 148, 88, .06);
+  }
+  .chronicle-heading { min-width: 0; flex: 1; }
+  .chronicle-heading strong { display: block; color: #eadfc6; font-family: Georgia, serif; font-size: 1.04rem; }
+  .chronicle-heading span { display: block; color: #a89877; font-size: .72rem; font-variant: small-caps; }
+  .chronicle-state {
+    padding: .23rem .42rem; border: 1px solid #756343; color: #c9b88e;
+    font-size: .64rem; font-variant: small-caps;
+  }
+  .chronicle-question { margin: .6rem 0 .85rem; color: #d8ccb4; font-family: Georgia, serif; font-size: 1.08rem; line-height: 1.42; }
+  .completion-chain { display: flex; flex-wrap: wrap; gap: .38rem; margin: .65rem 0 .85rem; }
+  .completion-mark {
+    display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .48rem;
+    border: 1px solid #4d4331; border-radius: 999px; color: #887d67; font-size: .72rem;
+  }
+  .completion-mark::before { content: ""; width: 7px; height: 7px; border: 1px solid currentColor; border-radius: 50%; }
+  .completion-mark.complete { color: #a7ba80; border-color: #566346; }
+  .completion-mark.complete::before { background: #8fa568; box-shadow: inset 0 0 0 2px #2b2319; }
+  .perspective-composer textarea { min-height: 145px; line-height: 1.5; }
+  .chronicle-waiting { margin: .75rem 0 0; color: #a89877; font-style: italic; font-size: .88rem; }
+  .retelling-card { margin-bottom: 1rem; padding: 1.2rem 1.25rem; }
+  .retelling-text { white-space: pre-wrap; color: #dcd1b9; line-height: 1.66; font-family: Georgia, serif; font-size: .97rem; }
+  .retelling-text::first-letter { color: #e0c27e; font-size: 2.1em; line-height: .8; }
+  .chronicle-divider {
+    display: flex; align-items: center; gap: .7rem; margin: 1.3rem 0 .85rem;
+    color: #95886f; font-size: .72rem; font-variant: small-caps;
+  }
+  .chronicle-divider::before, .chronicle-divider::after { content: ""; flex: 1; height: 1px; background: #493b29; }
+
   /* lore cards */
   .lore-card { margin-bottom: 1.1rem; }
   .lore-head { display: flex; gap: 0.9rem; align-items: center; }
@@ -206,10 +258,17 @@
     #app, #picker { padding: 1.2rem 0.85rem 1.5rem; border-radius: 7px; }
     #app::before, #picker::before { inset: 6px; }
     .tabbar { gap: 0.18rem; }
-    .tabbar > button[data-tab] { min-width: 0; flex: 1 1 30%; padding-inline: 0.45rem; }
+    .tabbar > button[data-tab] { min-width: 0; flex: 1 1 calc(25% - .18rem); padding-inline: 0.32rem; font-size: .88rem; }
     .doodle-tools { order: 2; width: auto; margin: 0.45rem 0 0; padding-left: 0; border-left: 0; }
     #tab-body { padding: 0.65rem; }
     #j-search { order: 3; width: 100%; margin: 0.45rem 0 0; }
+  }
+
+  @media (max-width: 360px) {
+    .chronicle-head { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: .28rem .65rem; align-items: center; }
+    .chronicle-number { grid-row: 1 / span 2; }
+    .chronicle-heading { grid-column: 2; }
+    .chronicle-state { grid-column: 2; justify-self: start; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -233,6 +292,7 @@
       <a href="#" id="j-switch" data-i18n="journal.notyou">Switch character</a>
     </header>
     <div class="tabbar">
+      <button data-tab="chronicle" data-i18n="journal.tab.chronicle">Chronicle</button>
       <button data-tab="journal" class="on" data-i18n="journal.tab.journal">Journal</button>
       <button data-tab="people" data-i18n="journal.tab.people">People</button>
       <button data-tab="places" data-i18n="journal.tab.places">Places</button>

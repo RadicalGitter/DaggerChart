@@ -7,6 +7,8 @@ The code map and API live in [docs/architecture.md](docs/architecture.md).
 The alternate player-shell contract lives in
 [docs/player-shell-visuals.md](docs/player-shell-visuals.md); trusted device
 identity is documented in [docs/player-identity.md](docs/player-identity.md).
+The reviewed session chronicler is documented in
+[docs/session-retellings.md](docs/session-retellings.md).
 Working rules for AI-assisted development are in [AGENTS.md](AGENTS.md) and
 [CLAUDE.md](CLAUDE.md).
 
@@ -29,7 +31,7 @@ whitelisted server-side regardless).
 
 | Route | Who | What |
 |---|---|---|
-| `/gm` | GM (private) | Console: campaign controls, private PC correspondence, playtest tickets, local UX map, settlement ledger, and a session quick table with rules search |
+| `/gm` | GM (private) | Console: campaign controls, reviewed session chronicler, private PC correspondence, playtest tickets, local UX map, settlement ledger, and a session quick table with rules search |
 | `/board` | GM (private) | Named Main/HUD drafting boards with infinite pan/zoom, live stat plates, counters, notes, and pinned camera views |
 | `/login` | everyone | Trusted-table chooser: campaign-grouped character bubbles, a separate resumable-drafts view, GM, and projector. Bare `/` lands here. |
 | `/player` | players | Player root: switch the device's character and choose a focused physical view. |
@@ -39,7 +41,7 @@ whitelisted server-side regardless).
 | `/screen` | everyone (projector) | The table screen: shows the one thing the GM projects — mood images, NPC portraits, cards, stores, free text |
 | `/create` | players | Guided Daggerheart character creation with an active-campaign choice when needed (all SRD data local) |
 | `/character/:id` | one player each | Live character sheet: tap-to-mark HP/Stress/Hope/Armor, Loadout/Vault hand manager |
-| `/journal` | players | The party's journal: notes on people and places the GM reveals, plus a season-stamped diary — each note "for my eyes" or "for the table" |
+| `/journal` | players | Chronicle perspectives and published accounts, revealed people/places, and a season-stamped diary with private or shared notes |
 | `/rules` | everyone | Searchable Daggerheart table reference with grouped browsing, deep links, cross-references, and glossary notes |
 | `/music` | GM | Music desk: spatial song bubbles, local playlists, a one-collection Suno web mirror, branching prompt tags, and character-theme variations |
 
@@ -58,6 +60,19 @@ long-press glossary popovers on underlined game terms.
 5. Everything lands in the season log; the GM chooses what to publish to the
    table view. A timestamped backup of `data/` is taken on every resolution.
 
+## How a session enters the chronicle
+
+1. The GM opens **Sessions**, marks who attended, and ends the session.
+2. Each chosen player writes the scene that mattered most from their
+   character's eyes under the Journal's **Chronicle** bookmark.
+3. The GM adds a factual summary and point of emphasis, then sends only those
+   player-known fields and previous published accounts to the chronicler.
+4. The returned account stays private until the GM edits and explicitly
+   publishes it.
+
+Provider setup and the audience boundary are in
+[docs/session-retellings.md](docs/session-retellings.md).
+
 ## Data
 
 All state is pretty-printed JSON in `data/` — hand-editable with the server
@@ -66,7 +81,7 @@ stopped (or live; the GM console re-reads on refresh):
 - `settlement.json` — population, season, buildings (level, foreman, spent event numbers, effects)
 - `campaigns.json` — active/archived campaign names and the campaign currently at the table
 - `session.json` — live table state: bounded Fear pool and whether players may see it
-- `sessions.json` — campaign-scoped session records reserved for the session chronicler
+- `sessions.json` — campaign-scoped attendance, perspectives, reviewed retellings, and publication state
 - `characters.json` — the folk (NPCs), including the GM-only hidden layer
 - `pcs.json` — campaign-owned player characters from the creator; `active: false` retires one without deleting its records
 - `people.json` — the wider world's NPCs (not villagers): public description, GM-only notes, carried items, current place

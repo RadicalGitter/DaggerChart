@@ -180,6 +180,14 @@ export function gmView() {
       campaigns: state.campaigns.campaigns.map((campaign) => ({ ...campaign }))
     },
     unreadMessages: Object.fromEntries(state.pcs.map((pc) => [pc.id, unreadFor(pc.id, "gm")])),
+    sessions: state.sessions
+      .filter((session) => session.campaignId === state.campaigns.currentId)
+      .map((session) => ({
+        ...session,
+        participants: [...(session.participants || [])],
+        perspectives: (session.perspectives || []).map((perspective) => ({ ...perspective })),
+        retelling: session.retelling ? { ...session.retelling } : null
+      })),
     buildings,
     characters: state.characters,
     party: state.pcs.filter((pc) => pc.campaignId === state.campaigns.currentId).map((p) => ({
@@ -342,6 +350,43 @@ export function loreView(pcId) {
   const notes = state.notes.filter(
     (n) => n.scope === "group" || (requestingPcId && n.pcId === requestingPcId)
   );
+  const requestingPc = requestingPcId ? activePcs().find((pc) => pc.id === requestingPcId) : null;
+  const campaignSessions = requestingPc
+    ? state.sessions.filter((session) => session.campaignId === requestingPc.campaignId)
+    : [];
+  const participantName = (session, participantId) =>
+    state.pcs.find((pc) => pc.id === participantId)?.name
+    || (session.perspectives || []).find((perspective) => perspective.pcId === participantId)?.author
+    || "A companion";
+  const sessionView = {
+    open: campaignSessions
+      .filter((session) => session.status !== "published" && (session.participants || []).includes(requestingPcId))
+      .sort((a, b) => Number(b.number || 0) - Number(a.number || 0))
+      .map((session) => ({
+        id: session.id,
+        number: session.number,
+        date: session.date,
+        seasonLabel: session.seasonLabel,
+        status: session.status,
+        canEdit: session.status === "gathering" || session.status === "failed",
+        perspective: (session.perspectives || []).find((perspective) => perspective.pcId === requestingPcId)?.text || "",
+        participants: (session.participants || []).map((participantId) => ({
+          name: participantName(session, participantId),
+          complete: (session.perspectives || []).some((perspective) => perspective.pcId === participantId && perspective.text)
+        }))
+      })),
+    published: campaignSessions
+      .filter((session) => session.status === "published" && session.retelling?.text)
+      .sort((a, b) => Number(b.number || 0) - Number(a.number || 0))
+      .map((session) => ({
+        id: session.id,
+        number: session.number,
+        date: session.date,
+        seasonLabel: session.seasonLabel,
+        text: session.retelling.text,
+        publishedAt: session.publishedAt || session.retelling.createdAt || null
+      }))
+  };
   return {
     seasonLabel: seasonLabel(),
     unreadMessages: requestingPcId ? unreadFor(requestingPcId, "player") : 0,
@@ -351,7 +396,8 @@ export function loreView(pcId) {
     party: currentPcs().map(identityView),
     people,
     places,
-    notes
+    notes,
+    sessions: sessionView
   };
 }
 

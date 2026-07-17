@@ -33,10 +33,9 @@ Treat each plan's **Backend** section as settled architecture and its
   keepsake in the `KEEPSAKES` registry (`tome.js`) per
   [player-shell-visuals.md](player-shell-visuals.md).
 
-Suggested remaining order (dependencies, not importance): **4**.
-7 (soft delete), 1 (Fear/Hope), 2 (GM quick tools), 3 (private messages),
-5 (rules reference), and 6 (campaigns) are built. Feature 4 is now the only
-remaining planned feature and the only one needing network access.
+All seven planned features are built on `beta`. Keep the sections below as
+architecture and acceptance documentation; future work now returns to the
+project roadmap and incremental table-tool improvements.
 
 ---
 
@@ -176,7 +175,15 @@ the journal composer's conventions).
 
 ---
 
-## 4. Session perspectives → Opus retelling
+## 4. Session perspectives → Opus retelling — BUILT
+
+**Built on `beta` (2026-07-17).** Campaign-scoped gathering records expose one
+draft-safe Chronicle prompt per participant, completion booleans without other
+players' text, and published history. The GM Sessions folio owns attendance,
+summary/emphasis, asynchronous send, full-text review, and explicit publish.
+`server/retell.js` defaults to Opus 4.8, builds from player-known fields only,
+retries one transient failure, recovers interrupted work on boot, and never
+auto-publishes.
 
 *(Revised per GM direction 2026-07-11: simpler than first drafted, and
 campaign-aware — read feature 6 first, sessions belong to a campaign.)*

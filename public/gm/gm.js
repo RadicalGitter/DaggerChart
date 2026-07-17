@@ -52,6 +52,7 @@ async function refresh() {
   renderPeople();
   renderPlaces();
   renderParty();
+  renderSessions();
   renderLedger();
   renderCampaigns();
   renderTown();
@@ -1154,6 +1155,198 @@ $("#paper-deliver").addEventListener("click", async () => {
       await refresh();
     }
   } catch (error) { toast(error.message, true); }
+});
+
+// --- session chronicle ---
+
+const SESSION_STATUS_LABELS = {
+  gathering: "gathering accounts",
+  retelling: "with the chronicler",
+  review: "awaiting review",
+  failed: "needs attention",
+  published: "entered in the chronicle"
+};
+
+function sessionParticipantName(session, pcId) {
+  return S.party.find((pc) => pc.id === pcId)?.name
+    || session.perspectives?.find((perspective) => perspective.pcId === pcId)?.author
+    || "A companion";
+}
+
+function sessionRosterHtml(session, editable) {
+  return `<fieldset class="session-roster" data-session-roster>
+    <legend>Characters present</legend>
+    ${(session.participants || []).map((pcId) => `<label>
+      <input type="checkbox" value="${esc(pcId)}" checked ${editable ? "" : "disabled"}>
+      <span>${esc(sessionParticipantName(session, pcId))}</span>
+    </label>`).join("")}
+    ${editable ? S.party.filter((pc) => pc.active && !(session.participants || []).includes(pc.id)).map((pc) => `<label>
+      <input type="checkbox" value="${esc(pc.id)}">
+      <span>${esc(pc.name)}</span>
+    </label>`).join("") : ""}
+  </fieldset>`;
+}
+
+function perspectiveSealsHtml(session) {
+  const perspectives = new Set((session.perspectives || []).filter((entry) => entry.text).map((entry) => entry.pcId));
+  return `<div class="perspective-seals">${(session.participants || []).map((pcId) =>
+    `<span class="perspective-seal ${perspectives.has(pcId) ? "complete" : ""}">${esc(sessionParticipantName(session, pcId))}</span>`
+  ).join("")}</div>`;
+}
+
+function openSessionHtml(session) {
+  const editable = session.status === "gathering" || session.status === "failed";
+  const reviewing = session.status === "review";
+  const stampClass = reviewing ? "review" : session.status === "retelling" ? "retelling" : "";
+  const complete = (session.participants || []).filter((pcId) =>
+    (session.perspectives || []).some((perspective) => perspective.pcId === pcId && perspective.text)
+  ).length;
+  const error = session.status === "failed" && session.error
+    ? `<div class="session-error">${esc(session.error)}</div>`
+    : "";
+  const review = reviewing ? `
+    <label class="smallcaps" for="retelling-${esc(session.id)}">Review the account</label>
+    <textarea class="retelling-review" id="retelling-${esc(session.id)}" data-session-retelling maxlength="30000">${esc(session.retelling?.text || "")}</textarea>
+    <div class="session-actions">
+      <button type="button" class="quiet" data-session-save-review>Save the reviewed page</button>
+      <button type="button" data-session-publish>Enter it into the chronicle</button>
+      <span class="status-note">${esc(session.retelling?.model || "")}</span>
+    </div>` : `
+    <div class="session-fields">
+      <label>Factual summary
+        <textarea rows="7" maxlength="12000" data-session-summary ${editable ? "" : "readonly"}>${esc(session.gmSummary || "")}</textarea>
+      </label>
+      <label>What held your attention
+        <textarea rows="7" maxlength="4000" data-session-highlight ${editable ? "" : "readonly"}>${esc(session.gmHighlight || "")}</textarea>
+      </label>
+    </div>
+    ${sessionRosterHtml(session, editable)}
+    ${perspectiveSealsHtml(session)}
+    ${error}
+    <div class="session-actions">
+      ${editable ? `<button type="button" class="quiet" data-session-save>Save the gathering</button>
+        <button type="button" data-session-retell>Send to the chronicler</button>` : ""}
+      <span class="status-note">${session.status === "retelling"
+        ? "The page will change when the account returns."
+        : `${complete} of ${(session.participants || []).length} perspectives received`}</span>
+    </div>`;
+  return `<article class="session-sheet" data-session="${esc(session.id)}" data-status="${esc(session.status)}">
+    <div class="session-head">
+      <span class="session-number">${esc(session.number)}</span>
+      <div class="session-title">
+        <strong>Session ${esc(session.number)}</strong>
+        <span>${esc(session.date || "undated")} · ${esc(session.seasonLabel || "")}</span>
+      </div>
+      <span class="session-stamp ${stampClass}">${esc(SESSION_STATUS_LABELS[session.status] || session.status)}</span>
+    </div>
+    ${review}
+  </article>`;
+}
+
+function publishedSessionHtml(session) {
+  return `<article class="session-sheet" data-status="published">
+    <div class="session-head">
+      <span class="session-number">${esc(session.number)}</span>
+      <div class="session-title"><strong>Session ${esc(session.number)}</strong><span>${esc(session.date || "undated")} · ${esc(session.seasonLabel || "")}</span></div>
+      <span class="session-stamp review">published</span>
+    </div>
+    <div class="published-excerpt">${esc(session.retelling?.text || "")}</div>
+  </article>`;
+}
+
+async function saveGathering(article) {
+  const id = article.dataset.session;
+  return api(`/api/sessions/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: {
+      gmSummary: article.querySelector("[data-session-summary]").value,
+      gmHighlight: article.querySelector("[data-session-highlight]").value,
+      participants: [...article.querySelectorAll("[data-session-roster] input:checked")].map((input) => input.value)
+    }
+  });
+}
+
+async function refreshSessionSection(message) {
+  document.activeElement?.blur();
+  await refresh();
+  renderSessions(true);
+  if (message) toast(message);
+}
+
+function wireSessions() {
+  for (const button of document.querySelectorAll("[data-session-save]")) button.onclick = async () => {
+    try {
+      await saveGathering(button.closest("[data-session]"));
+      await refreshSessionSection("The gathering is saved.");
+    } catch (error) { toast(error.message, true); }
+  };
+  for (const button of document.querySelectorAll("[data-session-retell]")) button.onclick = async () => {
+    const article = button.closest("[data-session]");
+    try {
+      await saveGathering(article);
+      await api(`/api/sessions/${encodeURIComponent(article.dataset.session)}/retell`, { method: "POST" });
+      await refreshSessionSection("The account has gone to the chronicler.");
+    } catch (error) { toast(error.message, true); }
+  };
+  for (const button of document.querySelectorAll("[data-session-save-review]")) button.onclick = async () => {
+    const article = button.closest("[data-session]");
+    try {
+      await api(`/api/sessions/${encodeURIComponent(article.dataset.session)}`, {
+        method: "PUT",
+        body: { retellingText: article.querySelector("[data-session-retelling]").value }
+      });
+      await refreshSessionSection("The reviewed page is saved.");
+    } catch (error) { toast(error.message, true); }
+  };
+  for (const button of document.querySelectorAll("[data-session-publish]")) button.onclick = async () => {
+    const article = button.closest("[data-session]");
+    if (!confirm("Enter this reviewed account into the players' chronicle?")) return;
+    try {
+      await api(`/api/sessions/${encodeURIComponent(article.dataset.session)}`, {
+        method: "PUT",
+        body: { retellingText: article.querySelector("[data-session-retelling]").value }
+      });
+      await api(`/api/sessions/${encodeURIComponent(article.dataset.session)}/publish`, { method: "POST" });
+      await refreshSessionSection("The session has entered the chronicle.");
+    } catch (error) { toast(error.message, true); }
+  };
+}
+
+function renderSessions(force = false) {
+  const root = $("#sessions-list");
+  if (!root || (!force && document.activeElement?.closest("#sec-sessions"))) return;
+  const sessions = [...(S.sessions || [])].sort((a, b) => Number(b.number || 0) - Number(a.number || 0));
+  const open = sessions.filter((session) => session.status !== "published");
+  const published = sessions.filter((session) => session.status === "published");
+  const campaign = S.campaigns?.campaigns?.find((entry) => entry.id === S.campaigns.currentId);
+  $("#session-campaign-name").textContent = campaign?.name || "Current campaign";
+  $("#session-opening-note").textContent = open.length
+    ? "Finish the open account before beginning the next session."
+    : "Mark who was at the table, then open their writing prompt.";
+  $("#session-open").disabled = open.length > 0 || !S.party.some((pc) => pc.active);
+  $("#session-open").textContent = open.length ? "Session account open" : "The session ends";
+  $("#session-new-roster").hidden = open.length > 0;
+  $("#session-new-roster").innerHTML = `<legend>Who was at the table</legend>${S.party.filter((pc) => pc.active).map((pc) => `<label>
+    <input type="checkbox" data-new-session-pc value="${esc(pc.id)}" checked>
+    <span>${esc(pc.name)}</span>
+  </label>`).join("") || '<span class="muted">No active characters are seated in this campaign.</span>'}`;
+  root.innerHTML = `${open.map(openSessionHtml).join("")}
+    ${published.length ? `<details class="published-sessions"><summary>Published sessions · ${published.length}</summary>${published.map(publishedSessionHtml).join("")}</details>` : ""}`;
+  wireSessions();
+}
+
+$("#session-open").addEventListener("click", async () => {
+  const participants = [...document.querySelectorAll("[data-new-session-pc]:checked")].map((input) => input.value);
+  try {
+    await api("/api/sessions", { method: "POST", body: { participants } });
+    await refreshSessionSection("The perspective pages are open.");
+  } catch (error) { toast(error.message, true); }
+});
+
+$("#sec-sessions").addEventListener("focusout", () => {
+  setTimeout(() => {
+    if (!document.activeElement?.closest("#sec-sessions") && S) renderSessions(true);
+  }, 0);
 });
 
 // --- ledger ---

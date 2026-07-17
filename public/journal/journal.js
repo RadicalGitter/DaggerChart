@@ -1,4 +1,4 @@
-// The players' journal: shared and personal notes on people, places, and days.
+// The players' journal: chronicle, shared and personal notes, people, and places.
 // Reads /api/lore (whitelisted server-side); writes /api/notes as the chosen PC.
 import { t, lang, initI18n, seasonLabel } from "/shared/i18n.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
@@ -145,6 +145,66 @@ function renderJournalTab() {
       : `<p class="empty">${t("journal.empty")}</p>`}`;
 }
 
+function chronicleDate(value) {
+  if (!value) return "";
+  const parsed = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString(lang === "sv" ? "sv-SE" : "en-GB", { day: "numeric", month: "long", year: "numeric" });
+}
+
+function chronicleHead(session, status = null) {
+  return `<div class="chronicle-head">
+    <span class="chronicle-number">${esc(session.number)}</span>
+    <div class="chronicle-heading">
+      <strong>${t("journal.chronicle.session")} ${esc(session.number)}</strong>
+      <span>${esc(chronicleDate(session.date))}${session.seasonLabel ? ` · ${esc(seasonLabel(session.seasonLabel))}` : ""}</span>
+    </div>
+    ${status ? `<span class="chronicle-state">${esc(status)}</span>` : ""}
+  </div>`;
+}
+
+function openChronicleHtml(session) {
+  const marks = (session.participants || []).map((participant) =>
+    `<span class="completion-mark ${participant.complete ? "complete" : ""}">${esc(participant.name)}</span>`
+  ).join("");
+  const status = t(`journal.chronicle.status.${session.status}`);
+  const composer = session.canEdit ? `<div class="perspective-composer composer">
+    <textarea id="perspective-${esc(session.id)}" rows="7" maxlength="12000" placeholder="${esc(t("journal.chronicle.placeholder"))}">${esc(session.perspective || "")}</textarea>
+    <div class="row">
+      <span class="muted">${t("journal.chronicle.privateuntil")}</span>
+      <button class="write" data-perspective-save="${esc(session.id)}">${t("journal.chronicle.save")}</button>
+    </div>
+  </div>` : `<p class="chronicle-waiting">${session.status === "retelling"
+    ? t("journal.chronicle.working")
+    : t("journal.chronicle.reviewing")}</p>`;
+  return `<article class="card chronicle-prompt">
+    ${chronicleHead(session, status)}
+    <p class="chronicle-question">${t("journal.chronicle.question")}</p>
+    <div class="completion-chain">${marks}</div>
+    ${composer}
+  </article>`;
+}
+
+function publishedChronicleHtml(session) {
+  return `<article class="card retelling-card">
+    ${chronicleHead(session)}
+    <div class="retelling-text">${linkify(esc(session.text))}</div>
+  </article>`;
+}
+
+function renderChronicleTab() {
+  const q = QUERY.toLowerCase();
+  const open = (LORE.sessions?.open || []).filter((session) =>
+    !q || matches(q, String(session.number), session.date, session.seasonLabel, session.perspective, ...(session.participants || []).map((entry) => entry.name))
+  );
+  const published = (LORE.sessions?.published || []).filter((session) =>
+    !q || matches(q, String(session.number), session.date, session.seasonLabel, session.text)
+  );
+  return `${open.map(openChronicleHtml).join("")}
+    ${published.length ? `<div class="chronicle-divider">${t("journal.chronicle.published")}</div>${published.map(publishedChronicleHtml).join("")}` : ""}
+    ${!open.length && !published.length ? `<p class="empty">${t("journal.chronicle.empty")}</p>` : ""}`;
+}
+
 function personCard(p) {
   const place = p.placeId ? LORE.places.find((x) => x.id === p.placeId) : null;
   const gone = p.status !== "alive";
@@ -254,9 +314,19 @@ function renderTab() {
   for (const b of document.querySelectorAll(".tabbar [data-tab]")) {
     b.classList.toggle("on", b.dataset.tab === TAB);
   }
+  document.querySelector('[data-tab="chronicle"]').classList.toggle("awaiting", (LORE.sessions?.open || []).some((session) => session.canEdit && !session.perspective));
+  $(".doodle-tools").hidden = TAB === "chronicle";
+  $("#j-search").placeholder = TAB === "chronicle" ? t("journal.chronicle.search") : t("journal.search");
   const body = $("#tab-body");
-  const page = TAB === "journal" ? renderJournalTab() : TAB === "people" ? renderPeopleTab() : renderPlacesTab();
-  body.innerHTML = `<div class="page-content">${page}</div><canvas class="doodle-layer" aria-hidden="true"></canvas>`;
+  const page = TAB === "chronicle"
+    ? renderChronicleTab()
+    : TAB === "journal"
+      ? renderJournalTab()
+      : TAB === "people"
+        ? renderPeopleTab()
+        : renderPlacesTab();
+  const doodleLayer = TAB === "chronicle" ? "" : '<canvas class="doodle-layer" aria-hidden="true"></canvas>';
+  body.innerHTML = `<div class="page-content">${page}</div>${doodleLayer}`;
   wireTabBody();
   restoreDrafts(saved);
   wireDoodleLayer();
@@ -330,7 +400,7 @@ function setDoodleTool(next) {
 }
 
 async function saveDoodlePage() {
-  if (!PCID) return;
+  if (!PCID || !Array.isArray(DOODLES[TAB])) return;
   try {
     await api(`/api/journal-doodles/${encodeURIComponent(PCID)}/${TAB}`, {
       method: "PUT",
@@ -351,8 +421,8 @@ function pointOnCanvas(event, canvas) {
 
 function wireDoodleLayer() {
   const canvas = $(".doodle-layer");
-  if (!canvas) return;
   doodleObserver?.disconnect();
+  if (!canvas) return;
   doodleObserver = new ResizeObserver(() => requestAnimationFrame(redrawDoodles));
   doodleObserver.observe($("#tab-body"));
 
@@ -422,6 +492,28 @@ function turnTo(nextTab, afterTurn) {
 
 function wireTabBody() {
   const body = $("#tab-body");
+
+  for (const button of body.querySelectorAll("[data-perspective-save]")) {
+    const savePerspective = async () => {
+      const textarea = document.getElementById(`perspective-${button.dataset.perspectiveSave}`);
+      if (!textarea?.value.trim()) return;
+      try {
+        await api(`/api/sessions/${encodeURIComponent(button.dataset.perspectiveSave)}/perspectives`, {
+          method: "POST",
+          body: { pcId: PCID, text: textarea.value }
+        });
+        textarea.value = "";
+        await fetchLore();
+        renderTab();
+      } catch (error) {
+        alert(error.message);
+      }
+    };
+    button.onclick = savePerspective;
+    document.getElementById(`perspective-${button.dataset.perspectiveSave}`)?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) savePerspective();
+    });
+  }
 
   for (const comp of body.querySelectorAll(".composer[data-kind]")) {
     const kind = comp.dataset.kind;
@@ -548,6 +640,7 @@ function showPicker() {
       history.replaceState(null, "", `/journal/?pc=${encodeURIComponent(PCID)}`);
       await fetchLore();
       await fetchDoodles();
+      if ((LORE.sessions?.open || []).some((session) => session.canEdit)) TAB = "chronicle";
       $("#picker").hidden = true;
       $("#app").hidden = false;
       renderAll();
@@ -579,6 +672,9 @@ if (params.has("embed")) document.body.classList.add("embed");
     PCID = null;
     showPicker();
   } else {
+    const requestedTab = params.get("tab");
+    if (["chronicle", "journal", "people", "places"].includes(requestedTab)) TAB = requestedTab;
+    else if ((LORE.sessions?.open || []).some((session) => session.canEdit)) TAB = "chronicle";
     await fetchDoodles();
     $("#app").hidden = false;
     renderAll();

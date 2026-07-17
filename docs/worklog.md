@@ -20,6 +20,15 @@ each other. Rules of the road:
 ## Lanes
 
 **2026-07-17 — Codex** · status: DONE
+Lane: session perspectives and reviewed Opus retellings (feature 4). Campaign-
+scoped session records, strict player whitelists, isolated Anthropic adapter,
+GM gathering/review flow, and the player Chronicle prompt. Verified campaign
+isolation, own-draft-only payloads, completion booleans, missing-key failure,
+mocked 5xx retry, review publication, restart recovery, EN/SV, and 390px/320px
+layouts. No external model request was made; live campaign data and unrelated
+local media stay outside the commit.
+
+**2026-07-17 — Codex** · status: DONE
 Lane: campaigns (feature 6). Added boot migration and atomic persistence for
 campaigns, PC/draft/session/log ownership, guarded campaign management APIs,
 current-campaign party/chronicle whitelists, the GM campaign ledger, conditional

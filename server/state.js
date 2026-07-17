@@ -126,9 +126,17 @@ for (const entry of state.characterDrafts) {
   draftsMigrated = true;
 }
 for (const session of state.sessions) {
-  if (knownCampaignIds.has(session.campaignId)) continue;
-  session.campaignId = state.campaigns.currentId;
-  sessionsMigrated = true;
+  if (!knownCampaignIds.has(session.campaignId)) {
+    session.campaignId = state.campaigns.currentId;
+    sessionsMigrated = true;
+  }
+  // A network request cannot survive a server restart. Return the record to
+  // an explicit retryable state instead of leaving the UI waiting forever.
+  if (session.status === "retelling") {
+    session.status = "failed";
+    session.error = "The server closed before the chronicler returned. Send it again.";
+    sessionsMigrated = true;
+  }
 }
 for (const entry of state.log) {
   if (knownCampaignIds.has(entry.campaignId)) continue;
