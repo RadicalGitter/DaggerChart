@@ -5,7 +5,7 @@ import { loadJson, saveJson } from "./store.js";
 
 const FILE = "telemetry.json";
 const VIEWPORTS = new Set(["mobile", "tablet", "desktop"]);
-const PAGE_PATTERN = /^\/(?:login|player|table|table-book|tome|create|character\/:id|journal|music)(?:@embed)?$/;
+const PAGE_PATTERN = /^\/(?:login|player|table|table-book|tome|create|character\/:id|journal|music|rules)(?:@embed)?$/;
 const MAX_EVENTS_PER_BATCH = 200;
 const MAX_POINTS_PER_PAGE = 900;
 const MAX_TARGETS_PER_PAGE = 120;

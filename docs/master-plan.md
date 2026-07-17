@@ -33,11 +33,12 @@ Treat each plan's **Backend** section as settled architecture and its
   keepsake in the `KEEPSAKES` registry (`tome.js`) per
   [player-shell-visuals.md](player-shell-visuals.md).
 
-Suggested remaining order (dependencies, not importance): **5 → 6 → 4**.
+Suggested remaining order (dependencies, not importance): **finish 5 → 6 → 4**.
 7 (soft delete), 1 (Fear/Hope), 2 (GM quick tools), and 3 (private messages)
-are built. 5 is mostly data
-authoring; 6 (campaigns) must land before 4, which is campaign-scoped and the
-only feature needing network access.
+are built. Feature 5's corpus, public API, and standalone reference are built;
+its player-shell and GM-hotbar entry points remain. Feature 6 (campaigns) must
+land before 4, which is campaign-scoped and the only feature needing network
+access.
 
 ---
 
@@ -279,7 +280,15 @@ shape above already holds it; nothing else should assume audio exists.
 
 ---
 
-## 5. Rules wiki
+## 5. Rules wiki — CORE BUILT
+
+**Core built on `beta` (2026-07-17).** `data/daggerheart/rules.json` contains
+34 paraphrased official-SRD entries across At the Table, Combat, Recovery, and
+Gear. `GET /api/rules` serves the corpus with public caching and ETag support;
+`/rules` supplies ranked search, grouped browsing, hash deep links, curated
+cross-references, glossary-enhanced escaped text, EN/SV chrome, content-free
+telemetry, and responsive index/article views. Player-shell registration and
+the GM hotbar quick-search remain the second integration slice.
 
 **Goal.** A searchable, hierarchically grouped rules reference (Combat /
 Adventuring / Downtime / …) with cross-references ("you probably also meant…"),

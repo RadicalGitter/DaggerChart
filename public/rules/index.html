@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rules at Hand - The Settlement</title>
+<link rel="stylesheet" href="/shared/ledger.css">
+<link rel="stylesheet" href="/shared/lamplight.css">
+<link rel="stylesheet" href="rules.css">
+</head>
+<body>
+<div class="rules-shell" id="rules-shell">
+  <header class="rules-masthead">
+    <a class="root-link" href="/player" data-nav="player-root">
+      <span aria-hidden="true">&#8592;</span>
+      <span data-i18n="rules.return">Player root</span>
+    </a>
+    <div class="rules-heading">
+      <span class="smallcaps" data-i18n="rules.kicker">A table reference</span>
+      <h1 data-i18n="rules.title">Rules at Hand</h1>
+    </div>
+    <a class="source-mark" id="source-mark" href="https://www.daggerheart.com/srd/" target="_blank" rel="noreferrer">
+      <span>SRD</span><strong>1.0</strong>
+    </a>
+  </header>
+
+  <div class="rule-colors" aria-hidden="true"><i></i><i></i><i></i></div>
+
+  <div class="mobile-switch" role="group" aria-label="Rules view" data-i18n-aria="rules.view">
+    <button type="button" class="active" id="show-index" data-tab="browse" data-i18n="rules.browse">Browse</button>
+    <button type="button" id="show-article" data-tab="article" data-i18n="rules.article">Rule</button>
+  </div>
+
+  <main class="rules-workbench">
+    <aside class="rules-index" aria-label="Rules index" data-i18n-aria="rules.indexLabel">
+      <div class="search-field">
+        <label for="rule-search" data-i18n="rules.search">Search the rules</label>
+        <div class="search-control">
+          <span class="search-glyph" aria-hidden="true"></span>
+          <input id="rule-search" type="search" autocomplete="off" spellcheck="false" data-i18n-placeholder="rules.searchPlaceholder" placeholder="Attack, rest, Hope…">
+          <button id="clear-search" type="button" aria-label="Clear search" title="Clear search" data-i18n-aria="rules.clearSearch" data-i18n-title="rules.clearSearch" hidden>&times;</button>
+        </div>
+      </div>
+      <div class="index-count" id="index-count" aria-live="polite"></div>
+      <nav class="rule-tree" id="rule-tree" aria-label="Rule entries" data-i18n-aria="rules.entriesLabel"></nav>
+    </aside>
+
+    <section class="article-pane" aria-live="polite">
+      <button class="article-back" id="article-back" type="button">
+        <span aria-hidden="true">&#8592;</span>
+        <span data-i18n="rules.backToIndex">Back to the index</span>
+      </button>
+      <article class="rule-article" id="rule-article">
+        <p class="article-loading" data-i18n="rules.loading">Opening the reference…</p>
+      </article>
+    </section>
+  </main>
+</div>
+<script type="module" src="rules.js"></script>
+</body>
+</html>

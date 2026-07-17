@@ -23,6 +23,7 @@ public/
   create/     character creation wizard
   character/  live character sheet + hand manager
   music/      GM music desk: bubble library, prompt tag board, generation controls
+  rules/      searchable public SRD table reference
   journal/    players' journal: notes on people, places, and days
   board/      named Main/HUD drafting boards (infinite canvas, plates, pins)
 data/         all persistent state (see README)
@@ -60,6 +61,8 @@ docs/         this file, the design spec, ComfyUI workflow
   endpoints call `broadcast()` so open pages refresh. Named drafting-board PUTs
   deliberately do *not* broadcast (would echo the GM's own edits back); when
   `boards.json` is absent, boot migrates legacy `board.json` into `main` once.
+  The static `daggerheart/rules.json` corpus is loaded once at boot and served
+  cacheably; it contains no campaign state.
 - **`music.js`** — owns `music.json`, playlist/theme metadata, safe local-audio
   paths, publishing, the mock/live provider adapter, and the validated Suno
   web-library mirror. Generated files are downloaded into
@@ -93,6 +96,7 @@ docs/         this file, the design spec, ComfyUI workflow
 | `POST/PUT /api/characters[/:id]` | folk (NPC) cards incl. hidden layer |
 | `POST /api/log`, `POST /api/log/:id/publish` | chronicle notes, publish to table |
 | `GET /api/reference` | SRD creation data (classes, ancestries, cards…) |
+| `GET /api/rules` | public searchable rules corpus with source/license metadata; cacheable with ETag/304 |
 | `GET /api/character-drafts`, `GET/PUT/DELETE /api/character-drafts/:id` | resumable unfinished creator state, listed separately from completed PCs |
 | `GET/POST/PUT/DELETE /api/party[/:id]` | active player characters; DELETE retires without destroying the stored record or keyed data |
 | `POST /api/party/:id/restore` | return a retired character to player choosers and sheets |
@@ -156,6 +160,11 @@ Consumable reactions; see [inventory.md](inventory.md).
   dock for the current `settlement-pc`. It fetches only `/api/messages?pc=`,
   marks the player side read on open, and sends with `Ctrl+Enter`; EN/SV labels
   live in `shared/i18n.js`.
+- **Rules reference:** `/rules` ranks client-side search as title prefix,
+  title substring, keyword, path, then body. Hashes are stable rule IDs;
+  `seeAlso` supplies curated links and escaped body text passes through
+  `termify()`. Desktop uses independently scrolling index/article panes;
+  narrow screens switch between Browse and Rule views.
 - **Player-shell visuals:** `/player` is the root for choosing a focused visual
   tool. `/table`, `/table-book`, and `/tome` share `/api/table`, SSE,
   `settlement-pc`, and the existing embeds. See

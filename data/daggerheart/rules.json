@@ -1,0 +1,282 @@
+{
+  "version": "1.0",
+  "source": {
+    "title": "Daggerheart SRD 1.0 (September 9, 2025)",
+    "url": "https://www.daggerheart.com/wp-content/uploads/2025/09/Daggerheart-SRD-9-09-25.pdf",
+    "license": "Darrington Press Community Gaming License"
+  },
+  "nodes": [
+    {
+      "id": "core-gameplay-loop",
+      "title": "Core Gameplay Loop",
+      "path": ["At the Table", "Flow"],
+      "body": "The GM sets the scene, then the table asks and answers questions until the fiction is clear enough for someone to act. If success is certain or failure would be uninteresting, the move succeeds without a roll. If the outcome is uncertain and consequential, make an action roll. Resolve what changed, then set the changed scene again.",
+      "seeAlso": ["spotlight", "action-rolls"],
+      "keywords": ["scene", "fiction", "conversation", "when to roll", "automatic success"]
+    },
+    {
+      "id": "spotlight",
+      "title": "The Spotlight",
+      "path": ["At the Table", "Flow"],
+      "body": "Daggerheart has no fixed initiative order or set number of actions. The spotlight marks the character or player who currently has the table's attention. It moves where the fiction naturally points, to someone who has not acted recently, or wherever a rule directs it. A failed action roll usually passes the spotlight to the GM for a move.",
+      "seeAlso": ["core-gameplay-loop", "action-roll-outcomes", "fear"],
+      "keywords": ["initiative", "turn order", "action economy", "gm move", "whose turn"]
+    },
+    {
+      "id": "action-rolls",
+      "title": "Action Rolls",
+      "path": ["At the Table", "Rolls"],
+      "body": "Use an action roll when a move is difficult or risky enough that both success and failure could change the scene. Roll the Hope and Fear Duality Dice, add the relevant trait and other modifiers, then compare the total to the Difficulty. Meeting or beating the Difficulty succeeds; which Duality Die is higher determines whether the result is with Hope or with Fear.",
+      "seeAlso": ["action-roll-outcomes", "advantage-disadvantage", "experiences"],
+      "keywords": ["duality dice", "difficulty", "trait roll", "2d12", "make a move"]
+    },
+    {
+      "id": "action-roll-outcomes",
+      "title": "Action Roll Outcomes",
+      "path": ["At the Table", "Rolls"],
+      "body": "- Success with Hope: succeed and gain a Hope.\n- Success with Fear: succeed with a cost or complication; the GM gains a Fear.\n- Failure with Hope: fail with a minor consequence, gain a Hope, and pass the spotlight to the GM.\n- Failure with Fear: fail with a major consequence; the GM gains a Fear and takes the spotlight.\n\nEvery roll changes the scene. A failed roll never means that nothing happens.",
+      "seeAlso": ["action-rolls", "critical-success", "fear", "hope"],
+      "keywords": ["success with hope", "success with fear", "failure with hope", "failure with fear", "failing forward"]
+    },
+    {
+      "id": "critical-success",
+      "title": "Critical Success",
+      "path": ["At the Table", "Rolls"],
+      "body": "Matching results on the Hope and Fear Dice are a Critical Success, regardless of the total. The action automatically succeeds with an added benefit, the PC gains a Hope, and the PC clears a Stress. A critical attack also deals critical damage. A Critical Success counts as a roll with Hope.",
+      "seeAlso": ["critical-damage", "action-roll-outcomes", "stress"],
+      "keywords": ["crit", "matching dice", "double", "clear stress", "automatic success"]
+    },
+    {
+      "id": "reaction-rolls",
+      "title": "Reaction Rolls",
+      "path": ["At the Table", "Rolls"],
+      "body": "A reaction roll answers an attack, hazard, or other imminent effect. Resolve it like an action roll, but it generates neither Hope nor Fear, does not trigger an additional GM move, and cannot receive Help an Ally. On a Critical Success, ignore effects that would still apply on an ordinary success, but do not gain Hope or clear Stress.",
+      "seeAlso": ["action-rolls", "critical-success", "help-an-ally"],
+      "keywords": ["reaction", "avoid", "withstand", "saving throw", "defense roll"]
+    },
+    {
+      "id": "advantage-disadvantage",
+      "title": "Advantage and Disadvantage",
+      "path": ["At the Table", "Rolls"],
+      "body": "With advantage, roll a d6 and add it to the roll. With disadvantage, roll a d6 and subtract it. Advantage and disadvantage in your own dice pool cancel one-for-one, so you never roll both there. Dice supplied from outside your pool, such as Help an Ally, still apply to your final result.",
+      "seeAlso": ["action-rolls", "help-an-ally", "line-of-sight-cover"],
+      "keywords": ["adv", "disadv", "extra d6", "cancel", "bonus die", "penalty die"]
+    },
+    {
+      "id": "group-action-rolls",
+      "title": "Group Action Rolls",
+      "path": ["At the Table", "Working Together"],
+      "body": "Choose one PC to lead. The leader makes an action roll; every other participating PC describes their contribution and makes a suitable reaction roll. Add +1 to the leader's total for each successful reaction and -1 for each failed reaction.",
+      "seeAlso": ["action-rolls", "reaction-rolls", "tag-team-rolls"],
+      "keywords": ["group check", "everyone rolls", "lead character", "cooperate", "party action"]
+    },
+    {
+      "id": "tag-team-rolls",
+      "title": "Tag Team Rolls",
+      "path": ["At the Table", "Working Together"],
+      "body": "Once per session, a player can spend 3 Hope to initiate a Tag Team Roll with another PC. Both PCs roll, then choose one complete roll to resolve both actions. Hope on that chosen roll grants Hope to both PCs; Fear grants the GM one Fear for each PC involved. On a successful Tag Team attack, combine both damage rolls as one source and choose one damage type if they differ.",
+      "seeAlso": ["group-action-rolls", "hope", "multiple-damage-sources"],
+      "keywords": ["team up", "combo", "3 hope", "combined attack", "once per session"]
+    },
+    {
+      "id": "help-an-ally",
+      "title": "Help an Ally",
+      "path": ["At the Table", "Working Together"],
+      "body": "Spend a Hope and describe how you help a PC making an action roll, then roll an advantage die for them. If several allies help, each rolls, but the acting PC adds only the highest result. Help an Ally cannot be used on reaction rolls.",
+      "seeAlso": ["hope", "advantage-disadvantage", "reaction-rolls"],
+      "keywords": ["aid", "assist", "help", "advantage die", "spend hope"]
+    },
+    {
+      "id": "hope",
+      "title": "Hope",
+      "path": ["At the Table", "Resources"],
+      "body": "PCs begin with 2 Hope, can hold at most 6, and keep it between sessions. Gain Hope from rolls with Hope. Spend it to Help an Ally, apply a relevant Experience, initiate a Tag Team Roll, or activate a Hope Feature. Hope gained by the current roll can immediately pay for a feature used on that action.",
+      "seeAlso": ["action-roll-outcomes", "help-an-ally", "experiences", "tag-team-rolls"],
+      "keywords": ["metacurrency", "maximum hope", "gain hope", "spend hope", "hope feature"]
+    },
+    {
+      "id": "fear",
+      "title": "Fear",
+      "path": ["At the Table", "Resources"],
+      "body": "The GM gains Fear when a player rolls with Fear. The pool holds at most 12 and carries between sessions. The GM can spend Fear to make or strengthen a GM move, activate a Fear Feature, spotlight additional adversaries, or use other effects that name a Fear cost.",
+      "seeAlso": ["action-roll-outcomes", "spotlight", "downtime-consequences"],
+      "keywords": ["gm currency", "fear pool", "maximum fear", "gm move", "fear feature"]
+    },
+    {
+      "id": "experiences",
+      "title": "Using Experiences",
+      "path": ["At the Table", "Resources"],
+      "body": "When an Experience is relevant to an action or reaction roll, spend a Hope to add that Experience's modifier. You may spend multiple Hope to apply multiple relevant Experiences to the same roll. An Experience describes learned aptitude; it does not grant a separate spell or feature.",
+      "seeAlso": ["hope", "action-rolls", "reaction-rolls"],
+      "keywords": ["utilize experience", "background bonus", "experience modifier", "spend hope"]
+    },
+    {
+      "id": "evasion",
+      "title": "Evasion",
+      "path": ["Combat", "Defense"],
+      "body": "Evasion is the Difficulty for rolls made against a PC. A PC's class sets their base Evasion, and equipment, conditions, domain cards, and other effects can change it. Attacks against adversaries use the adversary's Difficulty instead.",
+      "seeAlso": ["attack-rolls", "conditions", "line-of-sight-cover"],
+      "keywords": ["armor class", "to hit", "target number", "defense", "difficulty"]
+    },
+    {
+      "id": "attack-rolls",
+      "title": "Attack Rolls",
+      "path": ["Combat", "Attacking"],
+      "body": "An attack roll is an action roll intended to inflict harm. Use the trait named by the weapon or spell; an unarmed attack uses Strength or Finesse as the GM decides. Unless a rule says otherwise, compare the result to the target's Difficulty. Roll damage only after a successful attack.",
+      "seeAlso": ["action-rolls", "damage-rolls", "evasion", "multi-target-attacks"],
+      "keywords": ["attack", "hit", "to hit", "weapon trait", "unarmed", "target difficulty"]
+    },
+    {
+      "id": "damage-rolls",
+      "title": "Damage Rolls",
+      "path": ["Combat", "Damage"],
+      "body": "On a successful attack, roll the damage listed by the weapon, spell, or feature. Weapon damage rolls use a number of damage dice equal to Proficiency, while any flat modifier is added only once. Successful unarmed attacks deal a number of d4s equal to Proficiency. Effects that deal damage using Spellcast roll a number of dice equal to the Spellcast trait, with no dice at +0 or lower.",
+      "seeAlso": ["attack-rolls", "critical-damage", "damage-thresholds", "damage-types"],
+      "keywords": ["weapon damage", "proficiency", "flat modifier", "spellcast damage", "unarmed damage"]
+    },
+    {
+      "id": "critical-damage",
+      "title": "Critical Damage",
+      "path": ["Combat", "Damage"],
+      "body": "On a Critical Success with an attack, roll damage normally, then add the maximum possible result of all damage dice. For example, a normal 2d8+1 attack becomes 2d8+1+16. Flat modifiers are not maximized again.",
+      "seeAlso": ["critical-success", "damage-rolls", "damage-thresholds"],
+      "keywords": ["critical hit", "max dice", "crit damage", "double damage"]
+    },
+    {
+      "id": "damage-thresholds",
+      "title": "Damage Thresholds",
+      "path": ["Combat", "Damage"],
+      "body": "Compare final damage to the target's Major and Severe thresholds. Below Major marks 1 Hit Point; Major or higher but below Severe marks 2; Severe or higher marks 3. Damage reduced to 0 or less marks no Hit Points. A PC's armor thresholds include their level. Marking the last Hit Point makes a PC fall and choose a death move.",
+      "seeAlso": ["armor-slots", "damage-rolls", "death-moves", "resistance-immunity-direct"],
+      "keywords": ["minor damage", "major damage", "severe damage", "hit points", "hp", "thresholds"]
+    },
+    {
+      "id": "armor-slots",
+      "title": "Armor Slots",
+      "path": ["Combat", "Defense"],
+      "body": "When you take damage, you can mark one Armor Slot to lower its severity by one threshold: Severe to Major, Major to Minor, or Minor to none. Armor Score determines how many Armor Slots are available, up to 12. A character with Armor Score 0 cannot mark Armor Slots. Direct damage bypasses this option.",
+      "seeAlso": ["damage-thresholds", "resistance-immunity-direct", "short-rest", "long-rest"],
+      "keywords": ["armor score", "reduce damage", "mark armor", "repair armor", "damage severity"]
+    },
+    {
+      "id": "damage-types",
+      "title": "Damage Types",
+      "path": ["Combat", "Damage"],
+      "body": "Daggerheart has physical damage (phy) and magic damage (mag). Mundane weapons and unarmed attacks normally deal physical damage; spells normally deal magic damage. When a single attack deals both types, resistance or immunity helps only if the target has it against both types.",
+      "seeAlso": ["resistance-immunity-direct", "damage-rolls", "multiple-damage-sources"],
+      "keywords": ["physical damage", "magic damage", "phy", "mag", "damage type"]
+    },
+    {
+      "id": "resistance-immunity-direct",
+      "title": "Resistance, Immunity, and Direct Damage",
+      "path": ["Combat", "Damage"],
+      "body": "Resistance halves incoming damage of the named type before thresholds are checked; apply it before other reductions, and do not stack multiple resistances to the same type. Immunity ignores incoming damage of that type. Direct damage cannot be reduced by marking Armor Slots.",
+      "seeAlso": ["damage-types", "armor-slots", "damage-thresholds"],
+      "keywords": ["resistant", "immune", "half damage", "direct damage", "incoming damage"]
+    },
+    {
+      "id": "multi-target-attacks",
+      "title": "Multi-Target Attacks",
+      "path": ["Combat", "Attacking"],
+      "body": "When a spell or ability targets several adversaries, make one attack roll and one damage roll, then apply those results to each target separately. Each target's own Difficulty, resistance, immunity, and thresholds still matter.",
+      "seeAlso": ["attack-rolls", "damage-rolls", "multiple-damage-sources"],
+      "keywords": ["area attack", "multiple targets", "one roll", "aoe", "several adversaries"]
+    },
+    {
+      "id": "multiple-damage-sources",
+      "title": "Multiple Damage Sources",
+      "path": ["Combat", "Damage"],
+      "body": "Damage that arrives simultaneously from multiple sources is totaled before comparing it to the target's damage thresholds. A Tag Team attack also combines both successful damage rolls and treats the total as one source.",
+      "seeAlso": ["damage-thresholds", "tag-team-rolls", "damage-rolls"],
+      "keywords": ["combine damage", "simultaneous damage", "one source", "added damage"]
+    },
+    {
+      "id": "ranges",
+      "title": "Range Bands",
+      "path": ["Combat", "Positioning"],
+      "body": "- Melee: close enough to touch.\n- Very Close: roughly 5-10 feet.\n- Close: roughly 10-30 feet.\n- Far: roughly 30-100 feet.\n- Very Far: roughly 100-300 feet.\n- Out of Range: beyond the active conflict and normally untargetable.\n\nAn effect's listed range is its maximum; unless it says otherwise, it can be used at any closer range.",
+      "seeAlso": ["movement-under-pressure", "line-of-sight-cover", "multi-target-attacks"],
+      "keywords": ["melee", "very close", "close", "far", "very far", "distance"]
+    },
+    {
+      "id": "movement-under-pressure",
+      "title": "Movement Under Pressure",
+      "path": ["Combat", "Positioning"],
+      "body": "While under pressure or in danger, an action roll can include movement to a location within Close range. Moving without another action roll, or moving farther than Close, normally requires a successful Agility Roll. An adversary can move within Close as part of an action, or spend its action to sprint within Very Far.",
+      "seeAlso": ["ranges", "spotlight", "action-rolls"],
+      "keywords": ["move", "sprint", "reposition", "agility roll", "danger", "free movement"]
+    },
+    {
+      "id": "line-of-sight-cover",
+      "title": "Line of Sight and Cover",
+      "path": ["Combat", "Positioning"],
+      "body": "A ranged attacker normally needs line of sight to the target. Partial obstruction gives the target cover, so attacks through it have disadvantage. Total obstruction removes line of sight and normally prevents the attack.",
+      "seeAlso": ["advantage-disadvantage", "ranges", "attack-rolls"],
+      "keywords": ["cover", "line of sight", "ranged attack", "obstruction", "blocked"]
+    },
+    {
+      "id": "conditions",
+      "title": "Standard Conditions",
+      "path": ["Combat", "Conditions"],
+      "body": "- Hidden: rolls against you have disadvantage while enemies cannot see you and do not know your location; it ends when you are seen or attack.\n- Restrained: you cannot move, but can still act from your position.\n- Vulnerable: all rolls targeting you have advantage.\n\nThe same condition normally cannot be applied more than once. Temporary conditions can be cleared by making an appropriate move against them; special conditions name their own removal rule.",
+      "seeAlso": ["advantage-disadvantage", "stress", "movement-under-pressure"],
+      "keywords": ["hidden", "restrained", "vulnerable", "temporary condition", "clear condition"]
+    },
+    {
+      "id": "stress",
+      "title": "Stress",
+      "path": ["Combat", "Consequences"],
+      "body": "Stress measures mental, physical, and emotional strain. All classes begin with 6 Stress slots and can increase to 12. Marking the last Stress makes the character Vulnerable until at least 1 Stress is cleared. If a character must mark Stress and has no open slot, they mark 1 Hit Point instead. A move that requires marking Stress cannot be used when all Stress is marked.",
+      "seeAlso": ["conditions", "short-rest", "long-rest", "critical-success"],
+      "keywords": ["mark stress", "full stress", "vulnerable", "clear stress", "no stress slots"]
+    },
+    {
+      "id": "short-rest",
+      "title": "Short Rest",
+      "path": ["Recovery", "Rests"],
+      "body": "A short rest is about an hour in the fiction. Each PC may freely move domain cards between Loadout and Vault, then choose two downtime moves, including the same move twice. A move can clear 1d4 + Tier Hit Points, Stress, or Armor Slots, or Prepare to gain Hope. Rest-limited features refresh at the end. An interrupted short rest gives no benefits.",
+      "seeAlso": ["long-rest", "downtime-consequences", "armor-slots", "stress"],
+      "keywords": ["rest", "downtime move", "repair armor", "tend wounds", "clear stress", "prepare"]
+    },
+    {
+      "id": "long-rest",
+      "title": "Long Rest",
+      "path": ["Recovery", "Rests"],
+      "body": "A long rest lasts several in-world hours. Each PC may freely move domain cards between Loadout and Vault, then choose two downtime moves, including the same move twice. Long-rest moves can clear all Hit Points, Stress, or Armor Slots; Prepare for Hope; or advance a GM-approved long-term project. Rest and long-rest limits refresh at the end. An interrupted long rest grants only short-rest benefits.",
+      "seeAlso": ["short-rest", "downtime-consequences", "equipment-swaps", "death-moves"],
+      "keywords": ["camp", "sleep", "downtime move", "project", "clear all", "refresh feature"]
+    },
+    {
+      "id": "downtime-consequences",
+      "title": "Rest Consequences",
+      "path": ["Recovery", "Rests"],
+      "body": "After a short rest, the GM gains 1d4 Fear. After a long rest, the GM gains Fear equal to 1d4 plus the number of PCs and may advance one long-term countdown. After three short rests in a row, the party's next rest must be long.",
+      "seeAlso": ["short-rest", "long-rest", "fear"],
+      "keywords": ["rest fear", "three short rests", "countdown", "gm gains fear", "downtime cost"]
+    },
+    {
+      "id": "death-moves",
+      "title": "Death Moves",
+      "path": ["Recovery", "Falling"],
+      "body": "When a PC marks their last Hit Point, choose one death move.\n- Blaze of Glory: take one final action that automatically critically succeeds with GM approval, then die.\n- Avoid Death: fall unconscious, worsen the situation, and roll the Hope Die for a possible permanent scar; recover when an ally clears at least 1 HP or after a long rest.\n- Risk It All: roll the Duality Dice. Hope higher keeps you standing and clears HP or Stress equal to that die; Fear higher means death; matching dice clear all HP and Stress.",
+      "seeAlso": ["damage-thresholds", "critical-success", "long-rest"],
+      "keywords": ["fall", "last hit point", "blaze of glory", "avoid death", "risk it all", "scar"]
+    },
+    {
+      "id": "quick-rulings",
+      "title": "Quick Rulings",
+      "path": ["At the Table", "Rulings"],
+      "body": "- Round fractions up unless a rule says otherwise; resolve remaining ambiguity in the PCs' favor.\n- A rerolled die uses the new result unless the feature says otherwise.\n- The controller of simultaneous effects chooses their order.\n- Effects normally stack except conditions and advantage/disadvantage.\n- Hope or Stress normally cannot be spent repeatedly on the same feature to multiply it on one roll.\n- A post-roll feature can be used after success or failure is declared, but before consequences unfold or another roll begins.",
+      "seeAlso": ["advantage-disadvantage", "conditions", "hope", "stress"],
+      "keywords": ["rounding", "reroll", "stacking", "simultaneous effects", "spending resources", "after a roll"]
+    },
+    {
+      "id": "equipment-swaps",
+      "title": "Swapping Equipment",
+      "path": ["Gear", "Equipping"],
+      "body": "Only active weapons and active armor grant their attacks, protection, and features. Swap an Inventory Weapon with an Active Weapon for free during a rest or calm moment; under pressure, mark a Stress. A PC can have one Active Armor, cannot equip armor while in danger, and must recalculate thresholds whenever armor changes.",
+      "seeAlso": ["long-rest", "short-rest", "stress", "armor-slots"],
+      "keywords": ["equip", "unequip", "swap weapon", "inventory weapon", "active armor", "loadout"]
+    }
+  ]
+}

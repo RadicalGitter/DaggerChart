@@ -40,6 +40,7 @@ whitelisted server-side regardless).
 | `/create` | players | Guided Daggerheart character creation (all SRD data local) |
 | `/character/:id` | one player each | Live character sheet: tap-to-mark HP/Stress/Hope/Armor, Loadout/Vault hand manager |
 | `/journal` | players | The party's journal: notes on people and places the GM reveals, plus a season-stamped diary — each note "for my eyes" or "for the table" |
+| `/rules` | everyone | Searchable Daggerheart table reference with grouped browsing, deep links, cross-references, and glossary notes |
 | `/music` | GM | Music desk: spatial song bubbles, local playlists, a one-collection Suno web mirror, branching prompt tags, and character-theme variations |
 
 Player-facing pages have an EN/SV language toggle (top right, per device) and
@@ -80,6 +81,7 @@ stopped (or live; the GM console re-reads on refresh):
 - `event-tables/*.json` — **do not open** (see above)
 - `daggerheart/reference.json` — SRD reference data (classes, ancestries, communities, domain cards, weapons, armor, and the 60-entry Consumables catalog)
 - `daggerheart/gm-screen.json` — compact SRD quick-reference rows for the GM overlay
+- `daggerheart/rules.json` — hand-editable public rules corpus used by the searchable table reference
 - `backups/` — automatic snapshots (gitignored)
 
 Audio files live outside `data/` under `Visseren/`; see

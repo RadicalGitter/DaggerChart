@@ -30,6 +30,7 @@ const ROOT = path.join(__dirname, "..");
 const PUBLIC = path.join(ROOT, "public");
 const PORT = process.env.PORT || 4626;
 const STANDARD_CONDITIONS = new Set(["hidden", "restrained", "vulnerable"]);
+const rulesCorpus = loadJson("daggerheart/rules.json", { version: "1.0", source: null, nodes: [] });
 const isActivePc = (pc) => pc?.active !== false;
 const activePcById = (id) => state.pcs.find((pc) => pc.id === id && isActivePc(pc)) || null;
 
@@ -49,6 +50,7 @@ app.use("/character", express.static(path.join(PUBLIC, "character")));
 app.use("/journal", express.static(path.join(PUBLIC, "journal")));
 app.use("/screen", express.static(path.join(PUBLIC, "screen")));
 app.use("/music", express.static(path.join(PUBLIC, "music")));
+app.use("/rules", express.static(path.join(PUBLIC, "rules")));
 // /character/<id> serves the sheet shell; the page reads the id from the URL.
 app.get("/character/:id", (_req, res) => res.sendFile(path.join(PUBLIC, "character", "index.html")));
 // The bare address is the trusted-table identity chooser. No passwords;
@@ -126,6 +128,10 @@ app.get("/api/reference", guard((_req, res) => {
   if (!state.reference) throw new Error("Reference data missing — run the reference build.");
   res.json(state.reference);
 }));
+app.get("/api/rules", (_req, res) => {
+  res.set("Cache-Control", "public, max-age=300");
+  res.json(rulesCorpus);
+});
 
 app.get("/api/party", (_req, res) => res.json(partyListView()));
 

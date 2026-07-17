@@ -355,7 +355,28 @@ const STRINGS = {
     "hand.aboveLevel": "beyond your level",
     "hand.giveup": "Remove",
     "hand.confirmRemove": "Remove {name} from your Vault?",
-    "hand.tovault": "It goes to your Vault — your Loadout is full."
+    "hand.tovault": "It goes to your Vault — your Loadout is full.",
+    // rules reference
+    "rules.kicker": "A table reference",
+    "rules.title": "Rules at Hand",
+    "rules.return": "Player root",
+    "rules.search": "Search the rules",
+    "rules.searchPlaceholder": "Attack, rest, Hope…",
+    "rules.clearSearch": "Clear search",
+    "rules.view": "Rules view",
+    "rules.indexLabel": "Rules index",
+    "rules.entriesLabel": "Rule entries",
+    "rules.browse": "Browse",
+    "rules.article": "Rule",
+    "rules.matches": "{n} matching entries",
+    "rules.oneMatch": "1 matching entry",
+    "rules.allEntries": "{n} entries",
+    "rules.noResults": "No rule matches that search.",
+    "rules.seeAlso": "See also",
+    "rules.source": "Official source",
+    "rules.loading": "Opening the reference…",
+    "rules.error": "The rules reference could not be loaded.",
+    "rules.backToIndex": "Back to the index"
   },
   sv: {
     "create.title": "Skapa din rollperson",
@@ -686,7 +707,27 @@ const STRINGS = {
     "hand.aboveLevel": "över din nivå",
     "hand.giveup": "Ta bort",
     "hand.confirmRemove": "Ta bort {name} från ditt Vault?",
-    "hand.tovault": "Det läggs i ditt Vault — din Loadout är full."
+    "hand.tovault": "Det läggs i ditt Vault — din Loadout är full.",
+    "rules.kicker": "En bordsreferens",
+    "rules.title": "Regler till hands",
+    "rules.return": "Spelarrot",
+    "rules.search": "Sök i reglerna",
+    "rules.searchPlaceholder": "Attack, vila, Hope…",
+    "rules.clearSearch": "Rensa sökning",
+    "rules.view": "Regelvy",
+    "rules.indexLabel": "Regelregister",
+    "rules.entriesLabel": "Regelposter",
+    "rules.browse": "Bläddra",
+    "rules.article": "Regel",
+    "rules.matches": "{n} träffar",
+    "rules.oneMatch": "1 träff",
+    "rules.allEntries": "{n} poster",
+    "rules.noResults": "Ingen regel matchar sökningen.",
+    "rules.seeAlso": "Se även",
+    "rules.source": "Officiell källa",
+    "rules.loading": "Öppnar referensen…",
+    "rules.error": "Regelreferensen kunde inte laddas.",
+    "rules.backToIndex": "Tillbaka till registret"
   }
 };
 
@@ -940,6 +981,15 @@ function wireToggle() {
 function applyStatic() {
   for (const el of document.querySelectorAll("[data-i18n]")) {
     el.textContent = t(el.dataset.i18n);
+  }
+  for (const el of document.querySelectorAll("[data-i18n-placeholder]")) {
+    el.setAttribute("placeholder", t(el.dataset.i18nPlaceholder));
+  }
+  for (const el of document.querySelectorAll("[data-i18n-aria]")) {
+    el.setAttribute("aria-label", t(el.dataset.i18nAria));
+  }
+  for (const el of document.querySelectorAll("[data-i18n-title]")) {
+    el.setAttribute("title", t(el.dataset.i18nTitle));
   }
 }
 

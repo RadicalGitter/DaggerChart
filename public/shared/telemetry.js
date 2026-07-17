@@ -10,7 +10,8 @@ const ROUTES = new Set([
   "/create",
   "/character/:id",
   "/journal",
-  "/music"
+  "/music",
+  "/rules"
 ]);
 const ACTION_SELECTOR = [
   "a[href]",

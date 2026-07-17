@@ -138,13 +138,20 @@ designing anything; it is the source of truth. Code map + API:
   GM hotbar fetches all threads through `/api/messages/gm`. General player and
   GM views expose unread counts only, never message text. Retiring a PC keeps
   the GM-readable thread but blocks player reads and new messages.
+- `/rules` is the public standalone rules reference backed by
+  `data/daggerheart/rules.json` and cacheable `GET /api/rules`. Search remains
+  client-side with the settled title-prefix → title-substring → keyword → path
+  → body ranking; bodies are escaped before `termify()`. The standalone core
+  is built; player-shell and GM-hotbar entry points are the remaining feature-5
+  integration work.
 
 ## What's next (agreed ambitions, in rough order)
 - **The remaining planned features have backend implementation plans in
   [docs/master-plan.md](docs/master-plan.md).** Read its Shared foundations
   before starting one; character lifecycle (feature 7), the Fear/Hope tracker
   (feature 1), GM quick tools (feature 2), and private messages (feature 3) are
-  built, so the remaining suggested dependency order is 5 → 6 → 4.
+  built. Feature 5's standalone rules core is built; finish its shell/hotbar
+  integration, then continue in dependency order 6 → 4.
 - ComfyUI wiring: the GM-side request UI exists on People cards (prompt saved
   to `portraitPrompt`, `POST /api/people/:id/portrait` is a stub) — connect it
   to the local 5090 using `docs/comfyui/waidrin-portraits-workflow.json`
