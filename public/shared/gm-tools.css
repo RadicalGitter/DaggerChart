@@ -18,6 +18,73 @@
 body.gm-tools-overlay-visible,
 body.gm-tools-messages-visible { overflow: hidden !important; }
 
+.gm-duality-feed {
+  position: fixed;
+  z-index: 2020;
+  top: max(.8rem, env(safe-area-inset-top));
+  right: max(.8rem, env(safe-area-inset-right));
+  width: min(390px, calc(100vw - 1.6rem));
+  display: grid;
+  gap: .5rem;
+  pointer-events: none;
+}
+.gm-duality-roll {
+  min-height: 72px;
+  padding: .55rem .7rem;
+  display: grid;
+  grid-template-columns: 42px minmax(92px, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: .15rem .6rem;
+  box-sizing: border-box;
+  color: var(--tool-ink);
+  border: 1px solid #6d5d46;
+  border-left: 3px solid var(--tool-gold);
+  border-radius: 5px;
+  background: rgba(29, 25, 21, .97);
+  box-shadow: 0 12px 35px rgba(0,0,0,.48);
+  animation: gm-roll-arrive 220ms ease-out both;
+}
+.gm-duality-roll.is-fear { border-left-color: var(--tool-red); }
+.gm-duality-roll.is-critical { border-color: #d3b75e; box-shadow: 0 0 22px rgba(207,174,79,.18), 0 12px 35px rgba(0,0,0,.48); }
+.gm-duality-roll.is-leaving { animation: gm-roll-leave 500ms ease-in both; }
+.gm-duality-portrait {
+  width: 40px;
+  height: 40px;
+  grid-row: 1 / -1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: var(--tool-gold);
+  border: 1px solid #685943;
+  border-radius: 50%;
+  background: #211c17;
+}
+.gm-duality-portrait img { width: 100%; height: 100%; object-fit: cover; }
+.gm-duality-initial { font-size: 1rem; }
+.gm-duality-copy { min-width: 0; align-self: end; }
+.gm-duality-copy strong,
+.gm-duality-copy span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gm-duality-copy strong { color: #f2e7d1; font-size: .78rem; }
+.gm-duality-copy span { margin-top: .08rem; color: var(--tool-muted); font-size: .58rem; font-variant: small-caps; }
+.gm-duality-dice { grid-row: 1 / -1; grid-column: 3; display: grid; grid-template-columns: 34px 42px 34px; align-items: center; gap: .25rem; }
+.gm-duality-dice > span { display: grid; place-items: center; }
+.gm-duality-dice small { color: var(--tool-muted); font-size: .51rem; font-variant: small-caps; }
+.gm-duality-dice span b { margin-top: .08rem; font-size: .82rem; }
+.gm-duality-dice > strong { color: #f3dfaa; font-size: 1.5rem; text-align: center; }
+.gm-duality-roll.is-fear .gm-duality-dice > strong { color: #e2afa4; }
+.gm-duality-outcome { min-width: 0; align-self: start; color: #c9b88f; font-size: .61rem; font-variant: small-caps; }
+.gm-duality-roll.is-fear .gm-duality-outcome { color: #d4a39a; }
+
+@keyframes gm-roll-arrive {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes gm-roll-leave {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(24px); }
+}
+
 .gm-tools-bar {
   position: fixed;
   left: 50%;
@@ -441,6 +508,9 @@ body.gm-tools-messages-visible { overflow: hidden !important; }
 }
 
 @media (max-width: 430px) {
+  .gm-duality-roll { grid-template-columns: 36px minmax(76px, 1fr) auto; padding: .45rem .5rem; }
+  .gm-duality-portrait { width: 34px; height: 34px; }
+  .gm-duality-dice { grid-template-columns: 30px 36px 30px; }
   .gm-tools-bar { gap: 0.28rem; padding-left: 0.35rem; padding-right: 0.35rem; }
   .gm-tools-bar button { width: 30px; height: 30px; }
   .gm-tools-fear-readout { min-width: 54px; }
@@ -456,4 +526,6 @@ body.gm-tools-messages-visible { overflow: hidden !important; }
 
 @media (prefers-reduced-motion: reduce) {
   .gm-tools-bar { transition: none; }
+  .gm-duality-roll,
+  .gm-duality-roll.is-leaving { animation: none; }
 }

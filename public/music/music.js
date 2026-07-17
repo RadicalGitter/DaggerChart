@@ -1489,26 +1489,81 @@ $("#prev-track").onclick = () => {
   else if (audio.src) audio.currentTime = 0;
 };
 $("#loop-toggle").onclick = () => { $("#audio").loop = !$("#audio").loop; updateTransport(); };
-$("#volume").oninput = (event) => { $("#audio").volume = Number(event.target.value); };
+const audio = $("#audio");
+let userVolume = Number($("#volume").value);
+let fadeGain = 1;
+let duckGain = 1;
+let duckTimer = null;
+let duckResetTimer = null;
+
+function applyMusicVolume() {
+  const effectiveVolume = Math.max(0, Math.min(1, userVolume * fadeGain * duckGain));
+  audio.volume = effectiveVolume;
+  audio.dataset.effectiveVolume = effectiveVolume.toFixed(3);
+  audio.dataset.duckGain = duckGain.toFixed(3);
+}
+
+function duckForCritical() {
+  const start = performance.now();
+  const initial = duckGain;
+  const target = 10 ** (-4 / 20);
+  const attack = 180;
+  const hold = 950;
+  const release = 1250;
+  clearInterval(duckTimer);
+  clearTimeout(duckResetTimer);
+  duckTimer = setInterval(() => {
+    const elapsed = performance.now() - start;
+    if (elapsed < attack) {
+      const progress = elapsed / attack;
+      duckGain = initial + (target - initial) * progress;
+    } else if (elapsed < attack + hold) {
+      duckGain = target;
+    } else {
+      const progress = Math.min(1, (elapsed - attack - hold) / release);
+      const smooth = progress * progress * (3 - 2 * progress);
+      duckGain = target + (1 - target) * smooth;
+    }
+    applyMusicVolume();
+    if (elapsed >= attack + hold + release) {
+      clearInterval(duckTimer);
+      duckTimer = null;
+      duckGain = 1;
+      applyMusicVolume();
+    }
+  }, 30);
+  // Background tabs can throttle intervals; this guarantees eventual recovery.
+  duckResetTimer = setTimeout(() => {
+    clearInterval(duckTimer);
+    duckTimer = null;
+    duckGain = 1;
+    applyMusicVolume();
+  }, attack + hold + release + 250);
+}
+
+$("#volume").oninput = (event) => {
+  userVolume = Number(event.target.value);
+  applyMusicVolume();
+};
 $("#seek").oninput = (event) => {
   const audio = $("#audio");
   if (Number.isFinite(audio.duration)) audio.currentTime = audio.duration * Number(event.target.value) / 1000;
 };
 $("#fade-out").onclick = () => {
-  const audio = $("#audio");
-  const startingVolume = audio.volume;
+  const startingGain = fadeGain;
   const timer = setInterval(() => {
-    audio.volume = Math.max(0, audio.volume - 0.04);
-    if (audio.volume <= 0) {
+    fadeGain = Math.max(0, fadeGain - 0.04);
+    applyMusicVolume();
+    if (fadeGain <= 0) {
       clearInterval(timer);
       audio.pause();
-      audio.volume = startingVolume;
+      fadeGain = startingGain;
+      applyMusicVolume();
     }
   }, 100);
 };
 
-const audio = $("#audio");
-audio.volume = Number($("#volume").value);
+applyMusicVolume();
 audio.onplay = updateTransport;
 audio.onpause = updateTransport;
 audio.ontimeupdate = () => {
@@ -1558,6 +1613,12 @@ load();
 
 const stream = new EventSource("/api/stream");
 let reloadTimer = null;
+stream.addEventListener("duality-roll", (event) => {
+  try {
+    const roll = JSON.parse(event.data);
+    if (roll?.outcome === "critical") duckForCritical();
+  } catch { /* Ignore malformed transient events without interrupting music. */ }
+});
 stream.onmessage = () => {
   clearTimeout(reloadTimer);
   reloadTimer = setTimeout(load, 400);

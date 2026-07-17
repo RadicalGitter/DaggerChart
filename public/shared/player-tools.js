@@ -1,4 +1,5 @@
 import { t } from "/shared/i18n.js";
+import "/shared/duality-dice.js";
 
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
@@ -111,6 +112,7 @@ function install() {
   }
 
   function openDrawer() {
+    window.dispatchEvent(new CustomEvent("settlement:close-dice"));
     refresh();
     if (!currentPcId) return;
     drawer.hidden = false;
@@ -176,6 +178,7 @@ function install() {
   });
   window.addEventListener("settlement:identity", refresh);
   window.addEventListener("settlement:open-notes", openDrawer);
+  window.addEventListener("settlement:close-notes", () => closeDrawer({ restoreFocus: false }));
   renderScope();
   refresh();
 }

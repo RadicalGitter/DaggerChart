@@ -1,5 +1,6 @@
 import express from "express";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import "./env.js";
 import { campaignById, createCampaignId, isActiveCampaign, state, persist, addLog, advanceSeason, resolveDowntime, modifierBreakdown, seasonLabel } from "./state.js";
@@ -11,6 +12,7 @@ import { clearTelemetry, recordTelemetryBatch, telemetryView } from "./telemetry
 import { retellSession } from "./retell.js";
 import { suggestPortrait } from "./portrait-suggest.js";
 import { artWorkshop } from "./art.js";
+import { resolveDualityRoll } from "./duality-roll.js";
 import {
   SCENE_DIMENSIONS,
   SCENE_ROOT_IDS,
@@ -94,6 +96,7 @@ const app = express();
 app.use(express.json({ limit: "8mb" }));
 app.use(almanac); // wiki + roll-to-reveal tables (server/almanac.js)
 app.use("/shared", express.static(path.join(PUBLIC, "shared")));
+app.use("/vendor/dice-box-threejs", express.static(path.join(PUBLIC, "vendor", "dice-box-threejs")));
 app.use("/vendor/html2canvas", express.static(path.join(ROOT, "node_modules", "html2canvas", "dist")));
 app.use("/gm", express.static(path.join(PUBLIC, "gm")));
 app.use("/board", express.static(path.join(PUBLIC, "board")));
@@ -126,6 +129,12 @@ app.get("/api/stream", (req, res) => {
 });
 function broadcast() {
   for (const c of clients) c.write("data: update\n\n");
+}
+
+function broadcastEvent(name, payload) {
+  if (!/^[a-z][a-z0-9-]*$/i.test(name)) throw new Error("Invalid live event name.");
+  const message = `event: ${name}\ndata: ${JSON.stringify(payload)}\n\n`;
+  for (const client of clients) client.write(message);
 }
 
 const musicPoll = setInterval(() => {
@@ -180,6 +189,22 @@ function allowSunoSnapshot(req, res, next) {
 
 // --- table (player) API: whitelisted server-side ---
 app.get("/api/table", (_req, res) => res.json(tableView()));
+
+app.post("/api/rolls/duality", guard((req, res) => {
+  const pc = activePcById(String(req.body?.pcId || ""));
+  if (!pc) throw new Error("Choose an active character before rolling.");
+  const roll = resolveDualityRoll(req.body);
+  const event = {
+    id: randomUUID(),
+    pcId: pc.id,
+    pcName: pc.name,
+    portrait: pc.portrait || null,
+    at: new Date().toISOString(),
+    ...roll
+  };
+  broadcastEvent("duality-roll", event);
+  res.status(201).json(event);
+}));
 
 // --- character creator & party (player-facing; the table is trusted) ---
 app.get("/api/reference", guard((_req, res) => {
