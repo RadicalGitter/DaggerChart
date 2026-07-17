@@ -19,7 +19,9 @@ import {
   removeSong,
   songAudioPath,
   checkProviderCredits,
-  refreshPendingMusic
+  refreshPendingMusic,
+  configureSunoMirror,
+  syncSunoSnapshot
 } from "./music.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -89,6 +91,20 @@ function guardAsync(handler) {
       res.status(400).json({ error: err.message });
     }
   };
+}
+
+function allowSunoSnapshot(req, res, next) {
+  const origin = req.get("Origin");
+  if (origin && /^https:\/\/(?:www\.)?suno\.com$/i.test(origin)) {
+    res.set({
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Private-Network": "true",
+      Vary: "Origin"
+    });
+  }
+  next();
 }
 
 // --- table (player) API: whitelisted server-side ---
@@ -366,6 +382,19 @@ app.post("/api/music/provider/callback", guardAsync(async (_req, res) => {
   const changed = await refreshPendingMusic();
   if (changed) broadcast();
   res.json({ ok: true });
+}));
+
+app.put("/api/music/suno-mirror", guard((req, res) => {
+  const mirror = configureSunoMirror(req.body?.targetName);
+  broadcast();
+  res.json(mirror);
+}));
+
+app.options("/api/music/suno-snapshot", allowSunoSnapshot, (_req, res) => res.sendStatus(204));
+app.post("/api/music/suno-snapshot", allowSunoSnapshot, guardAsync(async (req, res) => {
+  const result = await syncSunoSnapshot(req.body || {});
+  broadcast();
+  res.json(result);
 }));
 
 app.post("/api/music/themes/:pcId/publish", guard((req, res) => {

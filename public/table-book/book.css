@@ -273,12 +273,12 @@ body {
 
 .bookmarks { position: absolute; inset: 0; z-index: 45; pointer-events: none; }
 .bookmark {
-  --tab: #6b3b32; --slot: 0;
+  --tab: #6b3b32; --tab-hi: #8f6961; --slot: 0;
   position: absolute; top: calc(65px + var(--slot) * 91px); left: calc(var(--tome-w) - 10px);
   width: var(--mark-w); height: 58px; border: 0; padding: 0 17px 0 15px;
   display: flex; justify-content: space-between; align-items: center; gap: 8px;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--tab) 74%, white 26%), var(--tab));
+    linear-gradient(180deg, var(--tab-hi), var(--tab));
   color: #f2e5c7; font: 0.82rem Georgia, serif; font-variant: small-caps; letter-spacing: 0.055em;
   text-align: left; cursor: pointer; pointer-events: auto;
   clip-path: polygon(0 9%, 88% 9%, 100% 50%, 88% 91%, 0 91%);
@@ -298,11 +298,11 @@ body {
   min-width: 23px; height: 23px; display: grid; place-items: center; flex: none;
   border: 1px solid rgba(255,242,204,0.34); border-radius: 50%; font-size: 0.72rem;
 }
-.bookmark[data-key="town"] { --tab: #7b4934; }
-.bookmark[data-key="folk"] { --tab: #4d5b3e; }
-.bookmark[data-key="chronicle"] { --tab: #6a3b35; }
-.bookmark[data-key="journal"] { --tab: #40566a; }
-.bookmark[data-key="character"] { --tab: #655039; }
+.bookmark[data-key="town"] { --tab: #7b4934; --tab-hi: #9d7869; }
+.bookmark[data-key="folk"] { --tab: #4d5b3e; --tab-hi: #7b866f; }
+.bookmark[data-key="chronicle"] { --tab: #6a3b35; --tab-hi: #916e69; }
+.bookmark[data-key="journal"] { --tab: #40566a; --tab-hi: #71828f; }
+.bookmark[data-key="character"] { --tab: #655039; --tab-hi: #887765; }
 
 .chapter-kicker { color: #856c43; font-variant: small-caps; letter-spacing: 0.11em; font-size: 0.8rem; }
 .chapter-title { margin: 0.3rem 0 0.7rem; color: #38291d; font-size: 2rem; line-height: 1.05; font-weight: 500; }

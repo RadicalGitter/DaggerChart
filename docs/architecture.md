@@ -13,10 +13,11 @@ server/
 public/
   shared/     themes, i18n.js, and small player-facing registries
   gm/         GM console (sections: downtime, buildings, folk, people, places, party, stores, ledger, settlement)
-  login/      trusted-table identity chooser (GM, projector, PCs, creator)
-  table/      read-only projectable dashboard (card-deck navigation)
-  table-book/ standalone physical-book shell variant (same player API)
-  tome/       aged-tome shell variant: keepsake bookmarks (see player-shell-visuals.md)
+  login/      trusted-table chooser: finished-character bubbles + draft side view
+  player/     player root: identity switcher and visual-tool shelf
+  table/      general arcana-card shell over all five player sections
+  table-book/ settlement folio: town, folk, and chronicle
+  tome/       personal tome: journal, character, and inventory keepsakes
   screen/     the projector client (renders whatever the GM casts via /api/screen)
   create/     character creation wizard
   character/  live character sheet + hand manager
@@ -50,8 +51,10 @@ docs/         this file, the design spec, ComfyUI workflow
   endpoints call `broadcast()` so open pages refresh; `PUT /api/board`
   deliberately does *not* broadcast (would echo the GM's own board edits back).
 - **`music.js`** — owns `music.json`, playlist/theme metadata, safe local-audio
-  paths, publishing, and the mock/live provider adapter. Generated files are
-  downloaded into `Visseren/Generated`; published themes are copied to
+  paths, publishing, the mock/live provider adapter, and the validated Suno
+  web-library mirror. Generated files are downloaded into
+  `Visseren/Generated`; mirrored web-library audio is cached under
+  `Visseren/Suno Mirror`; published themes are copied to
   `Visseren/Character Themes/<Character Name>`. See
   [music-integration.md](music-integration.md).
 
@@ -71,11 +74,13 @@ docs/         this file, the design spec, ComfyUI workflow
 | `POST/PUT /api/characters[/:id]` | folk (NPC) cards incl. hidden layer |
 | `POST /api/log`, `POST /api/log/:id/publish` | chronicle notes, publish to table |
 | `GET /api/reference` | SRD creation data (classes, ancestries, cards…) |
+| `GET /api/character-drafts`, `GET/PUT/DELETE /api/character-drafts/:id` | resumable unfinished creator state, listed separately from completed PCs |
 | `GET/POST/PUT/DELETE /api/party[/:id]` | player characters; list and single-character responses are explicit player whitelists |
 | `PUT /api/party/:id/conditions` | replace a PC's validated standard Conditions; broadcasts to player clients |
 | `GET /api/items/consumables` | the 60-entry standard Consumables catalog |
 | `POST /api/party/:id/inventory/grant` | give a standard Consumable, stacking to the rules limit of five |
 | `POST/PUT/DELETE /api/party/:id/inventory[/:itemId]` | add, edit, or remove a typed carried item |
+| `POST /api/party/inventory/paper` | GM delivery of private or group paper artifacts to PC inventories |
 | `POST /api/party/:id/inventory/:itemId/use` | atomically resolve a reaction and consume one quantity |
 | `GET /api/music` | music desk library, playlists, provider status, and published character sources |
 | `POST /api/music/generate` | create two drafts, or cover a published character source |
@@ -84,6 +89,8 @@ docs/         this file, the design spec, ComfyUI workflow
 | `POST /api/music/themes/:pcId/publish` | publish a ready draft under `Visseren/Character Themes` |
 | `PUT /api/music/themes/:pcId/identity` | curate the musical identity used by character cover mode |
 | `POST /api/music/provider/check` | check configured provider account credits without generating |
+| `PUT /api/music/suno-mirror` | set the exact Suno web collection mirrored by the desk |
+| `POST /api/music/suno-snapshot` | reconcile a validated browser snapshot and cache missing Suno MP3s locally |
 | `POST /api/music/playlists`, `POST /api/music/playlists/:id/songs` | create playlists and add songs |
 | `PUT/DELETE /api/music/songs/:id` | rename or remove song metadata; deletion keeps audio on disk |
 | `GET/PUT /api/board` | drafting-board document `{items, pins}` |
@@ -95,6 +102,7 @@ docs/         this file, the design spec, ComfyUI workflow
 | `PUT /api/journal-doodles/:pcId/:page` | save normalized pen/eraser strokes for Journal, People, or Places |
 | `GET/PUT /api/screen` | the table screen: GM projects one thing (image/card/stores/buildings/text, `type: null` darkens); GET resolves through `screenView()` whitelists |
 | `POST/PUT/DELETE /api/notes[/:id]` | player notes (journal/person/place, group/personal); edits and strikes require the author's `pcId` |
+| `GET/POST/PUT /api/feedback[/:id]` | screenshot ticket queue and GM triage state |
 
 `PUT /api/party/:id` merges partial bodies (the sheet PUTs single fields like
 `{hp: 3}`); if `level` changes it shifts damage thresholds by the same delta.
@@ -109,18 +117,21 @@ Consumable reactions; see [inventory.md](inventory.md).
   code only in `public/shared/`.
 - **Creator sub-steps:** a main creation section may define a static or
   data-driven `parts` count. The fixed footer renders secondary progress and
-  moves forward content left/backward content right; `step`, `part`, and the
-  draft are restored together from per-tab session storage.
+  moves forward content left/backward content right. Versioned `step`, `part`,
+  and draft state are saved locally and mirrored through the character-draft
+  API; signing the final covenant deletes the draft only after the PC exists.
 - **Themes:** GM surfaces use `ledger.css` (light, steward's-ledger). Player
   surfaces use `lamplight.css` (dark). Tone per spec §2: quiet, warm, no
   gamified fanfare; microcopy per §12.
 - **Live updates:** pages listen to `/api/stream` and refetch (debounced).
   Character plates on the board update as players tap their sheets.
-- **Player-shell visuals:** `/table` is canonical; standalone alternates such
-  as `/table-book` share `/api/table`, SSE, `settlement-pc`, and the existing
-  embeds. See [player-shell-visuals.md](player-shell-visuals.md).
-- **Identity:** bare `/` redirects to `/login`. A PC choice writes only
-  `settlement-pc`; GM and projector choices set no player identity. See
+- **Player-shell visuals:** `/player` is the root for choosing a focused visual
+  tool. `/table`, `/table-book`, and `/tome` share `/api/table`, SSE,
+  `settlement-pc`, and the existing embeds. See
+  [player-shell-visuals.md](player-shell-visuals.md).
+- **Identity:** bare `/` redirects to `/login`. A completed-PC choice writes
+  only `settlement-pc` and enters `/player`; unfinished drafts resume `/create`.
+  GM and projector choices set no player identity. See
   [player-identity.md](player-identity.md).
 - **i18n** (`shared/i18n.js`): per-device language (localStorage, EN/SV).
   Game terms (Hope, Stress, Evasion, Loadout…) stay English to match the

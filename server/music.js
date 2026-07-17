@@ -10,8 +10,11 @@ const MUSIC_FILE = "music.json";
 const LIBRARY_ROOT = path.resolve(process.env.MUSIC_LIBRARY_DIR || path.join(ROOT, "Visseren"));
 const CHARACTER_THEMES_DIR = path.join(LIBRARY_ROOT, "Character Themes");
 const GENERATED_DIR = path.join(LIBRARY_ROOT, "Generated");
+const SUNO_MIRROR_DIR = path.join(LIBRARY_ROOT, "Suno Mirror");
 const SUNO_API_BASE = (process.env.SUNO_API_URL || "https://api.sunoapi.org").replace(/\/$/, "");
 const SUNO_UPLOAD_URL = process.env.SUNO_UPLOAD_URL || "https://sunoapiorg.redpandaai.co/api/file-stream-upload";
+const SUNO_AUDIO_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const MAX_MIRROR_AUDIO_BYTES = 80 * 1024 * 1024;
 const SEED_AUDIO = [
   "The Vessel of Ash - Punchy Master.wav",
   "The Vessel of Ash - Tribal Psy Master.wav"
@@ -22,9 +25,16 @@ const DEFAULT_MUSIC = {
   songs: [],
   playlists: [
     { id: "library", name: "Library", fixed: true, songIds: [] },
-    { id: "character_themes", name: "Character Themes", fixed: true, songIds: [] }
+    { id: "character_themes", name: "Character Themes", fixed: true, songIds: [] },
+    { id: "suno_mirror", name: "Vessa'rin", fixed: true, songIds: [] }
   ],
-  characterThemes: {}
+  characterThemes: {},
+  sunoMirror: {
+    targetName: "Vessa'rin",
+    lastSyncedAt: null,
+    sourceUrl: null,
+    lastResult: null
+  }
 };
 
 export const music = loadJson(MUSIC_FILE, DEFAULT_MUSIC);
@@ -60,6 +70,10 @@ function ensureShape() {
   music.songs = Array.isArray(music.songs) ? music.songs : [];
   music.playlists = Array.isArray(music.playlists) ? music.playlists : [];
   music.characterThemes ||= {};
+  music.sunoMirror = {
+    ...structuredClone(DEFAULT_MUSIC.sunoMirror),
+    ...(music.sunoMirror || {})
+  };
   for (const fixed of DEFAULT_MUSIC.playlists) {
     const found = music.playlists.find((p) => p.id === fixed.id);
     if (found) {
@@ -69,6 +83,8 @@ function ensureShape() {
       music.playlists.push(structuredClone(fixed));
     }
   }
+  const mirror = music.playlists.find((playlist) => playlist.id === "suno_mirror");
+  mirror.name = music.sunoMirror.targetName;
 }
 
 function bootstrapLocalMasters() {
@@ -219,6 +235,7 @@ export function publishedThemeForPc(pcId) {
 export function musicView(pcs = []) {
   return {
     provider: providerStatus(),
+    sunoMirror: structuredClone(music.sunoMirror),
     songs: music.songs.map((song) => songView(song)),
     playlists: music.playlists.map((playlist) => ({ ...playlist, songIds: [...playlist.songIds] })),
     characterTags: pcs
@@ -280,6 +297,191 @@ function callbackUrl() {
 function modelName(settings) {
   const allowed = new Set(["V4", "V4_5", "V4_5PLUS", "V4_5ALL", "V5", "V5_5"]);
   return allowed.has(settings.model) ? settings.model : "V5_5";
+}
+
+function cleanMirrorName(value) {
+  const name = cleanText(value, 80);
+  if (!name) throw new Error("Name the Suno collection to mirror.");
+  return name;
+}
+
+function sameMirrorName(left, right) {
+  return cleanText(left, 80).normalize("NFKC").toLocaleLowerCase()
+    === cleanText(right, 80).normalize("NFKC").toLocaleLowerCase();
+}
+
+function safeSunoImageUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && /(^|\.)suno\.ai$/i.test(url.hostname)
+      ? url.href.slice(0, 2000)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function safeSunoPageUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && /(^|\.)suno\.com$/i.test(url.hostname)
+      ? url.href.slice(0, 2000)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function sunoAudioUrl(audioId) {
+  return `https://cdn1.suno.ai/${audioId}.mp3`;
+}
+
+async function cacheSunoMirrorAudio(song, audioId) {
+  if (audioPath(song)) return false;
+  fs.mkdirSync(SUNO_MIRROR_DIR, { recursive: true });
+  const destination = path.join(SUNO_MIRROR_DIR, `${audioId}.mp3`);
+  if (fs.existsSync(destination)) {
+    song.audioFile = path.relative(ROOT, destination);
+    song.status = "ready";
+    return false;
+  }
+
+  const temp = `${destination}.tmp`;
+  const response = await fetch(sunoAudioUrl(audioId));
+  if (!response.ok) throw new Error(`Suno audio download returned ${response.status}.`);
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.toLowerCase().startsWith("audio/")) throw new Error("Suno returned a non-audio response.");
+  const declaredSize = Number(response.headers.get("content-length"));
+  if (Number.isFinite(declaredSize) && declaredSize > MAX_MIRROR_AUDIO_BYTES) {
+    throw new Error("Suno audio exceeds the mirror download limit.");
+  }
+  const bytes = Buffer.from(await response.arrayBuffer());
+  if (bytes.length > MAX_MIRROR_AUDIO_BYTES) throw new Error("Suno audio exceeds the mirror download limit.");
+  fs.writeFileSync(temp, bytes);
+  fs.renameSync(temp, destination);
+  song.audioFile = path.relative(ROOT, destination);
+  song.status = "ready";
+  return true;
+}
+
+export function configureSunoMirror(targetName) {
+  music.sunoMirror.targetName = cleanMirrorName(targetName);
+  const playlist = music.playlists.find((candidate) => candidate.id === "suno_mirror");
+  playlist.name = music.sunoMirror.targetName;
+  persistMusic();
+  return structuredClone(music.sunoMirror);
+}
+
+export async function syncSunoSnapshot({ collectionName, sourceUrl, songs }) {
+  const targetName = cleanMirrorName(music.sunoMirror.targetName);
+  if (!sameMirrorName(collectionName, targetName)) {
+    throw new Error(`This desk mirrors “${targetName}”. Open that exact Suno collection before syncing.`);
+  }
+  const cleanSourceUrl = safeSunoPageUrl(sourceUrl);
+  if (!cleanSourceUrl) throw new Error("The snapshot did not come from a Suno page.");
+  if (!Array.isArray(songs) || !songs.length) {
+    throw new Error("No songs were visible in the Suno collection. Nothing was changed.");
+  }
+
+  const snapshots = [];
+  const seen = new Set();
+  for (const entry of songs.slice(0, 500)) {
+    const audioId = cleanText(entry?.id, 40).toLowerCase();
+    if (!SUNO_AUDIO_ID.test(audioId) || seen.has(audioId)) continue;
+    const title = cleanText(entry?.title, 100);
+    if (!title) continue;
+    seen.add(audioId);
+    snapshots.push({
+      audioId,
+      title,
+      duration: Number.isFinite(Number(entry.duration)) ? Math.max(0, Number(entry.duration)) : null,
+      model: cleanText(entry.model, 40),
+      style: cleanText(entry.style, 4000),
+      imageUrl: safeSunoImageUrl(entry.imageUrl)
+    });
+  }
+  if (!snapshots.length) throw new Error("The Suno snapshot contained no valid songs. Nothing was changed.");
+
+  const mirror = music.playlists.find((candidate) => candidate.id === "suno_mirror");
+  const library = music.playlists.find((candidate) => candidate.id === "library");
+  const previousIds = new Set(mirror.songIds);
+  const mirroredSongs = [];
+  let imported = 0;
+  let updated = 0;
+
+  for (const snapshot of snapshots) {
+    let song = music.songs.find((candidate) => candidate.provider?.audioId === snapshot.audioId);
+    if (!song) {
+      song = {
+        id: `song_suno_${snapshot.audioId.replaceAll("-", "")}`,
+        title: snapshot.title,
+        prompt: snapshot.style || `Imported from the Suno collection ${targetName}.`,
+        status: "syncing",
+        source: "suno-library",
+        mode: "create",
+        pcId: null,
+        tagIds: [],
+        selectedTagIds: [],
+        promptEnvelope: null,
+        settings: { instrumental: true, model: snapshot.model },
+        audioFile: null,
+        provider: { name: "Suno web", generationId: null, sourceId: null, audioId: snapshot.audioId },
+        createdAt: now(),
+        publishedAt: null
+      };
+      music.songs.unshift(song);
+      imported += 1;
+    } else {
+      updated += 1;
+    }
+    song.title = snapshot.title;
+    song.duration = snapshot.duration || song.duration || null;
+    song.imageUrl = snapshot.imageUrl || song.imageUrl || null;
+    if (snapshot.style) song.prompt = snapshot.style;
+    song.settings ||= {};
+    if (snapshot.model) song.settings.model = snapshot.model.toUpperCase().replace(/[.-]/g, "_");
+    song.provider ||= {};
+    Object.assign(song.provider, {
+      name: song.provider.name || "Suno web",
+      audioId: snapshot.audioId,
+      remoteAudioUrl: sunoAudioUrl(snapshot.audioId),
+      pageUrl: `https://suno.com/song/${snapshot.audioId}`,
+      snapshotCollection: targetName
+    });
+    song.error = null;
+    if (!audioPath(song)) song.status = "syncing";
+    mirroredSongs.push(song);
+  }
+
+  let downloaded = 0;
+  let failed = 0;
+  let cursor = 0;
+  async function downloadWorker() {
+    while (cursor < mirroredSongs.length) {
+      const song = mirroredSongs[cursor++];
+      try {
+        if (await cacheSunoMirrorAudio(song, song.provider.audioId)) downloaded += 1;
+        else if (audioPath(song)) song.status = "ready";
+      } catch (err) {
+        failed += 1;
+        song.status = "waiting";
+        song.error = cleanText(err.message, 300);
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(3, mirroredSongs.length) }, downloadWorker));
+
+  mirror.name = targetName;
+  mirror.songIds = mirroredSongs.map((song) => song.id);
+  const mirroredIds = new Set(mirror.songIds);
+  library.songIds = [...mirror.songIds, ...library.songIds.filter((songId) => !mirroredIds.has(songId))];
+  const removed = [...previousIds].filter((songId) => !mirroredIds.has(songId)).length;
+  const result = { total: mirroredSongs.length, imported, updated, removed, downloaded, failed };
+  music.sunoMirror.lastSyncedAt = now();
+  music.sunoMirror.sourceUrl = cleanSourceUrl;
+  music.sunoMirror.lastResult = result;
+  persistMusic();
+  return { ...result, targetName, lastSyncedAt: music.sunoMirror.lastSyncedAt };
 }
 
 function livePayload(song) {

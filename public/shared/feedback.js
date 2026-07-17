@@ -126,6 +126,7 @@ function initFeedback() {
       overlay.querySelector(".feedback-panel").scrollTop = 0;
     } catch (error) {
       trigger.hidden = false;
+      console.error("Feedback screenshot capture failed:", error);
       alert(`${t("feedback.captureError")} ${error.message || ""}`.trim());
     }
   };

@@ -1012,6 +1012,100 @@ function renderCharacters() {
     : "Original composition";
 }
 
+async function captureSunoCollection(endpoint, targetName) {
+  if (!/(^|\.)suno\.com$/i.test(location.hostname)) {
+    alert(`Open the ${targetName} collection on Suno before using this helper.`);
+    return;
+  }
+
+  const found = new Map();
+  const normalize = (value) => String(value || "").replace(/\s+/g, " ").trim();
+  function collectVisibleSongs() {
+    for (const link of document.querySelectorAll('a[href*="/song/"]')) {
+      const match = link.getAttribute("href")?.match(/\/song\/([0-9a-f-]{36})/i);
+      if (!match) continue;
+      const id = match[1].toLowerCase();
+      const title = normalize(link.textContent);
+      if (!title) continue;
+      const row = link.closest('[role="row"]') || link.closest("button") || link.parentElement;
+      const lines = String(row?.innerText || "").split("\n").map(normalize).filter(Boolean);
+      const durationLabel = lines.find((line) => /^\d+:\d{2}$/.test(line));
+      const durationParts = durationLabel?.split(":").map(Number) || [];
+      const duration = durationParts.length === 2 ? durationParts[0] * 60 + durationParts[1] : null;
+      const model = lines.find((line) => /^(?:v\d|studio)/i.test(line)) || "";
+      const style = lines
+        .filter((line) => line !== title && line !== durationLabel && line !== model && !/^(?:remix|share|more)$/i.test(line))
+        .sort((left, right) => right.length - left.length)[0] || "";
+      const imageUrl = row?.querySelector('img[alt*="Song"]')?.src || "";
+      found.set(id, { id, title, duration, model, style, imageUrl });
+    }
+  }
+
+  const scroller = document.scrollingElement || document.documentElement;
+  const startingTop = scroller.scrollTop;
+  let previousCount = -1;
+  let stablePasses = 0;
+  for (let pass = 0; pass < 40 && stablePasses < 3; pass += 1) {
+    collectVisibleSongs();
+    stablePasses = found.size === previousCount ? stablePasses + 1 : 0;
+    previousCount = found.size;
+    window.scrollTo(0, scroller.scrollHeight);
+    await new Promise((resolve) => setTimeout(resolve, 450));
+  }
+  collectVisibleSongs();
+  window.scrollTo(0, startingTop);
+
+  const collectionName = normalize(document.querySelector("main h1")?.textContent || document.querySelector("h1")?.textContent);
+  const snapshot = { collectionName, sourceUrl: location.href, songs: [...found.values()] };
+  const sameName = collectionName.normalize("NFKC").toLocaleLowerCase()
+    === targetName.normalize("NFKC").toLocaleLowerCase();
+  if (!sameName) {
+    alert(`This is “${collectionName || "an unnamed page"}”. Open “${targetName}” before syncing.`);
+    return;
+  }
+  if (!snapshot.songs.length) {
+    alert("No songs were visible, so the local mirror was left unchanged.");
+    return;
+  }
+
+  const serialized = JSON.stringify(snapshot);
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: serialized
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || `Sync returned ${response.status}.`);
+    alert(`${targetName} synchronized: ${result.total} songs, ${result.downloaded} new downloads.`);
+  } catch (error) {
+    try {
+      await navigator.clipboard.writeText(serialized);
+      alert(`Direct sync was blocked. The snapshot was copied; use “Import copied snapshot” at the music desk.\n\n${error.message}`);
+    } catch {
+      prompt("Copy this snapshot into the music desk:", serialized);
+    }
+  }
+}
+
+function sunoBookmarklet(targetName) {
+  const endpoint = `${location.origin}/api/music/suno-snapshot`;
+  return `javascript:(${captureSunoCollection.toString()})(${JSON.stringify(endpoint)},${JSON.stringify(targetName)})`;
+}
+
+function renderSunoMirror() {
+  const mirror = state.data.sunoMirror || { targetName: "Vessa'rin" };
+  const nameInput = $("#suno-mirror-name");
+  if (document.activeElement !== nameInput) nameInput.value = mirror.targetName || "Vessa'rin";
+  const helper = $("#suno-helper");
+  helper.href = sunoBookmarklet(nameInput.value);
+  helper.textContent = `${nameInput.value} sync`;
+  const result = mirror.lastResult;
+  $("#suno-mirror-status").textContent = mirror.lastSyncedAt && result
+    ? `${result.total} ${result.total === 1 ? "song" : "songs"} · ${result.downloaded} downloaded · ${result.removed} removed from the mirror · ${new Date(mirror.lastSyncedAt).toLocaleString()}`
+    : "Not synchronized yet.";
+}
+
 function renderProvider() {
   const provider = state.data.provider || {};
   $("#provider-dot").classList.toggle("ready", Boolean(provider.ready));
@@ -1060,6 +1154,7 @@ async function load() {
     renderHistory();
     renderCharacters();
     renderProvider();
+    renderSunoMirror();
     renderIdentities();
   } catch (error) {
     toast(error.message);
@@ -1176,6 +1271,57 @@ $("#new-playlist").onclick = async () => {
 };
 
 $("#open-settings").onclick = () => $("#settings-dialog").showModal();
+$("#suno-mirror-name").oninput = () => {
+  const targetName = $("#suno-mirror-name").value.trim() || "Vessa'rin";
+  $("#suno-helper").href = sunoBookmarklet(targetName);
+  $("#suno-helper").textContent = `${targetName} sync`;
+};
+$("#save-suno-mirror").onclick = async () => {
+  const button = $("#save-suno-mirror");
+  button.disabled = true;
+  try {
+    await api("/api/music/suno-mirror", {
+      method: "PUT",
+      body: JSON.stringify({ targetName: $("#suno-mirror-name").value })
+    });
+    await load();
+    toast("Suno mirror target saved.");
+  } catch (error) {
+    toast(error.message);
+  } finally {
+    button.disabled = false;
+  }
+};
+$("#suno-helper").onclick = async (event) => {
+  event.preventDefault();
+  try {
+    await navigator.clipboard.writeText($("#suno-helper").href);
+    toast("Sync helper copied. Add it as a browser bookmark, then use it on Suno.");
+  } catch {
+    toast("Drag the sync helper to the browser bookmarks bar.");
+  }
+};
+$("#paste-suno-snapshot").onclick = async () => {
+  const button = $("#paste-suno-snapshot");
+  button.disabled = true;
+  try {
+    const snapshot = JSON.parse(await navigator.clipboard.readText());
+    const result = await api("/api/music/suno-snapshot", {
+      method: "POST",
+      body: JSON.stringify(snapshot)
+    });
+    state.playlistId = "suno_mirror";
+    await load();
+    toast(`${result.total} Suno songs synchronized.`);
+  } catch (error) {
+    toast(error.message || "The clipboard does not contain a Suno snapshot.");
+  } finally {
+    button.disabled = false;
+  }
+};
+$("#open-suno-library").onclick = () => {
+  window.open(state.data.sunoMirror?.sourceUrl || "https://suno.com/me", "_blank", "noopener");
+};
 $("#check-provider").onclick = async () => {
   const button = $("#check-provider");
   button.disabled = true;

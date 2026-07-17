@@ -40,6 +40,32 @@ without starting a generation.
 
 Removing a song from the desk removes metadata only. It never deletes audio.
 
+## Suno web-library mirror
+
+The configured generation API does not expose the playlists from the user's
+Suno web account. The desk therefore has a deliberately separate browser
+snapshot bridge for one named collection, `Vessa'rin` by default.
+
+The Settings dialog provides an installable bookmark helper. Run it while the
+target collection is open on `suno.com`; it scrolls through lazy-loaded rows,
+collects each song UUID and visible metadata, and posts the snapshot back to
+`POST /api/music/suno-snapshot`. If the browser blocks an HTTPS-to-localhost
+request, the helper copies the same JSON for the desk's **Import copied
+snapshot** fallback.
+
+The server does not trust media URLs from the browser. It validates Suno UUIDs,
+derives `https://cdn1.suno.ai/<uuid>.mp3`, limits each download to 80 MB, and
+caches successful files under `Visseren/Suno Mirror`. The fixed mirror playlist
+is replaced with the snapshot's exact order on every pull. A song removed from
+Suno leaves that playlist but its metadata and cached audio remain in the main
+Library; synchronization never deletes local files.
+
+`PUT /api/music/suno-mirror` changes the exact collection name. A snapshot with
+a different heading or no visible songs is rejected without changing the
+mirror. This bridge consumes no generation API credits, but it depends on
+Suno's public web markup and CDN convention and should be smoke-tested after a
+material Suno interface change.
+
 ## Character themes
 
 Finishing character creation queues an instrumental short overture. The prompt

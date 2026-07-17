@@ -618,7 +618,9 @@ async function finishCharacter() {
     clearTimeout(draftSaveTimer);
     localStorage.removeItem(DRAFT_KEY); // signed — the stash has served
     localStorage.removeItem(DRAFT_ID_KEY);
-    await fetch(`/api/character-drafts/${encodeURIComponent(draftId)}`, { method: "DELETE" });
+    // Character persistence already succeeded; stale-draft cleanup must not
+    // turn that success into a retry that creates a duplicate PC.
+    await fetch(`/api/character-drafts/${encodeURIComponent(draftId)}`, { method: "DELETE" }).catch(() => {});
     // This device now knows who its player is (shared with the shell & journal).
     localStorage.setItem("settlement-pc", pc.id);
     window.top.location.href = "/player";

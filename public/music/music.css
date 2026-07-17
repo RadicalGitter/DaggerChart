@@ -374,6 +374,17 @@ dialog { width: min(620px, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); 
 dialog::backdrop { background: rgba(30,40,37,0.52); }
 .dialog-head { border-bottom: 1px solid var(--rule); padding-bottom: 0.7rem; }
 .settings-section { padding: 1rem 0; border-bottom: 1px solid var(--rule); }
+.suno-mirror-controls { display: grid; gap: 0.7rem; }
+.suno-mirror-controls > label { display: grid; grid-template-columns: 110px 1fr; gap: 0.65rem; align-items: center; }
+.suno-mirror-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.suno-helper {
+  display: inline-flex; align-items: center; padding: 0.45rem 0.65rem;
+  color: var(--ink); background: transparent; border: 1px solid var(--rule-strong);
+  font: inherit; text-decoration: none; cursor: grab;
+}
+.suno-helper:hover { color: var(--oxblood); background: var(--paper-inset); }
+.suno-helper:active { cursor: grabbing; }
+.mirror-status { min-height: 2.2em; line-height: 1.45; }
 .identity-editor { display: grid; grid-template-columns: 110px 1fr auto; gap: 0.5rem; align-items: center; margin: 0.55rem 0; }
 .identity-editor textarea { min-height: 54px; }
 
@@ -403,6 +414,7 @@ dialog::backdrop { background: rgba(30,40,37,0.52); }
   .now-playing #seek { grid-column: 1 / -1; grid-row: 2; }
   .now-playing #time-label, .volume-control, .now-playing #fade-out { display: none; }
   .identity-editor { grid-template-columns: 1fr; }
+  .suno-mirror-controls > label { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
   .song-bubble { animation: none; }

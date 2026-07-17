@@ -6,43 +6,40 @@ must not fork campaign state or widen what reaches the browser.
 
 ## Current visuals
 
+### Player root — `/player`
+
+The login chooser sends a completed PC here. It is a quiet hub, not another
+campaign view: the player can switch the device's `settlement-pc` identity and
+choose among three physical tools. The preferred view is stored only in
+`settlement-shell`; it does not fork character or campaign state. Every shell
+keeps a small Views control back to this root.
+
 ### Card deck — `/table`
 
-The canonical player shell. The login chooser enters this visual by default.
-Five large cards open the Town, Folk of Note, Chronicle, Journal, and Character
-sections. On narrow screens the cards become banner rows.
+The general-purpose arcana deck. Five large tarot-flavored cards open Town,
+Folk of Note, Chronicle, Journal, and Character. On narrow screens the cards
+become banner rows. It is the broadest view, not the root route.
 
 ### Physical tome — `/table-book`
 
-An optional alternate shell. The book begins closed and front-facing with all
-chapter bookmarks on its right edge. Choosing a bookmark opens the cover to a
-two-page spread. Chapters before the current one move to the left edge;
-current and later chapters remain on the right. Moving between chapters turns
-a leaf in the appropriate direction. The book can be closed from its left
-page, and becomes a pannable physical spread on narrow screens.
-
-This route is deliberately not linked as the default and does not replace or
-modify `/table`.
+The settlement folio: Town, Folk of Note, and Chronicle only. It begins closed
+and front-facing; choosing a bookmark opens a two-page spread, and movement
+between chapters turns a leaf in the appropriate direction. Earlier bookmarks
+move to the left edge. On narrow screens the spread becomes one readable page
+with compact horizontal chapter tabs.
 
 ### Aged tome — `/tome`
 
-A weathered variant of the physical book: cracked leather, foxed and frayed
-parchment (SVG displacement filters), candlelight flicker, dust motes, and a
-faint breathing motion. Navigation is by **keepsakes** rather than tabs —
-real objects stuffed between the pages (a frayed ribbon, a raven feather, a
-torn parchment scrap, a pressed flower, a bone charm on a cord, and a key
-ring), each with a small handwritten label. A keepsake keeps its resting height
-on the fore-edge when it migrates to the left edge, like a real bookmark keeps
-its page.
+A personal weathered tome: Journal, Character, and Inventory only. Cracked
+leather, foxed parchment, candlelight, dust, and a restrained breathing motion
+make it feel handled rather than framed in a generic app panel. Navigation is
+by **keepsakes**: a pressed flower, bone charm, and key ring. A keepsake keeps
+its resting height when it migrates to the left edge.
 
-The Town spread is the sole home of settlement figures: population, season,
-stores, and current buildings. They do not appear in the tome's global chrome
-or as filler on other left pages. Character is one native two-page spread with
-no nested scrolling. Inventory is its adjacent keepsake; its first spread
-holds equipped arms/armor and carried items, while detailed Domain cards turn
-onto further spreads. Larger Folk, Chronicle, and Inventory collections also
-paginate as physical spreads inside their section instead of growing one long
-page.
+Character is one native two-page spread with no nested scrolling. Inventory is
+its adjacent keepsake; its first spread holds equipped arms/armor and carried
+items, while detailed Domain cards turn onto further spreads. Journal remains
+the existing spoiler-safe embed.
 
 Carried entries are buttons into a parchment editor. Mundane items expose
 freeform name, description, and quantity. Standard Consumables retain their
@@ -88,20 +85,18 @@ Every player-shell visual must preserve these boundaries:
 
 ## Adding another visual
 
-Until a visual chooser is designed, add each experiment as its own directory
-under `public/` and its own static route in `server/index.js`. Do not change the
-login's default player destination or replace `/table` without an explicit
-product decision.
+Add each visual as its own directory under `public/`, its own static route in
+`server/index.js`, and one entry in `public/shared/shells.js`. Keep `/player` as
+the login destination unless an explicit product decision changes the root.
 
 A new visual is ready for comparison when it:
 
-1. Implements all five player sections.
+1. Implements its declared tool scope completely.
 2. Preserves device identity and stable embeds.
 3. Works at desktop and phone widths.
 4. Has EN/SV UI phrasing.
 5. Has been restarted and browser-smoke-tested alongside `/table`.
 6. Leaves real campaign data unchanged during visual verification.
 
-When the project eventually offers a player-selectable visual, the selection
-should choose a shell route or renderer only. It must not duplicate PCs,
-notes, doodles, or settlement data.
+The root selection chooses only a shell route. It must not duplicate PCs,
+notes, doodles, inventory, or settlement data.

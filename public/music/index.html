@@ -161,8 +161,17 @@
     <button class="quiet" id="check-provider" type="button">Check account</button>
   </section>
   <section class="settings-section">
-    <h3>Suno playlists</h3>
-    <p class="muted">Collections on this desk are stored locally. The configured Suno API does not expose the playlists or library from your Suno web account, so account synchronization is unavailable.</p>
+    <h3>Suno library mirror</h3>
+    <div class="suno-mirror-controls">
+      <label><span>Collection</span><input id="suno-mirror-name" maxlength="80" value="Vessa'rin"></label>
+      <div class="suno-mirror-actions">
+        <button class="quiet" id="save-suno-mirror" type="button">Save target</button>
+        <a class="quiet suno-helper" id="suno-helper" draggable="true" href="#" title="Drag this to the bookmarks bar, then use it on the open Suno collection">Vessa'rin sync</a>
+        <button class="quiet" id="paste-suno-snapshot" type="button" title="Use a snapshot copied by the sync helper">Import copied snapshot</button>
+        <button class="quiet" id="open-suno-library" type="button">Open Suno</button>
+      </div>
+      <div class="mirror-status muted" id="suno-mirror-status">Not synchronized yet.</div>
+    </div>
   </section>
   <section class="settings-section" id="identity-settings">
     <h3>Character identities</h3>

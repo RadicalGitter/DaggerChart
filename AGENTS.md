@@ -45,7 +45,7 @@ designing anything; it is the source of truth. Code map + API:
 - One trusted table: no auth, no passwords; players reach the server over LAN.
   Bare `/` opens `/login`, an identity chooser rather than a security boundary:
   GM opens `/gm`, projector opens `/screen`, and a PC choice stores
-  `settlement-pc` before entering `/table`. See `docs/player-identity.md`.
+  `settlement-pc` before entering `/player`. See `docs/player-identity.md`.
 - PCs (players' characters) *are* in scope despite spec §10 — the user
   expanded scope deliberately: creator at `/create`, live sheets at
   `/character/:id`, Loadout/Vault hand manager. Town-side hidden-layer rules
@@ -77,32 +77,49 @@ designing anything; it is the source of truth. Code map + API:
   one `.big-card` button in `public/table/index.html` plus an entry in
   `SECTIONS` in `table.js`; the layout compresses automatically. The ❧ link
   (bottom right) is the quiet door back to `/gm`.
-- `/table` doubles as the **player shell**: Journal and Character cards embed
+- `/player` is the player root. It switches the device's `settlement-pc` and
+  presents the aged personal tome, settlement folio, and general arcana deck
+  as distinct tools. `settlement-shell` stores only a device preference.
+- `/table` is the broad general shell: Journal and Character cards embed
   the existing pages in the panel via same-origin iframes (`?embed=1` hides
   their masthead). Device identity is one localStorage key, `settlement-pc`
   (picker on the Character card, the journal's picker, or finishing `/create`
   all set it; storage events keep the shell in sync). Embed panels carry a
   stable `panelKey` so SSE refreshes never reload an iframe mid-use. Under
   640px the deck lays out as banner rows and the docked stack sits above the
-  panel. The login chooser enters `/table` by default.
-- `/table-book` is a standalone alternate shell, not a replacement for
-  `/table`. It renders a closed front-facing cover with right-edge bookmarks;
+  panel.
+- `/table-book` is the settlement folio for Town, Folk, and Chronicle. It
+  renders a closed front-facing cover with right-edge bookmarks;
   opening a chapter reveals a two-page spread, migrates earlier bookmarks to
   the left edge, and uses directional leaf turns between chapters. It consumes
-  only `/api/table` and the existing same-origin Journal/Character embeds.
+  only `/api/table`.
   Shared rules for future visual options live in
   `docs/player-shell-visuals.md`.
-- `/tome` is the aged keepsake shell. Town alone owns settlement figures and
-  buildings. Character is one native two-page spread; adjacent Inventory owns
+- `/tome` is the personal aged keepsake shell for Journal, Character, and
+  Inventory. Character is one native two-page spread; adjacent Inventory owns
   arms, armor, carried items, and further Domain-card spreads. Larger
   collections turn through spreads inside one keepsake rather than adding
   bookmarks. Chosen-character data comes from `playerCharacterView()`. Its
   bottom utility dock shows that PC's Conditions and reserves
   `#player-chat-slot` for future private messages.
+- Unfinished creator state lives in `data/character-drafts.json`, is mirrored
+  from local autosave, and appears only in the login's separate draft view.
+  The final signed covenant is an immutable `paper` inventory artifact; a
+  failed draft cleanup after PC creation must never make character creation
+  retry and duplicate the PC.
 - PC inventory uses typed entries with lazy migration from legacy strings.
   Standard Consumables resolve from `data/daggerheart/reference.json`, stack
   to five, and use atomic server-side reactions. Contract and extension rules:
   `docs/inventory.md`.
+- `/music` mirrors exactly one named Suno web collection through an installable
+  browser snapshot helper because the configured generation API has no account
+  playlist endpoint. The server validates song UUIDs, derives CDN URLs itself,
+  caches MP3s under `Visseren/Suno Mirror`, and never deletes cached audio when
+  a song leaves the upstream collection. See `docs/music-integration.md`.
+- Player feedback is explicit, not ambient telemetry: the bug control captures
+  the current viewport for annotation and creates a local ticket. GM triage
+  reads all tickets for crosstalk before presenting one problem at a time; see
+  `docs/feedback-triage-agent.md`.
 
 - `/screen` is the projector in front of the table (the drafting board owns
   `/board`): it shows exactly one thing, chosen by the GM — a mood image,

@@ -15,17 +15,16 @@ The chooser has three kinds of entry:
   player identity.
 - **Projector Screen** — a centered two-thirds-width, two-thirds-height plaque
   that opens `/screen`. It does not set a player identity.
-- **Player character** — a tall portrait card. Choosing one writes its `pcId`
-  to the device's `settlement-pc` localStorage key, then opens `/table`.
+- **Finished player character** — a movable, paintable bubble. Choosing one
+  writes its `pcId` to the device's `settlement-pc` localStorage key, then
+  opens `/player`.
+- **Unfinished character** — kept in a separate lateral Drafts view. Choosing
+  one resumes its server-mirrored creator state without writing a finished-PC
+  identity.
 
-The character creator is the create-user path. Links from `/login` open
-`/create/?return=/table`; successful creation stores the new PC identity and
-returns to the player shell. Direct visits to `/create` keep the existing
-behavior of opening the new character sheet after creation.
-
-When no PCs exist, `/login` uses the public Folk of Note cards as visual
-stand-ins. They are marked as stand-ins and link to creation. They never write
-an NPC id to `settlement-pc` and can never own notes or doodles.
+The character creator is the create-user path. `/create/?new=1` starts a fresh
+draft; `/create/?draft=<id>` resumes one. Successful creation stores the new PC
+identity and returns to `/player` after the final covenant is signed.
 
 ## Player-safe payload
 
@@ -42,6 +41,8 @@ not be added to the login payload.
 
 - Personal and group notes in `data/notes.json` retain their author `pcId`.
 - Journal drawing layers in `data/journal-doodles.json` are keyed by `pcId`.
+- Unfinished creator state in `data/character-drafts.json` has a draft id but
+  is not a PC and cannot own personal records.
 - The chosen identity is local to the browser device; selecting another PC
   simply changes `settlement-pc`.
 

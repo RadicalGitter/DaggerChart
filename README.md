@@ -31,14 +31,16 @@ whitelisted server-side regardless).
 |---|---|---|
 | `/gm` | GM (private) | Console: downtime runner, buildings, folk, stores, ledger, settlement |
 | `/board` | GM (private) | The Drafting Board — infinite pan/zoom whiteboard with live stat plates, counters, notes, and pinned camera views |
-| `/login` | everyone | Trusted-table identity chooser: GM, projector, existing PCs, and character creation. Bare `/` lands here. |
-| `/table` | players (the shell) | The canonical player viewport: town dashboard plus Journal and Your Character as cards in the same deck. Selecting a PC on `/login` remembers it on that device. |
-| `/table-book` | players (optional visual) | Standalone physical-tome version of the player shell: closed leather cover, edge bookmarks, animated opening and directional page turns. It does not replace `/table`. |
+| `/login` | everyone | Trusted-table chooser: finished-character bubbles, a separate resumable-drafts view, GM, and projector. Bare `/` lands here. |
+| `/player` | players | Player root: switch the device's character and choose a focused physical view. |
+| `/table` | players | General arcana-card deck over Town, Folk, Chronicle, Journal, and Character. |
+| `/table-book` | players | Settlement folio for Town, Folk of Note, and Chronicle, with directional page turns. |
+| `/tome` | players | Personal keepsake tome for Journal, Character, and Inventory. |
 | `/screen` | everyone (projector) | The table screen: shows the one thing the GM projects — mood images, NPC portraits, cards, stores, free text |
 | `/create` | players | Guided Daggerheart character creation (all SRD data local) |
 | `/character/:id` | one player each | Live character sheet: tap-to-mark HP/Stress/Hope/Armor, Loadout/Vault hand manager |
 | `/journal` | players | The party's journal: notes on people and places the GM reveals, plus a season-stamped diary — each note "for my eyes" or "for the table" |
-| `/music` | GM | Music desk: pop-to-play song bubbles, playlists, branching prompt tags, and character-theme variations |
+| `/music` | GM | Music desk: spatial song bubbles, local playlists, a one-collection Suno web mirror, branching prompt tags, and character-theme variations |
 
 Player-facing pages have an EN/SV language toggle (top right, per device) and
 long-press glossary popovers on underlined game terms.
@@ -70,6 +72,8 @@ stopped (or live; the GM console re-reads on refresh):
 - `log.json` — the season ledger; entries carry a `published` flag
 - `board.json` — drafting-board plates and pins
 - `music.json` — song metadata, playlists, provider tasks, and published character-theme pointers
+- `character-drafts.json` — versioned resumable creator state, separate from completed PCs
+- `feedback.json` — annotated screenshot tickets and GM triage state
 - `event-tables/*.json` — **do not open** (see above)
 - `daggerheart/reference.json` — SRD reference data (classes, ancestries, communities, domain cards, weapons, armor, and the 60-entry Consumables catalog)
 - `backups/` — automatic snapshots (gitignored)

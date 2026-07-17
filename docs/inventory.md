@@ -9,6 +9,9 @@ Inventory has two deliberately different weights:
   notes, but cannot accidentally rewrite what a Health Potion does. A custom
   Consumable has freeform rules and consumes one quantity without automatic
   bookkeeping.
+- A **paper artifact** is a physical note or signed covenant. Notes carry
+  explicit body/author metadata and can be opened from the sheet or tome.
+  Covenants carry the signed name/time and are immutable inventory records.
 
 The complete 60-entry standard Consumables table lives in
 `data/daggerheart/reference.json`. It includes the loot-table roll, English
@@ -18,7 +21,7 @@ existing `daggersearch/daggerheart-data` reference source (DPCGL).
 
 ## Stored and player-facing shapes
 
-New stored entries use:
+New ordinary stored entries use:
 
 ```json
 {
@@ -41,6 +44,13 @@ Catalog Consumables stack by `catalogId`, with the SRD limit of five of each.
 Using one and changing the character sheet happen in one server mutation, so
 a lost response cannot remove the item without applying its bookkeeping (or
 vice versa).
+
+Paper entries use `kind: "paper"` and `paperType: "note" | "covenant"`.
+Player-created notes retain the PC name as `author`; GM-delivered private and
+group notes are copied into each target inventory. The final creator step puts
+one signed covenant directly into the completed PC's starting inventory.
+`playerCharacterView()` exposes only the paper rendering fields. It does not
+turn inventory into a path around the normal hidden-data whitelist.
 
 ## Reactions
 
@@ -74,6 +84,8 @@ changes for the animation/result copy.
 
 - `GET /api/items/consumables` - lightweight standard catalog for GM search.
 - `POST /api/party/:id/inventory` - add a mundane or custom Consumable.
+- `POST /api/party/inventory/paper` - deliver a GM paper to one PC or the
+  whole group.
 - `PUT/DELETE /api/party/:id/inventory/:itemId` - edit or remove one entry.
 - `POST /api/party/:id/inventory/grant` - give a standard Consumable by
   `catalogId`.
