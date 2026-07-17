@@ -475,6 +475,13 @@ function resizeBubbleField() {
   persistBubblePositions();
 }
 
+function revealBubbleField() {
+  const stage = $("#bubble-stage");
+  if (!stage.clientWidth || !stage.clientHeight || !stage.querySelector("[data-song]")) return;
+  if (!bubblePhysics.items.size) mountBubblePhysics();
+  else resizeBubbleField();
+}
+
 function historyAge(timestamp) {
   const seconds = Math.max(0, Math.floor((Date.now() - Number(timestamp || 0)) / 1000));
   if (seconds < 60) return "just now";
@@ -1625,9 +1632,14 @@ new ResizeObserver(() => {
   bubbleResizeTimer = setTimeout(() => {
     sizeBubbleStage(activeSongs().length);
     if (bubblePhysics.layoutMode && bubblePhysics.layoutMode !== bubbleLayoutMode()) renderBubbles();
-    else resizeBubbleField();
+    else revealBubbleField();
   }, 100);
 }).observe($("#bubble-stage"));
+
+window.addEventListener("message", (event) => {
+  if (event.origin !== location.origin || event.data?.type !== "settlement:music-visible") return;
+  requestAnimationFrame(revealBubbleField);
+});
 
 renderTags();
 compilePrompt();
