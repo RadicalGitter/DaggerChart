@@ -1,6 +1,6 @@
 // The Drafting Board — an infinite pan/zoom whiteboard for the GM.
 // Plates (notes, counters, live stat blocks) live in world coordinates;
-// pins are saved camera positions. Everything persists to data/board.json.
+// pins are saved camera positions. Named documents persist to data/boards.json.
 
 import { TERMS } from "/shared/i18n.js";
 
@@ -17,6 +17,7 @@ let pins = [];
 let PARTY = [];   // full PCs (live)
 let FOLK = [];    // NPCs incl. GM-only fields (this surface is GM-private)
 let RESOURCES = {};
+let boardName = new URLSearchParams(location.search).get("board") === "hud" ? "hud" : "main";
 
 const cam = { x: 0, y: 0, z: 1 };
 const uid = () => `it_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
@@ -70,15 +71,20 @@ viewport.addEventListener("dblclick", (e) => {
 
 // ---------- persistence ----------
 let saveTimer = null;
+async function saveBoard() {
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  const response = await fetch(`/api/board/${boardName}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ items, pins })
+  });
+  if (!response.ok) throw new Error("The board could not be saved.");
+}
+
 function queueSave() {
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => {
-    await fetch("/api/board", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items, pins })
-    });
-  }, 600);
+  saveTimer = setTimeout(() => saveBoard().catch((error) => console.error(error.message)), 600);
 }
 
 // ---------- plates ----------
@@ -305,7 +311,7 @@ function renderCharacter(body, item) {
   if (!pc) return pickerBody(body, item, PARTY, "pcId", "character");
   const TR = ["Agility", "Strength", "Finesse", "Instinct", "Presence", "Knowledge"];
   body.innerHTML = `
-    <div class="muted" style="font-size:0.8rem;">${esc(pc.ancestry?.name || "")} ${esc(pc.class?.name || "")} — ${esc(pc.subclass?.name || "")} · Lv ${pc.level}</div>
+    <div class="muted" style="font-size:0.8rem;">${esc(pc.ancestry || "")} ${esc(pc.class || "")} — ${esc(pc.subclass || "")} · Lv ${pc.level}</div>
     <div class="statline">
       <div class="s"><b>${pc.evasion}</b><span>Evasion</span></div>
       <div class="s"><b>${pc.thresholds?.major}/${pc.thresholds?.severe}</b><span>Thresholds</span></div>
@@ -314,7 +320,7 @@ function renderCharacter(body, item) {
     <div class="viterow"><span class="lbl">HP</span>${dots(pc.hp, pc.hpMax, true)}</div>
     <div class="viterow"><span class="lbl">Stress</span>${dots(pc.stress, pc.stressMax, true)}</div>
     <div class="viterow"><span class="lbl">Hope</span>${dots(pc.hope, pc.hopeMax, false, true)}</div>
-    ${pc.armor ? `<div class="viterow"><span class="lbl">Armor</span>${dots(pc.armorMarked, pc.armor.score, true)}</div>` : ""}
+    ${pc.armor?.score ? `<div class="viterow"><span class="lbl">Armor</span>${dots(pc.armor.marked, pc.armor.score, true)}</div>` : ""}
     <div class="chips">${TR.map((t) => `<span class="pill">${t.slice(0, 3)} ${pc.traits?.[t] >= 0 ? "+" : ""}${pc.traits?.[t] ?? 0}</span>`).join("")}</div>
     <div class="chips">${(pc.experiences || []).map((e) => `<span class="pill">${esc(e.name)} +${e.bonus}</span>`).join("")}</div>`;
 }
@@ -379,17 +385,58 @@ for (const b of document.querySelectorAll("[data-add]")) {
   b.addEventListener("click", () => addItem(b.dataset.add));
 }
 
+function renderBoardMode() {
+  for (const button of document.querySelectorAll("[data-board-select]")) {
+    button.setAttribute("aria-pressed", String(button.dataset.boardSelect === boardName));
+  }
+  $("#board-title").textContent = boardName === "hud" ? "The HUD Board" : "The Drafting Board";
+  document.title = `${boardName === "hud" ? "The HUD Board" : "The Drafting Board"} — The Settlement`;
+}
+
+async function loadBoard(name) {
+  const response = await fetch(`/api/board/${name}`);
+  if (!response.ok) throw new Error("The board could not be loaded.");
+  const doc = await response.json();
+  boardName = name;
+  items = doc.items || [];
+  pins = doc.pins || [];
+  cam.x = 0; cam.y = 0; cam.z = 1;
+  world.replaceChildren();
+  for (const item of items) renderItem(item);
+  renderPins();
+  updateHint();
+  renderBoardMode();
+  applyCam();
+  const url = new URL(location.href);
+  if (boardName === "hud") url.searchParams.set("board", "hud");
+  else url.searchParams.delete("board");
+  history.replaceState(null, "", url);
+}
+
+for (const button of document.querySelectorAll("[data-board-select]")) {
+  button.addEventListener("click", async () => {
+    const next = button.dataset.boardSelect;
+    if (next === boardName) return;
+    for (const choice of document.querySelectorAll("[data-board-select]")) choice.disabled = true;
+    try {
+      await saveBoard();
+      await loadBoard(next);
+    } catch (error) {
+      console.error(error.message);
+    } finally {
+      for (const choice of document.querySelectorAll("[data-board-select]")) choice.disabled = false;
+    }
+  });
+}
+
 function updateHint() {
   $("#empty-hint").hidden = items.length > 0;
 }
 
 // ---------- live data ----------
 async function refreshData() {
-  const [party, state] = await Promise.all([
-    fetch("/api/party").then((r) => r.json()),
-    fetch("/api/state").then((r) => r.json())
-  ]);
-  PARTY = party;
+  const state = await fetch("/api/state").then((response) => response.json());
+  PARTY = (state.party || []).filter((pc) => pc.active !== false);
   FOLK = state.characters;
   RESOURCES = state.resources;
   for (const item of items) {
@@ -406,12 +453,6 @@ stream.onmessage = () => {
 
 // ---------- boot ----------
 (async () => {
-  const doc = await (await fetch("/api/board")).json();
-  items = doc.items || [];
-  pins = doc.pins || [];
   await refreshData();
-  for (const item of items) renderItem(item);
-  renderPins();
-  updateHint();
-  applyCam();
+  await loadBoard(boardName);
 })();

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Drafting Board — The Settlement</title>
 <link rel="stylesheet" href="/shared/ledger.css">
+<link rel="stylesheet" href="/shared/gm-tools.css">
 <style>
   html, body { height: 100%; overflow: hidden; }
 
@@ -30,6 +31,10 @@
   #bar .title { font-weight: 600; margin-right: 0.6rem; }
   #bar button { padding: 0.3rem 0.8rem; font-size: 0.85rem; }
   #bar .sep { width: 1px; height: 22px; background: var(--rule-strong); margin: 0 0.4rem; }
+  .board-switch { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 3px; overflow: hidden; }
+  #bar .board-switch button { border: 0; border-radius: 0; color: var(--ink-soft); background: var(--paper-raised); }
+  #bar .board-switch button + button { border-left: 1px solid var(--rule-strong); }
+  #bar .board-switch button[aria-pressed="true"] { color: var(--paper-raised); background: var(--oxblood); }
   #pins { display: flex; gap: 0.35rem; flex-wrap: wrap; align-items: center; }
   .pin-chip {
     display: inline-flex; align-items: center; gap: 0.35rem;
@@ -96,13 +101,32 @@
     color: var(--ink-faint); font-style: italic; pointer-events: none;
   }
   #empty-hint[hidden] { display: none; }
+  @media (max-width: 700px) {
+    #bar {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scrollbar-width: thin;
+    }
+    #bar > * { flex: none; }
+    #bar .title,
+    #bar a,
+    #pins { white-space: nowrap; }
+    #pins { flex-wrap: nowrap; }
+    #bar > span[style] { display: none; }
+  }
 </style>
 </head>
 <body>
 <div id="viewport"><div id="world"></div></div>
 <div id="empty-hint" hidden>The board is blank. Add a note, or double-click anywhere.</div>
 <div id="bar">
-  <span class="title">The Drafting Board</span>
+  <span class="title" id="board-title">The Drafting Board</span>
+  <div class="board-switch" role="group" aria-label="Board">
+    <button type="button" data-board-select="main" aria-pressed="true">Main</button>
+    <button type="button" data-board-select="hud" aria-pressed="false">HUD</button>
+  </div>
+  <span class="sep"></span>
   <button class="quiet" data-add="note">+ Note</button>
   <button class="quiet" data-add="counter">+ Counter</button>
   <button class="quiet" data-add="character">+ Character</button>
@@ -116,6 +140,8 @@
   <span style="flex:1"></span>
         <a href="/gm" style="font-size:0.82rem;">← GM console</a>
 </div>
+<div id="gm-tools-root"></div>
 <script type="module" src="board.js"></script>
+<script type="module" src="/shared/gm-tools.js"></script>
 </body>
 </html>

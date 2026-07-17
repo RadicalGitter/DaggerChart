@@ -1,0 +1,71 @@
+{
+  "source": "Daggerheart SRD v1.0, revision 2025-09-09",
+  "sourceUrl": "https://www.daggerheart.com/srd/",
+  "sections": [
+    {
+      "id": "difficulty",
+      "title": "Difficulty Benchmarks",
+      "rows": [
+        { "label": "5", "value": "Straightforward", "note": "Clear leverage, little pressure, or a forgiving situation." },
+        { "label": "10", "value": "Manageable", "note": "A familiar challenge with a meaningful chance of trouble." },
+        { "label": "15", "value": "Demanding", "note": "Real pressure, rough conditions, or a trained opponent." },
+        { "label": "20", "value": "Severe", "note": "Dangerous circumstances that call for skill and commitment." },
+        { "label": "25", "value": "Extreme", "note": "Exceptional opposition or several serious complications at once." },
+        { "label": "30", "value": "Legendary", "note": "A feat that should feel almost impossible in the fiction." }
+      ]
+    },
+    {
+      "id": "conditions",
+      "title": "Standard Conditions",
+      "rows": [
+        { "label": "Hidden", "value": "Targeted rolls have disadvantage", "note": "Ends when the creature is seen, enters an enemy's sight, or attacks." },
+        { "label": "Restrained", "value": "Cannot move", "note": "The creature can still act from its current position." },
+        { "label": "Vulnerable", "value": "Targeted rolls have advantage", "note": "Applies to every roll that targets the creature." }
+      ]
+    },
+    {
+      "id": "damage",
+      "title": "Damage and Hit Points",
+      "rows": [
+        { "label": "0 or less", "value": "Mark 0 HP", "note": "Damage fully reduced." },
+        { "label": "Below Major", "value": "Mark 1 HP", "note": "Minor damage." },
+        { "label": "Major to below Severe", "value": "Mark 2 HP", "note": "Major damage." },
+        { "label": "Severe or higher", "value": "Mark 3 HP", "note": "Severe damage." },
+        { "label": "Twice Severe", "value": "Mark 4 HP", "note": "Optional Massive Damage rule." }
+      ]
+    },
+    {
+      "id": "outcomes",
+      "title": "Action Roll Outcomes",
+      "rows": [
+        { "label": "Critical", "value": "Success plus an opening", "note": "The player leads the description and gains an extra advantage or opportunity." },
+        { "label": "Success with Hope", "value": "Yes, and", "note": "They succeed, gain Hope, and the world answers their action." },
+        { "label": "Success with Fear", "value": "Yes, but", "note": "They succeed; take Fear and introduce a minor cost or complication." },
+        { "label": "Failure with Hope", "value": "No, but", "note": "They miss their aim, gain Hope, and face a minor consequence." },
+        { "label": "Failure with Fear", "value": "No, and", "note": "Things worsen; take Fear and make a consequential move." }
+      ]
+    },
+    {
+      "id": "moves",
+      "title": "GM Moves",
+      "rows": [
+        { "label": "Make a move", "value": "Fear · failure · consequence · opening · uncertainty", "note": "Act when the fiction demands an answer or the players hand you an opportunity." },
+        { "label": "Soft move", "value": "Signal and invite reaction", "note": "Reveal pressure, shift the scene, or show what is about to happen." },
+        { "label": "Hard move", "value": "Resolve the consequence", "note": "Deal the impact directly when warning has passed or a Fear result warrants it." },
+        { "label": "Useful prompts", "value": "Threat · truth · separation · Stress · collateral", "note": "Let an NPC act, move the environment, spotlight danger, or close an opportunity." },
+        { "label": "Spend 1 Fear", "value": "Interrupt · extra move · Fear Feature · Experience", "note": "Steal the spotlight, add a move, activate a Fear Feature, or add an adversary Experience to a roll." }
+      ]
+    },
+    {
+      "id": "fear-pacing",
+      "title": "Fear Pacing",
+      "rows": [
+        { "label": "Incidental", "value": "0-1 Fear", "note": "Recovery, information gathering, or routine resupply." },
+        { "label": "Minor", "value": "1-3 Fear", "note": "Travel trouble or a small skirmish that points toward danger." },
+        { "label": "Standard", "value": "2-4 Fear", "note": "A substantial fight, perilous journey, or tense negotiation." },
+        { "label": "Major", "value": "4-8 Fear", "note": "A large battle or a scene that changes a character's story." },
+        { "label": "Climactic", "value": "6-12 Fear", "note": "A story-arc confrontation or defining set piece." }
+      ]
+    }
+  ]
+}

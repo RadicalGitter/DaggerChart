@@ -479,17 +479,40 @@ app.delete("/api/music/songs/:id", guard((req, res) => {
   res.json(result);
 }));
 
-// --- the drafting board (GM whiteboard): items + camera pins ---
-const board = loadJson("board.json", { items: [], pins: [] });
+// --- named drafting boards (GM whiteboards): items + camera pins ---
+const BOARD_NAMES = new Set(["main", "hud"]);
+const emptyBoard = () => ({ items: [], pins: [] });
+const boardDocument = (value) => ({
+  items: Array.isArray(value?.items) ? value.items : [],
+  pins: Array.isArray(value?.pins) ? value.pins : []
+});
+let boards = loadJson("boards.json", null);
+if (!boards) {
+  boards = { main: boardDocument(loadJson("board.json", emptyBoard())), hud: emptyBoard() };
+  saveJson("boards.json", boards);
+} else {
+  boards = { main: boardDocument(boards.main), hud: boardDocument(boards.hud) };
+}
+const gmScreen = loadJson("daggerheart/gm-screen.json", { sections: [] });
 
-app.get("/api/board", (_req, res) => res.json(board));
+function namedBoard(name) {
+  if (!BOARD_NAMES.has(name)) throw new Error("Unknown board.");
+  return boards[name];
+}
 
-app.put("/api/board", guard((req, res) => {
-  if (Array.isArray(req.body.items)) board.items = req.body.items;
-  if (Array.isArray(req.body.pins)) board.pins = req.body.pins;
-  saveJson("board.json", board);
-  res.json({ ok: true });
-}));
+function updateBoard(name, body) {
+  const board = namedBoard(name);
+  if (Array.isArray(body?.items)) board.items = body.items;
+  if (Array.isArray(body?.pins)) board.pins = body.pins;
+  saveJson("boards.json", boards);
+  return board;
+}
+
+app.get("/api/board", (_req, res) => res.json(namedBoard("main")));
+app.put("/api/board", guard((req, res) => res.json(updateBoard("main", req.body))));
+app.get("/api/board/:name", guard((req, res) => res.json(namedBoard(req.params.name))));
+app.put("/api/board/:name", guard((req, res) => res.json(updateBoard(req.params.name, req.body))));
+app.get("/api/gm-screen", (_req, res) => res.json(gmScreen));
 
 app.get("/api/downtime/preview", guard((req, res) => {
   const mods = modifierBreakdown(req.query.building, req.query.effort === "1");

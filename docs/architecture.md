@@ -12,8 +12,8 @@ server/
   store.js    atomic JSON read/write (tmp+rename), timestamped backups
   views.js    audience whitelists: gmView(), tableView(), loreView()
 public/
-  shared/     themes, i18n.js, session pools, player registries, feedback and UX collectors
-  gm/         GM console (campaign controls, feedback queue, and UX review map)
+  shared/     themes, i18n, session pools, GM quick tools, player registries, feedback and UX collectors
+  gm/         GM console (campaign controls, quick table, feedback queue, and UX review map)
   login/      trusted-table chooser: finished-character bubbles + draft side view
   player/     player root: identity switcher and visual-tool shelf
   table/      general arcana-card shell over all five player sections
@@ -24,7 +24,7 @@ public/
   character/  live character sheet + hand manager
   music/      GM music desk: bubble library, prompt tag board, generation controls
   journal/    players' journal: notes on people, places, and days
-  board/      the Drafting Board (infinite canvas, plates, pins)
+  board/      named Main/HUD drafting boards (infinite canvas, plates, pins)
 data/         all persistent state (see README)
 docs/         this file, the design spec, ComfyUI workflow
 ```
@@ -52,8 +52,9 @@ docs/         this file, the design spec, ComfyUI workflow
   public Hope totals to active party identities. Never render player surfaces
   from `gmView()`.
 - **`index.js`** — routes below, plus `GET /api/stream` (SSE). Mutating
-  endpoints call `broadcast()` so open pages refresh; `PUT /api/board`
-  deliberately does *not* broadcast (would echo the GM's own board edits back).
+  endpoints call `broadcast()` so open pages refresh. Named drafting-board PUTs
+  deliberately do *not* broadcast (would echo the GM's own edits back); when
+  `boards.json` is absent, boot migrates legacy `board.json` into `main` once.
 - **`music.js`** — owns `music.json`, playlist/theme metadata, safe local-audio
   paths, publishing, the mock/live provider adapter, and the validated Suno
   web-library mirror. Generated files are downloaded into
@@ -103,7 +104,9 @@ docs/         this file, the design spec, ComfyUI workflow
 | `POST /api/music/suno-snapshot` | reconcile a validated browser snapshot and cache missing Suno MP3s locally |
 | `POST /api/music/playlists`, `POST /api/music/playlists/:id/songs` | create playlists and add songs |
 | `PUT/DELETE /api/music/songs/:id` | rename or remove song metadata; deletion keeps audio on disk |
-| `GET/PUT /api/board` | drafting-board document `{items, pins}` |
+| `GET/PUT /api/board` | backward-compatible alias for the `main` drafting board |
+| `GET/PUT /api/board/:name` | named `main` or `hud` board document `{items, pins}` |
+| `GET /api/gm-screen` | static flat SRD quick-reference sections for GM surfaces |
 | `POST/PUT/DELETE /api/people[/:id]` | wider-world NPCs: description public, `hidden.notes` private, `placeId` moves them, `items` carried, `revealed` gates player visibility |
 | `POST /api/people/:id/portrait` | ComfyUI request stub — saves `portraitPrompt`, returns "not wired yet" |
 | `POST/PUT/DELETE /api/places[/:id]` | places; the village (`place_village`, `fixed`) cannot be deleted |
@@ -136,6 +139,9 @@ Consumable reactions; see [inventory.md](inventory.md).
   gamified fanfare; microcopy per §12.
 - **Live updates:** pages listen to `/api/stream` and refetch (debounced).
   Character plates on the board update as players tap their sheets.
+- **GM quick tools:** `/gm` and `/board` share a fixed hotbar with bounded Fear
+  controls and a full-screen quick table. The overlay combines live GM-whitelisted
+  PC vitals, the dedicated `hud` board, and static `gm-screen.json` reference rows.
 - **Player-shell visuals:** `/player` is the root for choosing a focused visual
   tool. `/table`, `/table-book`, and `/tome` share `/api/table`, SSE,
   `settlement-pc`, and the existing embeds. See

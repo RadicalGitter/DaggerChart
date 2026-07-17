@@ -9,6 +9,7 @@ const PLAYER_CONDITIONS = new Set(["hidden", "restrained", "vulnerable"]);
 const conditionView = (p) => [...new Set(p.conditions || [])].filter((id) => PLAYER_CONDITIONS.has(id));
 const isActivePc = (p) => p?.active !== false;
 const activePcs = () => state.pcs.filter(isActivePc);
+const numericView = (value, fallback = 0) => Number.isFinite(value) ? value : fallback;
 
 // Personalization stored on the character (chosen in the creator). Kept behind
 // a validated default so unknown or legacy-missing values never reach a client
@@ -147,6 +148,27 @@ export function gmView() {
       ancestry: p.ancestry?.name,
       community: p.community?.name,
       conditions: conditionView(p),
+      hp: numericView(p.hp),
+      hpMax: numericView(p.hpMax),
+      stress: numericView(p.stress),
+      stressMax: numericView(p.stressMax),
+      hope: numericView(p.hope),
+      hopeMax: numericView(p.hopeMax, 6),
+      evasion: numericView(p.evasion),
+      armor: {
+        name: p.armor?.name || "",
+        score: numericView(p.armor?.score),
+        marked: numericView(p.armorMarked)
+      },
+      thresholds: {
+        major: numericView(p.thresholds?.major),
+        severe: numericView(p.thresholds?.severe)
+      },
+      traits: Object.fromEntries(Object.entries(p.traits || {}).map(([name, value]) => [name, numericView(value)])),
+      experiences: (p.experiences || []).map((experience) => ({
+        name: experience.name || "",
+        bonus: numericView(experience.bonus)
+      })),
       papers: inventoryView(p, state.reference).filter((item) => item.kind === "paper")
     })),
     people: state.people,

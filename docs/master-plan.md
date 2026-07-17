@@ -33,9 +33,9 @@ Treat each plan's **Backend** section as settled architecture and its
   keepsake in the `KEEPSAKES` registry (`tome.js`) per
   [player-shell-visuals.md](player-shell-visuals.md).
 
-Suggested remaining order (dependencies, not importance): **2 → 3 → 5 → 6 → 4**.
-7 (soft delete) and 1 (Fear/Hope) are built. 2 sets up boards for the hotbar;
-3 is independent; 5 is mostly data
+Suggested remaining order (dependencies, not importance): **3 → 5 → 6 → 4**.
+7 (soft delete), 1 (Fear/Hope), and 2 (GM quick tools) are built. 3 is
+independent; 5 is mostly data
 authoring; 6 (campaigns) must land before 4, which is campaign-scoped and the
 only feature needing network access.
 
@@ -77,7 +77,13 @@ roadmap item) must NOT be entangled with this; Fear here is bookkeeping only.
 
 ---
 
-## 2. GM overlay & hovering hotbar
+## 2. GM overlay & hovering hotbar — BUILT
+
+**Built on `beta` (2026-07-17).** `/gm` and `/board` share a hovering Fear
+hotbar and responsive full-screen quick table. The overlay combines live active
+PC vitals, a dedicated named `hud` board, and six flat SRD reference sections.
+Boot migrates legacy `board.json` into `boards.json.main`; the old board routes
+remain aliases, named writes stay isolated, and board PUTs still do not broadcast.
 
 **Goal.** A small always-available hotbar on GM surfaces that can summon a
 full-screen overlay: all active PCs' live stats, standard difficulty tables,

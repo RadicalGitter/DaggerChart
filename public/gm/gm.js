@@ -7,7 +7,6 @@ let CONSUMABLES = [];
 let FEEDBACK = [];
 let TELEMETRY = { pages: {} };
 let selectedUxRoute = null;
-let fearBusy = false;
 
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) =>
@@ -46,7 +45,6 @@ async function refresh() {
   FEEDBACK = feedback;
   TELEMETRY = telemetry;
   renderNav();
-  renderFear();
   renderDowntimePicker();
   renderStores();
   renderBuildings();
@@ -281,40 +279,6 @@ function renderNav() {
   $("#nav-season").textContent = S.settlement.seasonLabel;
   $("#ledger-season").textContent = S.settlement.seasonLabel;
 }
-
-function renderFear() {
-  const session = S?.session || { fear: 0, showFearToPlayers: true };
-  const fear = Math.max(0, Math.min(12, session.fear || 0));
-  $("#gm-fear-count").textContent = `${fear} / 12`;
-  $("#gm-fear-track").innerHTML = Array.from({ length: 12 }, (_, index) =>
-    `<span class="gm-fear-token${index < fear ? " is-filled" : ""}"></span>`
-  ).join("");
-  $("#gm-fear-spend").disabled = fearBusy || fear === 0;
-  $("#gm-fear-gain").disabled = fearBusy || fear === 12;
-  $("#gm-fear-visible").checked = session.showFearToPlayers !== false;
-  $("#gm-fear-visible").disabled = fearBusy;
-}
-
-async function updateFear(patch) {
-  if (fearBusy) return;
-  const previous = { ...S.session };
-  S.session = { ...S.session, ...patch };
-  fearBusy = true;
-  renderFear();
-  try {
-    S.session = await api("/api/session", { method: "PUT", body: patch });
-  } catch (error) {
-    S.session = previous;
-    toast(error.message, true);
-  } finally {
-    fearBusy = false;
-    renderFear();
-  }
-}
-
-$("#gm-fear-spend").addEventListener("click", () => updateFear({ fear: (S?.session?.fear || 0) - 1 }));
-$("#gm-fear-gain").addEventListener("click", () => updateFear({ fear: (S?.session?.fear || 0) + 1 }));
-$("#gm-fear-visible").addEventListener("change", () => updateFear({ showFearToPlayers: $("#gm-fear-visible").checked }));
 
 function showSection(key) {
   for (const a of document.querySelectorAll("nav a[data-nav]")) {
@@ -1265,20 +1229,3 @@ $("#town-save").addEventListener("click", async () => {
 // --- boot ---
 showSection(location.hash.slice(1) || "season");
 refresh().catch((e) => toast(e.message, true));
-
-const stream = new EventSource("/api/stream");
-let streamRefreshTimer = null;
-stream.onmessage = () => {
-  clearTimeout(streamRefreshTimer);
-  streamRefreshTimer = setTimeout(async () => {
-    try {
-      const nextSession = (await api("/api/state")).session;
-      if (S && nextSession) {
-        S.session = nextSession;
-        renderFear();
-      }
-    } catch (error) {
-      toast(error.message, true);
-    }
-  }, 120);
-};

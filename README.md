@@ -29,8 +29,8 @@ whitelisted server-side regardless).
 
 | Route | Who | What |
 |---|---|---|
-| `/gm` | GM (private) | Console: campaign controls, playtest tickets, local UX map, and settlement ledger |
-| `/board` | GM (private) | The Drafting Board — infinite pan/zoom whiteboard with live stat plates, counters, notes, and pinned camera views |
+| `/gm` | GM (private) | Console: campaign controls, playtest tickets, local UX map, settlement ledger, and the hovering session quick table |
+| `/board` | GM (private) | Named Main/HUD drafting boards with infinite pan/zoom, live stat plates, counters, notes, and pinned camera views |
 | `/login` | everyone | Trusted-table chooser: finished-character bubbles, a separate resumable-drafts view, GM, and projector. Bare `/` lands here. |
 | `/player` | players | Player root: switch the device's character and choose a focused physical view. |
 | `/table` | players | General arcana-card deck over Town, Folk, Chronicle, Journal, and Character. |
@@ -71,13 +71,14 @@ stopped (or live; the GM console re-reads on refresh):
 - `notes.json` — the players' notes and journal entries
 - `journal-doodles.json` — per-PC pen and eraser layers for the Journal, People, and Places chapters
 - `log.json` — the season ledger; entries carry a `published` flag
-- `board.json` — drafting-board plates and pins
+- `boards.json` — named `main` and `hud` drafting-board documents; boot migrates a legacy `board.json` once
 - `music.json` — song metadata, playlists, provider tasks, and published character-theme pointers
 - `character-drafts.json` — versioned resumable creator state, separate from completed PCs
 - `feedback.json` — annotated screenshot tickets and GM triage state
 - `telemetry.json` — gitignored, content-free local UX aggregates; see [docs/ux-telemetry.md](docs/ux-telemetry.md)
 - `event-tables/*.json` — **do not open** (see above)
 - `daggerheart/reference.json` — SRD reference data (classes, ancestries, communities, domain cards, weapons, armor, and the 60-entry Consumables catalog)
+- `daggerheart/gm-screen.json` — compact SRD quick-reference rows for the GM overlay
 - `backups/` — automatic snapshots (gitignored)
 
 Audio files live outside `data/` under `Visseren/`; see

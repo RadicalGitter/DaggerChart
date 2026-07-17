@@ -20,6 +20,15 @@ each other. Rules of the road:
 ## Lanes
 
 **2026-07-17 — Codex** · status: DONE
+Lane: GM overlay and hovering hotbar (feature 2): named-board migration and
+routes in `server/index.js`, GM party vitals in `server/views.js`, static GM
+reference data, `public/shared/gm-tools.*`, `public/board/*`, `public/gm/*`,
+and docs. Verified legacy migration, aliases, invalid-name rejection, isolated
+writes, restart persistence, keyboard close/focus, Fear controls, and responsive
+desktop/390px/320px layouts against dummy data. Live campaign JSON, generated
+`boards.json`, and local media remain out of the commit.
+
+**2026-07-17 — Codex** · status: DONE
 Lane: Fear/Hope tracker (feature 1): `server/state.js`, `server/views.js`,
 session route in `server/index.js`, `public/shared/session-pools.*`, the three
 player shells, `public/gm/*`, and docs. Live campaign JSON and local media

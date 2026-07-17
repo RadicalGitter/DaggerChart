@@ -128,13 +128,18 @@ designing anything; it is the source of truth. Code map + API:
   whitelists, so even deliberately shown unrevealed entries expose only
   public fields. "Show at the table" buttons live on GM cards; the Screen
   section in `/gm` holds the forms and the darken control.
+- `/gm` and `/board` share `public/shared/gm-tools.*`: a hovering Fear hotbar
+  opens a responsive quick table with active-PC vitals, static SRD reference
+  rows, and the dedicated `hud` drafting board. Boards persist in named
+  `data/boards.json` documents (`main`, `hud`); boot migrates legacy
+  `board.json` once, and `/api/board` remains a non-broadcasting `main` alias.
 
 ## What's next (agreed ambitions, in rough order)
 - **The remaining planned features have backend implementation plans in
   [docs/master-plan.md](docs/master-plan.md).** Read its Shared foundations
-  before starting one; character lifecycle (feature 7) and the Fear/Hope
-  tracker (feature 1) are built, so the remaining suggested dependency order
-  is 2 → 3 → 5 → 6 → 4.
+  before starting one; character lifecycle (feature 7), the Fear/Hope tracker
+  (feature 1), and GM quick tools (feature 2) are built, so the remaining
+  suggested dependency order is 3 → 5 → 6 → 4.
 - ComfyUI wiring: the GM-side request UI exists on People cards (prompt saved
   to `portraitPrompt`, `POST /api/people/:id/portrait` is a stub) — connect it
   to the local 5090 using `docs/comfyui/waidrin-portraits-workflow.json`
