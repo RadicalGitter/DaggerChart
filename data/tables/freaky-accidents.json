@@ -1,0 +1,28 @@
+{
+  "id": "freaky-accidents",
+  "name": "Freaky Accidents",
+  "blurb": "For when something mundane goes suddenly, memorably wrong — a botched roll, an unlucky hour, or whenever the GM wants the world to hiccup. Report soberly; let the table do the screaming.",
+  "die": 20,
+  "entries": {
+    "1": { "text": "The ladder was fine. The rung was fine. The boot, however, had been quietly rotting since the crossing, and chooses now. The faller takes falling damage from exactly one rung higher than looks survivable — and lands on the one soft thing nobody will admit to leaving there." },
+    "2": { "text": "A saw bites a knot and sings — a high, pure, wrong note. Every dog in the settlement answers it. For the rest of the day the dogs will not stop escorting the sawyer everywhere, in formation." },
+    "3": { "text": "The soup was mushroom. One mushroom was not. Nobody is dying, but three settlers spend the night convinced they can hear what the palisade is thinking, and one of them writes it down. Keep what they wrote." },
+    "4": { "text": "A cart wheel comes off at the worst point of the slope. The cart overtakes its own ox with slow, terrible majesty. The cargo survives; the ox's dignity does not; the ox remembers who laughed." },
+    "5": { "text": "Someone's hammer head flies off mid-swing, arcs over the palisade, and is returned twenty minutes later by a child who will not say where they got it or who they were talking to out there." },
+    "6": { "text": "The well bucket comes up heavier than it went down. In it: a fish. The well does not connect to any water that has fish. It's a good fish, though." },
+    "7": { "text": "A gust takes the season's laundry line. Forty garments distribute themselves across the settlement with uncanny judgment — everyone ends up wearing the reputation they deserve. Morale wobbles: −1 or +1, GM's read of the room." },
+    "8": { "text": "Green wood in the stove pops like a shot. The person nearest sits straight down into the kindling basket and becomes, briefly and completely, a person wearing a basket. They cannot get out unaided. Something they'd hidden falls out of their coat in front of everyone." },
+    "9": { "text": "Lightning strikes the same stump twice while two settlers watch. The stump is fine. The argument about what this means lasts three days and produces two new superstitions, one of which — GM's choice — happens to be true." },
+    "10": { "text": "A settler bites into the winter's first apple and finds their own missing tooth in it. Lost two years ago. In the old country. Nobody eats apples for a week; Food −1, unanswered questions +1." },
+    "11": { "text": "Rope, coiled and stored properly, is found braided overnight into a pattern the oldest settler recognizes and won't discuss. The rope works better now — next check using it gains advantage — but nobody wants to be the one holding it." },
+    "12": { "text": "A misdelivered swing drives a nail perfectly through a hanging iron pot, both handles, and into the beam behind — a shot no one could make on purpose. The carpenter responsible goes pale and refuses credit. Pilgrims of bad carpentry will come to see it." },
+    "13": { "text": "During dinner the bunkhouse's north wall groans, shifts, and settles one inch truer than it was built. Everyone looks at Jory. Jory looks delighted and takes credit. The wall did not do it for him." },
+    "14": { "text": "Someone falls asleep on watch for only a moment and wakes with their boots on the wrong feet, relaced, and a small stone in each pocket. The stones are river-smooth. The river is a day's walk away." },
+    "15": { "text": "The grindstone catches a bad edge and showers sparks that land, precisely, in the shape of a constellation not currently in the sky. It will be, in three seasons. Note which one." },
+    "16": { "text": "A barrel thought to be salt pork has been brine all along — and in the brine, perfectly preserved, somebody's old-country letters, addressed to a name from the manifest that nobody answers to. Supplies −1. Ellory goes very quiet." },
+    "17": { "text": "The privy door jams with someone inside during the settlement's only formal event of the season. Their escape, over the top, in formalwear, is witnessed by everyone. Gain nothing. Lose nothing. It simply must be on the record." },
+    "18": { "text": "An axe handle snaps and the head buries itself in the earth at the feet of the newest arrival, quivering, like a thrown gauntlet. Digging it out reveals it struck the corner of something buried — flat, worked stone, older than the settlement. Stop digging or don't." },
+    "19": { "text": "Every candle in the settlement gutters at the same instant — indoors, outdoors, sheltered or not — and relights. The night watch swears the dark between was one heartbeat longer than it should have been. Nothing follows. Probably." },
+    "20": { "text": "A settler struck glancingly by a falling beam gets up unhurt — and for nine days afterward is impossibly, statistically absurdly lucky. Dropped things land right-side up; thrown dice do what they're told. On the tenth day it's gone, and the ledger should quietly note where all that luck might have been borrowed from." }
+  }
+}

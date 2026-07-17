@@ -1,0 +1,123 @@
+{
+  "id": "travel",
+  "name": "Travel Encounters",
+  "blurb": "An encounter is the route's danger tier (d12) colored by the way of travel (d6 twist). Roll both at once; read them as one scene.",
+  "danger": {
+    "quiet": {
+      "label": "Quiet roads",
+      "die": 12,
+      "entries": {
+        "1": { "text": "A toll of sorts: a child sits on a stile with a jar of dubious honey and enormous expectations. The road is technically theirs, they explain. It is easier to buy the honey." },
+        "2": { "text": "A peddler with a hand-cart going the other way, delighted to trade news for news. Half of what they tell you is true; the wrong half is more interesting." },
+        "3": { "text": "Fresh cairn by the roadside, tended, no name. Whoever keeps it has been here within the hour — the flowers haven't wilted." },
+        "4": { "text": "A shepherd has lost exactly one sheep and is philosophical about it in a way that invites help. The sheep is somewhere stupid. It is always somewhere stupid." },
+        "5": { "text": "Rain arrives with theatrical timing. So does a barn — dry, empty, and swept, with a lantern already lit that nobody claims to have lit." },
+        "6": { "text": "You catch up to a funeral procession moving at walking pace. Joining it for a mile is good manners; the mourners' stories about the deceased don't match each other at all." },
+        "7": { "text": "A crossroads shrine, recently repainted, with fresh offerings — and one of the offerings is from your settlement. Something from the stores. Nobody signed out anything." },
+        "8": { "text": "Two farmers arguing over a boundary stone that has visibly, recently, been moved. Both are right. The stone is wrong. Someone moved it in the night, and not by hand — drag marks come from the treeline." },
+        "9": { "text": "A wagon in the ditch, one wheel spinning, driver unhurt and mortified. Helping costs an hour and earns a standing welcome at a farmstead that will matter later." },
+        "10": { "text": "The road passes through a village that is entirely, pin-drop asleep at midday. Doors open, hearths warm, bread rising. Every soul asleep. They wake if roused, embarrassed, remembering nothing." },
+        "11": { "text": "A traveling notary — an actual, licensed, insufferable notary — offers to witness and seal any one agreement, oath, or claim, free, as advertising. Whatever gets sealed today is bindingly, cosmically official." },
+        "12": { "text": "An old woman feeding crows at the road's edge greets one of you by a childhood nickname no one out here could know. She won't explain. The crows find this hilarious." }
+      }
+    },
+    "uneasy": {
+      "label": "Uneasy wilds",
+      "die": 12,
+      "entries": {
+        "1": { "text": "The path is blocked by a felled tree. Cut, not fallen — and cut today. Whoever did it wanted travelers to stop exactly here, and is watching to see who does." },
+        "2": { "text": "Wolf sign, then wolves: a thin pack shadowing at the treeline, patient, assessing. They want the pack animal, or the smallest of you, and are honest about it." },
+        "3": { "text": "A stranger's campfire, still warm, kit abandoned mid-meal — and a trail of dropped belongings leading off it, each item set down carefully, face up, like breadcrumbs or like offerings." },
+        "4": { "text": "The bridge is out. The ford is fine, says the man at the ford, who charges nothing, helps genuinely, and is not on any map, chart, or memory of this route." },
+        "5": { "text": "Hail out of a clear sky, sudden and vicious. In the stones: one hailstone the size of a fist with a seed frozen at its center. The seed is warm." },
+        "6": { "text": "You find the source of the smoke you've smelled for an hour: a burnt wagon, two days old, cargo gone, oxen gone, people gone. On the wagon's side, fresh paint over the char: a mark the settlement's watchtower has on its list." },
+        "7": { "text": "Riders on the ridgeline, keeping pace with you for miles, always at the same distance. They match your stops. At dusk they are simply not there anymore." },
+        "8": { "text": "A cry for help from off the path — genuine, human, hurt. It is exactly as far away as it sounds. The situation it belongs to has more people in it than voices." },
+        "9": { "text": "The land is wrong for an hour: moss on the south side, sun a shade off its line, your shadow arriving a half-step late. Then it isn't. Instinct, moderate, to have noticed at all." },
+        "10": { "text": "An armed party at a narrowing of the way, polite, professional, letting travelers through — after questions. They're looking for someone. The description fits somebody you know back home." },
+        "11": { "text": "A dead campfire ringed by sleeping-shapes under blankets. They are stones. Twelve stones, person-sized, arranged as sleepers, blankets tucked with care. One blanket is from your settlement's stores." },
+        "12": { "text": "Night comes an hour early here — local, total, and calm, like a held breath. Things move courteously around your fire inside it, waiting to see if you keep the fire fed. Keep the fire fed." }
+      }
+    },
+    "forsaken": {
+      "label": "Forsaken reaches",
+      "die": 12,
+      "entries": {
+        "1": { "text": "The road itself has been dug out and taken — a mile of roadbed gone to bedrock, cart ruts and all, edges neat as a surgeon's. Whatever wanted a road owns one now, somewhere." },
+        "2": { "text": "A battlefield without a battle: churned earth, dropped weapons, banners of two armies no one has heard of — and no bodies, no blood, no crows. The weapons are still warm." },
+        "3": { "text": "A tower stands where the chart shows nothing, one window lit. It is visibly older than the landscape it stands in. The door is open in a way that constitutes an opinion about you." },
+        "4": { "text": "Every sound you make comes back — footfall, breath, word — a clean echo, four seconds late, from a direction with nothing in it. If you sing, something out there gets the harmony wrong on purpose, then corrects itself, learning." },
+        "5": { "text": "A river runs the wrong way here, uphill, urgent, as if late for something. Things bob past against the current: a door. A ladder. A bell. Parts of a place that is being taken somewhere, piece by piece." },
+        "6": { "text": "You cross the tracks of something that walks on two feet with a stride twice a tall man's — walking with purpose, in a straight line, through obstacles rather than around them. The line points, eventually, toward the coast the settlement sits on." },
+        "7": { "text": "A woman stands at a gibbet-tree, waiting. She has been waiting long enough that birds nest on her shoulders and she minds them like a grandmother. She will trade an answer for an answer — hers are true, and so must yours be." },
+        "8": { "text": "Weather with intent: a storm cell the size of a farmyard that follows the party at a walking pace, grumbling, holding its rain like a threat, herding you gently but unmistakably off your route and toward something." },
+        "9": { "text": "A field of standing stones — no, standing doors. Dozens of doors, freestanding, weathered, all closed. One of them is a door you recognize from the old country. It's warm to the touch, and behind it, faintly: kitchen sounds." },
+        "10": { "text": "Something enormous is asleep under the hill you were about to camp on — the whole hillside breathes, slow as tides. It dreams loudly; light sleepers by the fire will dream its dream and wake knowing one true, enormous, unwanted thing." },
+        "11": { "text": "The remains of an expedition much better equipped than yours, arranged in a circle facing outward, gear intact, a season old. Their journal's last line, in a steady hand: 'It only takes the ones who run.'" },
+        "12": { "text": "A tear of true wonder (§2 — rare and enormous): dawn happens twice. Between the two dawns, one hour that the world does not count — wounds don't bleed, fires don't burn down, and one impossible conversation becomes possible. Choose it well; the second dawn closes it." }
+      }
+    }
+  },
+  "modes": {
+    "foot": {
+      "label": "On foot",
+      "die": 6,
+      "twists": {
+        "1": { "text": "You're quiet: whatever the encounter is, you see it before it sees you. Position is yours." },
+        "2": { "text": "Blisters and short tempers — everyone is Stress 1 closer to the edge when it starts." },
+        "3": { "text": "The footpath shortcut is real, and puts you somewhere carts never go — add one detail the encounter didn't expect you to find." },
+        "4": { "text": "You can leave the path instantly. If this goes wrong, escape routes are plentiful — but they scatter the party." },
+        "5": { "text": "A walker's eye: you notice the small true thing (tracks, a dropped token, fresh sap). Advantage on the first Instinct roll of the scene." },
+        "6": { "text": "Weariness bites at the worst moment: the first reaction roll of the encounter is at disadvantage." }
+      }
+    },
+    "mounted": {
+      "label": "Mounted",
+      "die": 6,
+      "twists": {
+        "1": { "text": "The animals know first — ears flat, refusing a step, a full minute of warning if anyone reads them." },
+        "2": { "text": "Speed is yours: you can simply leave, once, cleanly — if you abandon whatever the scene might have given you." },
+        "3": { "text": "A thrown shoe at the encounter's edge: one mount is lame until tended, and tending it happens inside the scene." },
+        "4": { "text": "Height and presence: mounted, you read as somebody. The encounter addresses you as authority, with everything that invites." },
+        "5": { "text": "The mounts bolt if it turns loud — anyone not dismounted when things break is carried where their animal decides." },
+        "6": { "text": "Fresh horses matter: arrive rested; everyone clears one Stress as the scene opens." }
+      }
+    },
+    "wagon": {
+      "label": "With a wagon",
+      "die": 6,
+      "twists": {
+        "1": { "text": "The wagon is why: whatever happens, the cargo is what it's about — protect it, hide it, or bargain with it." },
+        "2": { "text": "You cannot leave the road. Whatever the encounter wants, it knows exactly where you have to pass." },
+        "3": { "text": "The wagon is shelter, wall, and high ground — a small fortress, if someone thinks of it in time." },
+        "4": { "text": "An axle complains at the scene's edge; the encounter unfolds during repairs, with your hands full and your backs bent." },
+        "5": { "text": "Room for one more: whatever or whoever the scene offers, you could actually carry it home. This is not always a blessing." },
+        "6": { "text": "Slow and loud: the encounter had a full hour's notice of your coming and has used it." }
+      }
+    },
+    "river": {
+      "label": "By river",
+      "die": 6,
+      "twists": {
+        "1": { "text": "The current decides the pace: the scene happens at the water's speed, and there is no stopping mid-way through it." },
+        "2": { "text": "Sound carries flat and far over water — you hear the encounter's truth (voices, weeping, hammering) long before you see it." },
+        "3": { "text": "The banks own you: whatever waits, waits where you must land, portage, or pole through shallows." },
+        "4": { "text": "Something paces the boat beneath the surface, patient and large; it surfaces only if blood or fire touches the water." },
+        "5": { "text": "Mist off the river wraps the whole scene — nothing is seen at more than ten paces, and everything is seen too late." },
+        "6": { "text": "The river is generous today: whatever the encounter, the water has already brought you one useful thing — floating, snagged, waiting to be fished out." }
+      }
+    },
+    "expedition": {
+      "label": "Full expedition (many souls, heavy-laden)",
+      "die": 6,
+      "twists": {
+        "1": { "text": "Too many to hide: the encounter measured your column from a distance and has already decided what you are." },
+        "2": { "text": "Someone among the settlers knows something about this — a face, a mark, a song. They come forward pale, mid-scene." },
+        "3": { "text": "The column stretches: when it starts, the party is at the front and the vulnerable are at the back, or the reverse. GM's knife, players' choice." },
+        "4": { "text": "Provisions make you a prize: whatever the encounter wanted, it now wants your stores more. Any bargain can be paid in Supplies instead of blood." },
+        "5": { "text": "Many hands: any one mundane task in the scene (dig, lift, build, carry) can simply be done, at once, by thirty people." },
+        "6": { "text": "Morale is a lantern everyone can see: how the party handles this scene is witnessed by all, and the stores' Morale moves ±1 on the strength of it." }
+      }
+    }
+  }
+}

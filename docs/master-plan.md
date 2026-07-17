@@ -296,6 +296,13 @@ telemetry, and responsive index/article views. The same ranking module powers
 the GM hotbar quick-search. `/table` exposes the reference as a sixth card;
 `/tome` uses a knotted cord keepsake and a mobile-first embedded spread.
 
+**Incremental Almanac upgrade (2026-07-17).** Claude's committed private-lore
+and chance-table work was grafted onto the newer rules architecture. The GM
+console now has one responsive Almanac surface with source-filtered rules and
+bounded editable lore, plus a separate chance-table leaf for physical or
+uniform app dice. Metadata never contains entry structures; only the rolled
+result is whitelisted. See [almanac.md](almanac.md).
+
 **Goal.** A searchable, hierarchically grouped rules reference (Combat /
 Adventuring / Downtime / …) with cross-references ("you probably also meant…"),
 reachable from player surfaces and the GM hotbar.

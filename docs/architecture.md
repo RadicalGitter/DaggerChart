@@ -6,6 +6,7 @@ pretty-printed JSON on disk. One machine (the GM's), players connect over LAN.
 ```
 server/
   index.js    routes, SSE stream, static serving
+  almanac.js  private lore CRUD and reveal-one-result chance-table boundary
   music.js    song metadata, playlists, character themes, Suno provider boundary
   retell.js   isolated Anthropic prompt and retry boundary for session accounts
   telemetry.js bounded, content-free local UX aggregation
@@ -14,7 +15,7 @@ server/
   views.js    audience whitelists for GM, shells, lore, PCs, and messages
 public/
   shared/     themes, i18n, session pools, GM tools/messages, rules search, player chat, feedback and UX collectors
-  gm/         GM console (campaign/session controls, correspondence, quick table, feedback queue, and UX review map)
+  gm/         GM console (campaign/session controls, Almanac, correspondence, quick table, feedback queue, and UX review map)
   login/      trusted-table chooser: finished-character bubbles + draft side view
   player/     player root: identity switcher and visual-tool shelf
   table/      general arcana-card shell over six player sections, including Rules
@@ -75,6 +76,11 @@ docs/         this file, the design spec, ComfyUI workflow
   `boards.json` is absent, boot migrates legacy `board.json` into `main` once.
   The static `daggerheart/rules.json` corpus is loaded once at boot and served
   cacheably; it contains no campaign state.
+- **`almanac.js`** — combines the public rules corpus with bounded, editable
+  private lore for the GM, and loads `data/tables/*.json` as reveal-one-result
+  chance tables. Metadata explicitly omits entry structures; roll responses
+  whitelist only the one result's text and optional reward. Seen-number state
+  lives in `tables-state.json`. See [almanac.md](almanac.md).
 - **`music.js`** — owns `music.json`, playlist/theme metadata, safe local-audio
   paths, publishing, the mock/live provider adapter, and the validated Suno
   web-library mirror. Generated files are downloaded into
@@ -123,6 +129,11 @@ docs/         this file, the design spec, ComfyUI workflow
 | `POST /api/log`, `POST /api/log/:id/publish` | chronicle notes, publish to table |
 | `GET /api/reference` | SRD creation data (classes, ancestries, cards…) |
 | `GET /api/rules` | public searchable rules corpus with source/license metadata; cacheable with ETag/304 |
+| `GET /api/gm/almanac` | combined public rules and private lore pages for the GM console only |
+| `POST/PUT/DELETE /api/gm/almanac/lore[/:id]` | bounded private lore-page authoring; public rules stay read-only |
+| `GET /api/gm/tables` | chance-table names, dice, labels, totals, and seen counts only; never entry text |
+| `POST /api/gm/tables/:id/roll` | reveal exactly one range-checked chance-table result, using an optional physical result |
+| `POST /api/gm/tables/travel/roll` | reveal one danger-tier encounter plus one way-of-travel twist |
 | `GET /api/character-drafts`, `GET/PUT/DELETE /api/character-drafts/:id` | resumable unfinished creator state, listed separately from completed PCs |
 | `GET/POST/PUT/DELETE /api/party[/:id]` | active player characters; DELETE retires without destroying the stored record or keyed data |
 | `POST /api/party/:id/restore` | return a retired character to player choosers and sheets |
@@ -199,6 +210,10 @@ Consumable reactions; see [inventory.md](inventory.md).
   are reused by the GM hotbar. Desktop uses independently scrolling
   index/article panes; narrow screens switch between Browse and Rule views.
   `/table` and `/tome` keep stable `?embed=1` reference iframes.
+- **GM Almanac:** the console reuses the same ranking module over public rules
+  and private lore, with source filters and a bounded lore editor. A segmented
+  leaf switches to chance-table tools with physical-result inputs, seen-count
+  rules, and one focused reveal sheet. No chance-table entry browser exists.
 - **Player-shell visuals:** `/player` is the root for choosing a focused visual
   tool. `/table`, `/table-book`, and `/tome` share `/api/table`, SSE,
   `settlement-pc`, and the existing embeds. See

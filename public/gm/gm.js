@@ -1,5 +1,6 @@
 // GM Console. Renders from /api/state; every mutation round-trips the server.
 import { CONDITIONS, conditionIcon } from "/shared/conditions.js";
+import { prepareRuleNodes, searchRuleNodes } from "/shared/rules-search.js";
 
 let S = null; // last fetched gm state
 let selectedBuilding = null;
@@ -290,6 +291,7 @@ function showSection(key) {
     sec.hidden = sec.id !== `sec-${key === "town" ? "town" : key}`;
   }
   if (key === "ux") requestAnimationFrame(renderUx);
+  if (key === "almanac") setAlmanacView(almanacView);
 }
 window.addEventListener("hashchange", () => showSection(location.hash.slice(1) || "season"));
 
@@ -1481,6 +1483,292 @@ $("#town-save").addEventListener("click", async () => {
   } catch (e) {
     toast(e.message, true);
   }
+});
+
+// --- the Almanac (public rules, private lore, reveal-one-result tables) ---
+let WIKI = [];
+let wikiById = new Map();
+let wikiActive = null;
+let wikiFilter = "all";
+let wikiLoaded = false;
+let TABLES = [];
+let tablesLoaded = false;
+let almanacView = "pages";
+
+const crumb = (node) => (node.path || []).join(" / ");
+
+function bodyHtml(body) {
+  return String(body || "").split(/\n{2,}/).map((block) => {
+    const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+    if (lines.length && lines.every((line) => line.startsWith("- "))) {
+      return `<ul>${lines.map((line) => `<li>${esc(line.slice(2))}</li>`).join("")}</ul>`;
+    }
+    return `<p>${lines.map(esc).join("<br>")}</p>`;
+  }).join("");
+}
+
+function filteredWikiNodes() {
+  const sourceNodes = wikiFilter === "all" ? WIKI : WIKI.filter((node) => node.source === wikiFilter);
+  return searchRuleNodes(sourceNodes, $("#wiki-search").value);
+}
+
+function renderWikiTree() {
+  const nodes = filteredWikiNodes();
+  const groups = new Map();
+  for (const node of nodes) {
+    const label = `${node.source === "lore" ? "Private lore" : "Rules"} / ${crumb(node) || "Unsorted"}`;
+    if (!groups.has(label)) groups.set(label, []);
+    groups.get(label).push(node);
+  }
+  $("#wiki-index-status").textContent = `${nodes.length} ${nodes.length === 1 ? "page" : "pages"}`;
+  $("#wiki-tree").innerHTML = nodes.length
+    ? [...groups.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([label, entries]) => `
+        <div class="group">${esc(label)}</div>
+        ${entries.map((node) => `
+          <button type="button" class="leaf ${node.id === wikiActive ? "on" : ""}" data-wiki="${esc(node.id)}">
+            ${esc(node.title)}<span class="leaf-source">${node.source === "lore" ? "lore" : "rule"}</span>
+          </button>`).join("")}`).join("")
+    : `<p class="almanac-empty">No page carries that wording.</p>`;
+  $("#wiki-tree").querySelectorAll("[data-wiki]").forEach((button) => {
+    button.addEventListener("click", () => openWikiNode(button.dataset.wiki));
+  });
+}
+
+function openWikiNode(id) {
+  const node = wikiById.get(id);
+  if (!node) return;
+  wikiActive = id;
+  const related = (node.seeAlso || []).map((relatedId) => wikiById.get(relatedId)).filter(Boolean);
+  $("#wiki-main").innerHTML = `
+    <p class="crumb">${esc(crumb(node))}${node.source === "lore" ? " / private lore" : " / rules"}</p>
+    <h3>${esc(node.title)}</h3>
+    <div class="almanac-rule" aria-hidden="true"><i></i></div>
+    <div class="body">${bodyHtml(node.body)}</div>
+    ${related.length ? `<div class="almanac-related">${related.map((entry) => `<button type="button" class="quiet" data-wiki="${esc(entry.id)}">${esc(entry.title)}</button>`).join("")}</div>` : ""}
+    ${node.source === "lore" ? `<div class="almanac-article-actions"><button type="button" class="quiet" data-wiki-edit="${esc(node.id)}">Edit page</button><button type="button" class="quiet" data-wiki-delete="${esc(node.id)}">Remove page</button></div>` : ""}`;
+  renderWikiTree();
+  $("#wiki-main").querySelectorAll("[data-wiki]").forEach((button) => {
+    button.addEventListener("click", () => openWikiNode(button.dataset.wiki));
+  });
+  $("#wiki-main [data-wiki-edit]")?.addEventListener("click", () => wikiEditor(node));
+  $("#wiki-main [data-wiki-delete]")?.addEventListener("click", async (event) => {
+    if (!confirm(`Remove "${node.title}" from the private Almanac?`)) return;
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      await api(`/api/gm/almanac/lore/${node.id}`, { method: "DELETE" });
+      wikiActive = null;
+      await loadWiki();
+      $("#wiki-main").innerHTML = `<p class="almanac-empty">The page has been removed.</p>`;
+      toast("Lore page removed.");
+    } catch (error) {
+      button.disabled = false;
+      toast(error.message, true);
+    }
+  });
+}
+
+function wikiEditor(sourceNode) {
+  const isNew = !sourceNode;
+  const node = sourceNode || { title: "", path: ["Lore"], body: "", keywords: [] };
+  $("#wiki-main").innerHTML = `
+    <div class="almanac-editor">
+      <p class="crumb">${isNew ? "Private lore / new page" : "Private lore / editing"}</p>
+      <h3>${isNew ? "Bind a new page" : `Edit ${esc(node.title)}`}</h3>
+      <label>Title<input type="text" id="wk-title" maxlength="120" value="${esc(node.title)}"></label>
+      <label>Shelf<input type="text" id="wk-path" maxlength="480" value="${esc((node.path || []).join(" / "))}" placeholder="Lore / The World"></label>
+      <label>Search words<input type="text" id="wk-keywords" maxlength="600" value="${esc((node.keywords || []).join(", "))}"></label>
+      <label>Page<textarea id="wk-body" maxlength="30000">${esc(node.body)}</textarea></label>
+      <div class="almanac-article-actions"><button type="button" id="wk-save">${isNew ? "Bind it in" : "Save page"}</button><button type="button" class="quiet" id="wk-cancel">Cancel</button></div>
+    </div>`;
+  $("#wk-title").focus();
+  $("#wk-cancel").addEventListener("click", () => {
+    if (isNew) $("#wiki-main").innerHTML = `<p class="almanac-empty">Choose a page from the index.</p>`;
+    else openWikiNode(node.id);
+  });
+  $("#wk-save").addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    const body = {
+      title: $("#wk-title").value,
+      path: $("#wk-path").value.split("/").map((part) => part.trim()).filter(Boolean),
+      keywords: $("#wk-keywords").value.split(",").map((word) => word.trim()).filter(Boolean),
+      body: $("#wk-body").value
+    };
+    button.disabled = true;
+    try {
+      const saved = isNew
+        ? await api("/api/gm/almanac/lore", { method: "POST", body })
+        : await api(`/api/gm/almanac/lore/${node.id}`, { method: "PUT", body });
+      await loadWiki();
+      openWikiNode(saved.id);
+      toast(isNew ? "Lore page bound into the Almanac." : "Lore page saved.");
+    } catch (error) {
+      button.disabled = false;
+      toast(error.message, true);
+    }
+  });
+}
+
+async function loadWiki() {
+  const payload = await api("/api/gm/almanac");
+  WIKI = prepareRuleNodes(payload);
+  wikiById = new Map(WIKI.map((node) => [node.id, node]));
+  wikiLoaded = true;
+  renderWikiTree();
+  if (wikiActive && wikiById.has(wikiActive)) openWikiNode(wikiActive);
+}
+
+function progressMarkup(seen, total) {
+  const safeTotal = Math.max(Number(total) || 0, 1);
+  const safeSeen = Math.min(Math.max(Number(seen) || 0, 0), safeTotal);
+  const progress = Math.round((safeSeen / safeTotal) * 100);
+  return `<div class="chance-progress"><span>${safeSeen} of ${total} pages turned</span><span class="chance-progress-track" aria-hidden="true"><i style="--progress:${progress}%"></i></span></div>`;
+}
+
+function renderTravelTool(table) {
+  const danger = Object.entries(table.travel.danger || {});
+  const modes = Object.entries(table.travel.modes || {});
+  return `<article class="chance-tool travel">
+    <div class="chance-die compound">d12+d6</div>
+    <div class="chance-copy">
+      <h3>${esc(table.name)}</h3>
+      <p class="muted">${esc(table.blurb)}</p>
+      <div class="chance-controls">
+        <label>Danger<select id="travel-danger">${danger.map(([key, value]) => `<option value="${esc(key)}">${esc(value.label)} (${value.seen}/${value.total})</option>`).join("")}</select></label>
+        <label>Way of travel<select id="travel-mode">${modes.map(([key, value]) => `<option value="${esc(key)}">${esc(value.label)} (${value.seen}/${value.total})</option>`).join("")}</select></label>
+        <label>Physical d12<input type="number" id="travel-raw" min="1" max="12" inputmode="numeric" placeholder="optional"></label>
+        <label>Physical d6<input type="number" id="travel-twist-raw" min="1" max="6" inputmode="numeric" placeholder="optional"></label>
+        <button type="button" data-travel-roll>Set out</button>
+      </div>
+    </div>
+  </article>`;
+}
+
+function renderTables() {
+  $("#tables-grid").innerHTML = TABLES.map((table) => table.travel ? renderTravelTool(table) : `
+    <article class="chance-tool">
+      <div class="chance-die">d${table.die}</div>
+      <div class="chance-copy">
+        <h3>${esc(table.name)}</h3>
+        <p class="muted">${esc(table.blurb)}</p>
+        ${progressMarkup(table.seen, table.total)}
+        <div class="chance-controls">
+          <label>Physical result<input type="number" min="1" max="${table.die}" inputmode="numeric" placeholder="optional" data-table-raw="${esc(table.id)}"></label>
+          <button type="button" data-table-roll="${esc(table.id)}">Turn one page</button>
+        </div>
+      </div>
+    </article>`).join("");
+  $("#tables-grid").querySelectorAll("[data-table-roll]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const table = TABLES.find((entry) => entry.id === button.dataset.tableRoll);
+      const raw = $(`[data-table-raw="${CSS.escape(table.id)}"]`).value;
+      button.disabled = true;
+      try {
+        const result = await api(`/api/gm/tables/${table.id}/roll`, { method: "POST", body: raw ? { raw } : {} });
+        showTableResult(table.name, result);
+        await loadTables(false);
+      } catch (error) {
+        button.disabled = false;
+        toast(error.message, true);
+      }
+    });
+  });
+  $("#tables-grid [data-travel-roll]")?.addEventListener("click", rollTravelTable);
+}
+
+async function rollTravelTable(event) {
+  const button = event.currentTarget;
+  const table = TABLES.find((entry) => entry.travel);
+  const body = { mode: $("#travel-mode").value, danger: $("#travel-danger").value };
+  if ($("#travel-raw").value) body.raw = $("#travel-raw").value;
+  if ($("#travel-twist-raw").value) body.twistRaw = $("#travel-twist-raw").value;
+  button.disabled = true;
+  try {
+    const result = await api("/api/gm/tables/travel/roll", { method: "POST", body });
+    showTableResult(table.name, result);
+    await loadTables(false);
+  } catch (error) {
+    button.disabled = false;
+    toast(error.message, true);
+  }
+}
+
+function showTableResult(name, result) {
+  const encounter = result.encounter || result;
+  const repeated = encounter.seenBefore || result.twist?.seenBefore;
+  const number = `${encounter.n}${result.twist ? ` / ${result.twist.n}` : ""}`;
+  const context = result.tierLabel ? `${result.tierLabel} / ${result.modeLabel}` : `Page ${encounter.n}`;
+  $("#table-result").innerHTML = `<article class="chance-reveal">
+    <header class="chance-reveal-head">
+      <div class="chance-reveal-number">${esc(number)}</div>
+      <div class="chance-reveal-title"><strong>${esc(name)}</strong><span>${esc(context)}</span></div>
+    </header>
+    <div class="entry-text">${esc(encounter.entry.text)}</div>
+    ${encounter.entry.reward ? `<div class="entry-reward">${esc(encounter.entry.reward)}</div>` : ""}
+    ${result.twist ? `<div class="entry-text"><strong>The way colors it:</strong> ${esc(result.twist.entry.text)}</div>` : ""}
+    ${repeated ? `<div class="seen">A page in this result has been turned before.</div>` : ""}
+    <div class="almanac-article-actions"><button type="button" class="quiet" id="tr-ledger">Enter it into the ledger</button></div>
+  </article>`;
+  const ledgerButton = $("#tr-ledger");
+  ledgerButton.addEventListener("click", async () => {
+    const text = `${name}${result.tierLabel ? ` (${result.tierLabel}, ${result.modeLabel})` : ""} ${encounter.n}${result.twist ? `/${result.twist.n}` : ""}: ${encounter.entry.text}${result.twist ? ` — ${result.twist.entry.text}` : ""}`;
+    ledgerButton.disabled = true;
+    try {
+      await api("/api/log", { method: "POST", body: { text } });
+      ledgerButton.textContent = "Entered into the ledger";
+      toast("Entered into the ledger.");
+    } catch (error) {
+      ledgerButton.disabled = false;
+      toast(error.message, true);
+    }
+  });
+  $("#table-result").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
+}
+
+async function loadTables(clearResult = true) {
+  TABLES = await api("/api/gm/tables");
+  tablesLoaded = true;
+  renderTables();
+  if (clearResult) $("#table-result").innerHTML = "";
+}
+
+function setAlmanacView(view) {
+  almanacView = view === "chance" ? "chance" : "pages";
+  document.querySelectorAll("[data-almanac-view]").forEach((button) => {
+    const active = button.dataset.almanacView === almanacView;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  document.querySelectorAll("[data-almanac-pane]").forEach((pane) => {
+    pane.hidden = pane.dataset.almanacPane !== almanacView;
+  });
+  if (almanacView === "pages" && !wikiLoaded) {
+    $("#wiki-tree").innerHTML = `<p class="almanac-empty">Opening the index.</p>`;
+    loadWiki().catch((error) => toast(error.message, true));
+  }
+  if (almanacView === "chance" && !tablesLoaded) {
+    $("#tables-grid").innerHTML = `<p class="almanac-empty">Opening the chance tables.</p>`;
+    loadTables().catch((error) => toast(error.message, true));
+  }
+}
+
+$("#wiki-search").addEventListener("input", renderWikiTree);
+$("#wiki-search").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    const first = filteredWikiNodes()[0];
+    if (first) openWikiNode(first.id);
+  }
+});
+$("#wiki-new").addEventListener("click", () => wikiEditor(null));
+document.querySelectorAll("[data-wiki-filter]").forEach((button) => {
+  button.addEventListener("click", () => {
+    wikiFilter = button.dataset.wikiFilter;
+    document.querySelectorAll("[data-wiki-filter]").forEach((entry) => entry.classList.toggle("active", entry === button));
+    renderWikiTree();
+  });
+});
+document.querySelectorAll("[data-almanac-view]").forEach((button) => {
+  button.addEventListener("click", () => setAlmanacView(button.dataset.almanacView));
 });
 
 // --- boot ---

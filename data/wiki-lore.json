@@ -1,0 +1,160 @@
+{
+  "note": "GM-only lore. Editable from the console Wiki tab; grows with the campaign. Nothing here reaches player payloads.",
+  "nodes": [
+    {
+      "id": "lore_visseren",
+      "title": "Visseren",
+      "path": [
+        "Lore",
+        "The World"
+      ],
+      "body": "The new world. Not empty — other towns, cities, and powers wait out in the dark hexes — but the settlers arrived knowing nothing and owning nothing. The name is what the crossing charts called the coastline; nobody remembers who wrote it on them.\n\nSeed page — grow me as the map reveals itself.",
+      "seeAlso": [
+        "lore_dark_hexes",
+        "lore_crossing"
+      ],
+      "keywords": [
+        "world",
+        "setting",
+        "new world"
+      ]
+    },
+    {
+      "id": "lore_old_country",
+      "title": "The Old Country",
+      "path": [
+        "Lore",
+        "The World"
+      ],
+      "body": "Where the fifty came from, and what they don't talk about. Jory vouched for half the passage list at the harbor. Ellory's father was a harbor clerk ruined by one false ledger. Calder wore another army's colors once. Keep it vague at the table until a player digs — backstory is better excavated than announced.",
+      "seeAlso": [
+        "lore_crossing",
+        "lore_folk_web"
+      ],
+      "keywords": [
+        "homeland",
+        "harbor",
+        "before"
+      ]
+    },
+    {
+      "id": "lore_crossing",
+      "title": "The Crossing",
+      "path": [
+        "Lore",
+        "The World"
+      ],
+      "body": "The voyage that made the fifty a people. One storm, remembered differently by everyone who survived it: Calder went into the water three times and came out with two; Lyra's brother was the third. Old Sef (proposed folk) saw something beneath the ship — and it saw him back. The passage manifest survives in Ellory's locked drawer: fifty names, one of which nobody answers to.\n\nThe storm is the campaign's shared wound. Touch it rarely.",
+      "seeAlso": [
+        "lore_folk_web",
+        "lore_old_country"
+      ],
+      "keywords": [
+        "voyage",
+        "storm",
+        "ship",
+        "manifest",
+        "arrival"
+      ]
+    },
+    {
+      "id": "lore_settlement",
+      "title": "The Settlement",
+      "path": [
+        "Lore",
+        "The Town"
+      ],
+      "body": "Fifty souls, five buildings, one palisade. The scale is intimate: every death is a name, one good foreman changes everything. The town is the players' character as much as their PCs are — its ledger is the campaign's memory.\n\nSeed page — record founding decisions, layout, and the things the players name.",
+      "seeAlso": [
+        "lore_folk_web"
+      ],
+      "keywords": [
+        "town",
+        "village",
+        "palisade",
+        "fifty"
+      ]
+    },
+    {
+      "id": "lore_folk_web",
+      "title": "The Folk Web (who owes whom)",
+      "path": [
+        "Lore",
+        "The Town"
+      ],
+      "body": "The load-bearing secrets, in one place (full truth lives on each folk card's GM notes):\n\n— Garrick owes Jory his passage; he has seen the bunkhouse joinery and says nothing.\n— Jory's gift is people, not carpentry (§8C, the designed story — protect it).\n— Calder is a deserter under a dead man's name; he carries the knife of the man he couldn't save.\n— That man was Lyra's brother. She feeds his dogs. Neither she nor Calder has ever spoken of it.\n— Ellory has noticed the manifest's extra name. She wants a reason before a judgment — but she will want one of the two.\n\nEvery thread crosses at least one other. Pull any of them and the web moves.",
+      "seeAlso": [
+        "lore_crossing",
+        "lore_bards_tome"
+      ],
+      "keywords": [
+        "garrick",
+        "jory",
+        "calder",
+        "lyra",
+        "ellory",
+        "secrets",
+        "threads"
+      ]
+    },
+    {
+      "id": "lore_dark_hexes",
+      "title": "The Dark Hexes",
+      "path": [
+        "Lore",
+        "The World"
+      ],
+      "body": "The map begins black; the players pick a direction and walk. Out there: other powers, older claims, and the rare-and-enormous kind of magic (§2 — a sword inside a log, a wolf that speaks). The scanned map and its locations legend live in docs/map/ — reveal hex by hex, never by accident.\n\nSeed page — add rumors here before they're confirmed, one line each.",
+      "seeAlso": [
+        "lore_visseren"
+      ],
+      "keywords": [
+        "hexes",
+        "map",
+        "exploration",
+        "unknown",
+        "rumors"
+      ]
+    },
+    {
+      "id": "lore_seasons",
+      "title": "The Wheel of the Year",
+      "path": [
+        "Lore",
+        "The Town"
+      ],
+      "body": "A year passes with each new story arc; within it the seasons turn with the building rolls. The wheel is the campaign's metronome — springs are for hope, winters collect debts. When the folk b-plot system lands, its scenes will ride this wheel (spring scene, then summer, autumn, winter).",
+      "seeAlso": [
+        "lore_folk_web"
+      ],
+      "keywords": [
+        "seasons",
+        "year",
+        "spring",
+        "winter",
+        "cadence"
+      ]
+    },
+    {
+      "id": "lore_bards_tome",
+      "title": "The Bard's Tome (meta — deepest secret)",
+      "path": [
+        "Lore",
+        "Beneath"
+      ],
+      "body": "The PCs are figments of the Bard's (or a trickster god's) imagination, written into being exactly as created. The players' tome IS his book; they write in the book that wrote them. Rewards were penned on their arrival page and never revised; the audience beyond the fourth wall (Suno listeners) applauds performances the characters can't hear.\n\nThis is the campaign's floor. Nothing on any player surface may state it — only hairline cracks: a first page in a hand nobody claims, a portrait that was always already there. Full design: docs/bards-tome-plan.md.",
+      "seeAlso": [
+        "lore_folk_web",
+        "lore_seasons"
+      ],
+      "keywords": [
+        "bard",
+        "trickster",
+        "meta",
+        "fourth wall",
+        "tome",
+        "audience"
+      ]
+    }
+  ]
+}

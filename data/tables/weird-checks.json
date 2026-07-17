@@ -1,0 +1,28 @@
+{
+  "id": "weird-checks",
+  "name": "Weird Checks",
+  "blurb": "Strange dares and stranger opportunities. Roll when a player attempts something odd enough to deserve its own fate, or when the world offers a peculiar challenge.",
+  "die": 20,
+  "entries": {
+    "1": { "text": "Hold a perfectly straight face while the settlement's worst liar tells their tale. Instinct, hard.", "reward": "The liar becomes your informant for a season — they respect nothing so much as an unreadable face." },
+    "2": { "text": "Out-stare the old ram that has claimed the wood-pile. Presence, moderate — it has been practicing longer than you.", "reward": "The ram follows you thereafter at a dignified distance. Once, when it matters, it will headbutt someone you truly need headbutted." },
+    "3": { "text": "Thread a fishhook by moonlight with cold-numbed fingers while someone tells you urgent news. Finesse, hard.", "reward": "Your hands remember it forever: +1 to your next three Finesse rolls made under pressure." },
+    "4": { "text": "Recite the names of all fifty settlers, in the order they stepped off the ship. Knowledge, moderate.", "reward": "The old ones weep. Gain 2 Hope, and the settlement's elders will thereafter answer one hard question a season honestly." },
+    "5": { "text": "Carry a brimming bowl of stew up the watchtower ladder without spilling. Agility, moderate; hard if it's windy, and it's always windy.", "reward": "Calder shares the stew and one true thing from his list of what moves in the dark." },
+    "6": { "text": "Split a log with one blow in front of everyone after loudly announcing you will. Strength, hard.", "reward": "A work-song is invented about you on the spot. Once this year, invoke it to give the whole party advantage on a group action." },
+    "7": { "text": "Sleep a full night in the storehouse rafters without Ellory noticing. Agility then Presence, both moderate.", "reward": "You now know the storehouse's other inventory — the drawer, the manifest, the things counted that aren't food." },
+    "8": { "text": "Convince a crow to trade you what it's carrying. Presence, hard; offering something shiny shifts it to moderate.", "reward": "The crow's trinket is always worth more than what you gave. Always. The crows have decided they like doing business with you." },
+    "9": { "text": "Walk the palisade's top beam end to end at dusk, arms out, no hands. Agility, hard.", "reward": "The children of the settlement believe you can do anything. Once, that belief will be mechanically true: turn one failure witnessed by a child into a success." },
+    "10": { "text": "Eat whatever Jory cooked without your face saying anything at all. Instinct, very hard.", "reward": "Jory quietly starts asking you first before he 'improves' anything. This is worth more than gold." },
+    "11": { "text": "Mend a stranger's boot so well they don't notice it was ever torn. Finesse, moderate.", "reward": "The stranger, whoever they turn out to be, owes you one small kindness — and strangers here are never only strangers." },
+    "12": { "text": "Stay awake through Lyra's entire silent dawn watch beside her, without speaking once. Instinct, hard.", "reward": "She teaches you to read the ridge line. Advantage on your next three wilderness Instinct rolls." },
+    "13": { "text": "Make bread rise in winter in a cold kitchen through sheer attention and love. Knowledge, hard.", "reward": "+1 Morale to the stores, and the recipe becomes yours — the settlement calls the loaf by your name." },
+    "14": { "text": "Beat Garrick at arm wrestling. Strength, very hard. He will not let you win, out of respect.", "reward": "Win or lose, gain a Hope. Win, and Garrick tells you one thing he has never told anyone — GM's choice of thread." },
+    "15": { "text": "Catch the storehouse cat, who has never been caught. Agility, very hard.", "reward": "You may not keep the cat. But the cat keeps you: once per session it appears somewhere useful — atop the thing you're looking for." },
+    "16": { "text": "Read the whole sky: name tomorrow's weather, loudly, and be right. Instinct, hard.", "reward": "The settlement plans around your word now. Once a season, declare the weather narratively convenient and it is so." },
+    "17": { "text": "Dance the old-country harvest dance correctly, all eleven turns, with everyone watching. Presence, hard.", "reward": "For one evening the settlement forgets it is fifty people in the dark. +2 Morale, and everyone clears a Stress." },
+    "18": { "text": "Whittle something true with your off hand while telling the story of who it's for. Finesse and Presence, both moderate.", "reward": "The carving is a small anchor: whoever carries it may reroll one Fear-heavy roll while it's on them. One carving at a time exists." },
+    "19": { "text": "Follow the fox that watches the bunkhouse, all the way to where it goes. Agility and Instinct, both hard.", "reward": "Where the fox goes is worth knowing — the GM places one revealed secret of the nearby hexes, a season early." },
+    "20": { "text": "At full dark, ring the watchtower bell exactly once so softly that only one person in the settlement hears it — the person who needed to wake. Finesse, nearly impossible.", "reward": "The bell remembers your hand. Once in the campaign, ring it from anywhere: one person of your choosing, anywhere in the world, wakes and knows the settlement needs them." }
+  }
+}

@@ -11,13 +11,24 @@ each other. Rules of the road:
 3. Prefer additive work (new files, new branches) when the other agent has
    an open lane. Merge conflicts are cheaper than lost WIP, but neither is
    free.
-4. Spoiler rules (CLAUDE.md / AGENTS.md) bind every agent equally: never
-   read `data/event-tables/*` event text; player payloads only via the
-   whitelists in `server/views.js`.
+4. Spoiler rules (CLAUDE.md / AGENTS.md) bind every agent equally: never read
+   `data/event-tables/*` event text or `data/tables/*` entry text/rewards;
+   player payloads only via the whitelists in `server/views.js`.
 
 ---
 
 ## Lanes
+
+**2026-07-17 — Claude + Codex** · status: DONE
+Lane: integrate Claude commit `31288bd` (GM Almanac). Retained beta's newer
+34-page public rules corpus and shared ranking module, then grafted Claude's
+eight private lore pages and three reveal-one-result chance tables into a
+single responsive GM tool. Replaced duplicate public routes with bounded
+GM-namespaced lore CRUD, explicit roll-response whitelists, uniform dice,
+seen-count metadata, and failure-safe controls. Verified structure without
+printing entry prose, scratch-only CRUD/repeats/range gates/travel rolls,
+desktop/390px/320px layouts, and no horizontal overflow. Live campaign data,
+table state, local audio, and map work remain outside the commit.
 
 **2026-07-17 — Codex** · status: DONE
 Lane: session perspectives and reviewed Opus retellings (feature 4). Campaign-
@@ -25,8 +36,9 @@ scoped session records, strict player whitelists, isolated Anthropic adapter,
 GM gathering/review flow, and the player Chronicle prompt. Verified campaign
 isolation, own-draft-only payloads, completion booleans, missing-key failure,
 mocked 5xx retry, review publication, restart recovery, EN/SV, and 390px/320px
-layouts. No external model request was made; live campaign data and unrelated
-local media stay outside the commit.
+layouts. One isolated dummy Opus request verified the configured provider; no
+live campaign content was sent. Live campaign data and unrelated local media
+stay outside the commit.
 
 **2026-07-17 — Codex** · status: DONE
 Lane: campaigns (feature 6). Added boot migration and atomic persistence for

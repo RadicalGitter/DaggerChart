@@ -7,9 +7,11 @@ designing anything; it is the source of truth. Code map + API:
 ## Hard rules (spoiler safety — highest priority)
 
 1. **Never read, print, quote, grep, or diff event text** from
-   `data/event-tables/*.json`. The GM (the user) has deliberately not read
-   these tables; results must surprise them at the table. Structure keys
-   (`tier`, `resource`, flags) are fine to inspect; `event` strings are not.
+   `data/event-tables/*.json` or chance-table entry text/rewards from
+   `data/tables/*.json`. The GM (the user) has deliberately not read these
+   tables; results must surprise them at the table. Structure keys, table
+   names, labels, dice, counts, and flags are fine to inspect; `event`, entry
+   `text`, and entry `reward` values are not.
    This applies to *your own output in chat* — tool results the user can
    expand count as spoiling.
 2. Never build a screen, log, export, or error path that shows more than the
@@ -17,9 +19,9 @@ designing anything; it is the source of truth. Code map + API:
 3. Player-facing payloads come only from the whitelist in `server/views.js`.
    Hidden fields (`hidden.inspiration`, `hidden.penalty`) must be excluded
    server-side, never hidden with CSS.
-4. When testing downtime resolution, run against a scratch `DATA_DIR` with
-   dummy tables — resolving against real data spends event numbers and can
-   print real event text.
+4. When testing downtime or chance-table resolution, run against a scratch
+   `DATA_DIR` with dummy or copied-but-unread tables. Resolving against real
+   data spends numbers and can print real event text.
 
 ## Project conventions
 
@@ -145,6 +147,10 @@ designing anything; it is the source of truth. Code map + API:
   → body ranking shared by the standalone page and GM hotbar; bodies are
   escaped before `termify()`. `/table` embeds it as a sixth card and `/tome`
   carries it behind the knotted-cord keepsake.
+- The GM **Almanac** combines those read-only rules with private editable lore
+  from `data/wiki-lore.json`. Its chance-table leaf exposes metadata only until
+  a roll; `/api/gm/tables*` may return one explicitly whitelisted result and
+  never an entry collection. See `docs/almanac.md`.
 - Campaigns scope PCs, drafts, session records, and chronicle entries while
   the settlement world remains singular. `data/campaigns.json` names one
   active campaign as current; `/table`, `/api/lore`, downtime logging, group

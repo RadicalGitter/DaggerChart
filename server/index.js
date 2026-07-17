@@ -5,6 +5,7 @@ import "./env.js";
 import { campaignById, createCampaignId, isActiveCampaign, state, persist, addLog, advanceSeason, resolveDowntime, modifierBreakdown, seasonLabel } from "./state.js";
 import { gmView, tableView, loreView, screenView, partyListView, playerCharacterView, gmMessagesView, playerMessagesView } from "./views.js";
 import { loadJson, saveJson } from "./store.js";
+import almanac from "./almanac.js";
 import { addInventoryItem, consumables, grantConsumable, inventoryEntry, updateInventoryItem, useInventoryItem } from "./inventory.js";
 import { clearTelemetry, recordTelemetryBatch, telemetryView } from "./telemetry.js";
 import { retellSession } from "./retell.js";
@@ -79,6 +80,7 @@ function sessionParticipants(value, campaignId, activeOnly = false) {
 
 const app = express();
 app.use(express.json({ limit: "8mb" }));
+app.use(almanac); // wiki + roll-to-reveal tables (server/almanac.js)
 app.use("/shared", express.static(path.join(PUBLIC, "shared")));
 app.use("/vendor/html2canvas", express.static(path.join(ROOT, "node_modules", "html2canvas", "dist")));
 app.use("/gm", express.static(path.join(PUBLIC, "gm")));

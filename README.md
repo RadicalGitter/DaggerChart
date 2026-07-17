@@ -9,6 +9,8 @@ The alternate player-shell contract lives in
 identity is documented in [docs/player-identity.md](docs/player-identity.md).
 The reviewed session chronicler is documented in
 [docs/session-retellings.md](docs/session-retellings.md).
+The GM lore index and reveal-one-result tables are documented in
+[docs/almanac.md](docs/almanac.md).
 Working rules for AI-assisted development are in [AGENTS.md](AGENTS.md) and
 [CLAUDE.md](CLAUDE.md).
 
@@ -31,7 +33,7 @@ whitelisted server-side regardless).
 
 | Route | Who | What |
 |---|---|---|
-| `/gm` | GM (private) | Console: campaign controls, reviewed session chronicler, private PC correspondence, playtest tickets, local UX map, settlement ledger, and a session quick table with rules search |
+| `/gm` | GM (private) | Console: campaign controls, reviewed session chronicler, rules/private-lore Almanac, reveal-one-result chance tables, correspondence, playtest tickets, local UX map, settlement ledger, and quick tools |
 | `/board` | GM (private) | Named Main/HUD drafting boards with infinite pan/zoom, live stat plates, counters, notes, and pinned camera views |
 | `/login` | everyone | Trusted-table chooser: campaign-grouped character bubbles, a separate resumable-drafts view, GM, and projector. Bare `/` lands here. |
 | `/player` | players | Player root: switch the device's character and choose a focused physical view. |
@@ -96,6 +98,9 @@ stopped (or live; the GM console re-reads on refresh):
 - `feedback.json` — annotated screenshot tickets and GM triage state
 - `telemetry.json` — gitignored, content-free local UX aggregates; see [docs/ux-telemetry.md](docs/ux-telemetry.md)
 - `event-tables/*.json` — **do not open** (see above)
+- `tables/*.json` — **do not open**; chance-table entries are revealed one result at a time through the GM Almanac
+- `tables-state.json` — numbers already revealed from chance tables; created on the first roll
+- `wiki-lore.json` — editable private GM pages shown beside public rules in the Almanac
 - `daggerheart/reference.json` — SRD reference data (classes, ancestries, communities, domain cards, weapons, armor, and the 60-entry Consumables catalog)
 - `daggerheart/gm-screen.json` — compact SRD quick-reference rows for the GM overlay
 - `daggerheart/rules.json` — hand-editable public rules corpus used by the searchable table reference
