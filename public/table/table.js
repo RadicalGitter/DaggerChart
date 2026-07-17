@@ -5,6 +5,7 @@
 // whole deck into a stack at the left — selection on top — and the card's
 // contents take the rest of the row. Pressing the stack puts the deck back.
 import { t, term, initI18n, seasonLabel, TERMS } from "/shared/i18n.js";
+import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -223,6 +224,7 @@ function layoutDeck() {
 
 function openCard(key) {
   selected = key;
+  setTelemetryMode(key);
   panelOverride = null;
   panelKey = null;
   updatePanel();
@@ -231,6 +233,7 @@ function openCard(key) {
 
 function closePanel() {
   selected = null;
+  setTelemetryMode("deck");
   panelOverride = null;
   updatePanel();
   layoutDeck();
@@ -260,6 +263,7 @@ window.addEventListener("resize", () => {
 
 async function render() {
   data = await (await fetch("/api/table")).json();
+  setTelemetryMode(selected || "deck");
 
   $("#t-name").textContent = data.settlement.name;
   $("#t-season").innerHTML = `<span class="term" data-term="season">${esc(seasonLabel(data.settlement.seasonLabel))}</span> · ${t("table.folkcount", { n: data.settlement.population })}`;

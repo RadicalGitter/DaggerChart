@@ -4,6 +4,7 @@ import { t, term, termify, initI18n } from "/shared/i18n.js";
 import { DEFAULT_SHELL } from "/shared/shells.js";
 import { PENS } from "/shared/pens.js";
 import { covenantArticlesHtml } from "/shared/paper.js";
+import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -527,6 +528,7 @@ function renderSubprogress(st) {
 
 function rerender(direction = null) {
   const st = steps[step];
+  setTelemetryMode(`step-${step + 1}:part-${part + 1}`);
   part = Math.min(part, partTotal(st) - 1);
   $("#progress").innerHTML = steps
     .map((_, i) => `<div class="dot ${i < step ? "done" : i === step ? "now" : ""}"></div>`)

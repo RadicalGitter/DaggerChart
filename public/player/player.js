@@ -1,5 +1,6 @@
 import { t, initI18n, seasonLabel } from "/shared/i18n.js";
 import { SHELLS, DEFAULT_SHELL, shellEntryRoute, validShell } from "/shared/shells.js";
+import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
 
 const $ = (selector) => document.querySelector(selector);
@@ -75,6 +76,7 @@ function renderGate() {
 
 function render() {
   if (!data) return;
+  setTelemetryMode(currentPC() ? "views" : "choose-character");
   document.title = `${t("player.hub.root")} — ${data.settlement.name}`;
   $("#settlement-name").textContent = data.settlement.name;
   $("#season-label").textContent = seasonLabel(data.settlement.seasonLabel);

@@ -1,6 +1,7 @@
 // The players' journal: shared and personal notes on people, places, and days.
 // Reads /api/lore (whitelisted server-side); writes /api/notes as the chosen PC.
 import { t, lang, initI18n, seasonLabel } from "/shared/i18n.js";
+import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -248,6 +249,7 @@ function restoreDrafts({ drafts, focusId }) {
 }
 
 function renderTab() {
+  setTelemetryMode(TAB);
   const saved = snapshotDrafts();
   for (const b of document.querySelectorAll(".tabbar [data-tab]")) {
     b.classList.toggle("on", b.dataset.tab === TAB);

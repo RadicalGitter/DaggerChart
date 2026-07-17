@@ -6,6 +6,7 @@ import { state, persist, addLog, advanceSeason, resolveDowntime, modifierBreakdo
 import { gmView, tableView, loreView, screenView, partyListView, playerCharacterView } from "./views.js";
 import { loadJson, saveJson } from "./store.js";
 import { addInventoryItem, consumables, grantConsumable, inventoryEntry, updateInventoryItem, useInventoryItem } from "./inventory.js";
+import { clearTelemetry, recordTelemetryBatch, telemetryView } from "./telemetry.js";
 import {
   musicView,
   characterThemeView,
@@ -291,6 +292,15 @@ app.delete("/api/party/:id", guard((req, res) => {
 
 // --- GM API ---
 app.get("/api/state", (_req, res) => res.json(gmView()));
+
+// Local UX evidence. Batches never broadcast: a heartbeat must not cause
+// every open client to refetch campaign state.
+app.get("/api/telemetry", (_req, res) => res.json(telemetryView()));
+app.post("/api/telemetry/batch", guard((req, res) => {
+  recordTelemetryBatch(req.body || {});
+  res.status(204).end();
+}));
+app.delete("/api/telemetry", guard((_req, res) => res.json(clearTelemetry())));
 
 // --- first-party playtest tickets ---
 

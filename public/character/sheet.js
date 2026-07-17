@@ -2,6 +2,7 @@
 // and persist. Live-updates when the GM (or another device) changes the character.
 import { t, term, termify, initI18n } from "/shared/i18n.js";
 import { paperArtifactHtml } from "/shared/paper.js";
+import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -24,6 +25,7 @@ function pips(kind, marked, max, harm) {
 }
 
 function render() {
+  setTelemetryMode("sheet");
   const p = PC;
   const w = p.weapons || {};
   const weaponRow = (label, wp) =>

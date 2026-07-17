@@ -116,10 +116,18 @@ designing anything; it is the source of truth. Code map + API:
   playlist endpoint. The server validates song UUIDs, derives CDN URLs itself,
   caches MP3s under `Visseren/Suno Mirror`, and never deletes cached audio when
   a song leaves the upstream collection. See `docs/music-integration.md`.
-- Player feedback is explicit, not ambient telemetry: the bug control captures
-  the current viewport for annotation and creates a local ticket. GM triage
-  reads all tickets for crosstalk before presenting one problem at a time; see
+- Player feedback tickets are explicit: the bug control captures the current
+  viewport for annotation and creates a local ticket. GM triage reads all
+  tickets for crosstalk before presenting one problem at a time; see
   `docs/feedback-triage-agent.md`.
+- Content-free ambient UX telemetry is an explicit scope expansion for the
+  current five-person private playtest. It has no consent gate, stores only
+  normalized routes/modes/coordinates/semantic targets and aggregate timing,
+  and must never collect written content, identities, screenshots, IPs, user
+  agents, or browser history. `data/telemetry.json` is gitignored. **Review
+  consent, retention, access, and whether this should exist at all if the
+  project becomes remote, public, or materially larger.** See
+  `docs/ux-telemetry.md`.
 
 - `/screen` is the projector in front of the table (the drafting board owns
   `/board`): it shows exactly one thing, chosen by the GM — a mood image,

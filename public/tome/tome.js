@@ -9,6 +9,7 @@
 import { t, term, termify, initI18n, seasonLabel, lang } from "/shared/i18n.js";
 import { CONDITIONS, conditionIcon } from "/shared/conditions.js";
 import { paperArtifactHtml } from "/shared/paper.js";
+import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
 
 const $ = (selector) => document.querySelector(selector);
@@ -336,6 +337,7 @@ function pageStartNumber() {
 
 function renderSpread(force = false) {
   if (!data) return;
+  setTelemetryMode(`${SECTION_ORDER[selectedIndex].key}:spread-${spreadIndex + 1}`);
   const spreads = spreadsFor();
   spreadIndex = Math.min(spreadIndex, spreads.length - 1);
   const spread = spreads[spreadIndex];
@@ -366,6 +368,7 @@ function fitCharacterPages() {
 
 function renderCover() {
   if (!data) return;
+  if (!bookOpen) setTelemetryMode("closed");
   $("#cover-title").textContent = data.settlement.name;
   $("#front-cover").setAttribute("aria-label", t("table.book.open"));
 }

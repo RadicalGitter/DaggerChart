@@ -1,4 +1,5 @@
 import { t, initI18n, seasonLabel } from "/shared/i18n.js";
+import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
 
 const $ = (selector) => document.querySelector(selector);
@@ -153,6 +154,7 @@ function render() {
     $("#character-views").querySelector(".finished-view").inert = false;
     $("#character-views").querySelector(".drafts-view").inert = true;
   }
+  setTelemetryMode($("#character-views").dataset.view === "drafts" ? "drafts" : "finished");
   $("#draft-view-toggle").hidden = drafts.length === 0;
   $("#draft-view-label").textContent = $("#character-views").dataset.view === "drafts" ? t("login.backFinished") : t("login.showDrafts", { n: drafts.length });
   requestAnimationFrame(() => {
@@ -178,6 +180,7 @@ $("#draft-view-toggle").onclick = () => {
   views.querySelector(".drafts-view").inert = !showDrafts;
   $("#draft-view-toggle").setAttribute("aria-pressed", String(showDrafts));
   $("#draft-view-label").textContent = showDrafts ? t("login.backFinished") : t("login.showDrafts", { n: drafts.length });
+  setTelemetryMode(showDrafts ? "drafts" : "finished");
   requestAnimationFrame(() => positionStage(showDrafts ? $("#unfinished-characters") : $("#finished-characters"), showDrafts ? "draft" : "pc"));
 };
 

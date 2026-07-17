@@ -7,12 +7,13 @@ pretty-printed JSON on disk. One machine (the GM's), players connect over LAN.
 server/
   index.js    routes, SSE stream, static serving
   music.js    song metadata, playlists, character themes, Suno provider boundary
+  telemetry.js bounded, content-free local UX aggregation
   state.js    domain logic: roll resolution, modifiers, season, log
   store.js    atomic JSON read/write (tmp+rename), timestamped backups
   views.js    audience whitelists: gmView(), tableView(), loreView()
 public/
-  shared/     themes, i18n.js, and small player-facing registries
-  gm/         GM console (sections: downtime, buildings, folk, people, places, party, stores, ledger, settlement)
+  shared/     themes, i18n.js, player registries, feedback and UX collectors
+  gm/         GM console (campaign controls, feedback queue, and UX review map)
   login/      trusted-table chooser: finished-character bubbles + draft side view
   player/     player root: identity switcher and visual-tool shelf
   table/      general arcana-card shell over all five player sections
@@ -57,6 +58,10 @@ docs/         this file, the design spec, ComfyUI workflow
   `Visseren/Suno Mirror`; published themes are copied to
   `Visseren/Character Themes/<Character Name>`. See
   [music-integration.md](music-integration.md).
+- **`telemetry.js`** — owns gitignored `telemetry.json`, validates the fixed
+  player-surface whitelist, and aggregates bounded route/mode/viewport timing
+  and click candidates without content or identity. See
+  [ux-telemetry.md](ux-telemetry.md).
 
 ## API
 
@@ -103,6 +108,7 @@ docs/         this file, the design spec, ComfyUI workflow
 | `GET/PUT /api/screen` | the table screen: GM projects one thing (image/card/stores/buildings/text, `type: null` darkens); GET resolves through `screenView()` whitelists |
 | `POST/PUT/DELETE /api/notes[/:id]` | player notes (journal/person/place, group/personal); edits and strikes require the author's `pcId` |
 | `GET/POST/PUT /api/feedback[/:id]` | screenshot ticket queue and GM triage state |
+| `GET/DELETE /api/telemetry`, `POST /api/telemetry/batch` | read/reset GM UX evidence and ingest bounded content-free player batches |
 
 `PUT /api/party/:id` merges partial bodies (the sheet PUTs single fields like
 `{hp: 3}`); if `level` changes it shifts damage thresholds by the same delta.
@@ -144,6 +150,11 @@ Consumable reactions; see [inventory.md](inventory.md).
 - **Character overtures:** completing creation queues two drafts from a concise
   subset of the character text. The sheet can play, regenerate, and publish
   them; provider failures never block character creation.
+- **UX evidence:** `shared/telemetry.js` instruments only the fixed player
+  routes. It sends normalized coordinates, semantic code targets, coarse
+  viewport classes, modes, and active time. It never sends written content,
+  identifiers, screenshots, query strings, or browser details. The GM reviews
+  it under **UX map**; see [ux-telemetry.md](ux-telemetry.md).
 
 ## The roll system (do not "improve")
 

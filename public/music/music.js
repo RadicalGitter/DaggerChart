@@ -1,4 +1,5 @@
 import { TAGS, ROOT_IDS, findTag, childIds, descendantIds } from "./taxonomy.js";
+import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
 
 const $ = (selector) => document.querySelector(selector);
@@ -795,7 +796,10 @@ function showContextMenu(songId, x, y) {
           await load();
         }
       }
-      if (button.dataset.action === "settings") $("#settings-dialog").showModal();
+      if (button.dataset.action === "settings") {
+        setTelemetryMode("settings");
+        $("#settings-dialog").showModal();
+      }
       if (button.dataset.action === "delete" && confirm(`Remove ${song.title} from the desk? Its audio file will be kept.`)) {
         await api(`/api/music/songs/${encodeURIComponent(songId)}`, { method: "DELETE" });
         await load();
@@ -913,6 +917,7 @@ function wireTagButtons(container = document) {
 }
 
 function renderTags() {
+  setTelemetryMode(`tags:depth-${state.route.length}`);
   const currentId = state.route.at(-1);
   const current = tagById(currentId);
   if (!currentId) {
@@ -1270,7 +1275,11 @@ $("#new-playlist").onclick = async () => {
   }
 };
 
-$("#open-settings").onclick = () => $("#settings-dialog").showModal();
+$("#open-settings").onclick = () => {
+  setTelemetryMode("settings");
+  $("#settings-dialog").showModal();
+};
+$("#settings-dialog").addEventListener("close", () => setTelemetryMode(`tags:depth-${state.route.length}`));
 $("#suno-mirror-name").oninput = () => {
   const targetName = $("#suno-mirror-name").value.trim() || "Vessa'rin";
   $("#suno-helper").href = sunoBookmarklet(targetName);

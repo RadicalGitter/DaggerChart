@@ -5,6 +5,8 @@ let S = null; // last fetched gm state
 let selectedBuilding = null;
 let CONSUMABLES = [];
 let FEEDBACK = [];
+let TELEMETRY = { pages: {} };
+let selectedUxRoute = null;
 
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) =>
@@ -32,10 +34,16 @@ async function api(path, opts = {}) {
 }
 
 async function refresh() {
-  const [nextState, items, feedback] = await Promise.all([api("/api/state"), api("/api/items/consumables"), api("/api/feedback")]);
+  const [nextState, items, feedback, telemetry] = await Promise.all([
+    api("/api/state"),
+    api("/api/items/consumables"),
+    api("/api/feedback"),
+    api("/api/telemetry").catch(() => ({ pages: {} }))
+  ]);
   S = nextState;
   CONSUMABLES = items;
   FEEDBACK = feedback;
+  TELEMETRY = telemetry;
   renderNav();
   renderDowntimePicker();
   renderStores();
@@ -48,6 +56,7 @@ async function refresh() {
   renderTown();
   renderScreen();
   renderFeedback();
+  renderUx();
 }
 
 function renderFeedback() {
@@ -74,6 +83,156 @@ function renderFeedback() {
       await refresh();
     } catch (error) { toast(error.message, true); }
   };
+}
+
+// --- local playtest UX evidence ---
+const UX_SURFACE_NAMES = {
+  "/login": "Character selection",
+  "/player": "Player root",
+  "/table": "Card table",
+  "/table-book": "Folio",
+  "/tome": "Leatherbound tome",
+  "/create": "Character creation",
+  "/character/:id": "Character sheet",
+  "/journal": "Journal",
+  "/music": "Music desk"
+};
+
+function uxSurfaceName(path) {
+  const embedded = path.endsWith("@embed");
+  const base = path.replace(/@embed$/, "");
+  return `${UX_SURFACE_NAMES[base] || base}${embedded ? " (embedded)" : ""}`;
+}
+
+function durationLabel(ms = 0) {
+  if (ms < 60_000) return `${Math.round(ms / 1_000)}s`;
+  if (ms < 3_600_000) return `${Math.round(ms / 60_000)}m`;
+  return `${(ms / 3_600_000).toFixed(ms < 36_000_000 ? 1 : 0)}h`;
+}
+
+function percent(part = 0, total = 0) {
+  return total > 0 ? Math.round(part / total * 100) : 0;
+}
+
+function uxMetric(entry, viewport) {
+  if (!entry) return {};
+  return viewport === "all" ? entry : (entry.viewports?.[viewport] || {});
+}
+
+function uxRow(label, width, value, { dead = false, code = false } = {}) {
+  const safeLabel = esc(label);
+  return `<div class="ux-metric-row${dead ? " dead-row" : ""}">
+    ${code ? `<code title="${safeLabel}">${safeLabel}</code>` : `<span>${safeLabel}</span>`}
+    <span class="ux-bar" aria-hidden="true"><i style="--value:${Math.max(0, Math.min(100, width))}%"></i></span>
+    <span class="ux-metric-value">${esc(value)}</span>
+  </div>`;
+}
+
+function drawUxMap(page, viewport, deadOnly) {
+  const canvas = $("#ux-canvas");
+  if (!canvas || $("#sec-ux").hidden) return;
+  const rect = canvas.getBoundingClientRect();
+  if (rect.width < 10 || rect.height < 10) return;
+  const ratio = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.round(rect.width * ratio);
+  canvas.height = Math.round(rect.height * ratio);
+  const context = canvas.getContext("2d");
+  context.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+  const width = rect.width;
+  const height = rect.height;
+  const inset = Math.max(16, width * .035);
+  const top = inset + 22;
+  const innerWidth = width - inset * 2;
+  const innerHeight = height - top - inset;
+  context.fillStyle = "#faf5ea";
+  context.fillRect(0, 0, width, height);
+  context.strokeStyle = "#b8ab8f";
+  context.lineWidth = 1;
+  context.strokeRect(inset, inset, innerWidth, height - inset * 2);
+  context.beginPath();
+  context.moveTo(inset, top);
+  context.lineTo(width - inset, top);
+  context.stroke();
+  for (let i = 0; i < 3; i += 1) {
+    context.beginPath();
+    context.fillStyle = i === 0 ? "#9a5a49" : i === 1 ? "#b89b58" : "#68784d";
+    context.arc(inset + 11 + i * 14, inset + 11, 3, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  const points = (page?.points || []).filter((point) =>
+    (viewport === "all" || point.viewport === viewport) && (!deadOnly || point.dead));
+  for (const point of points) {
+    const x = inset + Math.max(0, Math.min(1, point.x)) * innerWidth;
+    const y = top + Math.max(0, Math.min(1, point.y)) * innerHeight;
+    const radius = point.dead ? Math.max(22, width * .036) : Math.max(17, width * .028);
+    const color = point.dead ? [145, 52, 38] : [72, 106, 73];
+    const gradient = context.createRadialGradient(x, y, 1, x, y, radius);
+    gradient.addColorStop(0, `rgba(${color.join(",")},.34)`);
+    gradient.addColorStop(.35, `rgba(${color.join(",")},.18)`);
+    gradient.addColorStop(1, `rgba(${color.join(",")},0)`);
+    context.fillStyle = gradient;
+    context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+  }
+
+  if (!points.length) {
+    context.fillStyle = "#8a7f6b";
+    context.font = "italic 15px Georgia, serif";
+    context.textAlign = "center";
+    context.fillText(page ? "No clicks match this filter yet." : "Player activity will gather here.", width / 2, height / 2);
+  }
+}
+
+function renderUx() {
+  const routeSelect = $("#ux-route");
+  if (!routeSelect) return;
+  const pages = Object.values(TELEMETRY?.pages || {}).sort((a, b) =>
+    (b.sessions || 0) - (a.sessions || 0) || a.path.localeCompare(b.path));
+  if (!selectedUxRoute || !TELEMETRY.pages?.[selectedUxRoute]) selectedUxRoute = pages[0]?.path || null;
+  routeSelect.disabled = pages.length === 0;
+  routeSelect.innerHTML = pages.length
+    ? pages.map((page) => `<option value="${esc(page.path)}" ${page.path === selectedUxRoute ? "selected" : ""}>${esc(uxSurfaceName(page.path))}</option>`).join("")
+    : `<option>No player activity yet</option>`;
+
+  const viewport = $("#ux-viewport").value;
+  const deadOnly = $("#ux-dead-only").checked;
+  const page = selectedUxRoute ? TELEMETRY.pages?.[selectedUxRoute] : null;
+  const stats = uxMetric(page, viewport);
+  const deadRate = percent(stats.deadClicks, stats.clicks);
+  $("#ux-summary").innerHTML = `
+    <div class="ux-stat"><strong>${stats.sessions || 0}</strong><span>sessions</span></div>
+    <div class="ux-stat"><strong>${durationLabel(stats.activeMs || 0)}</strong><span>active time</span></div>
+    <div class="ux-stat"><strong>${stats.clicks || 0}</strong><span>clicks</span></div>
+    <div class="ux-stat"><strong>${deadRate}%</strong><span>dead candidates</span></div>`;
+
+  const viewportEntries = ["mobile", "tablet", "desktop"].map((key) => [key, page?.viewports?.[key] || {}]);
+  const maxViewportTime = Math.max(1, ...viewportEntries.map(([, entry]) => entry.activeMs || 0));
+  $("#ux-viewports").innerHTML = page
+    ? viewportEntries.map(([key, entry]) => uxRow(key[0].toUpperCase() + key.slice(1), (entry.activeMs || 0) / maxViewportTime * 100, `${durationLabel(entry.activeMs || 0)} / ${entry.sessions || 0}`)).join("")
+    : `<div class="ux-empty">No visits recorded.</div>`;
+
+  const modes = Object.entries(page?.modes || {})
+    .map(([name, entry]) => [name, uxMetric(entry, viewport)])
+    .filter(([, entry]) => (entry.entries || 0) + (entry.activeMs || 0) + (entry.clicks || 0) > 0)
+    .sort((a, b) => (b[1].activeMs || 0) - (a[1].activeMs || 0) || (b[1].clicks || 0) - (a[1].clicks || 0))
+    .slice(0, 10);
+  const maxModeTime = Math.max(1, ...modes.map(([, entry]) => entry.activeMs || entry.clicks || 0));
+  $("#ux-modes").innerHTML = modes.length
+    ? modes.map(([name, entry]) => uxRow(name, (entry.activeMs || entry.clicks || 0) / maxModeTime * 100, `${durationLabel(entry.activeMs || 0)} / ${entry.clicks || 0}`, { code: true })).join("")
+    : `<div class="ux-empty">No mode time recorded.</div>`;
+
+  const targets = Object.entries(page?.targets || {})
+    .map(([name, entry]) => [name, uxMetric(entry, viewport)])
+    .filter(([, entry]) => (entry.deadClicks || 0) > 0)
+    .sort((a, b) => (b[1].deadClicks || 0) - (a[1].deadClicks || 0) || (b[1].clicks || 0) - (a[1].clicks || 0))
+    .slice(0, 10);
+  const maxDead = Math.max(1, ...targets.map(([, entry]) => entry.deadClicks || 0));
+  $("#ux-targets").innerHTML = targets.length
+    ? targets.map(([name, entry]) => uxRow(name, (entry.deadClicks || 0) / maxDead * 100, `${entry.deadClicks || 0} / ${entry.clicks || 0}`, { dead: true, code: true })).join("")
+    : `<div class="ux-empty">No dead-click candidates.</div>`;
+
+  requestAnimationFrame(() => drawUxMap(page, viewport, deadOnly));
 }
 
 // --- the table screen ---
@@ -128,8 +287,33 @@ function showSection(key) {
   for (const sec of document.querySelectorAll("main > section")) {
     sec.hidden = sec.id !== `sec-${key === "town" ? "town" : key}`;
   }
+  if (key === "ux") requestAnimationFrame(renderUx);
 }
 window.addEventListener("hashchange", () => showSection(location.hash.slice(1) || "season"));
+
+$("#ux-route").addEventListener("change", () => {
+  selectedUxRoute = $("#ux-route").value;
+  renderUx();
+});
+$("#ux-viewport").addEventListener("change", renderUx);
+$("#ux-dead-only").addEventListener("change", renderUx);
+$("#ux-clear").addEventListener("click", async () => {
+  if (!confirm("Clear all locally collected UX history?")) return;
+  try {
+    TELEMETRY = await api("/api/telemetry", { method: "DELETE" });
+    selectedUxRoute = null;
+    renderUx();
+    toast("UX history cleared.");
+  } catch (error) {
+    toast(error.message, true);
+  }
+});
+let uxResizeFrame = null;
+window.addEventListener("resize", () => {
+  if ($("#sec-ux").hidden) return;
+  cancelAnimationFrame(uxResizeFrame);
+  uxResizeFrame = requestAnimationFrame(renderUx);
+});
 
 // --- downtime runner ---
 function renderDowntimePicker() {

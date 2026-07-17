@@ -1,6 +1,7 @@
 // Standalone physical-book experiment for the player table.
 // It consumes only the same server-whitelisted /api/table payload as /table.
 import { t, term, initI18n, seasonLabel, TERMS } from "/shared/i18n.js";
+import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
 
 const $ = (selector) => document.querySelector(selector);
@@ -167,6 +168,7 @@ function wirePageActions() {
 function renderSpread(force = false) {
   if (!data) return;
   const section = SECTION_ORDER[selectedIndex];
+  setTelemetryMode(section.key);
   $("#left-content").innerHTML = leftPageHtml(section, selectedIndex);
   $("#left-number").textContent = String(selectedIndex * 2 + 1);
   $("#right-number").textContent = String(selectedIndex * 2 + 2);
@@ -183,6 +185,7 @@ function renderSpread(force = false) {
 
 function renderCover() {
   if (!data) return;
+  if (!bookOpen) setTelemetryMode("closed");
   $("#cover-title").textContent = data.settlement.name;
   $("#cover-season").textContent = seasonLabel(data.settlement.seasonLabel);
   $("#cover-season").setAttribute("title", t("table.book.open"));
