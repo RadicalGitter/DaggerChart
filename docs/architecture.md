@@ -6,6 +6,7 @@ pretty-printed JSON on disk. One machine (the GM's), players connect over LAN.
 ```
 server/
   index.js    routes, SSE stream, static serving
+  music.js    song metadata, playlists, character themes, Suno provider boundary
   state.js    domain logic: roll resolution, modifiers, season, log
   store.js    atomic JSON read/write (tmp+rename), timestamped backups
   views.js    audience whitelists: gmView(), tableView(), loreView()
@@ -19,6 +20,7 @@ public/
   screen/     the projector client (renders whatever the GM casts via /api/screen)
   create/     character creation wizard
   character/  live character sheet + hand manager
+  music/      GM music desk: bubble library, prompt tag board, generation controls
   journal/    players' journal: notes on people, places, and days
   board/      the Drafting Board (infinite canvas, plates, pins)
 data/         all persistent state (see README)
@@ -47,6 +49,11 @@ docs/         this file, the design spec, ComfyUI workflow
 - **`index.js`** — routes below, plus `GET /api/stream` (SSE). Mutating
   endpoints call `broadcast()` so open pages refresh; `PUT /api/board`
   deliberately does *not* broadcast (would echo the GM's own board edits back).
+- **`music.js`** — owns `music.json`, playlist/theme metadata, safe local-audio
+  paths, publishing, and the mock/live provider adapter. Generated files are
+  downloaded into `Visseren/Generated`; published themes are copied to
+  `Visseren/Character Themes/<Character Name>`. See
+  [music-integration.md](music-integration.md).
 
 ## API
 
@@ -70,6 +77,15 @@ docs/         this file, the design spec, ComfyUI workflow
 | `POST /api/party/:id/inventory/grant` | give a standard Consumable, stacking to the rules limit of five |
 | `POST/PUT/DELETE /api/party/:id/inventory[/:itemId]` | add, edit, or remove a typed carried item |
 | `POST /api/party/:id/inventory/:itemId/use` | atomically resolve a reaction and consume one quantity |
+| `GET /api/music` | music desk library, playlists, provider status, and published character sources |
+| `POST /api/music/generate` | create two drafts, or cover a published character source |
+| `GET /api/music/themes/:pcId` | one player's overture drafts and published theme |
+| `POST /api/music/themes/:pcId/generate` | write another character overture draft |
+| `POST /api/music/themes/:pcId/publish` | publish a ready draft under `Visseren/Character Themes` |
+| `PUT /api/music/themes/:pcId/identity` | curate the musical identity used by character cover mode |
+| `POST /api/music/provider/check` | check configured provider account credits without generating |
+| `POST /api/music/playlists`, `POST /api/music/playlists/:id/songs` | create playlists and add songs |
+| `PUT/DELETE /api/music/songs/:id` | rename or remove song metadata; deletion keeps audio on disk |
 | `GET/PUT /api/board` | drafting-board document `{items, pins}` |
 | `POST/PUT/DELETE /api/people[/:id]` | wider-world NPCs: description public, `hidden.notes` private, `placeId` moves them, `items` carried, `revealed` gates player visibility |
 | `POST /api/people/:id/portrait` | ComfyUI request stub — saves `portraitPrompt`, returns "not wired yet" |
@@ -114,6 +130,9 @@ Consumable reactions; see [inventory.md](inventory.md).
   `initI18n()` wires the toggle + popovers. GM console is English-only for now.
 - **Hand manager** (`character/sheet.js`): Loadout (max 5) / Vault per SRD;
   acquiring filters reference cards by the PC's class domains and level.
+- **Character overtures:** completing creation queues two drafts from a concise
+  subset of the character text. The sheet can play, regenerate, and publish
+  them; provider failures never block character creation.
 
 ## The roll system (do not "improve")
 

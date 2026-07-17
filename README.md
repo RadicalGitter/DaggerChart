@@ -38,6 +38,7 @@ whitelisted server-side regardless).
 | `/create` | players | Guided Daggerheart character creation (all SRD data local) |
 | `/character/:id` | one player each | Live character sheet: tap-to-mark HP/Stress/Hope/Armor, Loadout/Vault hand manager |
 | `/journal` | players | The party's journal: notes on people and places the GM reveals, plus a season-stamped diary — each note "for my eyes" or "for the table" |
+| `/music` | GM | Music desk: pop-to-play song bubbles, playlists, branching prompt tags, and character-theme variations |
 
 Player-facing pages have an EN/SV language toggle (top right, per device) and
 long-press glossary popovers on underlined game terms.
@@ -68,9 +69,14 @@ stopped (or live; the GM console re-reads on refresh):
 - `journal-doodles.json` — per-PC pen and eraser layers for the Journal, People, and Places chapters
 - `log.json` — the season ledger; entries carry a `published` flag
 - `board.json` — drafting-board plates and pins
+- `music.json` — song metadata, playlists, provider tasks, and published character-theme pointers
 - `event-tables/*.json` — **do not open** (see above)
 - `daggerheart/reference.json` — SRD reference data (classes, ancestries, communities, domain cards, weapons, armor, and the 60-entry Consumables catalog)
 - `backups/` — automatic snapshots (gitignored)
+
+Audio files live outside `data/` under `Visseren/`; see
+[docs/music-integration.md](docs/music-integration.md) for local secret and
+provider configuration.
 
 ## Roadmap
 

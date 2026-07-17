@@ -2,3 +2,4 @@ node_modules/
 data/backups/
 *.tmp
 .claude/settings.local.json
+.env.local

@@ -1,10 +1,26 @@
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import "./env.js";
 import { state, persist, addLog, advanceSeason, resolveDowntime, modifierBreakdown, seasonLabel } from "./state.js";
 import { gmView, tableView, loreView, screenView, partyListView, playerCharacterView } from "./views.js";
 import { loadJson, saveJson } from "./store.js";
 import { addInventoryItem, consumables, grantConsumable, inventoryEntry, updateInventoryItem, useInventoryItem } from "./inventory.js";
+import {
+  musicView,
+  characterThemeView,
+  generateSong,
+  generateCharacterTheme,
+  publishCharacterTheme,
+  setCharacterThemeIdentity,
+  createPlaylist,
+  addSongToPlaylist,
+  renameSong,
+  removeSong,
+  songAudioPath,
+  checkProviderCredits,
+  refreshPendingMusic
+} from "./music.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(__dirname, "..", "public");
@@ -24,6 +40,7 @@ app.use("/create", express.static(path.join(PUBLIC, "create")));
 app.use("/character", express.static(path.join(PUBLIC, "character")));
 app.use("/journal", express.static(path.join(PUBLIC, "journal")));
 app.use("/screen", express.static(path.join(PUBLIC, "screen")));
+app.use("/music", express.static(path.join(PUBLIC, "music")));
 // /character/<id> serves the sheet shell; the page reads the id from the URL.
 app.get("/character/:id", (_req, res) => res.sendFile(path.join(PUBLIC, "character", "index.html")));
 // The bare address is the trusted-table identity chooser. No passwords;
@@ -43,11 +60,28 @@ function broadcast() {
   for (const c of clients) c.write("data: update\n\n");
 }
 
+const musicPoll = setInterval(() => {
+  void refreshPendingMusic()
+    .then((changed) => { if (changed) broadcast(); })
+    .catch((err) => console.warn(`Music task refresh failed: ${err.message}`));
+}, 15000);
+musicPoll.unref();
+
 // Spoiler safety: errors report messages only, never state or table contents.
 function guard(handler) {
   return (req, res) => {
     try {
       handler(req, res);
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  };
+}
+
+function guardAsync(handler) {
+  return async (req, res) => {
+    try {
+      await handler(req, res);
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
@@ -80,6 +114,11 @@ app.post("/api/party", guard((req, res) => {
   state.pcs.push(pc);
   addLog({ type: "party", summary: `${pc.name.trim()} takes their place in the settlement.`, published: true });
   persist();
+  // Theme generation is separate from character persistence: a provider
+  // failure must never keep a player from finishing their character.
+  void generateCharacterTheme(pc)
+    .then(() => broadcast())
+    .catch((err) => console.warn(`Character theme could not be queued: ${err.message}`));
   broadcast();
   res.json(playerCharacterView(pc.id));
 }));
@@ -172,6 +211,89 @@ app.delete("/api/party/:id", guard((req, res) => {
 
 // --- GM API ---
 app.get("/api/state", (_req, res) => res.json(gmView()));
+
+// --- music desk & character themes ---
+app.get("/api/music", (_req, res) => res.json(musicView(state.pcs)));
+
+app.get("/api/music/themes/:pcId", guard((req, res) => {
+  if (!state.pcs.some((pc) => pc.id === req.params.pcId)) throw new Error("No such character.");
+  res.json(characterThemeView(req.params.pcId));
+}));
+
+app.get("/api/music/songs/:id/audio", guard((req, res) => {
+  const file = songAudioPath(req.params.id);
+  if (!file) throw new Error("That audio is not available locally.");
+  res.sendFile(file);
+}));
+
+app.post("/api/music/generate", guardAsync(async (req, res) => {
+  const song = await generateSong(req.body || {});
+  broadcast();
+  res.json(song);
+}));
+
+app.post("/api/music/themes/:pcId/generate", guardAsync(async (req, res) => {
+  const pc = state.pcs.find((candidate) => candidate.id === req.params.pcId);
+  if (!pc) throw new Error("No such character.");
+  const song = await generateCharacterTheme(pc, req.body || {});
+  broadcast();
+  res.json(song);
+}));
+
+app.post("/api/music/provider/check", guardAsync(async (_req, res) => {
+  res.json(await checkProviderCredits());
+}));
+
+app.post("/api/music/provider/refresh", guardAsync(async (_req, res) => {
+  const changed = await refreshPendingMusic();
+  if (changed) broadcast();
+  res.json({ changed });
+}));
+
+app.post("/api/music/provider/callback", guardAsync(async (_req, res) => {
+  const changed = await refreshPendingMusic();
+  if (changed) broadcast();
+  res.json({ ok: true });
+}));
+
+app.post("/api/music/themes/:pcId/publish", guard((req, res) => {
+  const pc = state.pcs.find((candidate) => candidate.id === req.params.pcId);
+  if (!pc) throw new Error("No such character.");
+  const theme = publishCharacterTheme(req.body.songId, pc);
+  broadcast();
+  res.json(theme);
+}));
+
+app.put("/api/music/themes/:pcId/identity", guard((req, res) => {
+  if (!state.pcs.some((pc) => pc.id === req.params.pcId)) throw new Error("No such character.");
+  const result = setCharacterThemeIdentity(req.params.pcId, req.body.identity);
+  broadcast();
+  res.json(result);
+}));
+
+app.post("/api/music/playlists", guard((req, res) => {
+  const playlist = createPlaylist(req.body.name);
+  broadcast();
+  res.json(playlist);
+}));
+
+app.post("/api/music/playlists/:id/songs", guard((req, res) => {
+  const playlist = addSongToPlaylist(req.params.id, req.body.songId);
+  broadcast();
+  res.json(playlist);
+}));
+
+app.put("/api/music/songs/:id", guard((req, res) => {
+  const song = renameSong(req.params.id, req.body.title);
+  broadcast();
+  res.json(song);
+}));
+
+app.delete("/api/music/songs/:id", guard((req, res) => {
+  const result = removeSong(req.params.id);
+  broadcast();
+  res.json(result);
+}));
 
 // --- the drafting board (GM whiteboard): items + camera pins ---
 const board = loadJson("board.json", { items: [], pins: [] });
@@ -538,4 +660,5 @@ app.listen(PORT, () => {
   console.log(`The Settlement is open.`);
   console.log(`  GM console:      http://localhost:${PORT}/gm`);
   console.log(`  Player table:    http://localhost:${PORT}/table`);
+  console.log(`  Music desk:      http://localhost:${PORT}/music`);
 });

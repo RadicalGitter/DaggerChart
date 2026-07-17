@@ -7,12 +7,12 @@
 <link rel="stylesheet" href="/shared/ledger.css">
 <link rel="stylesheet" href="/shared/lamplight.css">
 <style>
-  .wrap { max-width: 680px; margin: 0 auto; padding: 1.4rem 1rem 3rem; }
+  .wrap { width: 100%; max-width: 680px; margin: 0 auto; padding: 1.4rem 1rem 3rem; box-sizing: border-box; overflow-x: clip; }
   header { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; }
   header .portrait { width: 84px; height: 84px; font-size: 2rem; }
   header h1 { font-size: 1.5rem; margin-bottom: 0.1rem; }
-  .traits-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin: 1rem 0; }
-  .trait-tile { text-align: center; padding: 0.6rem 0.3rem; }
+  .traits-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; margin: 1rem 0; }
+  .trait-tile { min-width: 0; box-sizing: border-box; text-align: center; padding: 0.6rem 0.3rem; }
   .trait-tile .v { font-size: 1.5rem; font-weight: 600; }
   .vitals { display: grid; gap: 0.8rem; margin: 1rem 0; }
   .vital { display: flex; align-items: center; gap: 0.9rem; }
@@ -34,6 +34,37 @@
   .hand-actions { margin-top: 0.6rem; display: flex; gap: 0.5rem; }
   .hand-actions button { font-size: 0.85rem; padding: 0.3rem 0.8rem; }
   button.quiet.grave { color: #c96a4f; border-color: #6b4438; }
+  .theme-panel { overflow: hidden; border-color: #56462d; background: radial-gradient(circle at 50% 0, #252c2b, #181611 70%); }
+  .theme-head { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; margin-bottom: 0.75rem; }
+  .theme-head .smallcaps { color: #d4b86a; }
+  .theme-bubbles { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; min-height: 112px; padding: 0.4rem 0; }
+  .theme-bubble {
+    width: 112px; height: 112px; flex: 0 0 112px; padding: 0.7rem; border-radius: 50%;
+    border: 1px solid #8aaea0; color: #f2ead8; text-align: center;
+    background:
+      radial-gradient(circle at 28% 22%, rgba(255,255,255,0.72) 0 4%, rgba(255,255,255,0.12) 11%, transparent 24%),
+      radial-gradient(circle at 68% 72%, rgba(115,168,150,0.24), transparent 58%),
+      rgba(58,76,70,0.38);
+    box-shadow: inset -9px -12px 20px rgba(100,154,136,0.15), 0 6px 18px rgba(0,0,0,0.24);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    animation: theme-drift 8s ease-in-out infinite;
+  }
+  .theme-bubble:nth-child(2n) { border-color: #9d8296; animation-delay: -3s; }
+  .theme-bubble strong { font-size: 0.82rem; line-height: 1.15; overflow-wrap: anywhere; }
+  .theme-bubble span { margin-top: 0.35rem; color: #b5aa92; font-size: 0.65rem; text-transform: uppercase; }
+  .theme-bubble.rendering { opacity: 0.65; border-style: dashed; }
+  .theme-bubble.pop { animation: theme-pop 0.34s ease-out forwards; }
+  .theme-publish { margin-top: 0.6rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.45rem; }
+  .theme-publish button { max-width: 100%; font-size: 0.78rem; padding: 0.28rem 0.65rem; white-space: normal; overflow-wrap: anywhere; }
+  .theme-settings { margin-top: 0.8rem; border-top: 1px solid #3a3224; padding-top: 0.7rem; }
+  .theme-settings summary { cursor: pointer; color: #b6a683; font-size: 0.85rem; }
+  .theme-form { display: grid; gap: 0.6rem; margin-top: 0.7rem; }
+  .theme-form label span { display: block; margin-bottom: 0.2rem; color: #a89877; font-size: 0.78rem; }
+  .theme-form input, .theme-form textarea, .theme-form select { width: 100%; }
+  .theme-note { min-height: 1.1rem; color: #a89877; font-size: 0.82rem; }
+  @keyframes theme-drift { 0%,100% { translate: 0 0; } 50% { translate: 0 -4px; } }
+  @keyframes theme-pop { 0% { scale: 1; opacity: 1; } 58% { scale: 1.15; opacity: 0.65; } 100% { scale: 1.38; opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .theme-bubble { animation: none; } .theme-bubble.pop { animation-duration: 0.01ms; } }
 </style>
 </head>
 <body>

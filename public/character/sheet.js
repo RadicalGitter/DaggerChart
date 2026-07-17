@@ -9,6 +9,9 @@ const esc = (s) =>
 
 const id = location.pathname.split("/").filter(Boolean).pop();
 let PC = null;
+let THEMES = { songs: [], published: null, provider: {} };
+const themePopped = new Set();
+const themeAudio = new Audio();
 
 const featHtml = (f) => `<div class="featline"><strong>${esc(f.name)}</strong> ${termify(esc(f.text))}</div>`;
 const TRAITS = ["Agility", "Strength", "Finesse", "Instinct", "Presence", "Knowledge"];
@@ -36,6 +39,8 @@ function render() {
         <div style="margin-top:0.25rem;"><a href="/journal/?pc=${esc(p.id)}" style="color:#d4b86a; font-size:0.85rem; text-decoration:none; border-bottom:1px dotted #8a7550;">${t("journal.open")} ↗</a></div>
       </div>
     </header>
+
+    ${themeHtml(p)}
 
     <div class="defenses card">
       <div><div class="value">${p.evasion}</div><div class="smallcaps">${term("evasion", t("vital.evasion"))}</div></div>
@@ -106,6 +111,125 @@ function render() {
   `;
   wirePips();
   wireHand();
+  wireTheme();
+}
+
+function themeHtml(p) {
+  const visible = (THEMES.songs || []).filter((song) => !themePopped.has(song.id));
+  const prompt = THEMES.songs?.[0]?.prompt || "";
+  const bubbles = visible.length
+    ? visible.map((song) => `<button class="theme-bubble ${song.status !== "ready" ? "rendering" : ""}" data-theme-play="${esc(song.id)}" aria-label="${t("theme.play")}: ${esc(song.title)}">
+        <strong>${esc(song.title)}</strong>
+        <span>${song.publishedAt ? t("theme.published") : song.status === "ready" ? t("theme.ready") : t("theme.rendering")}</span>
+      </button>`).join("")
+    : `<p class="muted" style="text-align:center;align-self:center;">${themePopped.size ? "" : t("theme.waiting")}</p>`;
+  const publish = (THEMES.songs || []).filter((song) => song.status === "ready").map((song) =>
+    `<button class="quiet" data-theme-publish="${esc(song.id)}" ${song.publishedAt ? "disabled" : ""}>${song.publishedAt ? t("theme.published") : `${t("theme.publish")}: ${esc(song.title)}`}</button>`
+  ).join("");
+  return `<section class="sheet-section card theme-panel">
+    <div class="theme-head"><span class="smallcaps">${t("theme.title")}</span>${themePopped.size ? `<button class="quiet" id="theme-resurface">${t("theme.resurface")}</button>` : ""}</div>
+    <div class="theme-bubbles">${bubbles}</div>
+    <div class="theme-publish">${publish}</div>
+    <details class="theme-settings">
+      <summary>${t("theme.settings")}</summary>
+      <form class="theme-form" id="theme-form">
+        <label><span>${t("theme.songtitle")}</span><input id="theme-title" maxlength="100" value="${esc(`${p.name}'s Overture`)}"></label>
+        <label><span>${t("theme.direction")}</span><textarea id="theme-prompt" rows="5" maxlength="6000">${esc(prompt)}</textarea></label>
+        <label><span>${t("theme.model")}</span><select id="theme-model"><option>V5</option><option>V5_5</option><option>V4_5PLUS</option><option>V4_5ALL</option><option>V4_5</option><option>V4</option></select></label>
+        <label><span>${t("theme.style")}</span><input id="theme-style" maxlength="1000"></label>
+        <label><span>${t("theme.exclude")}</span><input id="theme-negative" maxlength="200"></label>
+        <button type="submit">${t("theme.generate")}</button>
+        <div class="theme-note" id="theme-note"></div>
+      </form>
+    </details>
+  </section>`;
+}
+
+function themePopSound() {
+  try {
+    const Context = window.AudioContext || window.webkitAudioContext;
+    const context = new Context();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.frequency.setValueAtTime(240, context.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(85, context.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.07, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.09);
+    oscillator.connect(gain).connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.1);
+    oscillator.onended = () => context.close();
+  } catch {
+    // Playback still works when synthesized audio is unavailable.
+  }
+}
+
+function wireTheme() {
+  for (const button of document.querySelectorAll("[data-theme-play]")) {
+    button.onclick = () => {
+      const song = THEMES.songs.find((candidate) => candidate.id === button.dataset.themePlay);
+      if (!song) return;
+      themePopSound();
+      button.classList.add("pop");
+      themePopped.add(song.id);
+      if (song.audioUrl) {
+        themeAudio.src = song.audioUrl;
+        themeAudio.play().catch(() => {});
+      }
+      setTimeout(render, 350);
+    };
+  }
+  for (const button of document.querySelectorAll("[data-theme-publish]")) {
+    button.onclick = async () => {
+      button.disabled = true;
+      const response = await fetch(`/api/music/themes/${id}/publish`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ songId: button.dataset.themePublish })
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        button.disabled = false;
+        alert(body.error || t("theme.error.publish"));
+        return;
+      }
+      await load();
+      const note = $("#theme-note");
+      if (note) note.textContent = t("theme.saved");
+    };
+  }
+  const resurface = $("#theme-resurface");
+  if (resurface) resurface.onclick = () => { themePopped.clear(); render(); };
+  const form = $("#theme-form");
+  if (form) form.onsubmit = async (event) => {
+    event.preventDefault();
+    const note = $("#theme-note");
+    const submit = form.querySelector("button[type=submit]");
+    submit.disabled = true;
+    note.textContent = t("theme.sending");
+    const response = await fetch(`/api/music/themes/${id}/generate`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: $("#theme-title").value,
+        prompt: $("#theme-prompt").value,
+        settings: {
+          instrumental: true,
+          model: $("#theme-model").value,
+          style: $("#theme-style").value,
+          negativeTags: $("#theme-negative").value
+        }
+      })
+    });
+    const body = await response.json();
+    if (!response.ok) {
+      note.textContent = body.error || t("theme.error.generate");
+      submit.disabled = false;
+      return;
+    }
+    themePopped.clear();
+    await load();
+    const nextNote = $("#theme-note");
+    if (nextNote) nextNote.textContent = t("theme.sent");
+  };
 }
 
 // ---------- the hand: Loadout (max 5) & Vault ----------
@@ -265,13 +389,17 @@ function wirePips() {
 }
 
 async function load() {
-  const res = await fetch(`/api/party/${id}`);
-  const data = await res.json();
+  const [res, themeRes] = await Promise.all([
+    fetch(`/api/party/${id}`),
+    fetch(`/api/music/themes/${id}`)
+  ]);
+  const [data, themeData] = await Promise.all([res.json(), themeRes.json()]);
   if (!res.ok) {
     $("#sheet").innerHTML = `<p class="smallcaps" style="text-align:center;">${esc(data.error || t("sheet.notfound"))}</p>`;
     return;
   }
   PC = data;
+  THEMES = themeRes.ok ? themeData : { songs: [], published: null, provider: {} };
   document.title = `${PC.name} — The Settlement`;
   render();
 }

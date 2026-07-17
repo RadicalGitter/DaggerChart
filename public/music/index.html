@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Music Desk — The Settlement</title>
+<link rel="stylesheet" href="/shared/ledger.css">
+<link rel="stylesheet" href="music.css">
+</head>
+<body>
+<div class="music-shell">
+  <aside class="library-rail">
+    <header class="desk-mark">
+      <a href="/gm">The Settlement</a>
+      <h1>The Music Desk</h1>
+    </header>
+    <label class="search-field">
+      <span>Find a song</span>
+      <input id="song-search" type="search" autocomplete="off" placeholder="Title or prompt">
+    </label>
+    <nav aria-label="Music collections">
+      <div class="rail-label">Collections</div>
+      <div id="playlist-list"></div>
+      <button class="quiet rail-command" id="new-playlist">New playlist</button>
+    </nav>
+    <div class="rail-foot">
+      <span id="provider-dot" aria-hidden="true"></span>
+      <span id="provider-label">Provider</span>
+    </div>
+  </aside>
+
+  <main class="bubble-column">
+    <header class="stage-head">
+      <div>
+        <div class="smallcaps">Songs on the surface</div>
+        <h2 id="collection-title">Library</h2>
+      </div>
+      <div class="stage-actions">
+        <button class="quiet" id="resurface">Resurface</button>
+        <button class="quiet" id="open-settings">Settings</button>
+      </div>
+    </header>
+    <div class="bubble-stage" id="bubble-stage" aria-live="polite"></div>
+  </main>
+
+  <aside class="forge-column">
+    <header class="forge-head">
+      <div>
+        <div class="smallcaps">Prompt instrument</div>
+        <h2>Tag board</h2>
+      </div>
+      <div class="route-actions">
+        <button class="quiet" id="tag-back" aria-label="Go back">Back</button>
+        <button class="quiet" id="tag-start">Start</button>
+      </div>
+    </header>
+
+    <form id="pin-form" class="pin-form">
+      <input id="pin-input" type="text" autocomplete="off" maxlength="60" placeholder="Pin a word">
+      <button type="submit">Pin</button>
+    </form>
+    <div class="pinned-row" id="pinned-row"></div>
+
+    <div class="tag-board" id="tag-board"></div>
+
+    <section class="character-sources" id="character-sources" hidden>
+      <div class="rail-label">Character themes</div>
+      <div class="character-tags" id="character-tags"></div>
+      <div class="source-note" id="source-note">Original composition</div>
+    </section>
+
+    <form id="generation-form" class="generation-form">
+      <label>
+        <span>Title</span>
+        <input id="song-title" maxlength="100" placeholder="Name this cue">
+      </label>
+      <label>
+        <span>Compiled direction</span>
+        <textarea id="song-prompt" rows="5" maxlength="5000"></textarea>
+      </label>
+      <details>
+        <summary>Advanced settings</summary>
+        <div class="advanced-grid">
+          <label><span>Model</span><select id="song-model">
+            <option>V5</option><option>V5_5</option><option>V4_5PLUS</option>
+            <option>V4_5ALL</option><option>V4_5</option><option>V4</option>
+          </select></label>
+          <label><span>Extra style</span><input id="song-style" maxlength="1000"></label>
+          <label><span>Exclude</span><input id="song-negative" maxlength="200" placeholder="bright synths, vocals"></label>
+          <label class="checkline"><input id="song-instrumental" type="checkbox" checked> Instrumental</label>
+          <label><span>Style weight</span><input id="style-weight" type="range" min="0" max="1" step="0.05" value="0.65"></label>
+          <label><span>Weirdness</span><input id="weirdness" type="range" min="0" max="1" step="0.05" value="0.45"></label>
+          <label><span>Theme weight</span><input id="audio-weight" type="range" min="0" max="1" step="0.05" value="0.7"></label>
+        </div>
+      </details>
+      <button class="generate-button" id="generate-song" type="submit">Write two drafts</button>
+      <div class="form-note" id="generation-note"></div>
+    </form>
+  </aside>
+
+  <footer class="now-playing" id="now-playing">
+    <button class="transport" id="play-toggle" aria-label="Play or pause">▶</button>
+    <div class="playing-copy">
+      <strong id="playing-title">Nothing playing</strong>
+      <span id="playing-detail">Pop a song to hear it.</span>
+    </div>
+    <input id="seek" type="range" min="0" max="1000" value="0" aria-label="Seek">
+    <span id="time-label">0:00</span>
+    <label class="volume-control"><span>Volume</span><input id="volume" type="range" min="0" max="1" step="0.02" value="0.8"></label>
+    <button class="transport" id="loop-toggle" aria-label="Loop">↻</button>
+    <button class="quiet" id="fade-out">Fade out</button>
+    <audio id="audio"></audio>
+  </footer>
+</div>
+
+<div class="context-menu" id="context-menu" hidden></div>
+<div class="toast" id="toast"></div>
+
+<dialog id="settings-dialog">
+  <form method="dialog" class="dialog-head">
+    <div><div class="smallcaps">Music desk</div><h2>Settings</h2></div>
+    <button class="quiet" value="cancel">Close</button>
+  </form>
+  <section class="settings-section">
+    <h3>Provider</h3>
+    <div id="provider-detail"></div>
+    <button class="quiet" id="check-provider" type="button">Check account</button>
+  </section>
+  <section class="settings-section" id="identity-settings">
+    <h3>Character identities</h3>
+    <p class="muted">A hand-curated musical identity is added whenever that character becomes the source theme.</p>
+    <div id="identity-list"></div>
+  </section>
+</dialog>
+
+<script type="module" src="music.js"></script>
+</body>
+</html>

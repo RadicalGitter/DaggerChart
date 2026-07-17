@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "songs": [],
+  "playlists": [
+    {
+      "id": "library",
+      "name": "Library",
+      "fixed": true,
+      "songIds": []
+    },
+    {
+      "id": "character_themes",
+      "name": "Character Themes",
+      "fixed": true,
+      "songIds": []
+    }
+  ],
+  "characterThemes": {}
+}
