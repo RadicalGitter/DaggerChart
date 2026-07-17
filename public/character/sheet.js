@@ -5,6 +5,7 @@ import { paperArtifactHtml } from "/shared/paper.js";
 import { traitAccent, traitGraphic } from "/shared/traits.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import { playerFeatureEnabled, setPlayerFeatureContext } from "/shared/player-features.js";
+import { fetchJsonWithRetry } from "/shared/reliable-fetch.js";
 import "/shared/feedback.js";
 import "/shared/player-tools.js";
 
@@ -17,6 +18,9 @@ const id = location.pathname.split("/").filter(Boolean).pop();
 let PC = null;
 let THEMES = { songs: [], published: null, provider: {} };
 let sheetSectionObserver = null;
+let loadInFlight = null;
+let loadQueued = false;
+let themeLoadVersion = 0;
 const themeAudio = new Audio();
 
 const featHtml = (f) => `<div class="featline"><strong>${esc(f.name)}</strong> ${termify(esc(f.text))}</div>`;
@@ -432,7 +436,7 @@ function handHtml(p) {
           expected: entitlement.expected,
           missing: entitlement.missing,
           level: entitlement.level,
-          domains: entitlement.domains.map((domain) => title(domain)).join(" & ")
+          domains: entitlement.domains.join(" & ")
         })}</p>
       </div>
       <button class="quiet" id="hand-acquire">${acquiring ? t("hand.done") : t("hand.owedChoose")}</button>
@@ -457,6 +461,15 @@ function handHtml(p) {
     }</div>
     ${handNote ? `<div class="muted" style="margin-top:0.5rem;font-size:0.88rem;">${esc(handNote)}</div>` : ""}
     ${acquirePanel}`;
+}
+
+function refreshThemeSection() {
+  const current = $("#sheet-theme");
+  if (!current || !PC || current.matches(":focus-within") || current.querySelector("details[open]")) return;
+  const holder = document.createElement("div");
+  holder.innerHTML = themeHtml(PC);
+  current.replaceWith(holder.firstElementChild);
+  wireTheme();
 }
 
 function acquireHtml(p) {
@@ -578,21 +591,69 @@ function wirePips() {
   }
 }
 
-async function load() {
-  const [res, themeRes] = await Promise.all([
-    fetch(`/api/party/${id}`),
-    fetch(`/api/music/themes/${id}`)
-  ]);
-  const [data, themeData] = await Promise.all([res.json(), themeRes.json()]);
-  if (!res.ok) {
-    $("#sheet").innerHTML = `<p class="smallcaps" style="text-align:center;">${esc(data.error || t("sheet.notfound"))}</p>`;
-    return;
+function renderLoadFailure(error) {
+  const notFound = error?.status === 400;
+  $("#sheet").innerHTML = `<div class="card sheet-load-error" role="alert">
+    <strong>${esc(notFound ? t("sheet.notfound") : t("sheet.loadError"))}</strong>
+    ${notFound ? "" : `<p>${esc(t("sheet.loadErrorHint"))}</p><button type="button" id="sheet-retry">${esc(t("sheet.retry"))}</button>`}
+  </div>`;
+  const retry = $("#sheet-retry");
+  if (retry) retry.onclick = () => {
+    $("#sheet").innerHTML = `<p class="smallcaps" style="text-align:center;">${esc(t("sheet.loading"))}</p>`;
+    void load();
+  };
+}
+
+function showReconnectNotice() {
+  if ($("#sheet-connection")) return;
+  const notice = document.createElement("div");
+  notice.className = "sheet-connection";
+  notice.id = "sheet-connection";
+  notice.setAttribute("role", "status");
+  notice.innerHTML = `<span>${esc(t("sheet.reconnecting"))}</span><button type="button" class="quiet">${esc(t("sheet.retry"))}</button>`;
+  notice.querySelector("button").onclick = () => void load();
+  $("#sheet").prepend(notice);
+}
+
+async function loadThemes() {
+  const version = ++themeLoadVersion;
+  try {
+    const nextThemes = await fetchJsonWithRetry(`/api/music/themes/${id}`, { attempts: 2, timeoutMs: 2500 });
+    if (version !== themeLoadVersion || !PC || PC.id !== id) return;
+    THEMES = nextThemes;
+    refreshThemeSection();
+  } catch {
+    // Music is optional. A provider or route failure must not block the sheet.
   }
-  PC = data;
-  PC.playerFeatures = setPlayerFeatureContext(PC, PC.id);
-  THEMES = themeRes.ok ? themeData : { songs: [], published: null, provider: {} };
-  document.title = `${PC.name} — The Settlement`;
-  render();
+}
+
+async function loadCharacter() {
+  try {
+    const data = await fetchJsonWithRetry(`/api/party/${id}`, { attempts: 3, timeoutMs: 3500 });
+    PC = data;
+    PC.playerFeatures = setPlayerFeatureContext(PC, PC.id);
+    document.title = `${PC.name} — The Settlement`;
+    render();
+    void loadThemes();
+  } catch (error) {
+    if (PC) showReconnectNotice();
+    else renderLoadFailure(error);
+  }
+}
+
+function load() {
+  if (loadInFlight) {
+    loadQueued = true;
+    return loadInFlight;
+  }
+  loadInFlight = loadCharacter().finally(() => {
+    loadInFlight = null;
+    if (loadQueued) {
+      loadQueued = false;
+      void load();
+    }
+  });
+  return loadInFlight;
 }
 
 initI18n();
@@ -602,7 +663,8 @@ $("#paper-dialog").onclick = (event) => { if (event.target === $("#paper-dialog"
 // Live updates — but don't clobber a tap in flight; simple debounce via reload.
 const stream = new EventSource("/api/stream");
 let pending = null;
-stream.onmessage = () => {
+stream.onmessage = (event) => {
+  if (event?.data === "connected") return;
   clearTimeout(pending);
   pending = setTimeout(load, 400);
 };
