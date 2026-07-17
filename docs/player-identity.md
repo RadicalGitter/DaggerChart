@@ -47,11 +47,23 @@ not be added to the login payload.
   simply changes `settlement-pc`.
 
 Character creation does not copy records from an older character. A future
-retirement/migration tool may move notes to a new PC, but that must be an
+ownership-migration tool may move notes to a new PC, but that must be an
 explicit GM/player action that rewrites note ownership atomically and records
 what moved. It must not infer ownership from player names. Doodle migration
 should be offered separately because drawings may belong to the old
 character's journal as an artifact.
+
+## Stepping back
+
+The GM can retire a completed character without deleting it. Retired PCs are
+absent from `/login`, `/player`, shell pickers, `/api/party`, and the other
+player-facing identity lists. A device still holding that PC's
+`settlement-pc` value finds no matching public identity and returns to its
+picker naturally.
+
+The stored sheet, inventory, papers, personal notes, journal doodles, and
+theme files remain intact. Restoring the PC makes those records available
+again. Missing legacy `active` fields are treated as active.
 
 ## Trust boundary
 

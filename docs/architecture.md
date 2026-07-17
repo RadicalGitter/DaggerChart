@@ -80,7 +80,8 @@ docs/         this file, the design spec, ComfyUI workflow
 | `POST /api/log`, `POST /api/log/:id/publish` | chronicle notes, publish to table |
 | `GET /api/reference` | SRD creation data (classes, ancestries, cards…) |
 | `GET /api/character-drafts`, `GET/PUT/DELETE /api/character-drafts/:id` | resumable unfinished creator state, listed separately from completed PCs |
-| `GET/POST/PUT/DELETE /api/party[/:id]` | player characters; list and single-character responses are explicit player whitelists |
+| `GET/POST/PUT/DELETE /api/party[/:id]` | active player characters; DELETE retires without destroying the stored record or keyed data |
+| `POST /api/party/:id/restore` | return a retired character to player choosers and sheets |
 | `PUT /api/party/:id/conditions` | replace a PC's validated standard Conditions; broadcasts to player clients |
 | `GET /api/items/consumables` | the 60-entry standard Consumables catalog |
 | `POST /api/party/:id/inventory/grant` | give a standard Consumable, stacking to the rules limit of five |
@@ -139,6 +140,10 @@ Consumable reactions; see [inventory.md](inventory.md).
   only `settlement-pc` and enters `/player`; unfinished drafts resume `/create`.
   GM and projector choices set no player identity. See
   [player-identity.md](player-identity.md).
+- **Character lifecycle:** missing `pc.active` reads as true. Retirement keeps
+  the PC, inventory, papers, notes, doodles, and music files intact while all
+  player whitelists and mutation routes reject the inactive identity. The GM
+  can restore it from Party -> Stepped back; there is no hard-delete route.
 - **i18n** (`shared/i18n.js`): per-device language (localStorage, EN/SV).
   Game terms (Hope, Stress, Evasion, Loadout…) stay English to match the
   physical cards; UI phrasing translates; the long-press glossary explains

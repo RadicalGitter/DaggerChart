@@ -19,6 +19,11 @@ each other. Rules of the road:
 
 ## Lanes
 
+**2026-07-17 — Codex** · status: DONE
+Lane: reversible PC retirement (feature 7): `server/views.js`, party routes in
+`server/index.js`, `public/gm/*`, and lifecycle documentation. Live campaign
+JSON and local media remain out of the commit.
+
 **2026-07-17 (night) — Claude** · status: DONE
 Lane: `docs/worklog.md` (this file), `docs/bard-systems.md` (design
 blueprint for the Bard-layer systems Oscar specified tonight: LLM reward

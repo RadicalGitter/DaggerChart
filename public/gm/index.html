@@ -108,6 +108,24 @@
   .paper-delivery textarea { width: 100%; box-sizing: border-box; }
   .paper-ledger { display: grid; gap: .45rem; margin-top: .9rem; }
   .paper-ledger-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .7rem; align-items: center; padding-top: .45rem; border-top: 1px dotted var(--rule-strong); }
+  .party-table-wrap { max-width: 100%; overflow-x: auto; }
+  .party-identity { display: flex; align-items: center; gap: .6rem; min-width: 150px; }
+  .party-portrait {
+    display: grid; flex: none; width: 36px; height: 36px; place-items: center; overflow: hidden;
+    border: 1px solid var(--rule-strong); border-radius: 50%; background: var(--paper-inset);
+    color: var(--ink-soft); font-size: .9rem; font-weight: 600;
+  }
+  .party-portrait img { width: 100%; height: 100%; object-fit: cover; }
+  .stepped-back { margin: 1rem 0 1.4rem; border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule); }
+  .stepped-back summary { display: flex; align-items: center; gap: .55rem; padding: .65rem 0; color: var(--ink-soft); cursor: pointer; font-variant: small-caps; list-style: none; }
+  .stepped-back summary::-webkit-details-marker { display: none; }
+  .stepped-back summary::before { content: ""; width: .38rem; height: .38rem; border-right: 1px solid var(--oxblood); border-bottom: 1px solid var(--oxblood); transform: rotate(-45deg); transition: transform .16s ease; }
+  .stepped-back[open] summary::before { transform: rotate(45deg); }
+  .stepped-back-count { min-width: 1.6rem; padding: 0 .4rem; border: 1px solid var(--rule-strong); border-radius: 10px; text-align: center; font-size: .72rem; }
+  .stepped-back-list { padding-bottom: .35rem; }
+  .stepped-back-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .7rem; align-items: center; padding: .7rem 0; border-top: 1px dotted var(--rule-strong); }
+  .stepped-back-row .party-portrait { filter: grayscale(.75); opacity: .72; }
+  .stepped-back-row .muted { display: block; font-size: .78rem; }
   .feedback-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 1rem; }
   .feedback-ticket img { display: block; width: 100%; max-height: 360px; object-fit: contain; border: 1px solid var(--rule-strong); background: #17120c; }
   .feedback-meta { margin: .55rem 0; color: var(--ink-soft); font-size: .78rem; }
@@ -172,6 +190,21 @@
     .ux-toolbar #ux-route { width: 100%; min-width: 0; }
     .ux-toolbar select { min-width: 128px; }
     .ux-clear { width: 100%; }
+    .party-table-wrap { overflow: visible; }
+    #party-table, #party-table tbody { display: block; width: 100%; }
+    #party-table tr:first-child { display: none; }
+    #party-table tr:not(:first-child) { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .15rem .8rem; padding: .75rem 0; border-bottom: 1px solid var(--rule); }
+    #party-table td { display: block; padding: .15rem 0; border-bottom: 0; }
+    #party-table td:nth-child(1) { grid-column: 1; grid-row: 1; }
+    #party-table td:nth-child(2) { grid-column: 1; color: var(--ink-soft); font-size: .86rem; }
+    #party-table td:nth-child(3) { grid-column: 2; grid-row: 1; text-align: right; }
+    #party-table td:nth-child(3)::before { content: "Level"; display: block; color: var(--ink-faint); font-size: .66rem; font-variant: small-caps; }
+    #party-table td:nth-child(4) { grid-column: 1 / -1; }
+    #party-table td:nth-child(5) { grid-column: 1; align-self: center; }
+    #party-table td:nth-child(6) { grid-column: 2; align-self: center; }
+    #party-table td[colspan] { grid-column: 1 / -1; }
+    #party-table .condition-toggles { min-width: 0; }
+    #party-table .party-identity { min-width: 0; }
   }
 </style>
 </head>
@@ -296,7 +329,11 @@
     <section id="sec-party" hidden>
       <h2>Party</h2>
       <p class="muted">Players can create characters at <a href="/create" target="_blank">/create</a> on any phone connected to your Wi-Fi.</p>
-      <table class="ledger" id="party-table"></table>
+      <div class="party-table-wrap"><table class="ledger" id="party-table"></table></div>
+      <details class="stepped-back" id="stepped-back" hidden>
+        <summary>Stepped back <span class="stepped-back-count" id="stepped-back-count">0</span></summary>
+        <div class="stepped-back-list" id="stepped-back-list"></div>
+      </details>
       <div class="card grant-consumable">
         <h3>Give a consumable</h3>
         <p class="muted">Search the complete standard loot table. A character can carry up to five of each.</p>

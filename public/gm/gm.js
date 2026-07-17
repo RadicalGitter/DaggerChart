@@ -993,26 +993,44 @@ function renderPlaceEditor(pl) {
 }
 
 // --- party ---
+const activePartyMembers = () => (S.party || []).filter((pc) => pc.active !== false);
+
+function partyIdentity(p) {
+  const portrait = p.portrait
+    ? `<img src="${esc(p.portrait)}" alt="">`
+    : esc((p.name || "?").slice(0, 1).toUpperCase());
+  return `<div class="party-identity"><span class="party-portrait" aria-hidden="true">${portrait}</span><span><strong>${esc(p.name)}</strong>${p.player ? `<br><span class="muted" style="font-size:0.85rem;">${esc(p.player)}</span>` : ""}</span></div>`;
+}
+
 function renderParty() {
-  const rows = (S.party || [])
+  const active = activePartyMembers();
+  const retired = (S.party || []).filter((pc) => pc.active === false);
+  const rows = active
     .map(
       (p) => `<tr>
-        <td><strong>${esc(p.name)}</strong>${p.player ? `<br><span class="muted" style="font-size:0.85rem;">${esc(p.player)}</span>` : ""}</td>
+        <td>${partyIdentity(p)}</td>
         <td>${esc(p.ancestry || "")} ${esc(p.class || "")}<br><span class="muted" style="font-size:0.85rem;">${esc(p.subclass || "")}</span></td>
-        <td><input type="number" class="num" min="1" max="10" value="${p.level}" data-pclevel="${p.id}"></td>
+        <td><input type="number" class="num" min="1" max="10" value="${p.level}" data-pclevel="${esc(p.id)}" aria-label="Level for ${esc(p.name)}"></td>
         <td><div class="condition-toggles" aria-label="Conditions for ${esc(p.name)}">${CONDITIONS.map((condition) => {
-          const active = (p.conditions || []).includes(condition.id);
-          const action = active ? "Clear" : "Apply";
-          return `<button class="condition-toggle${active ? " active" : ""}" type="button" data-pccondition="${p.id}" data-condition="${condition.id}" aria-pressed="${active}" title="${action} ${condition.name}">${conditionIcon(condition.id)}<span>${condition.name}</span></button>`;
+          const applied = (p.conditions || []).includes(condition.id);
+          const action = applied ? "Clear" : "Apply";
+          return `<button class="condition-toggle${applied ? " active" : ""}" type="button" data-pccondition="${esc(p.id)}" data-condition="${condition.id}" aria-pressed="${applied}" title="${action} ${condition.name}">${conditionIcon(condition.id)}<span>${condition.name}</span></button>`;
         }).join("")}</div></td>
-        <td><a href="/character/${p.id}" target="_blank">Open the sheet ↗</a></td>
-        <td><button class="quiet grave" data-pcdel="${p.id}">Delete</button></td>
+        <td><a href="/character/${encodeURIComponent(p.id)}" target="_blank">Open the sheet ↗</a></td>
+        <td><button class="quiet" data-pcretire="${esc(p.id)}">Retire</button></td>
       </tr>`
     )
     .join("");
   $("#party-table").innerHTML = `
     <tr><th>Character</th><th>Class</th><th>Level</th><th>Conditions</th><th>Sheet</th><th></th></tr>
-    ${rows || '<tr><td colspan="6" class="muted">No player characters yet. Send your players to /create.</td></tr>'}`;
+    ${rows || '<tr><td colspan="6" class="muted">No active player characters. Send your players to /create or restore someone below.</td></tr>'}`;
+  $("#stepped-back").hidden = retired.length === 0;
+  $("#stepped-back-count").textContent = String(retired.length);
+  $("#stepped-back-list").innerHTML = retired.map((p) => `<div class="stepped-back-row">
+    <span class="party-portrait" aria-hidden="true">${p.portrait ? `<img src="${esc(p.portrait)}" alt="">` : esc((p.name || "?").slice(0, 1).toUpperCase())}</span>
+    <span><strong>${esc(p.name)}</strong><span class="muted">${[p.ancestry, p.class, p.player].filter(Boolean).map(esc).join(" · ") || "Character record preserved"}</span></span>
+    <button class="quiet" type="button" data-pcrestore="${esc(p.id)}">Return</button>
+  </div>`).join("");
   for (const el of document.querySelectorAll("[data-pclevel]")) {
     el.onchange = () =>
       api(`/api/party/${el.dataset.pclevel}`, { method: "PUT", body: { level: clampNum(el, 1, 10) } })
@@ -1032,13 +1050,25 @@ function renderParty() {
       }
     };
   }
-  for (const el of document.querySelectorAll("[data-pcdel]")) {
+  for (const el of document.querySelectorAll("[data-pcretire]")) {
     el.onclick = async () => {
-      const p = S.party.find((x) => x.id === el.dataset.pcdel);
-      if (!confirm(`Delete ${p.name}? This permanently removes the character sheet and journal drawings.`)) return;
+      const p = S.party.find((x) => x.id === el.dataset.pcretire);
+      if (!confirm(`Retire ${p.name}? Their sheet, inventory, notes, and drawings will be kept, but they will disappear from player choosers.`)) return;
       try {
-        await api(`/api/party/${el.dataset.pcdel}`, { method: "DELETE" });
-        toast(`${p.name} deleted.`);
+        await api(`/api/party/${encodeURIComponent(p.id)}`, { method: "DELETE" });
+        toast(`${p.name} stepped back from the tale.`);
+        await refresh();
+      } catch (e) {
+        toast(e.message, true);
+      }
+    };
+  }
+  for (const el of document.querySelectorAll("[data-pcrestore]")) {
+    el.onclick = async () => {
+      const p = S.party.find((x) => x.id === el.dataset.pcrestore);
+      try {
+        await api(`/api/party/${encodeURIComponent(p.id)}/restore`, { method: "POST" });
+        toast(`${p.name} returned to the party.`);
         await refresh();
       } catch (e) {
         toast(e.message, true);
@@ -1052,7 +1082,12 @@ function renderParty() {
 function renderPaperDelivery() {
   const target = $("#paper-target");
   const selected = target.value;
-  target.innerHTML = `<option value="group">Whole party — shared copies</option>${(S.party || []).map((pc) => `<option value="${pc.id}">${esc(pc.name)} — private</option>`).join("")}`;
+  const active = activePartyMembers();
+  target.innerHTML = active.length
+    ? `<option value="group">Whole party — shared copies</option>${active.map((pc) => `<option value="${esc(pc.id)}">${esc(pc.name)} — private</option>`).join("")}`
+    : `<option value="">No active characters</option>`;
+  target.disabled = active.length === 0;
+  $("#paper-deliver").disabled = active.length === 0;
   if ([...target.options].some((option) => option.value === selected)) target.value = selected;
   const papers = (S.party || []).flatMap((pc) => (pc.papers || []).map((paper) => ({ pc, paper })));
   $("#paper-ledger").innerHTML = papers.length ? papers.map(({ pc, paper }) => `<div class="paper-ledger-row">
@@ -1070,7 +1105,12 @@ function selectedConsumable() {
 function renderConsumableGrant() {
   const pcSelect = $("#grant-pc");
   const selectedPc = pcSelect.value;
-  pcSelect.innerHTML = (S.party || []).map((pc) => `<option value="${pc.id}">${esc(pc.name)}</option>`).join("");
+  const active = activePartyMembers();
+  pcSelect.innerHTML = active.length
+    ? active.map((pc) => `<option value="${esc(pc.id)}">${esc(pc.name)}</option>`).join("")
+    : `<option value="">No active characters</option>`;
+  pcSelect.disabled = active.length === 0;
+  $("#grant-give").disabled = active.length === 0;
   if ([...pcSelect.options].some((option) => option.value === selectedPc)) pcSelect.value = selectedPc;
   $("#consumable-options").innerHTML = CONSUMABLES.map((item) => `<option value="${esc(item.name)}"></option>`).join("");
   const item = selectedConsumable();

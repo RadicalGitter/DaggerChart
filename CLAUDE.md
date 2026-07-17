@@ -103,6 +103,11 @@ designing anything; it is the source of truth. Code map + API:
   Standard Consumables resolve from `data/daggerheart/reference.json`, stack
   to five, and use atomic server-side reactions. Contract and extension rules:
   `docs/inventory.md`.
+- PC removal is reversible retirement only. Missing `active` means true;
+  `DELETE /api/party/:id` sets it false and `POST .../restore` returns it.
+  Player whitelists and mutations exclude retired PCs, while inventory,
+  papers, notes, doodles, and music files remain untouched. There is no PC
+  hard-delete endpoint.
 - Player feedback tickets are explicit: the bug control captures the current
   viewport for annotation and creates a local ticket. GM triage reads all
   tickets for crosstalk before presenting one problem at a time; see
@@ -125,9 +130,10 @@ designing anything; it is the source of truth. Code map + API:
   section in `/gm` holds the forms and the darken control.
 
 ## What's next (agreed ambitions, in rough order)
-- **Seven planned features have backend implementation plans in
+- **The remaining planned features have backend implementation plans in
   [docs/master-plan.md](docs/master-plan.md).** Read its Shared foundations
-  before starting one; suggested dependency order is 7 → 1 → 2 → 3 → 5 → 6 → 4.
+  before starting one; character lifecycle (feature 7) is built, so the
+  remaining suggested dependency order is 1 → 2 → 3 → 5 → 6 → 4.
 - ComfyUI wiring: the GM-side request UI exists on People cards (prompt saved
   to `portraitPrompt`, `POST /api/people/:id/portrait` is a stub) — connect it
   to the local 5090 using `docs/comfyui/waidrin-portraits-workflow.json`

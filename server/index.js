@@ -30,6 +30,8 @@ const ROOT = path.join(__dirname, "..");
 const PUBLIC = path.join(ROOT, "public");
 const PORT = process.env.PORT || 4626;
 const STANDARD_CONDITIONS = new Set(["hidden", "restrained", "vulnerable"]);
+const isActivePc = (pc) => pc?.active !== false;
+const activePcById = (id) => state.pcs.find((pc) => pc.id === id && isActivePc(pc)) || null;
 
 const app = express();
 app.use(express.json({ limit: "8mb" }));
@@ -171,6 +173,7 @@ app.post("/api/party", guard((req, res) => {
   pc.id = `pc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
   pc.createdAt = new Date().toISOString();
   pc.level = pc.level || 1;
+  pc.active = true;
   state.pcs.push(pc);
   addLog({ type: "party", summary: `${pc.name.trim()} takes their place in the settlement.`, published: true });
   persist();
@@ -184,7 +187,7 @@ app.post("/api/party", guard((req, res) => {
 }));
 
 app.put("/api/party/:id", guard((req, res) => {
-  const i = state.pcs.findIndex((p) => p.id === req.params.id);
+  const i = state.pcs.findIndex((p) => p.id === req.params.id && isActivePc(p));
   if (i === -1) throw new Error("No such character.");
   if (Object.hasOwn(req.body, "conditions")) throw new Error("Use the Conditions control.");
   const prev = state.pcs[i];
@@ -206,7 +209,7 @@ app.put("/api/party/:id", guard((req, res) => {
 app.get("/api/items/consumables", (_req, res) => res.json(consumables(state.reference)));
 
 app.put("/api/party/:id/conditions", guard((req, res) => {
-  const pc = state.pcs.find((p) => p.id === req.params.id);
+  const pc = activePcById(req.params.id);
   if (!pc) throw new Error("No such character.");
   if (!Array.isArray(req.body.conditions)) throw new Error("Conditions must be a list.");
   const conditions = [...new Set(req.body.conditions)];
@@ -218,7 +221,7 @@ app.put("/api/party/:id/conditions", guard((req, res) => {
 }));
 
 function pcForInventory(id) {
-  const pc = state.pcs.find((entry) => entry.id === id);
+  const pc = activePcById(id);
   if (!pc) throw new Error("No such character.");
   return pc;
 }
@@ -233,8 +236,8 @@ app.post("/api/party/:id/inventory", guard((req, res) => {
 app.post("/api/party/inventory/paper", guard((req, res) => {
   const target = String(req.body.target || "");
   const recipients = target === "group"
-    ? state.pcs
-    : state.pcs.filter((pc) => pc.id === target);
+    ? state.pcs.filter(isActivePc)
+    : state.pcs.filter((pc) => pc.id === target && isActivePc(pc));
   if (!recipients.length) throw new Error("Choose at least one character.");
   const delivered = recipients.map((pc) => {
     const item = addInventoryItem(pc, {
@@ -281,13 +284,27 @@ app.post("/api/party/:id/inventory/:itemId/use", guard((req, res) => {
 }));
 
 app.delete("/api/party/:id", guard((req, res) => {
-  const i = state.pcs.findIndex((p) => p.id === req.params.id);
-  if (i === -1) throw new Error("No such character.");
-  const [gone] = state.pcs.splice(i, 1);
-  delete state.journalDoodles[gone.id];
+  const pc = state.pcs.find((candidate) => candidate.id === req.params.id);
+  if (!pc) throw new Error("No such character.");
+  if (pc.active !== false) {
+    pc.active = false;
+    addLog({ type: "party", summary: `${pc.name} steps back from the tale.` });
+  }
   persist();
   broadcast();
-  res.json({ removed: gone.name });
+  res.json({ retired: pc.name, active: false });
+}));
+
+app.post("/api/party/:id/restore", guard((req, res) => {
+  const pc = state.pcs.find((candidate) => candidate.id === req.params.id);
+  if (!pc) throw new Error("No such character.");
+  if (pc.active === false) {
+    pc.active = true;
+    addLog({ type: "party", summary: `${pc.name} returns to the tale.` });
+  }
+  persist();
+  broadcast();
+  res.json({ restored: pc.name, active: true });
 }));
 
 // --- GM API ---
@@ -351,10 +368,10 @@ app.put("/api/feedback/:id", guard((req, res) => {
 }));
 
 // --- music desk & character themes ---
-app.get("/api/music", (_req, res) => res.json(musicView(state.pcs)));
+app.get("/api/music", (_req, res) => res.json(musicView(state.pcs.filter(isActivePc))));
 
 app.get("/api/music/themes/:pcId", guard((req, res) => {
-  if (!state.pcs.some((pc) => pc.id === req.params.pcId)) throw new Error("No such character.");
+  if (!activePcById(req.params.pcId)) throw new Error("No such character.");
   res.json(characterThemeView(req.params.pcId));
 }));
 
@@ -371,7 +388,7 @@ app.post("/api/music/generate", guardAsync(async (req, res) => {
 }));
 
 app.post("/api/music/themes/:pcId/generate", guardAsync(async (req, res) => {
-  const pc = state.pcs.find((candidate) => candidate.id === req.params.pcId);
+  const pc = activePcById(req.params.pcId);
   if (!pc) throw new Error("No such character.");
   const song = await generateCharacterTheme(pc, req.body || {});
   broadcast();
@@ -408,7 +425,7 @@ app.post("/api/music/suno-snapshot", allowSunoSnapshot, guardAsync(async (req, r
 }));
 
 app.post("/api/music/themes/:pcId/publish", guard((req, res) => {
-  const pc = state.pcs.find((candidate) => candidate.id === req.params.pcId);
+  const pc = activePcById(req.params.pcId);
   if (!pc) throw new Error("No such character.");
   const theme = publishCharacterTheme(req.body.songId, pc);
   broadcast();
@@ -416,7 +433,7 @@ app.post("/api/music/themes/:pcId/publish", guard((req, res) => {
 }));
 
 app.put("/api/music/themes/:pcId/identity", guard((req, res) => {
-  if (!state.pcs.some((pc) => pc.id === req.params.pcId)) throw new Error("No such character.");
+  if (!activePcById(req.params.pcId)) throw new Error("No such character.");
   const result = setCharacterThemeIdentity(req.params.pcId, req.body.identity);
   broadcast();
   res.json(result);
@@ -724,13 +741,13 @@ function cleanDoodleStrokes(value) {
 }
 
 app.get("/api/journal-doodles/:pcId", guard((req, res) => {
-  if (!state.pcs.some((p) => p.id === req.params.pcId)) throw new Error("No such character.");
+  if (!activePcById(req.params.pcId)) throw new Error("No such character.");
   res.json(state.journalDoodles[req.params.pcId] || { journal: [], people: [], places: [] });
 }));
 
 app.put("/api/journal-doodles/:pcId/:page", guard((req, res) => {
   const { pcId, page } = req.params;
-  if (!state.pcs.some((p) => p.id === pcId)) throw new Error("No such character.");
+  if (!activePcById(pcId)) throw new Error("No such character.");
   if (!DOODLE_PAGES.has(page)) throw new Error("No such journal page.");
   const strokes = cleanDoodleStrokes(req.body.strokes);
   state.journalDoodles[pcId] ||= { journal: [], people: [], places: [] };
@@ -743,7 +760,7 @@ app.post("/api/notes", guard((req, res) => {
   const { kind, refId, scope, pcId, text } = req.body;
   if (!NOTE_KINDS.has(kind)) throw new Error("Unknown kind of note.");
   if (!text || !text.trim()) throw new Error("Write something first.");
-  const pc = state.pcs.find((p) => p.id === pcId);
+  const pc = activePcById(pcId);
   if (!pc) throw new Error("No such character.");
   if (kind === "person" && !state.people.find((p) => p.id === refId && p.revealed))
     throw new Error("Unknown person.");
@@ -770,6 +787,7 @@ app.post("/api/notes", guard((req, res) => {
 app.put("/api/notes/:id", guard((req, res) => {
   const note = state.notes.find((n) => n.id === req.params.id);
   if (!note) throw new Error("No such note.");
+  if (!activePcById(req.body.pcId)) throw new Error("No such character.");
   if (note.pcId !== req.body.pcId) throw new Error("Only the character who wrote this note can edit it.");
   if (typeof req.body.text === "string" && req.body.text.trim()) note.text = req.body.text.trim();
   if (req.body.scope === "personal" || req.body.scope === "group") note.scope = req.body.scope;
@@ -782,6 +800,7 @@ app.put("/api/notes/:id", guard((req, res) => {
 app.delete("/api/notes/:id", guard((req, res) => {
   const i = state.notes.findIndex((n) => n.id === req.params.id);
   if (i === -1) throw new Error("No such note.");
+  if (!activePcById(req.query.pc)) throw new Error("No such character.");
   if (state.notes[i].pcId !== req.query.pc) throw new Error("Only the character who wrote this note can remove it.");
   state.notes.splice(i, 1);
   persist();

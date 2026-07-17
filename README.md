@@ -64,7 +64,7 @@ stopped (or live; the GM console re-reads on refresh):
 
 - `settlement.json` — population, season, buildings (level, foreman, spent event numbers, effects)
 - `characters.json` — the folk (NPCs), including the GM-only hidden layer
-- `pcs.json` — player characters from the creator
+- `pcs.json` — player characters from the creator; `active: false` retires one without deleting its records
 - `people.json` — the wider world's NPCs (not villagers): public description, GM-only notes, carried items, current place
 - `places.json` — the map beyond the palisade; the settlement itself is the fixed first entry
 - `notes.json` — the players' notes and journal entries

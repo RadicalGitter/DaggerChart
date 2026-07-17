@@ -365,7 +365,7 @@ header — keep Sol's card design untouched.
 
 ---
 
-## 7. Character lifecycle (GM editor + soft delete)
+## 7. Character lifecycle (GM editor + soft delete) — built
 
 **Goal.** A GM view to manage PCs: deactivate ("delete") a character, see a
 *deleted characters* view, and restore mistakes. Glorified
@@ -398,6 +398,12 @@ picker naturally. Verify that on implementation rather than assuming it.
 quiet "Retire" action per row and a collapsed "Stepped back" list beneath it
 with "Restore" buttons. Wording stays in the fiction — retire/return, not
 delete/undelete.
+
+**Built 2026-07-17.** Missing `active` values read as true. Retirement is
+idempotent, preserves all keyed records, removes stale player access, and
+filters group deliveries and character-theme sources to active PCs. Desktop
+uses the ledger table; narrow GM screens use stacked rows without horizontal
+scrolling.
 
 ---
 

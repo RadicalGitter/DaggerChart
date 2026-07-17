@@ -7,6 +7,8 @@ import { inventoryView } from "./inventory.js";
 
 const PLAYER_CONDITIONS = new Set(["hidden", "restrained", "vulnerable"]);
 const conditionView = (p) => [...new Set(p.conditions || [])].filter((id) => PLAYER_CONDITIONS.has(id));
+const isActivePc = (p) => p?.active !== false;
+const activePcs = () => state.pcs.filter(isActivePc);
 
 // Personalization stored on the character (chosen in the creator). Kept behind
 // a validated default so unknown or legacy-missing values never reach a client
@@ -44,7 +46,7 @@ const identityView = (p) => ({
 // returning the stored PC object: future private character fields must not
 // silently cross this boundary.
 export function playerCharacterView(id) {
-  const p = state.pcs.find((pc) => pc.id === id);
+  const p = state.pcs.find((pc) => pc.id === id && isActivePc(pc));
   if (!p) return null;
   return {
     ...identityView(p),
@@ -100,7 +102,7 @@ export function playerCharacterView(id) {
 }
 
 export function partyListView() {
-  return state.pcs.map(identityView);
+  return activePcs().map(identityView);
 }
 
 export function gmView() {
@@ -127,6 +129,8 @@ export function gmView() {
       id: p.id,
       name: p.name,
       player: p.player,
+      portrait: p.portrait || null,
+      active: isActivePc(p),
       level: p.level,
       class: p.class?.name,
       subclass: p.subclass?.name,
@@ -230,6 +234,8 @@ export function screenView() {
 // The journal's view of the world: only what the GM has revealed, and only
 // the public face of it. Hidden notes and unrevealed entries stay server-side.
 export function loreView(pcId) {
+  const activePcIds = new Set(activePcs().map((p) => p.id));
+  const requestingPcId = activePcIds.has(pcId) ? pcId : null;
   const revealedPlaces = new Set(state.places.filter((p) => p.revealed).map((p) => p.id));
   const people = state.people
     .filter((p) => p.revealed)
@@ -255,11 +261,11 @@ export function loreView(pcId) {
       home: !!p.fixed
     }));
   const notes = state.notes.filter(
-    (n) => n.scope === "group" || (pcId && n.pcId === pcId)
+    (n) => n.scope === "group" || (requestingPcId && n.pcId === requestingPcId)
   );
   return {
     seasonLabel: seasonLabel(),
-    party: state.pcs.map(identityView),
+    party: activePcs().map(identityView),
     people,
     places,
     notes
@@ -305,6 +311,6 @@ export function tableView() {
     characters,
     chronicle,
     // Player-shell/login identity card: public identity fields only.
-    party: state.pcs.map(identityView)
+    party: activePcs().map(identityView)
   };
 }
