@@ -9,6 +9,7 @@ server/
   almanac.js  private lore CRUD and reveal-one-result chance-table boundary
   music.js    song metadata, playlists, character themes, Suno provider boundary
   retell.js   isolated Anthropic prompt and retry boundary for session accounts
+  portrait-suggest.js bounded Anthropic writing aid for portrait briefs
   telemetry.js bounded, content-free local UX aggregation
   state.js    domain logic: roll resolution, modifiers, season, log
   store.js    atomic JSON read/write (unique tmp+rename), timestamped backups
@@ -16,7 +17,7 @@ server/
 public/
   shared/     themes, i18n, session pools, GM tools/messages, rules search, player chat, feedback and UX collectors
   gm/         GM console (campaign/session controls, Almanac, correspondence, quick table, feedback queue, and UX review map)
-  login/      trusted-table chooser: finished-character bubbles + draft side view
+  login/      trusted-table chooser: movable portrait cards + draft side view
   player/     player root: identity switcher and visual-tool shelf
   table/      general arcana-card shell over six player sections, including Rules
   table-book/ settlement folio: town, folk, and chronicle
@@ -94,6 +95,13 @@ docs/         this file, the design spec, ComfyUI workflow
   environment, defaults `RETELL_MODEL` to `claude-opus-4-8`, times out after
   60 seconds, and retries one 429/5xx response. See
   [session-retellings.md](session-retellings.md).
+- **`art.js`** — validates tokenized ComfyUI API-format workflows, queues them
+  without fixed node IDs, polls one prompt's history, and copies returned
+  images into the gitignored player-static art directory. Portrait and scenic
+  setup is documented in [comfyui/README.md](comfyui/README.md).
+- **`portrait-suggest.js`** — sends only bounded, player-known portrait context
+  to Anthropic and returns one editable prose suggestion. It never generates
+  an image or writes character state.
 - **`telemetry.js`** — owns gitignored `telemetry.json`, validates the fixed
   player-surface whitelist, and aggregates bounded route/mode/viewport timing
   and click candidates without content or identity. See
@@ -158,7 +166,12 @@ docs/         this file, the design spec, ComfyUI workflow
 | `GET/PUT /api/board/:name` | named `main` or `hud` board document `{items, pins}` |
 | `GET /api/gm-screen` | static flat SRD quick-reference sections for GM surfaces |
 | `POST/PUT/DELETE /api/people[/:id]` | wider-world NPCs: description public, `hidden.notes` private, `placeId` moves them, `items` carried, `revealed` gates player visibility |
-| `POST /api/people/:id/portrait` | ComfyUI request stub — saves `portraitPrompt`, returns "not wired yet" |
+| `GET /api/art/status` | report local portrait/scenic graph validity and portrait-adviser readiness |
+| `POST /api/art/portrait` | generate an optional portrait for an unfinished character draft |
+| `POST /api/art/portrait/suggest` | ask Anthropic for one editable portrait-brief suggestion |
+| `POST /api/party/:id/portrait` | generate and attach a player-character portrait through ComfyUI |
+| `POST /api/people/:id/portrait` | save the prompt, generate, and attach a wider-world portrait through ComfyUI |
+| `POST /api/places/:id/image` | save the prompt, generate, and attach a scenic image through ComfyUI |
 | `POST/PUT/DELETE /api/places[/:id]` | places; the village (`place_village`, `fixed`) cannot be deleted |
 | `GET /api/lore?pc=id` | whitelisted journal payload: revealed people/places, group notes + that PC's personal notes |
 | `GET /api/journal-doodles/:pcId` | the chosen PC's three transparent journal drawing layers |
@@ -221,7 +234,7 @@ Consumable reactions; see [inventory.md](inventory.md).
 - **Identity:** bare `/` redirects to `/login`. A completed-PC choice writes
   only `settlement-pc` and enters `/player`; unfinished drafts resume `/create`.
   GM and projector choices set no player identity. Login groups the public
-  `/api/party` identities by active campaign without changing bubble position
+  `/api/party` identities by active campaign without changing card position
   or paint keys. The creator inserts a campaign part only when multiple active
   campaigns exist. See [player-identity.md](player-identity.md).
 - **Campaign boundary:** the settlement, buildings, folk, people/places, and
@@ -234,6 +247,10 @@ Consumable reactions; see [inventory.md](inventory.md).
   the PC, inventory, papers, notes, doodles, and music files intact while all
   player whitelists and mutation routes reject the inactive identity. The GM
   can restore it from Party -> Stepped back; there is no hard-delete route.
+- **Personal sheets:** class-specific compositions will share typed, stable
+  character modules before layout editing is introduced. The proposed
+  scissor interaction and communal vector-sketch bin are bounded in
+  [character-sheet-vision.md](character-sheet-vision.md).
 - **i18n** (`shared/i18n.js`): per-device language (localStorage, EN/SV).
   Game terms (Hope, Stress, Evasion, Loadout…) stay English to match the
   physical cards; UI phrasing translates; the long-press glossary explains

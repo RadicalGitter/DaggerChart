@@ -168,7 +168,7 @@ designing anything; it is the source of truth. Code map + API:
   the settlement world remains singular. `data/campaigns.json` names one
   active campaign as current; `/table`, `/api/lore`, downtime logging, group
   paper delivery, and music character tags use it. Player identity whitelists
-  retain all active-campaign PCs so `/login` can group bubbles and personal
+  retain all active-campaign PCs so `/login` can group cards and personal
   shells can recognize a chosen seat. Archiving hides access without deleting
   campaign-owned records.
 - Session perspectives persist in `data/sessions.json`. The GM **Sessions**
@@ -182,11 +182,10 @@ designing anything; it is the source of truth. Code map + API:
 - **All seven backend-first features in
   [docs/master-plan.md](docs/master-plan.md) are built.** Keep that document as
   architecture and acceptance context for incremental upgrades.
-- ComfyUI wiring: the GM-side request UI exists on People cards (prompt saved
-  to `portraitPrompt`, `POST /api/people/:id/portrait` is a stub) — connect it
-  to the local 5090 using `docs/comfyui/waidrin-portraits-workflow.json`
-  ("Waidrin Portraits"). Later: players generate portraits from `/create`
-  with prompt + toggles/sliders, and a new workflow for Places images.
+- ComfyUI refinement: the local API adapter and GM controls now accept
+  tokenized character and scenic API workflows. Next, expose the character
+  portrait experience in `/create` with prompt + restrained controls once the
+  production workflow is installed; later add portrait aging/archives.
 - In-app 4d6−1d6 roller with a reveal moment (Phase 4; simulate real dice,
   never flat 0–30).
 - Magic item cards: print-ready fronts matching the physical deck; scalable

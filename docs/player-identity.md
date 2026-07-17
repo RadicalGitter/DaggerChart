@@ -15,10 +15,10 @@ The chooser has three kinds of entry:
   player identity.
 - **Projector Screen** — a centered two-thirds-width, two-thirds-height plaque
   that opens `/screen`. It does not set a player identity.
-- **Finished player character** — a movable, paintable bubble. Choosing one
+- **Finished player character** — a movable, tintable portrait card. Choosing one
   writes its `pcId` to the device's `settlement-pc` localStorage key, then
-  opens `/player`. Bubbles are grouped into one draggable field per active
-  campaign; their saved positions and paint remain keyed to the character.
+  opens `/player`. Cards are grouped into one draggable field per active
+  campaign; their saved positions and tint remain keyed to the character.
 - **Unfinished character** — kept in a separate lateral Drafts view. Choosing
   one resumes its server-mirrored creator state without writing a finished-PC
   identity.

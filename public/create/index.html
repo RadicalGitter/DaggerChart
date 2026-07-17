@@ -210,18 +210,27 @@
     .signature-field.is-signing .signing-pen { display: none; }
   }
 </style>
+<link rel="stylesheet" href="create.css">
 </head>
-<body>
-<div class="wrap">
-  <header>
-    <h1 data-i18n="create.title">Create your character</h1>
-    <div class="smallcaps" data-i18n="create.subtitle">The Settlement — find your place at the table</div>
+<body class="creator-body">
+<div class="creator-backdrop" aria-hidden="true"><span></span><i></i></div>
+<main class="wrap creator-shell">
+  <header class="creator-masthead">
+    <div class="creator-brand">
+      <span class="creator-brand-mark" aria-hidden="true">V</span>
+      <span><h1 data-i18n="create.title">Create your character</h1><span class="smallcaps" data-i18n="create.subtitle">The Settlement — find your place at the table</span></span>
+    </div>
+    <div class="creator-identity" id="creator-identity" aria-live="polite"></div>
     <div class="draft-tools"><span id="draft-status"></span><button class="quiet" id="draft-reset" type="button" data-i18n="create.startOver">Start over</button></div>
   </header>
-  <div class="progress" id="progress"></div>
-  <div id="step"></div>
-  <div class="warn" id="warn"></div>
-</div>
+  <div class="creator-workspace">
+    <div class="progress" id="progress" aria-label="Character creation progress"></div>
+    <section class="creator-page">
+      <div id="step"></div>
+      <div class="warn" id="warn"></div>
+    </section>
+  </div>
+</main>
 <div class="navbtns">
   <div class="inner">
     <button class="quiet" id="btn-back">Back</button>

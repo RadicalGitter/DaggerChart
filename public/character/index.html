@@ -8,12 +8,16 @@
 <link rel="stylesheet" href="/shared/lamplight.css">
 <link rel="stylesheet" href="/shared/paper.css">
 <style>
+  :root { --sheet-primary: #8b7653; --sheet-secondary: #9fcdb7; }
   .wrap { width: 100%; max-width: 680px; margin: 0 auto; padding: 1.4rem 1rem 3rem; box-sizing: border-box; overflow-x: clip; }
   header { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; }
-  header .portrait { width: 84px; height: 84px; font-size: 2rem; }
-  header h1 { font-size: 1.5rem; margin-bottom: 0.1rem; }
+  header .portrait { width: 84px; height: 84px; overflow: hidden; border: 3px solid var(--sheet-primary); box-shadow: 0 0 0 2px var(--sheet-secondary); font-size: 2rem; }
+  header .portrait img { width: 100%; height: 100%; object-fit: cover; }
+  header h1 { color: color-mix(in srgb, var(--sheet-primary) 48%, #f0e3c7); font-size: 1.5rem; margin-bottom: 0.1rem; }
   .traits-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; margin: 1rem 0; }
-  .trait-tile { min-width: 0; box-sizing: border-box; text-align: center; padding: 0.6rem 0.3rem; }
+  .trait-tile { position: relative; min-width: 0; box-sizing: border-box; text-align: center; padding: 0.55rem 0.3rem 0.75rem; border-bottom: 2px solid color-mix(in srgb, var(--trait-accent) 60%, transparent); }
+  .trait-sheet-symbol { width: 38px; height: 38px; display: grid; place-items: center; margin: 0 auto .2rem; color: var(--trait-accent); border: 1px solid currentColor; border-radius: 50%; }
+  .trait-sheet-symbol .trait-glyph { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .trait-tile .v { font-size: 1.5rem; font-weight: 600; }
   .vitals { display: grid; gap: 0.8rem; margin: 1rem 0; }
   .vital { display: flex; align-items: center; gap: 0.9rem; }

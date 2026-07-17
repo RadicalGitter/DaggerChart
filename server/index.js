@@ -9,6 +9,8 @@ import almanac from "./almanac.js";
 import { addInventoryItem, consumables, grantConsumable, inventoryEntry, updateInventoryItem, useInventoryItem } from "./inventory.js";
 import { clearTelemetry, recordTelemetryBatch, telemetryView } from "./telemetry.js";
 import { retellSession } from "./retell.js";
+import { suggestPortrait } from "./portrait-suggest.js";
+import { artWorkshop } from "./art.js";
 import {
   musicView,
   characterThemeView,
@@ -96,6 +98,7 @@ app.use("/journal", express.static(path.join(PUBLIC, "journal")));
 app.use("/screen", express.static(path.join(PUBLIC, "screen")));
 app.use("/music", express.static(path.join(PUBLIC, "music")));
 app.use("/rules", express.static(path.join(PUBLIC, "rules")));
+app.use("/generated", express.static(path.join(PUBLIC, "generated"), { maxAge: "1h" }));
 // /character/<id> serves the sheet shell; the page reads the id from the URL.
 app.get("/character/:id", (_req, res) => res.sendFile(path.join(PUBLIC, "character", "index.html")));
 // The bare address is the trusted-table identity chooser. No passwords;
@@ -179,6 +182,44 @@ app.get("/api/rules", (_req, res) => {
 });
 
 app.get("/api/party", (_req, res) => res.json(partyListView()));
+
+app.get("/api/art/status", (_req, res) => res.json({
+  ...artWorkshop.status(),
+  suggestions: {
+    ready: Boolean(process.env.ANTHROPIC_API_KEY),
+    model: process.env.PORTRAIT_SUGGEST_MODEL || process.env.RETELL_MODEL || "claude-opus-4-8"
+  }
+}));
+
+app.post("/api/art/portrait/suggest", guardAsync(async (req, res) => {
+  const draftId = String(req.body.draftId || "");
+  if (!/^draft_[a-zA-Z0-9_-]{6,80}$/.test(draftId)) throw new Error("A valid character draft is required.");
+  // This is a trusted five-player table with no per-player quota. Add request
+  // throttling here before exposing character creation beyond that boundary.
+  const result = await suggestPortrait(req.body.context || {});
+  res.json(result);
+}));
+
+app.post("/api/art/portrait", guardAsync(async (req, res) => {
+  const draftId = String(req.body.draftId || "");
+  if (!/^draft_[a-zA-Z0-9_-]{6,80}$/.test(draftId)) throw new Error("A valid character draft is required.");
+  const result = await artWorkshop.request({
+    kind: "portrait",
+    entityId: draftId,
+    prompt: req.body.prompt,
+    negativePrompt: req.body.negativePrompt,
+    seed: req.body.seed,
+    width: req.body.width,
+    height: req.body.height,
+    primaryColor: req.body.primaryColor,
+    secondaryColor: req.body.secondaryColor,
+    tags: req.body.tags,
+    armor: req.body.armor,
+    mainHand: req.body.mainHand,
+    offHand: req.body.offHand
+  });
+  res.json({ ...result, message: "The portrait is ready." });
+}));
 
 app.get("/api/character-drafts", (_req, res) => res.json(state.characterDrafts.map((entry) => ({
   id: entry.id,
@@ -269,6 +310,33 @@ app.put("/api/party/:id", guard((req, res) => {
   persist();
   broadcast();
   res.json(playerCharacterView(next.id));
+}));
+
+app.post("/api/party/:id/portrait", guardAsync(async (req, res) => {
+  const pc = state.pcs.find((candidate) => candidate.id === req.params.id && isPlayablePc(candidate));
+  if (!pc) throw new Error("No such character.");
+  pc.portraitPrompt = String(req.body.prompt || "").trim();
+  persist();
+  const result = await artWorkshop.request({
+    kind: "portrait",
+    entityId: pc.id,
+    prompt: pc.portraitPrompt,
+    negativePrompt: req.body.negativePrompt,
+    seed: req.body.seed,
+    width: req.body.width,
+    height: req.body.height,
+    primaryColor: req.body.primaryColor,
+    secondaryColor: req.body.secondaryColor,
+    tags: req.body.tags,
+    armor: req.body.armor,
+    mainHand: req.body.mainHand,
+    offHand: req.body.offHand
+  });
+  if (!state.pcs.includes(pc)) throw new Error("That character is no longer available.");
+  pc.portrait = result.url;
+  persist();
+  broadcast();
+  res.json({ ...result, message: `${pc.name}'s portrait is ready.` });
 }));
 
 app.get("/api/items/consumables", (_req, res) => res.json(consumables(state.reference)));
@@ -822,17 +890,25 @@ app.delete("/api/people/:id", guard((req, res) => {
   res.json({ removed: gone.name });
 }));
 
-// ComfyUI portrait request. Not wired yet — the prompt is kept so the request
-// can be replayed once the workshop is connected (docs/comfyui/).
-app.post("/api/people/:id/portrait", guard((req, res) => {
+app.post("/api/people/:id/portrait", guardAsync(async (req, res) => {
   const person = state.people.find((p) => p.id === req.params.id);
   if (!person) throw new Error("Unknown person.");
-  person.portraitPrompt = (req.body.prompt || "").trim();
+  person.portraitPrompt = String(req.body.prompt || "").trim();
   persist();
-  res.json({
-    queued: false,
-    message: "The portrait workshop isn't connected yet. The prompt is saved and will be used once ComfyUI is wired in."
+  const result = await artWorkshop.request({
+    kind: "portrait",
+    entityId: person.id,
+    prompt: person.portraitPrompt,
+    negativePrompt: req.body.negativePrompt,
+    seed: req.body.seed,
+    width: req.body.width,
+    height: req.body.height
   });
+  if (!state.people.includes(person)) throw new Error("That person is no longer available.");
+  person.portrait = result.url;
+  persist();
+  broadcast();
+  res.json({ ...result, message: `${person.name}'s portrait is ready.` });
 }));
 
 app.post("/api/places", guard((req, res) => {
@@ -844,6 +920,7 @@ app.post("/api/places", guard((req, res) => {
     kind: b.kind || "",
     description: b.description || "",
     portrait: b.portrait || null,
+    imagePrompt: b.imagePrompt || "",
     revealed: b.revealed !== false,
     fixed: false,
     hidden: { notes: "", ...(b.hidden || {}) }
@@ -852,6 +929,27 @@ app.post("/api/places", guard((req, res) => {
   persist();
   broadcast();
   res.json(place);
+}));
+
+app.post("/api/places/:id/image", guardAsync(async (req, res) => {
+  const place = state.places.find((candidate) => candidate.id === req.params.id);
+  if (!place) throw new Error("Unknown place.");
+  place.imagePrompt = String(req.body.prompt || "").trim();
+  persist();
+  const result = await artWorkshop.request({
+    kind: "scenic",
+    entityId: place.id,
+    prompt: place.imagePrompt,
+    negativePrompt: req.body.negativePrompt,
+    seed: req.body.seed,
+    width: req.body.width,
+    height: req.body.height
+  });
+  if (!state.places.includes(place)) throw new Error("That place is no longer available.");
+  place.portrait = result.url;
+  persist();
+  broadcast();
+  res.json({ ...result, message: `${place.name}'s scene is ready.` });
 }));
 
 app.put("/api/places/:id", guard((req, res) => {

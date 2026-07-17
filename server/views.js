@@ -20,6 +20,11 @@ const SHELL_IDS = new Set(["tome", "book", "table"]);
 const PEN_IDS = new Set(["quill", "reed", "brush"]);
 const shellOf = (p) => (SHELL_IDS.has(p.shell) ? p.shell : "table");
 const penOf = (p) => (PEN_IDS.has(p.pen) ? p.pen : "quill");
+const detailColor = (value, fallback) => /^#[0-9a-f]{6}$/i.test(String(value || "")) ? String(value).toLowerCase() : fallback;
+const appearanceView = (p) => ({
+  primaryColor: detailColor(p.appearance?.primaryColor, "#8b7653"),
+  secondaryColor: detailColor(p.appearance?.secondaryColor, "#9fcdb7")
+});
 
 const featureView = (feature) => feature ? {
   name: feature.name || "",
@@ -43,7 +48,8 @@ const identityView = (p) => ({
   name: p.name,
   player: p.player || "",
   portrait: p.portrait || null,
-  shell: shellOf(p)
+  shell: shellOf(p),
+  appearance: appearanceView(p)
 });
 
 const messageView = (message) => ({
@@ -196,6 +202,8 @@ export function gmView() {
       name: p.name,
       player: p.player,
       portrait: p.portrait || null,
+      portraitPrompt: p.portraitPrompt || "",
+      appearance: appearanceView(p),
       active: isActivePc(p),
       level: p.level,
       class: p.class?.name,

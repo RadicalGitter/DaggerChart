@@ -7,6 +7,7 @@ let selectedBuilding = null;
 let CONSUMABLES = [];
 let FEEDBACK = [];
 let TELEMETRY = { pages: {} };
+let ART_STATUS = { workflows: { portrait: { ready: false, reason: "missing" }, scenic: { ready: false, reason: "missing" } } };
 let selectedUxRoute = null;
 
 const $ = (sel) => document.querySelector(sel);
@@ -35,16 +36,18 @@ async function api(path, opts = {}) {
 }
 
 async function refresh() {
-  const [nextState, items, feedback, telemetry] = await Promise.all([
+  const [nextState, items, feedback, telemetry, artStatus] = await Promise.all([
     api("/api/state"),
     api("/api/items/consumables"),
     api("/api/feedback"),
-    api("/api/telemetry").catch(() => ({ pages: {} }))
+    api("/api/telemetry").catch(() => ({ pages: {} })),
+    api("/api/art/status").catch(() => ART_STATUS)
   ]);
   S = nextState;
   CONSUMABLES = items;
   FEEDBACK = feedback;
   TELEMETRY = telemetry;
+  ART_STATUS = artStatus;
   renderNav();
   renderDowntimePicker();
   renderStores();
@@ -292,6 +295,14 @@ function showSection(key) {
   }
   if (key === "ux") requestAnimationFrame(renderUx);
   if (key === "almanac") setAlmanacView(almanacView);
+}
+
+function artHint(kind) {
+  const workflow = ART_STATUS.workflows?.[kind];
+  if (workflow?.ready) return `${workflow.file} is ready.`;
+  if (workflow?.reason === "missing") return `Awaiting ${workflow.file || `${kind}-api-workflow.json`}.`;
+  if (workflow?.reason === "prompt-token-missing") return `Add {{prompt}} to ${workflow.file}.`;
+  return workflow?.reason || "The API workflow needs attention.";
 }
 window.addEventListener("hashchange", () => showSection(location.hash.slice(1) || "season"));
 
@@ -820,8 +831,8 @@ function renderPersonEditor(p) {
             <div style="flex:1">
               <textarea id="pe-prompt" rows="2" style="width:100%" placeholder="what the artist should paint">${esc(p.portraitPrompt || p.description || "")}</textarea>
               <div class="formrow" style="margin:0.4rem 0 0;">
-                <button class="quiet" id="pe-portrait-request">Request a portrait</button>
-                <span class="muted" style="font-size:0.8rem;">Waidrin Portraits workflow — wiring to come.</span>
+                <button class="quiet" id="pe-portrait-request" ${ART_STATUS.workflows?.portrait?.ready ? "" : "disabled"}>Request a portrait</button>
+                <span class="muted" style="font-size:0.8rem;">${esc(artHint("portrait"))}</span>
               </div>
             </div>
           </div>`}
@@ -851,11 +862,18 @@ function renderPersonEditor(p) {
     const requestBtn = $("#pe-portrait-request");
     if (requestBtn) {
       requestBtn.onclick = async () => {
+        const label = requestBtn.textContent;
+        requestBtn.disabled = true;
+        requestBtn.textContent = "Painting…";
         try {
           const r = await api(`/api/people/${p.id}/portrait`, { method: "POST", body: { prompt: $("#pe-prompt").value } });
+          $("#pe-portrait").value = r.url;
           toast(r.message);
         } catch (e) {
           toast(e.message, true);
+        } finally {
+          requestBtn.disabled = !ART_STATUS.workflows?.portrait?.ready;
+          requestBtn.textContent = label;
         }
       };
     }
@@ -931,7 +949,7 @@ $("#places-new").addEventListener("click", () => renderPlaceEditor(null));
 
 function renderPlaceEditor(pl) {
   const isNew = !pl;
-  pl = pl || { name: "", kind: "", description: "", portrait: null, revealed: true, fixed: false, hidden: {} };
+  pl = pl || { name: "", kind: "", description: "", portrait: null, imagePrompt: "", revealed: true, fixed: false, hidden: {} };
   $("#places-editor").innerHTML = `<div class="card" style="max-width:620px; margin-top:1rem;">
     <h3>${isNew ? "Add a place" : `Edit ${esc(pl.name)}`}</h3>
     <div class="formrow"><label>Name</label><input type="text" id="ple-name" value="${esc(pl.name)}" style="flex:1"></div>
@@ -951,10 +969,15 @@ function renderPlaceEditor(pl) {
     </div>
     <hr class="rule"><div class="smallcaps">Image</div>
     <div class="formrow"><label>Image URL</label><input type="text" id="ple-portrait" value="${esc(pl.portrait || "")}" style="flex:1" placeholder="/places/… (optional)"></div>
-    <div class="formrow">
-      <button class="quiet" disabled title="A ComfyUI workflow for places is still to be made.">Request an image</button>
-      <span class="muted" style="font-size:0.8rem;">awaiting a places workflow</span>
-    </div>
+    ${isNew ? `<p class="muted" style="font-size:0.85rem;">Save the place first, then request its scene.</p>` : `<div class="formrow" style="align-items:flex-start;"><label>ComfyUI prompt</label>
+      <div style="flex:1">
+        <textarea id="ple-prompt" rows="3" style="width:100%" placeholder="the place, weather, light, and viewpoint">${esc(pl.imagePrompt || pl.description || "")}</textarea>
+        <div class="formrow" style="margin:.4rem 0 0;">
+          <button class="quiet" id="ple-image-request" ${ART_STATUS.workflows?.scenic?.ready ? "" : "disabled"}>Request a scene</button>
+          <span class="muted" style="font-size:.8rem;">${esc(artHint("scenic"))}</span>
+        </div>
+      </div>
+    </div>`}
     <hr class="rule">
     <div class="formrow">
       <button id="ple-save">${isNew ? "Add place" : "Save"}</button>
@@ -963,6 +986,22 @@ function renderPlaceEditor(pl) {
     </div>
   </div>`;
   $("#ple-cancel").onclick = () => ($("#places-editor").innerHTML = "");
+  const imageRequest = $("#ple-image-request");
+  if (imageRequest) imageRequest.onclick = async () => {
+    const label = imageRequest.textContent;
+    imageRequest.disabled = true;
+    imageRequest.textContent = "Painting…";
+    try {
+      const result = await api(`/api/places/${encodeURIComponent(pl.id)}/image`, { method: "POST", body: { prompt: $("#ple-prompt").value } });
+      $("#ple-portrait").value = result.url;
+      toast(result.message);
+    } catch (error) {
+      toast(error.message, true);
+    } finally {
+      imageRequest.disabled = !ART_STATUS.workflows?.scenic?.ready;
+      imageRequest.textContent = label;
+    }
+  };
   const deleteBtn = $("#ple-delete");
   if (deleteBtn) {
     deleteBtn.onclick = async () => {
@@ -983,6 +1022,7 @@ function renderPlaceEditor(pl) {
       description: $("#ple-description").value,
       hidden: { notes: $("#ple-gmnotes").value },
       portrait: $("#ple-portrait").value || null,
+      imagePrompt: $("#ple-prompt")?.value || pl.imagePrompt || "",
       revealed: $("#ple-revealed").checked
     };
     try {
@@ -1021,7 +1061,7 @@ function renderParty() {
           return `<button class="condition-toggle${applied ? " active" : ""}" type="button" data-pccondition="${esc(p.id)}" data-condition="${condition.id}" aria-pressed="${applied}" title="${action} ${condition.name}">${conditionIcon(condition.id)}<span>${condition.name}</span></button>`;
         }).join("")}</div></td>
         <td><a href="/character/${encodeURIComponent(p.id)}" target="_blank">Open the sheet ↗</a></td>
-        <td><button class="quiet" data-pcretire="${esc(p.id)}">Retire</button></td>
+        <td><button class="quiet" data-pcart="${esc(p.id)}" ${ART_STATUS.workflows?.portrait?.ready ? "" : "disabled"} title="${esc(artHint("portrait"))}">Portrait</button> <button class="quiet" data-pcretire="${esc(p.id)}">Retire</button></td>
       </tr>`
     )
     .join("");
@@ -1519,6 +1559,26 @@ function renderWikiTree() {
     const label = `${node.source === "lore" ? "Private lore" : "Rules"} / ${crumb(node) || "Unsorted"}`;
     if (!groups.has(label)) groups.set(label, []);
     groups.get(label).push(node);
+  }
+  for (const el of document.querySelectorAll("[data-pcart]")) {
+    el.onclick = async () => {
+      const p = S.party.find((candidate) => candidate.id === el.dataset.pcart);
+      const suggested = p.portraitPrompt || [p.name, p.ancestry, p.class, p.subclass, "fantasy character portrait"].filter(Boolean).join(", ");
+      const portraitPrompt = window.prompt(`Portrait prompt for ${p.name}`, suggested);
+      if (portraitPrompt === null) return;
+      const label = el.textContent;
+      el.disabled = true;
+      el.textContent = "Painting…";
+      try {
+        const result = await api(`/api/party/${encodeURIComponent(p.id)}/portrait`, { method: "POST", body: { prompt: portraitPrompt } });
+        toast(result.message);
+        await refresh();
+      } catch (error) {
+        toast(error.message, true);
+        el.disabled = false;
+        el.textContent = label;
+      }
+    };
   }
   $("#wiki-index-status").textContent = `${nodes.length} ${nodes.length === 1 ? "page" : "pages"}`;
   $("#wiki-tree").innerHTML = nodes.length

@@ -4,6 +4,8 @@ import { t, term, termify, initI18n } from "/shared/i18n.js";
 import { DEFAULT_SHELL } from "/shared/shells.js";
 import { PENS } from "/shared/pens.js";
 import { covenantArticlesHtml } from "/shared/paper.js";
+import { traitAccent, traitGraphic } from "/shared/traits.js";
+import { classColor, DEFAULT_FAVORITE_COLOR, validDetailColor } from "/shared/class-colors.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
 
@@ -16,6 +18,7 @@ let REF = null;
 let PARTY = [];
 let CAMPAIGNS = [];
 let CURRENT_CAMPAIGN_ID = null;
+let ART_STATUS = { workflows: { portrait: { ready: false } }, suggestions: { ready: false } };
 let step = 0;
 let part = 0;
 let moving = false;
@@ -28,6 +31,11 @@ const draftParams = new URLSearchParams(location.search);
 if (draftParams.get("new") === "1") {
   localStorage.removeItem(DRAFT_KEY);
   localStorage.removeItem(DRAFT_ID_KEY);
+  // `new=1` is a one-shot command. Leaving it in the address makes any later
+  // reload, including the language switch, discard the draft a second time.
+  draftParams.delete("new");
+  const query = draftParams.toString();
+  history.replaceState(null, "", `${location.pathname}${query ? `?${query}` : ""}${location.hash}`);
 }
 const draftId = draftParams.get("draft") || localStorage.getItem(DRAFT_ID_KEY) || `draft_${crypto.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`}`;
 localStorage.setItem(DRAFT_ID_KEY, draftId);
@@ -45,6 +53,14 @@ const draft = {
   connections: {},  // question/name -> note
   shell: DEFAULT_SHELL,
   pen: PENS[0].id,
+  portrait: null,
+  portraitPrompt: "",
+  portraitNegativePrompt: "",
+  portraitSeed: null,
+  portraitSuggestion: "",
+  portraitTags: [],
+  portraitEquipment: { armor: true, mainHand: true, offHand: true },
+  favoriteColor: DEFAULT_FAVORITE_COLOR,
   covenant: { read: false, warned: false, signed: false, signedAt: null }
 };
 
@@ -55,9 +71,125 @@ const com = () => REF.communities.find((c) => c.id === draft.communityId) || nul
 const wpn = (id) => REF.weapons.find((w) => w.id === id) || null;
 const arm = () => REF.armors.find((a) => a.id === draft.armorId) || null;
 
+const PORTRAIT_TAGS = [
+  { id: "masculine", label: "portrait.tag.masculine", prompt: "masculine" },
+  { id: "feminine", label: "portrait.tag.feminine", prompt: "feminine" },
+  { id: "androgynous", label: "portrait.tag.androgynous", prompt: "androgynous" },
+  { id: "weathered", label: "portrait.tag.weathered", prompt: "weathered" },
+  { id: "elegant", label: "portrait.tag.elegant", prompt: "elegant" },
+  { id: "fierce", label: "portrait.tag.fierce", prompt: "fierce" },
+  { id: "gentle", label: "portrait.tag.gentle", prompt: "gentle" },
+  { id: "uncanny", label: "portrait.tag.uncanny", prompt: "uncanny" },
+  { id: "practical", label: "portrait.tag.practical", prompt: "practical" }
+];
+
 const featHtml = (f) => `<div class="featline"><strong>${esc(f.name)}</strong> ${termify(esc(f.text))}</div>`;
 const campaignChoiceVisible = () => CAMPAIGNS.length > 1;
 const campaignParty = () => PARTY.filter((pc) => pc.campaignId === draft.campaignId);
+
+function traitValue(value) {
+  return value === null ? "—" : `${value >= 0 ? "+" : ""}${value}`;
+}
+
+function traitImpact(value) {
+  if (value === 2) return t("traits.impact.plus2");
+  if (value === 1) return t("traits.impact.plus1");
+  if (value === 0) return t("traits.impact.zero");
+  if (value === -1) return t("traits.impact.minus1");
+  return t("traits.unassigned");
+}
+
+function assignTrait(name, value) {
+  const previous = draft.traits[name];
+  if (previous === value) return;
+  const limit = REF.traitArray.filter((candidate) => candidate === value).length;
+  const occupied = REF.traits.filter((candidate) => candidate !== name && draft.traits[candidate] === value);
+  if (occupied.length >= limit) draft.traits[occupied[0]] = previous;
+  draft.traits[name] = value;
+}
+
+function portraitRequestContext() {
+  const primaryColor = classColor(draft.classId);
+  const secondaryColor = validDetailColor(draft.favoriteColor);
+  const selectedTags = PORTRAIT_TAGS.filter((tag) => draft.portraitTags.includes(tag.id)).map((tag) => tag.prompt);
+  const equipment = {
+    armor: draft.portraitEquipment.armor ? arm()?.name || "" : "",
+    mainHand: draft.portraitEquipment.mainHand ? wpn(draft.primaryId)?.name || "" : "",
+    offHand: draft.portraitEquipment.offHand ? wpn(draft.secondaryId)?.name || "" : ""
+  };
+  const equipmentText = [
+    equipment.armor && `armor: ${equipment.armor}`,
+    equipment.mainHand && `main hand: ${equipment.mainHand}`,
+    equipment.offHand && `off hand: ${equipment.offHand}`
+  ].filter(Boolean);
+  const prompt = [
+    "A character portrait balancing atmosphere and concrete physical specifics equally.",
+    draft.portraitPrompt.trim(),
+    selectedTags.length ? `Visual identity: ${selectedTags.join(", ")}.` : "",
+    `Use ${primaryColor} as the primary class detail color and ${secondaryColor} as the secondary favorite-color accent.`,
+    equipmentText.length ? `Visible equipment: ${equipmentText.join("; ")}.` : "Do not feature equipment."
+  ].filter(Boolean).join(" ");
+  return { prompt, primaryColor, secondaryColor, selectedTags, ...equipment };
+}
+
+function collectPortraitFields(root = document) {
+  const prompt = root.querySelector("#portrait-prompt");
+  const negative = root.querySelector("#portrait-negative");
+  const favorite = root.querySelector("#portrait-favorite-color");
+  if (prompt) draft.portraitPrompt = prompt.value.trim();
+  if (negative) draft.portraitNegativePrompt = negative.value.trim();
+  if (favorite) draft.favoriteColor = validDetailColor(favorite.value);
+  for (const input of root.querySelectorAll("[data-portrait-equipment]")) {
+    draft.portraitEquipment[input.dataset.portraitEquipment] = input.checked;
+  }
+}
+
+function portraitStudioHtml() {
+  const ready = ART_STATUS.workflows?.portrait?.ready === true;
+  const adviserReady = ART_STATUS.suggestions?.ready === true;
+  const primaryColor = classColor(draft.classId);
+  const secondaryColor = validDetailColor(draft.favoriteColor);
+  const offHandAvailable = Boolean(wpn(draft.secondaryId));
+  const preview = draft.portrait
+    ? `<img src="${esc(draft.portrait)}" alt="">`
+    : `<span aria-hidden="true">${esc((draft.name || "?").slice(0, 1).toUpperCase())}</span><small>${t("portrait.empty")}</small>`;
+  return `<div class="portrait-studio">
+    <div class="portrait-canvas ${draft.portrait ? "has-image" : ""}" style="--portrait-primary:${primaryColor};--portrait-secondary:${secondaryColor}">${preview}</div>
+    <div class="portrait-controls">
+      <label for="portrait-prompt">${t("portrait.prompt")}</label>
+      <p class="portrait-balance">${t("portrait.balance")}</p>
+      <textarea id="portrait-prompt" rows="5" placeholder="${esc([draft.name, anc()?.name, cls()?.name].filter(Boolean).join(", "))}">${esc(draft.portraitPrompt)}</textarea>
+      <div class="portrait-writing-tools">
+        <button class="quiet" id="portrait-suggest" type="button" ${adviserReady ? "" : "disabled"}>${t("portrait.suggest")}</button>
+        <small>${adviserReady ? t("portrait.suggestReady") : t("portrait.suggestAwaiting")}</small>
+      </div>
+      ${draft.portraitSuggestion ? `<aside class="portrait-suggestion"><p>${esc(draft.portraitSuggestion)}</p><button class="quiet" id="portrait-use-suggestion" type="button">${t("portrait.useSuggestion")}</button></aside>` : ""}
+      <div class="portrait-pigments">
+        <span class="portrait-pigment"><i style="--pigment:${primaryColor}" aria-hidden="true"></i><span><small>${t("portrait.classColor")}</small><strong>${esc(cls()?.name || "")}</strong></span></span>
+        <label class="portrait-pigment" for="portrait-favorite-color"><input id="portrait-favorite-color" type="color" value="${secondaryColor}" aria-label="${t("portrait.favoriteColor")}"><span><small>${t("portrait.favoriteColor")}</small><strong id="portrait-favorite-value">${secondaryColor}</strong></span></label>
+      </div>
+      <fieldset class="portrait-tag-field">
+        <legend>${t("portrait.tags")}</legend>
+        <div class="portrait-tags">${PORTRAIT_TAGS.map((tag) => `<button type="button" data-portrait-tag="${tag.id}" class="${draft.portraitTags.includes(tag.id) ? "selected" : ""}" aria-pressed="${draft.portraitTags.includes(tag.id)}">${t(tag.label)}</button>`).join("")}</div>
+      </fieldset>
+      <fieldset class="portrait-equipment">
+        <legend>${t("portrait.equipment")}</legend>
+        <label><input type="checkbox" data-portrait-equipment="armor" ${draft.portraitEquipment.armor ? "checked" : ""}> <span>${t("portrait.includeArmor")}</span></label>
+        <label><input type="checkbox" data-portrait-equipment="mainHand" ${draft.portraitEquipment.mainHand ? "checked" : ""}> <span>${t("portrait.includeMain")}</span></label>
+        <label class="${offHandAvailable ? "" : "unavailable"}"><input type="checkbox" data-portrait-equipment="offHand" ${offHandAvailable && draft.portraitEquipment.offHand ? "checked" : ""} ${offHandAvailable ? "" : "disabled"}> <span>${t("portrait.includeOffhand")}</span></label>
+      </fieldset>
+      <details class="portrait-advanced">
+        <summary>${t("portrait.negative")}</summary>
+        <textarea id="portrait-negative" rows="2">${esc(draft.portraitNegativePrompt)}</textarea>
+      </details>
+      <div class="portrait-actions">
+        <button id="portrait-generate" type="button" ${ready ? "" : "disabled"}>${t("portrait.generate")}</button>
+        ${draft.portrait ? `<button class="quiet" id="portrait-clear" type="button">${t("portrait.clear")}</button>` : ""}
+      </div>
+      <p class="portrait-status ${ready ? "ready" : ""}">${ready ? t("portrait.ready") : t("portrait.awaiting")}</p>
+    </div>
+  </div>`;
+}
 
 // ---------- steps ----------
 const steps = [
@@ -71,10 +203,10 @@ const steps = [
           <span class="campaign-sigil" aria-hidden="true"><i>${index + 1}</i></span>
           <span class="campaign-copy"><strong>${esc(campaign.name)}</strong><small>${campaign.id === CURRENT_CAMPAIGN_ID ? t("campaign.current") : t("campaign.available")}</small></span>
         </button>`).join("")}</div>`;
-      return `<div class="card">
-        <div class="formrow"><label>${t("label.charname")}</label><input type="text" id="f-name" value="${esc(draft.name)}"></div>
-        <div class="formrow"><label>${t("label.pronouns")}</label><input type="text" id="f-pronouns" value="${esc(draft.pronouns)}"></div>
-        <div class="formrow"><label>${t("label.player")}</label><input type="text" id="f-player" value="${esc(draft.player)}"></div>
+      return `<div class="identity-inscription">
+        <div class="formrow identity-name"><label for="f-name">${t("label.charname")}</label><input type="text" id="f-name" value="${esc(draft.name)}" autocomplete="off"></div>
+        <div class="formrow"><label for="f-pronouns">${t("label.pronouns")}</label><input type="text" id="f-pronouns" value="${esc(draft.pronouns)}" autocomplete="off"></div>
+        <div class="formrow"><label for="f-player">${t("label.player")}</label><input type="text" id="f-player" value="${esc(draft.player)}" autocomplete="off"></div>
       </div>`;
     },
     wire(root) {
@@ -100,7 +232,7 @@ const steps = [
     render() {
       return `<div class="options">${REF.classes
         .map(
-          (c) => `<div class="card pick ${draft.classId === c.id ? "selected" : ""}" data-pick="${c.id}">
+          (c) => `<div class="card pick class-pick ${draft.classId === c.id ? "selected" : ""}" data-pick="${c.id}" style="--class-pigment:${classColor(c.id)}">
             <h3>${esc(c.name)}</h3>
             <div class="smallcaps">${c.domains.map(esc).join(" · ")}</div>
             <div class="desc">${esc(c.description.split(". ")[0])}.</div>
@@ -188,26 +320,29 @@ const steps = [
     title: () => t("step.traits.title"),
     sub: () => t("step.traits.sub"),
     render() {
-      const opts = (cur) =>
-        [2, 1, 0, -1]
-          .map((v) => `<option value="${v}" ${cur === v ? "selected" : ""}>${v >= 0 ? "+" : ""}${v}</option>`)
-          .join("");
-      return `<div class="trait-grid">${REF.traits
+      const values = [...new Set(REF.traitArray)].sort((a, b) => b - a);
+      const budget = values.map((value) => {
+        const total = REF.traitArray.filter((candidate) => candidate === value).length;
+        const used = Object.values(draft.traits).filter((candidate) => candidate === value).length;
+        return `<span class="trait-budget-token ${used === total ? "filled" : ""}"><strong>${traitValue(value)}</strong><small>${used}/${total}</small></span>`;
+      }).join("");
+      return `<div class="trait-budget"><span>${t("traits.array")}</span><div>${budget}</div></div>
+        <div class="trait-grid">${REF.traits
         .map(
-          (tr) => `<div class="card trait-cell">
-            <div class="smallcaps">${term("trait-" + tr.toLowerCase(), tr)}</div>
-            <select data-trait="${tr}">
-              <option value="" ${draft.traits[tr] === null ? "selected" : ""}>—</option>${opts(draft.traits[tr])}
-            </select>
-          </div>`
+          (tr) => `<article class="trait-cell ${draft.traits[tr] === null ? "unassigned" : ""}" style="--trait-accent:${traitAccent(tr)}">
+            <header><span class="trait-symbol">${traitGraphic(tr)}</span><div><h3>${term("trait-" + tr.toLowerCase(), tr)}</h3><strong class="trait-current">${traitValue(draft.traits[tr])}</strong></div></header>
+            <p class="trait-blurb">${t(`trait.${tr.toLowerCase()}.blurb`)}</p>
+            <div class="trait-values" role="group" aria-label="${esc(tr)}">${values.map((value) => `<button type="button" data-trait-name="${esc(tr)}" data-trait-value="${value}" class="${draft.traits[tr] === value ? "selected" : ""}" aria-pressed="${draft.traits[tr] === value}">${traitValue(value)}</button>`).join("")}</div>
+            <p class="trait-impact">${traitImpact(draft.traits[tr])}</p>
+          </article>`
         )
-        .join("")}</div>
-        <div class="count-note">${t("traits.note")}</div>`;
+        .join("")}</div>`;
     },
     wire(root) {
-      for (const el of root.querySelectorAll("[data-trait]")) {
-        el.onchange = () => {
-          draft.traits[el.dataset.trait] = el.value === "" ? null : parseInt(el.value, 10);
+      for (const button of root.querySelectorAll("[data-trait-value]")) {
+        button.onclick = () => {
+          assignTrait(button.dataset.traitName, Number(button.dataset.traitValue));
+          rerender();
         };
       }
     },
@@ -374,9 +509,11 @@ const steps = [
     }
   },
   {
-    title: () => t("step.pen.title"),
-    sub: () => t("step.pen.sub"),
-    render() {
+    title: (currentPart) => t(currentPart === 0 ? "step.pen.title" : "step.portrait.title"),
+    sub: (currentPart) => t(currentPart === 0 ? "step.pen.sub" : "step.portrait.sub"),
+    parts: 2,
+    render(currentPart) {
+      if (currentPart === 1) return portraitStudioHtml();
       return `<div class="options shell-options pen-options">${PENS
         .map(
           (p) => `<div class="card pick shell-pick ${draft.pen === p.id ? "selected" : ""}" data-pen="${esc(p.id)}">
@@ -386,11 +523,109 @@ const steps = [
         )
         .join("")}</div>`;
     },
-    wire(root) {
+    wire(root, currentPart = part) {
+      if (currentPart === 1) {
+        for (const tag of root.querySelectorAll("[data-portrait-tag]")) tag.onclick = () => {
+          collectPortraitFields(root);
+          const id = tag.dataset.portraitTag;
+          draft.portraitTags = draft.portraitTags.includes(id)
+            ? draft.portraitTags.filter((candidate) => candidate !== id)
+            : [...draft.portraitTags, id];
+          rerender();
+        };
+        const favorite = root.querySelector("#portrait-favorite-color");
+        favorite.oninput = () => {
+          draft.favoriteColor = validDetailColor(favorite.value);
+          document.documentElement.style.setProperty("--favorite-color", draft.favoriteColor);
+          root.querySelector("#portrait-favorite-value").textContent = draft.favoriteColor;
+          root.querySelector(".portrait-canvas").style.setProperty("--portrait-secondary", draft.favoriteColor);
+        };
+        const suggest = root.querySelector("#portrait-suggest");
+        suggest.onclick = async () => {
+          collectPortraitFields(root);
+          const context = portraitRequestContext();
+          suggest.disabled = true;
+          suggest.textContent = t("portrait.suggesting");
+          try {
+            const response = await fetch("/api/art/portrait/suggest", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                draftId,
+                context: {
+                  name: draft.name,
+                  ancestry: anc()?.name || "",
+                  className: cls()?.name || "",
+                  subclass: sub()?.name || "",
+                  description: draft.portraitPrompt,
+                  tags: context.selectedTags,
+                  primaryColor: context.primaryColor,
+                  secondaryColor: context.secondaryColor,
+                  armor: context.armor,
+                  mainHand: context.mainHand,
+                  offHand: context.offHand
+                }
+              })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || t("error.generic"));
+            draft.portraitSuggestion = result.suggestion;
+            rerender();
+          } catch (error) {
+            $("#warn").textContent = error.message;
+            suggest.disabled = false;
+            suggest.textContent = t("portrait.suggest");
+          }
+        };
+        const useSuggestion = root.querySelector("#portrait-use-suggestion");
+        if (useSuggestion) useSuggestion.onclick = () => {
+          collectPortraitFields(root);
+          draft.portraitPrompt = draft.portraitSuggestion;
+          rerender();
+        };
+        const generate = root.querySelector("#portrait-generate");
+        generate.onclick = async () => {
+          collectPortraitFields(root);
+          if (!draft.portraitPrompt) { $("#warn").textContent = t("portrait.prompt"); return; }
+          const context = portraitRequestContext();
+          generate.disabled = true;
+          generate.textContent = t("portrait.generating");
+          try {
+            const response = await fetch("/api/art/portrait", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                draftId,
+                prompt: context.prompt,
+                negativePrompt: draft.portraitNegativePrompt,
+                primaryColor: context.primaryColor,
+                secondaryColor: context.secondaryColor,
+                tags: context.selectedTags,
+                armor: context.armor,
+                mainHand: context.mainHand,
+                offHand: context.offHand
+              })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || t("error.generic"));
+            draft.portrait = result.url;
+            draft.portraitSeed = result.seed;
+            rerender();
+          } catch (error) {
+            $("#warn").textContent = error.message;
+            generate.disabled = false;
+            generate.textContent = t("portrait.generate");
+          }
+        };
+        const clear = root.querySelector("#portrait-clear");
+        if (clear) clear.onclick = () => { draft.portrait = null; draft.portraitSeed = null; rerender(); };
+        return;
+      }
       for (const el of root.querySelectorAll("[data-pen]")) el.onclick = () => { draft.pen = el.dataset.pen; rerender(); };
     },
-    collect() {
-      if (!PENS.some((p) => p.id === draft.pen)) return t("warn.pen");
+    collect(currentPart) {
+      if (currentPart === 0 && !PENS.some((p) => p.id === draft.pen)) return t("warn.pen");
+      if (currentPart === 1) collectPortraitFields();
     }
   },
   {
@@ -399,7 +634,10 @@ const steps = [
     render() {
       const c = cls(), s = sub(), a = anc(), k = com();
       const p = wpn(draft.primaryId), sc = wpn(draft.secondaryId), ar = arm();
-      return `<div class="card review">
+      const portrait = draft.portrait
+        ? `<img src="${esc(draft.portrait)}" alt="">`
+        : `<span>${esc((draft.name || "?").slice(0, 1).toUpperCase())}</span>`;
+      return `<div class="review-stage"><div class="review-portrait" aria-hidden="true">${portrait}</div><div class="card review">
         <h3>${esc(draft.name)}</h3>
         <p>${esc(draft.pronouns || "")}${draft.player ? ` · ${t("review.playedby", { player: esc(draft.player) })}` : ""}</p>
         <p>${t("review.of", { ancestry: esc(a.name), class: esc(c.name), subclass: esc(s.name), community: esc(k.name) })}</p>
@@ -414,7 +652,7 @@ const steps = [
         ${draft.classItem ? `<h3>${t("review.carried")}</h3><p>${esc(draft.classItem)}</p>` : ""}
         <h3>${t("review.pen")}</h3>
         <p>${esc(t((PENS.find((p) => p.id === draft.pen) || PENS[0]).name))}</p>
-      </div>`;
+      </div></div>`;
     },
     collect() {}
   },
@@ -528,7 +766,18 @@ function buildCharacter() {
       ancestry: a.features,
       community: k.features
     },
-    portrait: null,
+    portrait: draft.portrait,
+    portraitPrompt: draft.portraitPrompt,
+    appearance: {
+      primaryColor: classColor(draft.classId),
+      secondaryColor: validDetailColor(draft.favoriteColor)
+    },
+    portraitDirection: {
+      tags: [...draft.portraitTags],
+      includeArmor: draft.portraitEquipment.armor,
+      includeMainHand: draft.portraitEquipment.mainHand,
+      includeOffHand: draft.portraitEquipment.offHand
+    },
     notes: ""
   };
 }
@@ -549,23 +798,37 @@ function renderSubprogress(st) {
   ).join("")}</span><span class="subprogress-count">${part + 1} / ${total}</span>`;
 }
 
+function renderCreatorIdentity() {
+  const target = $("#creator-identity");
+  if (!target) return;
+  document.documentElement.style.setProperty("--class-color", classColor(draft.classId));
+  document.documentElement.style.setProperty("--favorite-color", validDetailColor(draft.favoriteColor));
+  const image = draft.portrait
+    ? `<img src="${esc(draft.portrait)}" alt="">`
+    : `<span>${esc((draft.name || "?").slice(0, 1).toUpperCase())}</span>`;
+  const details = [anc()?.name, cls()?.name].filter(Boolean).join(" · ");
+  target.innerHTML = `<span class="creator-identity-portrait" aria-hidden="true">${image}</span><span><strong>${esc(draft.name || t("create.title"))}</strong><small>${esc(details || t("create.subtitle"))}</small></span>`;
+}
+
 function rerender(direction = null) {
+  const previousScrollY = window.scrollY;
   const st = steps[step];
   setTelemetryMode(`step-${step + 1}:part-${part + 1}`);
   part = Math.min(part, partTotal(st) - 1);
   $("#progress").innerHTML = steps
-    .map((_, i) => `<div class="dot ${i < step ? "done" : i === step ? "now" : ""}"></div>`)
+    .map((_, i) => `<span class="dot ${i < step ? "done" : i === step ? "now" : ""}" aria-hidden="true"><i>${i + 1}</i></span>`)
     .join("");
   const sub = typeof st.sub === "function" ? st.sub(part) : st.sub;
   const heading = typeof st.title === "function" ? st.title(part) : st.title;
   const enter = direction === "next" ? " enter-right" : direction === "back" ? " enter-left" : "";
-  $("#step").innerHTML = `<div class="step-panel${enter}"><h2 class="step-title">${heading}</h2><div class="step-sub">${sub}</div>${st.render(part)}</div>`;
+  $("#step").innerHTML = `<div class="step-panel${enter}" data-step="${step + 1}"><header class="step-heading"><span class="step-number">${step + 1}</span><span><h2 class="step-title">${heading}</h2><span class="step-sub">${sub}</span></span></header>${st.render(part)}</div>`;
   $("#warn").textContent = "";
   $("#btn-back").style.visibility = step === 0 && part === 0 ? "hidden" : "visible";
   $("#btn-back").textContent = t("btn.back");
   $("#btn-next").hidden = step === steps.length - 1;
   $("#btn-next").textContent = t("btn.next");
   renderSubprogress(st);
+  renderCreatorIdentity();
   const root = $("#step");
   if (st.onPick) {
     for (const el of root.querySelectorAll("[data-pick]")) {
@@ -575,11 +838,12 @@ function rerender(direction = null) {
   for (const el of root.querySelectorAll("[data-item]")) {
     el.onclick = () => { draft.classItem = el.dataset.item; rerender(); };
   }
-  if (st.wire) st.wire(root);
+  if (st.wire) st.wire(root, part);
   root.addEventListener("input", scheduleDraftSave);
   root.addEventListener("change", scheduleDraftSave);
   scheduleDraftSave();
-  window.scrollTo(0, 0);
+  if (direction) window.scrollTo(0, 0);
+  else requestAnimationFrame(() => window.scrollTo(0, previousScrollY));
 }
 
 function animateMove(direction, update) {
@@ -710,6 +974,15 @@ function restoreDraft(serverSaved = null) {
     const saved = serverSaved || (localSaved?.id === draftId ? localSaved : null);
     if (!saved || saved.version !== 2 || typeof saved.step !== "number") return;
     Object.assign(draft, saved.draft);
+    draft.portraitTags = Array.isArray(draft.portraitTags)
+      ? draft.portraitTags.filter((id) => PORTRAIT_TAGS.some((tag) => tag.id === id))
+      : [];
+    draft.portraitEquipment = {
+      armor: draft.portraitEquipment?.armor !== false,
+      mainHand: draft.portraitEquipment?.mainHand !== false,
+      offHand: draft.portraitEquipment?.offHand !== false
+    };
+    draft.favoriteColor = validDetailColor(draft.favoriteColor);
     step = Math.max(0, Math.min(steps.length - 1, saved.step));
     part = Math.max(0, Math.min(partTotal(steps[step]) - 1, Number(saved.part) || 0));
   } catch { /* a bad stash never blocks creation */ }
@@ -728,13 +1001,15 @@ Promise.all([
   fetch("/api/reference").then((r) => r.json()),
   fetch("/api/party").then((r) => r.json()),
   fetch(`/api/character-drafts/${encodeURIComponent(draftId)}`).then((r) => r.ok ? r.json() : null),
-  fetch("/api/table").then((r) => r.json())
-]).then(([ref, party, saved, table]) => {
+  fetch("/api/table").then((r) => r.json()),
+  fetch("/api/art/status").then((r) => r.ok ? r.json() : ART_STATUS).catch(() => ART_STATUS)
+]).then(([ref, party, saved, table, artStatus]) => {
   if (ref.error) { $("#step").innerHTML = `<p class="warn">${esc(ref.error)}</p>`; return; }
   REF = ref;
   PARTY = party;
   CAMPAIGNS = Array.isArray(table.campaigns) ? table.campaigns : [];
   CURRENT_CAMPAIGN_ID = table.currentCampaignId || CAMPAIGNS[0]?.id || null;
+  ART_STATUS = artStatus;
   restoreDraft(saved);
   if (!draft.campaignId) draft.campaignId = CURRENT_CAMPAIGN_ID;
   else if (!CAMPAIGNS.some((campaign) => campaign.id === draft.campaignId)) {

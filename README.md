@@ -35,7 +35,7 @@ whitelisted server-side regardless).
 |---|---|---|
 | `/gm` | GM (private) | Console: campaign controls, reviewed session chronicler, rules/private-lore Almanac, reveal-one-result chance tables, correspondence, playtest tickets, local UX map, settlement ledger, and quick tools |
 | `/board` | GM (private) | Named Main/HUD drafting boards with infinite pan/zoom, live stat plates, counters, notes, and pinned camera views |
-| `/login` | everyone | Trusted-table chooser: campaign-grouped character bubbles, a separate resumable-drafts view, GM, and projector. Bare `/` lands here. |
+| `/login` | everyone | Trusted-table chooser: campaign-grouped movable portrait cards, a separate resumable-drafts view, GM, and projector. Bare `/` lands here. |
 | `/player` | players | Player root: switch the device's character and choose a focused physical view. |
 | `/table` | players | General arcana-card deck over Town, Folk, Chronicle, Journal, Character, and Rules. |
 | `/table-book` | players | Settlement folio for Town, Folk of Note, and Chronicle, with directional page turns. |
@@ -117,7 +117,7 @@ Per the spec's build phases, plus ambitions agreed at the table:
 - **Phase 3 — The Map**: hex overlay on the GM's scanned map (deferred until the scan is available).
 - **Phase 4 — Dice & depth**: in-app 4d6−1d6 roller with a reveal moment; building improvement flow; library building migration.
 - **Board screen**: a mood/status display in front of the table (another whitelisted route, like `/table`).
-- **ComfyUI portraits**: in-app character portrait generation on the local 5090; the working workflow is saved at [docs/comfyui/waidrin-portraits-workflow.json](docs/comfyui/waidrin-portraits-workflow.json).
+- **ComfyUI art workshop**: local portrait and scenic generation accepts tokenized API-format workflows without fixed node IDs; setup lives in [docs/comfyui/README.md](docs/comfyui/README.md).
 - **Magic item cards**: print-ready card fronts matching the physical deck ("mold" idea — layered paper in a sleeve).
 - **Sheet personalization**: per-class sheet layouts, bookmarkable stats, a draggable shortcut tray.
 

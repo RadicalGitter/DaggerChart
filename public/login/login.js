@@ -7,36 +7,61 @@ const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-const LAYOUT_KEY = "settlement-login-bubbles-v1";
-const COLORS = ["#f4a7b9", "#9fcdb7", "#9db9e8", "#ef4c43", "#f2ca3a", "#3aa75d", "#7e65d8", "#40c9c2", "#d66bd6"];
+const LAYOUT_KEY = "settlement-login-cards-v2";
+const LEGACY_LAYOUT_KEY = "settlement-login-bubbles-v1";
+const COLORS = [
+  { value: "#f4a7b9", label: "login.color.roseMist", family: "pastel" },
+  { value: "#9fcdb7", label: "login.color.mintGlass", family: "pastel" },
+  { value: "#9db9e8", label: "login.color.rainBlue", family: "pastel" },
+  { value: "#ef4c43", label: "login.color.emberRed", family: "primal" },
+  { value: "#f2ca3a", label: "login.color.sunGold", family: "primal" },
+  { value: "#3aa75d", label: "login.color.groveGreen", family: "primal" },
+  { value: "#7e65d8", label: "login.color.spellViolet", family: "magical" },
+  { value: "#40c9c2", label: "login.color.witchlight", family: "magical" },
+  { value: "#d66bd6", label: "login.color.feyPink", family: "magical" }
+];
 let data = null;
 let drafts = [];
 let identities = [];
 let paintColor = null;
 let drag = null;
-const bubbleState = (() => {
-  try { return { positions: {}, colors: {}, ...JSON.parse(localStorage.getItem(LAYOUT_KEY) || "{}") }; }
+const cardState = (() => {
+  try {
+    const saved = localStorage.getItem(LAYOUT_KEY) || localStorage.getItem(LEGACY_LAYOUT_KEY) || "{}";
+    return { positions: {}, colors: {}, ...JSON.parse(saved) };
+  }
   catch { return { positions: {}, colors: {} }; }
 })();
 
 const currentPC = () => localStorage.getItem("settlement-pc") || localStorage.getItem("settlement-journal-pc");
-const bubbleKey = (kind, id) => `${kind}:${id}`;
-const saveBubbles = () => localStorage.setItem(LAYOUT_KEY, JSON.stringify(bubbleState));
+const cardKey = (kind, id) => `${kind}:${id}`;
+const saveCards = () => localStorage.setItem(LAYOUT_KEY, JSON.stringify(cardState));
 
-function portraitHtml(person) {
-  return person.portrait ? `<span class="bubble-portrait"><img src="${esc(person.portrait)}" alt=""></span>` : "";
+function cardArtHtml(item, kind) {
+  const initial = esc((item.name || "?").trim().slice(0, 1).toUpperCase() || "?");
+  const art = kind === "pc" && item.portrait
+    ? `<img src="${esc(item.portrait)}" alt="">`
+    : `<span class="character-card-monogram">${initial}</span>`;
+  return `<span class="character-card-art ${item.portrait ? "has-portrait" : ""}" aria-hidden="true">${art}</span>`;
 }
 
-function bubbleHtml(item, kind, index) {
-  const key = bubbleKey(kind, item.id);
-  const color = bubbleState.colors[key] || (kind === "draft" ? "#d8b889" : "#a9cfc3");
+function cardHtml(item, kind, index) {
+  const key = cardKey(kind, item.id);
+  const primaryColor = item.appearance?.primaryColor || "#8b7653";
+  const color = cardState.colors[key] || item.appearance?.secondaryColor || (kind === "draft" ? "#d8b889" : "#9fcdb7");
   const detail = kind === "draft" ? t("login.resume") : (item.player || t("login.players"));
-  return `<button class="character-bubble ${kind === "draft" ? "bubble-resume" : ""} ${kind === "pc" && item.id === currentPC() ? "current" : ""}" type="button"
-    data-character-kind="${kind}" data-character-id="${esc(item.id)}" data-bubble-key="${esc(key)}"
-    style="--bubble-paint:${color};--bubble-turn:${((index % 5) - 2) * 1.2}deg">
-    ${kind === "pc" ? portraitHtml(item) : ""}
-    <strong class="bubble-name">${esc(item.name || t("login.unnamedDraft"))}</strong>
-    <span class="bubble-detail">${esc(detail)}</span>
+  const current = kind === "pc" && item.id === currentPC();
+  return `<button class="character-card ${kind === "draft" ? "character-card-draft" : ""} ${current ? "current" : ""}" type="button"
+    data-character-kind="${kind}" data-character-id="${esc(item.id)}" data-card-key="${esc(key)}"
+    aria-label="${esc(item.name || t("login.unnamedDraft"))}, ${esc(detail)}"
+    style="--card-paint:${color};--card-class:${primaryColor};--card-turn:${((index % 5) - 2) * 0.85}deg;--deal-delay:${(index % 7) * 42}ms">
+    ${cardArtHtml(item, kind)}
+    <span class="character-card-wash" aria-hidden="true"></span>
+    ${current ? `<span class="character-card-status">${esc(t("login.current"))}</span>` : ""}
+    <span class="character-card-copy">
+      <strong>${esc(item.name || t("login.unnamedDraft"))}</strong>
+      <span>${esc(detail)}</span>
+    </span>
   </button>`;
 }
 
@@ -47,9 +72,9 @@ function campaignGroupsHtml(items, kind) {
     const current = campaign.id === data.currentCampaignId;
     return `<section class="login-campaign-group ${current ? "is-current" : ""}">
       <div class="campaign-group-heading"><span>${esc(campaign.name)}</span>${current ? `<small>${t("campaign.current")}</small>` : ""}<i aria-hidden="true"></i></div>
-      <div class="character-bubble-stage ${kind === "draft" ? "unfinished-stage" : ""}" data-stage-kind="${kind}" data-campaign-id="${esc(campaign.id)}">
+      <div class="character-card-stage ${kind === "draft" ? "unfinished-stage" : ""}" data-stage-kind="${kind}" data-campaign-id="${esc(campaign.id)}">
         ${members.length
-          ? members.map((item, index) => bubbleHtml(item, kind, campaignIndex * 20 + index)).join("")
+          ? members.map((item, index) => cardHtml(item, kind, campaignIndex * 20 + index)).join("")
           : `<p class="trust-note campaign-empty">${kind === "draft" ? t("login.noDrafts") : t("login.noCampaignCharacters")}</p>`}
       </div>
     </section>`;
@@ -57,7 +82,7 @@ function campaignGroupsHtml(items, kind) {
 }
 
 function layoutCampaignStages() {
-  for (const stage of document.querySelectorAll(".character-bubble-stage")) {
+  for (const stage of document.querySelectorAll(".character-card-stage")) {
     positionStage(stage, stage.dataset.stageKind);
     wireStage(stage);
   }
@@ -67,88 +92,92 @@ function layoutCampaignStages() {
 }
 
 function positionStage(stage, kind) {
-  const bubbles = [...stage.querySelectorAll(".character-bubble")];
-  if (!bubbles.length || !stage.clientWidth || !stage.clientHeight) return;
-  const size = stage.clientWidth < 520 ? 116 : (kind === "draft" ? 128 : 142);
-  const columns = Math.max(1, Math.floor(stage.clientWidth / (size + 20)));
-  const rows = Math.max(1, Math.ceil(bubbles.length / columns));
-  bubbles.forEach((bubble, index) => {
-    const key = bubble.dataset.bubbleKey;
-    const saved = bubbleState.positions[key];
+  const cards = [...stage.querySelectorAll(".character-card")];
+  if (!cards.length || !stage.clientWidth) return;
+  const compact = stage.clientWidth < 520;
+  const width = compact ? 116 : (kind === "draft" ? 138 : 156);
+  const height = compact ? 164 : (kind === "draft" ? 186 : 210);
+  const columns = Math.max(1, Math.floor((stage.clientWidth - 18) / (width + 18)));
+  const rows = Math.max(1, Math.ceil(cards.length / columns));
+  stage.style.minHeight = `${Math.max(kind === "draft" ? 220 : 270, rows * (height + 16) + 20)}px`;
+  const stageHeight = stage.clientHeight;
+  cards.forEach((card, index) => {
+    const key = card.dataset.cardKey;
+    const saved = cardState.positions[key];
     const column = index % columns;
     const row = Math.floor(index / columns);
-    const fallbackX = ((column + 0.5) / Math.min(columns, bubbles.length)) * stage.clientWidth;
-    const fallbackY = ((row + 0.5) / rows) * stage.clientHeight;
-    const x = clamp((saved?.x ?? fallbackX / stage.clientWidth) * stage.clientWidth - size / 2, 2, Math.max(2, stage.clientWidth - size - 2));
-    const y = clamp((saved?.y ?? fallbackY / stage.clientHeight) * stage.clientHeight - size / 2, 2, Math.max(2, stage.clientHeight - size - 2));
-    bubble.style.setProperty("--bubble-size", `${size}px`);
-    bubble.style.setProperty("--bubble-x", `${x}px`);
-    bubble.style.setProperty("--bubble-y", `${y}px`);
-    bubble.dataset.x = x;
-    bubble.dataset.y = y;
+    const rowMembers = Math.min(columns, cards.length - row * columns);
+    const fallbackX = ((column + 0.5) / rowMembers) * stage.clientWidth;
+    const fallbackY = ((row + 0.5) / rows) * stageHeight;
+    const x = clamp((saved?.x ?? fallbackX / stage.clientWidth) * stage.clientWidth - width / 2, 3, Math.max(3, stage.clientWidth - width - 3));
+    const y = clamp((saved?.y ?? fallbackY / stageHeight) * stageHeight - height / 2, 3, Math.max(3, stageHeight - height - 3));
+    card.style.setProperty("--card-width", `${width}px`);
+    card.style.setProperty("--card-height", `${height}px`);
+    card.style.setProperty("--card-x", `${x}px`);
+    card.style.setProperty("--card-y", `${y}px`);
+    card.dataset.x = x;
+    card.dataset.y = y;
   });
 }
 
 function wireStage(stage) {
-  for (const bubble of stage.querySelectorAll(".character-bubble")) {
-    bubble.onpointerdown = (event) => {
+  for (const card of stage.querySelectorAll(".character-card")) {
+    card.onpointerdown = (event) => {
       if (paintColor) return;
       const rect = stage.getBoundingClientRect();
       drag = {
-        bubble,
+        card,
         stage,
         pointerId: event.pointerId,
-        offsetX: event.clientX - rect.left - Number(bubble.dataset.x),
-        offsetY: event.clientY - rect.top - Number(bubble.dataset.y),
+        offsetX: event.clientX - rect.left - Number(card.dataset.x),
+        offsetY: event.clientY - rect.top - Number(card.dataset.y),
         startX: event.clientX,
         startY: event.clientY,
         moved: false
       };
-      bubble.setPointerCapture(event.pointerId);
+      card.setPointerCapture(event.pointerId);
     };
-    bubble.onpointermove = (event) => {
-      if (!drag || drag.bubble !== bubble || drag.pointerId !== event.pointerId) return;
+    card.onpointermove = (event) => {
+      if (!drag || drag.card !== card || drag.pointerId !== event.pointerId) return;
       const rect = stage.getBoundingClientRect();
-      const size = bubble.offsetWidth;
-      const x = clamp(event.clientX - rect.left - drag.offsetX, 2, Math.max(2, stage.clientWidth - size - 2));
-      const y = clamp(event.clientY - rect.top - drag.offsetY, 2, Math.max(2, stage.clientHeight - size - 2));
+      const x = clamp(event.clientX - rect.left - drag.offsetX, 3, Math.max(3, stage.clientWidth - card.offsetWidth - 3));
+      const y = clamp(event.clientY - rect.top - drag.offsetY, 3, Math.max(3, stage.clientHeight - card.offsetHeight - 3));
       drag.moved ||= Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 5;
-      bubble.dataset.x = x;
-      bubble.dataset.y = y;
-      bubble.style.setProperty("--bubble-x", `${x}px`);
-      bubble.style.setProperty("--bubble-y", `${y}px`);
-      if (drag.moved) bubble.classList.add("dragging");
+      card.dataset.x = x;
+      card.dataset.y = y;
+      card.style.setProperty("--card-x", `${x}px`);
+      card.style.setProperty("--card-y", `${y}px`);
+      if (drag.moved) card.classList.add("dragging");
     };
-    bubble.onpointerup = (event) => {
-      if (!drag || drag.bubble !== bubble || drag.pointerId !== event.pointerId) return;
-      bubble.classList.remove("dragging");
+    card.onpointerup = (event) => {
+      if (!drag || drag.card !== card || drag.pointerId !== event.pointerId) return;
+      card.classList.remove("dragging");
       if (drag.moved) {
-        const size = bubble.offsetWidth;
-        bubbleState.positions[bubble.dataset.bubbleKey] = {
-          x: (Number(bubble.dataset.x) + size / 2) / stage.clientWidth,
-          y: (Number(bubble.dataset.y) + size / 2) / stage.clientHeight
+        cardState.positions[card.dataset.cardKey] = {
+          x: (Number(card.dataset.x) + card.offsetWidth / 2) / stage.clientWidth,
+          y: (Number(card.dataset.y) + card.offsetHeight / 2) / stage.clientHeight
         };
-        bubble.dataset.suppressClick = "true";
-        setTimeout(() => delete bubble.dataset.suppressClick, 0);
-        saveBubbles();
+        card.dataset.suppressClick = "true";
+        setTimeout(() => delete card.dataset.suppressClick, 0);
+        saveCards();
       }
       drag = null;
     };
-    bubble.onpointercancel = () => { bubble.classList.remove("dragging"); drag = null; };
-    bubble.onclick = () => {
-      if (bubble.dataset.suppressClick) return;
+    card.onpointercancel = () => { card.classList.remove("dragging"); drag = null; };
+    card.onclick = () => {
+      if (card.dataset.suppressClick) return;
       if (paintColor) {
-        if (paintColor === "clear") delete bubbleState.colors[bubble.dataset.bubbleKey];
-        else bubbleState.colors[bubble.dataset.bubbleKey] = paintColor;
-        bubble.style.setProperty("--bubble-paint", bubbleState.colors[bubble.dataset.bubbleKey] || (bubble.dataset.characterKind === "draft" ? "#d8b889" : "#a9cfc3"));
-        saveBubbles();
+        if (paintColor === "clear") delete cardState.colors[card.dataset.cardKey];
+        else cardState.colors[card.dataset.cardKey] = paintColor;
+        card.style.setProperty("--card-paint", cardState.colors[card.dataset.cardKey] || (card.dataset.characterKind === "draft" ? "#d8b889" : "#9fcdb7"));
+        saveCards();
         return;
       }
-      if (bubble.dataset.characterKind === "draft") {
-        location.href = `/create/?draft=${encodeURIComponent(bubble.dataset.characterId)}`;
+      if (card.dataset.characterKind === "draft") {
+        location.href = `/create/?draft=${encodeURIComponent(card.dataset.characterId)}`;
         return;
       }
-      localStorage.setItem("settlement-pc", bubble.dataset.characterId);
+      localStorage.setItem("settlement-pc", card.dataset.characterId);
       localStorage.removeItem("settlement-journal-pc");
       location.href = "/player";
     };
@@ -156,7 +185,7 @@ function wireStage(stage) {
 }
 
 function renderPalette() {
-  $("#character-palette").innerHTML = [...COLORS, "clear"].map((color) => `<button class="character-swatch ${paintColor === color ? "selected" : ""}" type="button" data-character-color="${color}" style="--swatch:${color === "clear" ? "transparent" : color}" aria-label="${color === "clear" ? t("login.clearPaint") : t("login.paint")}"></button>`).join("");
+  $("#character-palette").innerHTML = [...COLORS, { value: "clear", label: "login.clearPaint", family: "clear" }].map(({ value, label, family }) => `<button class="character-swatch ${family === "clear" ? "clear-swatch" : ""} ${paintColor === value ? "selected" : ""}" type="button" data-character-color="${value}" data-color-family="${family}" style="--swatch:${value === "clear" ? "transparent" : value}" aria-label="${esc(t(label))}" title="${esc(t(label))}"></button>`).join("");
   for (const swatch of document.querySelectorAll("[data-character-color]")) swatch.onclick = () => {
     paintColor = swatch.dataset.characterColor;
     renderPalette();

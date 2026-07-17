@@ -2,6 +2,7 @@
 // and persist. Live-updates when the GM (or another device) changes the character.
 import { t, term, termify, initI18n } from "/shared/i18n.js";
 import { paperArtifactHtml } from "/shared/paper.js";
+import { traitAccent, traitGraphic } from "/shared/traits.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
 
@@ -27,6 +28,8 @@ function pips(kind, marked, max, harm) {
 function render() {
   setTelemetryMode("sheet");
   const p = PC;
+  document.documentElement.style.setProperty("--sheet-primary", p.appearance?.primaryColor || "#8b7653");
+  document.documentElement.style.setProperty("--sheet-secondary", p.appearance?.secondaryColor || "#9fcdb7");
   const w = p.weapons || {};
   const weaponRow = (label, wp) =>
     wp
@@ -59,7 +62,7 @@ function render() {
     </div>
 
     <div class="traits-grid">${TRAITS.map(
-      (tr) => `<div class="card trait-tile"><div class="v">${p.traits[tr] >= 0 ? "+" : ""}${p.traits[tr]}</div><div class="smallcaps">${term("trait-" + tr.toLowerCase(), tr)}</div></div>`
+      (tr) => `<div class="trait-tile" style="--trait-accent:${traitAccent(tr)}"><span class="trait-sheet-symbol" aria-hidden="true">${traitGraphic(tr)}</span><div class="v">${p.traits[tr] >= 0 ? "+" : ""}${p.traits[tr]}</div><div class="smallcaps">${term("trait-" + tr.toLowerCase(), tr)}</div></div>`
     ).join("")}</div>
 
     <div class="sheet-section">
