@@ -43,6 +43,44 @@ const identityView = (p) => ({
   shell: shellOf(p)
 });
 
+const messageView = (message) => ({
+  id: message.id,
+  from: message.from === "gm" ? "gm" : "player",
+  text: String(message.text || ""),
+  ts: message.ts,
+  read: {
+    gm: message.read?.gm === true,
+    player: message.read?.player === true
+  }
+});
+
+const messagesFor = (pcId) => state.messages
+  .filter((message) => message.pcId === pcId)
+  .sort((a, b) => String(a.ts || "").localeCompare(String(b.ts || "")) || String(a.id || "").localeCompare(String(b.id || "")))
+  .map(messageView);
+
+const unreadFor = (pcId, side) => state.messages.filter(
+  (message) => message.pcId === pcId && message.read?.[side] !== true
+).length;
+
+export function playerMessagesView(pcId) {
+  const pc = activePcs().find((candidate) => candidate.id === pcId);
+  if (!pc) return null;
+  return { pc: identityView(pc), messages: messagesFor(pcId) };
+}
+
+export function gmMessagesView() {
+  const threads = state.pcs.map((pc) => ({
+    pc: { ...identityView(pc), active: isActivePc(pc) },
+    unread: unreadFor(pc.id, "gm"),
+    messages: messagesFor(pc.id)
+  }));
+  return {
+    totalUnread: threads.reduce((sum, thread) => sum + thread.unread, 0),
+    threads
+  };
+}
+
 const tableIdentityView = (p) => ({
   ...identityView(p),
   hope: Number.isInteger(p.hope) ? Math.max(0, p.hope) : 0,
@@ -134,6 +172,7 @@ export function gmView() {
       fear: state.session.fear,
       showFearToPlayers: state.session.showFearToPlayers
     },
+    unreadMessages: Object.fromEntries(state.pcs.map((pc) => [pc.id, unreadFor(pc.id, "gm")])),
     buildings,
     characters: state.characters,
     party: state.pcs.map((p) => ({
@@ -297,6 +336,7 @@ export function loreView(pcId) {
   );
   return {
     seasonLabel: seasonLabel(),
+    unreadMessages: requestingPcId ? unreadFor(requestingPcId, "player") : 0,
     party: activePcs().map(identityView),
     people,
     places,

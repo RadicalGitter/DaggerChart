@@ -20,6 +20,18 @@ each other. Rules of the road:
 ## Lanes
 
 **2026-07-17 — Codex** · status: DONE
+Lane: private GM/PC messages (feature 3): message persistence and audience
+views in `server/state.js`/`server/views.js`, validated routes in
+`server/index.js`, correspondence in `public/shared/gm-tools.*`, reusable
+player chat in `public/shared/player-chat.*`, the tome dock, i18n, and docs.
+Verified thread isolation, counts-only general payloads, active/retired gates,
+sender read semantics, restart persistence, SSE badges, `Ctrl+Enter`, focus
+return, and desktop/390px/320px layouts against dummy data. Browser QA also
+fixed overlapping read acknowledgements, atomic temp-file contention, singular
+unread copy, and the mobile feedback-button collision. Live campaign JSON and
+local media remain out of the commit.
+
+**2026-07-17 — Codex** · status: DONE
 Lane: GM overlay and hovering hotbar (feature 2): named-board migration and
 routes in `server/index.js`, GM party vitals in `server/views.js`, static GM
 reference data, `public/shared/gm-tools.*`, `public/board/*`, `public/gm/*`,

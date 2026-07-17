@@ -12,6 +12,7 @@ if (root) {
       minus: `<path d="M5 12h14"/>`,
       plus: `<path d="M12 5v14M5 12h14"/>`,
       eye: `<path d="M2.8 12s3.4-5.2 9.2-5.2 9.2 5.2 9.2 5.2-3.4 5.2-9.2 5.2S2.8 12 2.8 12z"/><circle cx="12" cy="12" r="2.3"/>`,
+      message: `<path d="M21 15a4 4 0 0 1-4 4H8l-5 3 1.7-5.1A7 7 0 0 1 3 12V8a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5z"/>`,
       grid: `<rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6"/>`,
       close: `<path d="M5 5l14 14M19 5L5 19"/>`
     };
@@ -28,9 +29,29 @@ if (root) {
         <button type="button" class="gm-tools-visibility" id="gm-tool-fear-visibility" aria-label="Hide Fear from players" title="Fear is visible to players" aria-pressed="true">${icon("eye")}</button>
       </div>
       <span class="gm-tools-divider" aria-hidden="true"></span>
+      <button type="button" class="gm-tools-messages-open" id="gm-tools-messages-open" aria-label="Open private messages" title="Open private messages">${icon("message")}<span class="gm-tools-message-badge" id="gm-tools-message-badge" hidden></span></button>
       <button type="button" class="gm-tools-overlay-open" id="gm-tools-overlay-open">${icon("grid")}<span>Quick table</span></button>
       <span class="gm-tools-notice" id="gm-tools-notice" role="status" hidden></span>
     </div>
+    <section class="gm-tools-messages" id="gm-tools-messages" role="dialog" aria-modal="true" aria-labelledby="gm-tools-messages-title" hidden>
+      <div class="gm-tools-messages-panel">
+        <header class="gm-tools-messages-head">
+          <div><span class="gm-tools-kicker">Private correspondence</span><h1 id="gm-tools-messages-title">Messages at the table</h1></div>
+          <button type="button" id="gm-tools-messages-close" aria-label="Close private messages" title="Close private messages">${icon("close")}</button>
+        </header>
+        <div class="gm-tools-messages-body">
+          <nav class="gm-tools-thread-list" id="gm-tools-thread-list" aria-label="Character threads"></nav>
+          <section class="gm-tools-conversation" aria-labelledby="gm-tools-conversation-title">
+            <header class="gm-tools-conversation-head"><div><h2 id="gm-tools-conversation-title">Choose a character</h2><p id="gm-tools-conversation-meta"></p></div></header>
+            <div class="gm-tools-message-list" id="gm-tools-message-list" aria-live="polite"></div>
+            <form class="gm-tools-message-form" id="gm-tools-message-form">
+              <textarea id="gm-tools-message-copy" maxlength="4000" rows="3" required placeholder="Write a private message…"></textarea>
+              <div><span id="gm-tools-message-status" role="status"></span><button type="submit">Send</button></div>
+            </form>
+          </section>
+        </div>
+      </div>
+    </section>
     <section class="gm-tools-overlay" id="gm-tools-overlay" role="dialog" aria-modal="true" aria-labelledby="gm-tools-overlay-title" hidden>
       <header class="gm-tools-overlay-head">
         <div><span class="gm-tools-kicker">At the Keeper's hand</span><h1 id="gm-tools-overlay-title">Session quick table</h1></div>
@@ -61,10 +82,15 @@ if (root) {
   let state = null;
   let screen = { sections: [] };
   let hud = { items: [], pins: [] };
+  let messageData = { totalUnread: 0, threads: [] };
   let reference = null;
   let fearBusy = false;
   let overlayOpen = false;
+  let messagesOpen = false;
+  let selectedMessagePcId = null;
+  let messageBusy = false;
   let lastFocus = null;
+  let messagesLastFocus = null;
   let noticeTimer = null;
 
   async function api(path, options = {}) {
@@ -115,6 +141,119 @@ if (root) {
     } finally {
       fearBusy = false;
       renderFear();
+    }
+  }
+
+  const sortedThreads = () => [...(messageData.threads || [])].sort((a, b) =>
+    Number(b.pc?.active !== false) - Number(a.pc?.active !== false)
+    || (b.unread || 0) - (a.unread || 0)
+    || String(a.pc?.name || "").localeCompare(String(b.pc?.name || "")));
+
+  function renderMessageBadge() {
+    const unread = bounded(messageData.totalUnread, 0, 999);
+    const badge = $("#gm-tools-message-badge");
+    badge.hidden = unread === 0;
+    badge.textContent = unread > 9 ? "9+" : String(unread);
+    const label = unread ? `Open private messages, ${unread} unread` : "Open private messages";
+    $("#gm-tools-messages-open").setAttribute("aria-label", label);
+    $("#gm-tools-messages-open").setAttribute("title", label);
+  }
+
+  function gmMessageHtml(message, pcName) {
+    const sender = message.from === "gm" ? "Keeper" : pcName;
+    const time = message.ts ? new Date(message.ts).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "";
+    return `<article class="gm-tools-message is-${message.from}"><header><strong>${esc(sender)}</strong><time>${esc(time)}</time></header><p>${esc(message.text)}</p></article>`;
+  }
+
+  function renderMessagePanel() {
+    const threads = sortedThreads();
+    if (!threads.some((thread) => thread.pc?.id === selectedMessagePcId)) {
+      selectedMessagePcId = threads.find((thread) => thread.unread)?.pc?.id
+        || threads.find((thread) => thread.pc?.active !== false)?.pc?.id
+        || threads[0]?.pc?.id
+        || null;
+    }
+    $("#gm-tools-thread-list").innerHTML = threads.length ? threads.map((thread) => {
+      const pc = thread.pc || {};
+      const current = pc.id === selectedMessagePcId;
+      const portrait = pc.portrait
+        ? `<img src="${esc(pc.portrait)}" alt="">`
+        : `<span>${esc((pc.name || "?").slice(0, 1).toUpperCase())}</span>`;
+      return `<button type="button" data-message-pc="${esc(pc.id)}" ${current ? `aria-current="true"` : ""}>
+        <span class="gm-tools-thread-portrait">${portrait}</span>
+        <span class="gm-tools-thread-copy"><strong>${esc(pc.name)}</strong><small>${esc(pc.player || (pc.active === false ? "Retired" : ""))}</small></span>
+        ${thread.unread ? `<span class="gm-tools-thread-unread">${bounded(thread.unread, 0, 99)}</span>` : ""}
+      </button>`;
+    }).join("") : `<p class="gm-tools-empty">No character threads.</p>`;
+
+    for (const button of $("#gm-tools-thread-list").querySelectorAll("[data-message-pc]")) {
+      button.addEventListener("click", () => { void selectMessageThread(button.dataset.messagePc); });
+    }
+
+    const selected = threads.find((thread) => thread.pc?.id === selectedMessagePcId) || null;
+    const title = $("#gm-tools-conversation-title");
+    const meta = $("#gm-tools-conversation-meta");
+    const copy = $("#gm-tools-message-copy");
+    const send = $("#gm-tools-message-form button[type=submit]");
+    if (!selected) {
+      title.textContent = "Choose a character";
+      meta.textContent = "";
+      $("#gm-tools-message-list").innerHTML = `<p class="gm-tools-empty">No conversation selected.</p>`;
+      copy.disabled = true;
+      send.disabled = true;
+      return;
+    }
+    title.textContent = selected.pc.name;
+    meta.textContent = selected.pc.active === false ? "Retired thread" : (selected.pc.player || "Active character");
+    const messages = selected.messages || [];
+    $("#gm-tools-message-list").innerHTML = messages.length
+      ? messages.map((message) => gmMessageHtml(message, selected.pc.name)).join("")
+      : `<p class="gm-tools-empty">No words have passed yet.</p>`;
+    copy.disabled = messageBusy || selected.pc.active === false;
+    send.disabled = messageBusy || selected.pc.active === false;
+    if (messagesOpen) requestAnimationFrame(() => {
+      const list = $("#gm-tools-message-list");
+      list.scrollTop = list.scrollHeight;
+    });
+  }
+
+  async function markGmRead() {
+    const thread = (messageData.threads || []).find((candidate) => candidate.pc?.id === selectedMessagePcId);
+    if (!thread?.unread) return;
+    await api("/api/messages/read", { method: "PUT", body: { pcId: selectedMessagePcId, side: "gm" } });
+    thread.unread = 0;
+    thread.messages = (thread.messages || []).map((message) => ({ ...message, read: { ...message.read, gm: true } }));
+    messageData.totalUnread = (messageData.threads || []).reduce((sum, candidate) => sum + (candidate.unread || 0), 0);
+    renderMessageBadge();
+    renderMessagePanel();
+  }
+
+  async function selectMessageThread(pcId) {
+    selectedMessagePcId = pcId;
+    renderMessagePanel();
+    try { await markGmRead(); } catch (error) { showNotice(error.message); }
+    if (!$("#gm-tools-message-copy").disabled) $("#gm-tools-message-copy").focus();
+  }
+
+  async function sendMessage() {
+    if (messageBusy || !selectedMessagePcId) return;
+    const copy = $("#gm-tools-message-copy");
+    const text = copy.value.trim();
+    if (!text) return;
+    messageBusy = true;
+    $("#gm-tools-message-status").textContent = "Sending…";
+    renderMessagePanel();
+    try {
+      await api("/api/messages", { method: "POST", body: { pcId: selectedMessagePcId, from: "gm", text } });
+      copy.value = "";
+      $("#gm-tools-message-status").textContent = "";
+      await refreshData();
+    } catch (error) {
+      $("#gm-tools-message-status").textContent = error.message;
+    } finally {
+      messageBusy = false;
+      renderMessagePanel();
+      if (!copy.disabled) copy.focus();
     }
   }
 
@@ -204,20 +343,51 @@ if (root) {
   }
 
   async function refreshData() {
-    const [nextState, nextScreen, nextHud] = await Promise.all([
+    const [nextState, nextScreen, nextHud, nextMessages] = await Promise.all([
       api("/api/state"),
       api("/api/gm-screen"),
-      api("/api/board/hud")
+      api("/api/board/hud"),
+      api("/api/messages/gm")
     ]);
     state = nextState;
     screen = nextScreen;
     hud = nextHud;
+    messageData = nextMessages;
     if ((hud.items || []).some((item) => item.type === "card") && !reference) reference = await api("/api/reference");
     renderFear();
+    renderMessageBadge();
+    if (messagesOpen) renderMessagePanel();
     if (overlayOpen) renderOverlay();
   }
 
+  async function openMessages() {
+    if (overlayOpen) closeOverlay();
+    messagesLastFocus = document.activeElement;
+    messagesOpen = true;
+    $("#gm-tools-messages").hidden = false;
+    document.body.classList.add("gm-tools-messages-visible");
+    try {
+      await refreshData();
+      renderMessagePanel();
+      await markGmRead();
+    } catch (error) {
+      showNotice(error.message);
+    }
+    if (!$("#gm-tools-message-copy").disabled) $("#gm-tools-message-copy").focus();
+    else $("#gm-tools-messages-close").focus();
+  }
+
+  function closeMessages() {
+    if (!messagesOpen) return;
+    messagesOpen = false;
+    $("#gm-tools-messages").hidden = true;
+    document.body.classList.remove("gm-tools-messages-visible");
+    $("#gm-tools-message-status").textContent = "";
+    messagesLastFocus?.focus?.();
+  }
+
   async function openOverlay() {
+    if (messagesOpen) closeMessages();
     lastFocus = document.activeElement;
     overlayOpen = true;
     $("#gm-tools-overlay").hidden = false;
@@ -241,10 +411,18 @@ if (root) {
   $("#gm-tool-fear-down").addEventListener("click", () => updateFear({ fear: bounded(state?.session?.fear, 0, 12) - 1 }));
   $("#gm-tool-fear-up").addEventListener("click", () => updateFear({ fear: bounded(state?.session?.fear, 0, 12) + 1 }));
   $("#gm-tool-fear-visibility").addEventListener("click", () => updateFear({ showFearToPlayers: state?.session?.showFearToPlayers === false }));
+  $("#gm-tools-messages-open").addEventListener("click", openMessages);
+  $("#gm-tools-messages-close").addEventListener("click", closeMessages);
+  $("#gm-tools-messages").addEventListener("pointerdown", (event) => { if (event.target === $("#gm-tools-messages")) closeMessages(); });
+  $("#gm-tools-message-form").addEventListener("submit", (event) => { event.preventDefault(); void sendMessage(); });
+  $("#gm-tools-message-copy").addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && event.ctrlKey) { event.preventDefault(); void sendMessage(); }
+  });
   $("#gm-tools-overlay-open").addEventListener("click", openOverlay);
   $("#gm-tools-overlay-close").addEventListener("click", closeOverlay);
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && overlayOpen) closeOverlay();
+    if (event.key === "Escape" && messagesOpen) closeMessages();
+    else if (event.key === "Escape" && overlayOpen) closeOverlay();
   });
 
   let refreshTimer = null;

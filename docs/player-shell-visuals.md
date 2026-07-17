@@ -50,9 +50,10 @@ and a restrained result animation. See [inventory.md](inventory.md).
 The chosen character's standard Conditions appear in a fixed utility dock at
 the foot of the tome. Each uses an original line symbol from
 `public/shared/conditions.js`; pressing it opens a short EN/SV rules
-explanation. `#player-chat-slot` is reserved in that same dock for the future
-private-message client. Until messaging exists it remains hidden, so the
-interface does not promise an action it cannot yet complete.
+explanation. `#player-chat-slot` mounts the private GM/PC thread in that same
+dock through `public/shared/player-chat.*`. The unread badge appears only for
+that chosen PC, the correspondence panel marks the player side read when it
+opens, and `Ctrl+Enter` sends without leaving the tome.
 
 Keepsakes are defined in the `KEEPSAKES` registry in `public/tome/tome.js` —
 one entry per object (art, label placement, sway). **Future player
@@ -69,6 +70,9 @@ Every player-shell visual must preserve these boundaries:
   player whitelist returned by `GET /api/party/:id`; never use the stored PC
   object or a GM view as a shortcut.
 - Listen to `/api/stream` and refetch after broadcasts.
+- Fetch private correspondence only from `GET /api/messages?pc=<chosen-id>`;
+  no shell payload contains thread text, and another PC's thread must never be
+  requested as a convenience.
 - Render the shared `session-pools` strip from `/api/table`: the deck and folio
   show party Hope, the personal tome shows only its chosen PC, and Fear is
   omitted entirely when the payload carries `null`.

@@ -10,6 +10,7 @@ import { t, term, termify, initI18n, seasonLabel, lang } from "/shared/i18n.js";
 import { CONDITIONS, conditionIcon } from "/shared/conditions.js";
 import { paperArtifactHtml } from "/shared/paper.js";
 import { sessionPoolsHtml } from "/shared/session-pools.js";
+import { mountPlayerChat } from "/shared/player-chat.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
 
@@ -134,6 +135,7 @@ let openOnArrival = new URLSearchParams(location.search).get("open") === "1";
 const getPC = () =>
   localStorage.getItem("settlement-pc") || localStorage.getItem("settlement-journal-pc");
 const setPC = (id) => localStorage.setItem("settlement-pc", id);
+const playerChat = mountPlayerChat({ slot: "#player-chat-slot", getPcId: getPC });
 const myIdentity = () => {
   const id = getPC();
   return (id && data?.party?.find((pc) => pc.id === id)) || null;
@@ -415,7 +417,7 @@ function renderPlayerDock() {
     return;
   }
   dock.hidden = false;
-  dock.setAttribute("aria-label", `${t("session.pool")}; ${t("conditions.label")}`);
+  dock.setAttribute("aria-label", `${t("session.pool")}; ${t("conditions.label")}; ${t("messages.open")}`);
   $("#session-pools").innerHTML = sessionPoolsHtml(data, { pcId: characterData.id });
   const active = new Set(characterData.conditions || []);
   const shown = $("#condition-popover").dataset.condition;
@@ -725,6 +727,7 @@ async function refresh() {
   if (!response.ok) throw new Error(t("error.table"));
   data = await response.json();
   await loadCharacter();
+  await playerChat.refresh();
   renderPlayerDock();
   renderCover();
   renderKeepsakes();
@@ -772,6 +775,7 @@ window.addEventListener("storage", async (event) => {
   spreadIndex = 0;
   sideKeys = { left: null, right: null };
   await loadCharacter();
+  await playerChat.refresh();
   renderPlayerDock();
   renderKeepsakes();
   if (bookOpen && ["character", "inventory"].includes(SECTION_ORDER[selectedIndex].key)) renderSpread(true);

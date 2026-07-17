@@ -97,8 +97,8 @@ designing anything; it is the source of truth. Code map + API:
   arms, armor, carried items, and further Domain-card spreads. Larger
   collections turn through spreads inside one keepsake rather than adding
   bookmarks. Chosen-character data comes from `playerCharacterView()`. Its
-  bottom utility dock shows that PC's Conditions and reserves
-  `#player-chat-slot` for future private messages.
+  bottom utility dock shows that PC's Conditions and mounts the reusable
+  private GM/PC correspondence client at `#player-chat-slot`.
 - PC inventory uses typed entries with lazy migration from legacy strings.
   Standard Consumables resolve from `data/daggerheart/reference.json`, stack
   to five, and use atomic server-side reactions. Contract and extension rules:
@@ -133,13 +133,18 @@ designing anything; it is the source of truth. Code map + API:
   rows, and the dedicated `hud` drafting board. Boards persist in named
   `data/boards.json` documents (`main`, `hud`); boot migrates legacy
   `board.json` once, and `/api/board` remains a non-broadcasting `main` alias.
+- Private correspondence persists as flat rows in `data/messages.json`.
+  Active players fetch only their own thread through `/api/messages?pc=`; the
+  GM hotbar fetches all threads through `/api/messages/gm`. General player and
+  GM views expose unread counts only, never message text. Retiring a PC keeps
+  the GM-readable thread but blocks player reads and new messages.
 
 ## What's next (agreed ambitions, in rough order)
 - **The remaining planned features have backend implementation plans in
   [docs/master-plan.md](docs/master-plan.md).** Read its Shared foundations
   before starting one; character lifecycle (feature 7), the Fear/Hope tracker
-  (feature 1), and GM quick tools (feature 2) are built, so the remaining
-  suggested dependency order is 3 → 5 → 6 → 4.
+  (feature 1), GM quick tools (feature 2), and private messages (feature 3) are
+  built, so the remaining suggested dependency order is 5 → 6 → 4.
 - ComfyUI wiring: the GM-side request UI exists on People cards (prompt saved
   to `portraitPrompt`, `POST /api/people/:id/portrait` is a stub) — connect it
   to the local 5090 using `docs/comfyui/waidrin-portraits-workflow.json`

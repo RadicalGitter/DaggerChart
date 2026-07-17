@@ -33,9 +33,9 @@ Treat each plan's **Backend** section as settled architecture and its
   keepsake in the `KEEPSAKES` registry (`tome.js`) per
   [player-shell-visuals.md](player-shell-visuals.md).
 
-Suggested remaining order (dependencies, not importance): **3 → 5 → 6 → 4**.
-7 (soft delete), 1 (Fear/Hope), and 2 (GM quick tools) are built. 3 is
-independent; 5 is mostly data
+Suggested remaining order (dependencies, not importance): **5 → 6 → 4**.
+7 (soft delete), 1 (Fear/Hope), 2 (GM quick tools), and 3 (private messages)
+are built. 5 is mostly data
 authoring; 6 (campaigns) must land before 4, which is campaign-scoped and the
 only feature needing network access.
 
@@ -126,7 +126,14 @@ player-visible; don't project it.
 
 ---
 
-## 3. Private messages (GM ↔ each player)
+## 3. Private messages (GM ↔ each player) — BUILT
+
+**Built on `beta` (2026-07-17).** Messages persist in `data/messages.json`.
+The shared GM hotbar has unread badges and a responsive one-thread-at-a-time
+correspondence panel; the personal tome mounts the EN/SV player thread in its
+bottom utility dock. Active PCs can read and write only their own thread,
+retired threads remain readable to the GM, SSE causes whitelisted refetches,
+and the general player/GM payloads carry counts only rather than message text.
 
 **Goal.** One quiet thread per PC between that player and the GM. Not a group
 chat, not player-to-player. Lives in the hotbar for the GM; for players, it

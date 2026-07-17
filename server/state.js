@@ -45,6 +45,7 @@ export const state = {
   people: loadJson("people.json", []),
   places: loadJson("places.json", [DEFAULT_VILLAGE]),
   notes: loadJson("notes.json", []),
+  messages: loadJson("messages.json", []),
   journalDoodles: loadJson("journal-doodles.json", {}),
   feedback: loadJson("feedback.json", []),
   screen: loadJson("screen.json", { current: null }),
@@ -82,6 +83,7 @@ export function persist() {
   saveJson("people.json", state.people);
   saveJson("places.json", state.places);
   saveJson("notes.json", state.notes);
+  saveJson("messages.json", state.messages);
   saveJson("journal-doodles.json", state.journalDoodles);
   saveJson("feedback.json", state.feedback);
   saveJson("screen.json", state.screen);

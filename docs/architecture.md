@@ -9,16 +9,16 @@ server/
   music.js    song metadata, playlists, character themes, Suno provider boundary
   telemetry.js bounded, content-free local UX aggregation
   state.js    domain logic: roll resolution, modifiers, season, log
-  store.js    atomic JSON read/write (tmp+rename), timestamped backups
-  views.js    audience whitelists: gmView(), tableView(), loreView()
+  store.js    atomic JSON read/write (unique tmp+rename), timestamped backups
+  views.js    audience whitelists for GM, shells, lore, PCs, and messages
 public/
-  shared/     themes, i18n, session pools, GM quick tools, player registries, feedback and UX collectors
-  gm/         GM console (campaign controls, quick table, feedback queue, and UX review map)
+  shared/     themes, i18n, session pools, GM tools/messages, player chat, feedback and UX collectors
+  gm/         GM console (campaign controls, correspondence, quick table, feedback queue, and UX review map)
   login/      trusted-table chooser: finished-character bubbles + draft side view
   player/     player root: identity switcher and visual-tool shelf
   table/      general arcana-card shell over all five player sections
   table-book/ settlement folio: town, folk, and chronicle
-  tome/       personal tome: journal, character, and inventory keepsakes
+  tome/       personal tome: journal, character, inventory, and private correspondence
   screen/     the projector client (renders whatever the GM casts via /api/screen)
   create/     character creation wizard
   character/  live character sheet + hand manager
@@ -32,11 +32,13 @@ docs/         this file, the design spec, ComfyUI workflow
 ## Server
 
 - **`store.js`** — `loadJson(name, fallback)` / `saveJson(name, obj)`; writes are
-  atomic (write `.tmp`, rename). `snapshot()` copies every `data/*.json` into
+  atomic (write a process-unique `.tmp`, rename). Unique temp names prevent
+  overlapping local server instances from contending during restarts and test
+  runs. `snapshot()` copies every `data/*.json` into
   `data/backups/<timestamp>/`; called on each downtime resolution. `DATA_DIR`
   env var overrides the data directory (used by tests/scratch runs).
 - **`state.js`** — owns the mutable `state` (settlement, live session, characters,
-  pcs, log, event tables). `session.json` holds the bounded 0..12 Fear pool and
+  pcs, messages, log, event tables). `session.json` holds the bounded 0..12 Fear pool and
   its player-visibility switch. `resolveDowntime(buildingId, raw, effort)` implements §5 of the
   spec exactly: raw −2..23 validated, modifiers summed, clamp 0–30, spent-number
   tracking per building, stockpile wipe on 0, standing `effect` capture, log
@@ -48,6 +50,9 @@ docs/         this file, the design spec, ComfyUI workflow
   people/places, and unfired event text never leave the server on `/api/table`
   or `/api/lore`. A person standing in an unrevealed place gets `placeId: null`.
   Personal notes ship only when the request carries the owner's `?pc=`.
+  `playerMessagesView(pcId)` returns only that active PC's thread;
+  `gmMessagesView()` returns the GM thread list. `gmView()` and `loreView()`
+  carry unread counts only, while `tableView()` carries neither counts nor text.
   `tableView()` exposes Fear only when the session switch permits it and adds
   public Hope totals to active party identities. Never render player surfaces
   from `gmView()`.
@@ -74,6 +79,10 @@ docs/         this file, the design spec, ComfyUI workflow
 | `GET /api/state` | full GM state (private) |
 | `GET /api/table` | whitelisted player payload |
 | `PUT /api/session` | set bounded Fear and/or its player visibility; persists and broadcasts |
+| `GET /api/messages?pc=id` | one active PC's private GM thread only |
+| `GET /api/messages/gm` | all PC threads and per-thread unread counts for GM surfaces |
+| `POST /api/messages` | send validated GM/PC text; stamps sender read state, persists, broadcasts |
+| `PUT /api/messages/read` | bulk-mark one side of one thread read; retired threads are GM-readable only |
 | `GET /api/stream` | SSE; any broadcast → clients refetch |
 | `GET /api/downtime/preview?building=id` | foreman + modifier breakdown before rolling |
 | `POST /api/downtime/resolve` | `{buildingId, raw, effort}` → single entry revealed |
@@ -140,8 +149,13 @@ Consumable reactions; see [inventory.md](inventory.md).
 - **Live updates:** pages listen to `/api/stream` and refetch (debounced).
   Character plates on the board update as players tap their sheets.
 - **GM quick tools:** `/gm` and `/board` share a fixed hotbar with bounded Fear
-  controls and a full-screen quick table. The overlay combines live GM-whitelisted
+  controls, unread correspondence, and a full-screen quick table. The message
+  panel shows one PC thread at a time; the overlay combines live GM-whitelisted
   PC vitals, the dedicated `hud` board, and static `gm-screen.json` reference rows.
+- **Player correspondence:** `shared/player-chat.*` mounts in the tome's bottom
+  dock for the current `settlement-pc`. It fetches only `/api/messages?pc=`,
+  marks the player side read on open, and sends with `Ctrl+Enter`; EN/SV labels
+  live in `shared/i18n.js`.
 - **Player-shell visuals:** `/player` is the root for choosing a focused visual
   tool. `/table`, `/table-book`, and `/tome` share `/api/table`, SSE,
   `settlement-pc`, and the existing embeds. See

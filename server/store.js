@@ -18,9 +18,16 @@ export function loadJson(name, fallback) {
 export function saveJson(name, obj) {
   const file = path.join(DATA_DIR, name);
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  const tmp = file + ".tmp";
-  fs.writeFileSync(tmp, JSON.stringify(obj, null, 2) + "\n", "utf8");
-  fs.renameSync(tmp, file);
+  // A unique temp file keeps overlapping local server instances from
+  // renaming one another's in-progress write during restarts and smoke tests.
+  const nonce = Math.random().toString(36).slice(2, 9);
+  const tmp = `${file}.${process.pid}-${Date.now()}-${nonce}.tmp`;
+  try {
+    fs.writeFileSync(tmp, JSON.stringify(obj, null, 2) + "\n", "utf8");
+    fs.renameSync(tmp, file);
+  } finally {
+    if (fs.existsSync(tmp)) fs.unlinkSync(tmp);
+  }
 }
 
 // Merge every table file in data/event-tables/ into one combined shape.

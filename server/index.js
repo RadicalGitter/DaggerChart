@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import "./env.js";
 import { state, persist, addLog, advanceSeason, resolveDowntime, modifierBreakdown, seasonLabel } from "./state.js";
-import { gmView, tableView, loreView, screenView, partyListView, playerCharacterView } from "./views.js";
+import { gmView, tableView, loreView, screenView, partyListView, playerCharacterView, gmMessagesView, playerMessagesView } from "./views.js";
 import { loadJson, saveJson } from "./store.js";
 import { addInventoryItem, consumables, grantConsumable, inventoryEntry, updateInventoryItem, useInventoryItem } from "./inventory.js";
 import { clearTelemetry, recordTelemetryBatch, telemetryView } from "./telemetry.js";
@@ -81,7 +81,11 @@ function guard(handler) {
     try {
       handler(req, res);
     } catch (err) {
-      res.status(400).json({ error: err.message });
+      const internal = Boolean(err?.code);
+      if (internal) console.error(err);
+      res.status(internal ? 500 : 400).json({
+        error: internal ? "The ledger could not be updated." : err.message
+      });
     }
   };
 }
@@ -91,7 +95,11 @@ function guardAsync(handler) {
     try {
       await handler(req, res);
     } catch (err) {
-      res.status(400).json({ error: err.message });
+      const internal = Boolean(err?.code);
+      if (internal) console.error(err);
+      res.status(internal ? 500 : 400).json({
+        error: internal ? "The ledger could not be updated." : err.message
+      });
     }
   };
 }
@@ -324,6 +332,61 @@ app.put("/api/session", guard((req, res) => {
   persist();
   broadcast();
   res.json({ ...state.session });
+}));
+
+// --- private GM/PC threads ---
+const MESSAGE_SIDES = new Set(["gm", "player"]);
+
+app.get("/api/messages/gm", (_req, res) => res.json(gmMessagesView()));
+
+app.get("/api/messages", guard((req, res) => {
+  const pc = activePcById(req.query.pc);
+  if (!pc) throw new Error("No such active character.");
+  res.json(playerMessagesView(pc.id));
+}));
+
+app.post("/api/messages", guard((req, res) => {
+  const pc = activePcById(req.body?.pcId);
+  if (!pc) throw new Error("No such active character.");
+  const from = req.body?.from;
+  if (!MESSAGE_SIDES.has(from)) throw new Error("Unknown message sender.");
+  const text = String(req.body?.text || "").trim();
+  if (!text) throw new Error("Write a message before sending it.");
+  if (text.length > 4000) throw new Error("Messages must be at most 4000 characters.");
+  const message = {
+    id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    pcId: pc.id,
+    from,
+    text,
+    ts: new Date().toISOString(),
+    read: { gm: from === "gm", player: from === "player" }
+  };
+  state.messages.push(message);
+  persist();
+  broadcast();
+  res.json(message);
+}));
+
+app.put("/api/messages/read", guard((req, res) => {
+  const side = req.body?.side;
+  if (!MESSAGE_SIDES.has(side)) throw new Error("Unknown message reader.");
+  const pc = state.pcs.find((candidate) => candidate.id === req.body?.pcId);
+  if (!pc || (side === "player" && !isActivePc(pc))) throw new Error("No such readable character thread.");
+  let marked = 0;
+  for (const message of state.messages) {
+    if (message.pcId !== pc.id || message.read?.[side] === true) continue;
+    message.read = {
+      gm: message.read?.gm === true,
+      player: message.read?.player === true,
+      [side]: true
+    };
+    marked += 1;
+  }
+  if (marked) {
+    persist();
+    broadcast();
+  }
+  res.json({ pcId: pc.id, side, marked });
 }));
 
 // Local UX evidence. Batches never broadcast: a heartbeat must not cause
