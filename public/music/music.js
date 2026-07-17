@@ -8,6 +8,9 @@ initTerms();
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+const MUSIC_EMBEDDED = new URLSearchParams(location.search).get("embed") === "1";
+
+document.body.classList.toggle("embedded", MUSIC_EMBEDDED);
 
 const PROMPT_ENVELOPE = "tag-board-v1";
 const edgePalette = ["#8ecfd0", "#e7b8c5", "#ead18c", "#a9d2b6", "#c5b6e1", "#efc2ad", "#acc6df"];
@@ -161,6 +164,7 @@ function songSeed(value) {
 
 function bubbleVisual(song, index = 0) {
   const seed = songSeed(song.id || song.title) + index;
+  const sizing = bubbleSizeProfile();
   const shapes = [
     ["53% 47% 55% 45% / 48% 54% 46% 52%", "48% 52% 46% 54% / 55% 47% 53% 45%"],
     ["47% 53% 49% 51% / 54% 46% 55% 45%", "54% 46% 53% 47% / 47% 55% 45% 53%"],
@@ -171,7 +175,7 @@ function bubbleVisual(song, index = 0) {
     a: edgePalette[seed % edgePalette.length],
     b: edgePalette[(seed + 2) % edgePalette.length],
     c: edgePalette[(seed + 5) % edgePalette.length],
-    size: 124 + (seed % 3) * 10,
+    size: sizing.base + (seed % 3) * sizing.step,
     drift: 7 + (seed % 4),
     turn: seed % 360,
     shapeA,
@@ -180,7 +184,22 @@ function bubbleVisual(song, index = 0) {
 }
 
 function bubbleLayoutMode() {
-  return window.matchMedia("(max-width: 680px)").matches ? "compact" : "wide";
+  if (window.matchMedia("(max-width: 680px)").matches) return "compact";
+  if (MUSIC_EMBEDDED || window.matchMedia("(max-width: 2200px)").matches) return "reduced";
+  return "wide";
+}
+
+function bubbleSizeProfile(mode = bubbleLayoutMode()) {
+  if (mode === "compact") return { min: 72, max: 144, base: 84, step: 6, cell: 108 };
+  if (mode === "reduced") return { min: 78, max: 172, base: 94, step: 7, cell: 122 };
+  return { min: 90, max: 230, base: 114, step: 8, cell: 150 };
+}
+
+function bubbleSizeLimits(mode = bubbleLayoutMode()) {
+  const profile = bubbleSizeProfile(mode);
+  const available = Math.max(48, Math.min(bubblePhysics.stageWidth - 4, bubblePhysics.stageHeight - 4));
+  const max = Math.min(profile.max, available);
+  return { min: Math.min(profile.min, max), max };
 }
 
 function bubbleLayoutKey(songId, mode = bubbleLayoutMode()) {
@@ -347,8 +366,8 @@ function moveBubbleDrag(event, bubble) {
     const pointerX = event.clientX - stageRect.left;
     const pointerY = event.clientY - stageRect.top;
     const distance = Math.hypot(pointerX - drag.centerX, pointerY - drag.centerY);
-    const maximumSize = Math.max(96, Math.min(230, bubblePhysics.stageWidth - 4, bubblePhysics.stageHeight - 4));
-    const size = clamp(drag.startSize + (distance - drag.startDistance) * 2, 96, maximumSize);
+    const limits = bubbleSizeLimits(bubblePhysics.layoutMode);
+    const size = clamp(drag.startSize + (distance - drag.startDistance) * 2, limits.min, limits.max);
     drag.item.size = size;
     drag.item.x = drag.centerX - size / 2;
     drag.item.y = drag.centerY - size / 2;
@@ -406,13 +425,14 @@ function mountBubblePhysics() {
   bubblePhysics.layoutMode = bubbleLayoutMode();
   if (!bubbles.length || !bubblePhysics.stageWidth || !bubblePhysics.stageHeight) return;
 
-  const columns = Math.max(1, Math.floor(bubblePhysics.stageWidth / 160));
+  const sizing = bubbleSizeProfile(bubblePhysics.layoutMode);
+  const limits = bubbleSizeLimits(bubblePhysics.layoutMode);
+  const columns = Math.max(1, Math.floor(bubblePhysics.stageWidth / sizing.cell));
   const rows = Math.max(1, Math.ceil(bubbles.length / columns));
   bubbles.forEach((bubble, index) => {
     const saved = state.layouts[bubbleLayoutKey(bubble.dataset.song)];
     const naturalSize = bubble.offsetWidth;
-    const maximumSize = Math.max(96, Math.min(230, bubblePhysics.stageWidth - 4, bubblePhysics.stageHeight - 4));
-    const size = clamp(Number.isFinite(saved?.size) ? saved.size : naturalSize, 96, maximumSize);
+    const size = clamp(Number.isFinite(saved?.size) ? saved.size : naturalSize, limits.min, limits.max);
     bubble.style.setProperty("--bubble-size", `${size}px`);
     const fallbackX = ((index % columns) + 0.5) / columns;
     const fallbackY = (Math.floor(index / columns) + 0.5) / rows;

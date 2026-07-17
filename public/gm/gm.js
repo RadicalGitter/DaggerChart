@@ -331,6 +331,7 @@ function showSection(key) {
   document.body.classList.toggle("images-open", key === "images");
   document.body.classList.toggle("folk-open", key === "folk");
   document.body.classList.toggle("board-open", key === "board");
+  document.body.classList.toggle("music-open", key === "music");
   if (key === "ux") requestAnimationFrame(renderUx);
   if (key === "almanac") setAlmanacView(almanacView);
   if (key === "images") requestAnimationFrame(renderImageLibrary);

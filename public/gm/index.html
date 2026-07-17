@@ -31,7 +31,9 @@
   nav a:hover { color: var(--ink); }
   main { min-width: 0; min-height: 0; height: 100%; overflow-y: auto; padding: 2rem 2.5rem; max-width: 980px; }
   body.folk-open main,
-  body.board-open main { width: 100%; max-width: none; box-sizing: border-box; }
+  body.board-open main,
+  body.music-open main { width: 100%; max-width: none; box-sizing: border-box; }
+  body.music-open main { padding: .75rem; overflow: hidden; }
   section[hidden] { display: none; }
 
   /* Downtime runner */
@@ -193,10 +195,21 @@
   .folk-portrait-attempt div { display: flex; flex-wrap: wrap; gap: .25rem; }
   .folk-portrait-attempt button { padding: .22rem .35rem; font-size: .58rem; }
 
-  .board-section { height: calc(100vh - 4rem); min-height: 620px; }
-  .board-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: .65rem; }
-  .board-section-head h2 { margin: 0; }
-  .gm-board-frame { width: 100%; height: calc(100% - 2.4rem); display: block; border: 1px solid var(--rule-strong); background: var(--paper); }
+  .gm-tool-section { height: calc(100vh - 4rem); min-height: 620px; }
+  .gm-tool-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: .65rem; }
+  .gm-tool-section-head h2 { margin: 0; }
+  .gm-tool-frame { width: 100%; height: calc(100% - 2.4rem); display: block; border: 1px solid var(--rule-strong); background: var(--paper); }
+  .music-section { height: calc(100vh - 1.5rem); min-height: 560px; }
+
+  @media (max-width: 1440px) and (min-width: 701px) {
+    .layout { grid-template-columns: 178px minmax(0, 1fr); }
+    nav { padding: 1rem 0; }
+    nav .title { padding: 0 .85rem .7rem; margin-bottom: .65rem; }
+    nav a { padding: .38rem .85rem; font-size: .8rem; }
+    main { padding: 1.25rem 1.5rem; }
+    .gm-tool-section { height: calc(100vh - 2.5rem); }
+    .music-section { height: calc(100vh - 1.5rem); }
+  }
 
   .formrow { display: flex; gap: 0.6rem; align-items: center; margin: 0.4rem 0; flex-wrap: wrap; }
   .formrow label { min-width: 110px; color: var(--ink-soft); font-size: 0.9rem; }
@@ -678,12 +691,12 @@
     .scene-root-grid, .scene-tag-row { gap: .45rem; }
     .scene-tag-bubble { width: 92px; height: 92px; flex-basis: 92px; padding: .5rem; font-size: .7rem; }
     .folk-workshop { grid-template-columns: 1fr; grid-template-rows: minmax(180px, .8fr) minmax(0, 1.2fr); }
-    .board-section { height: 75vh; min-height: 520px; }
+    .gm-tool-section, .music-section { height: 75vh; min-height: 520px; }
   }
   @media (max-width: 700px) and (pointer: coarse) {
     html, body { height: auto; overflow: visible; overscroll-behavior: auto; }
     .layout { display: block; height: auto; min-height: 100vh; overflow: visible; }
-    main, body.folk-open main { height: auto; overflow: visible; }
+    main, body.folk-open main, body.music-open main { height: auto; overflow: visible; }
     #sec-folk, .folk-workshop { height: auto; min-height: 0; }
     .folk-workshop { grid-template-rows: none; }
     .folk-card-field, .folk-card-back { height: auto; overflow: visible; }
@@ -721,6 +734,7 @@
     <a href="#buildings" data-nav="buildings">Buildings</a>
     <a href="#folk" data-nav="folk">Folk</a>
     <a href="#board" data-nav="board">Drafting board</a>
+    <a href="#music" data-nav="music">Music desk</a>
     <a href="#people" data-nav="people">People</a>
     <a href="#places" data-nav="places">Places</a>
     <a href="#images" data-nav="images">Images</a>
@@ -733,7 +747,6 @@
     <a href="#screen" data-nav="screen">Screen</a>
     <a href="#town" data-nav="town">Settlement</a>
     <hr class="rule" style="margin: 1rem 1.2rem;">
-    <a href="/music" target="_blank" style="font-size:0.85rem;">Open the music desk ↗</a>
     <a href="/table" target="_blank" style="font-size:0.85rem;">Open the table view ↗</a>
     <a href="/screen" target="_blank" style="font-size:0.85rem;">Open the screen ↗</a>
     <hr class="rule" style="margin: 1rem 1.2rem;">
@@ -817,12 +830,20 @@
       </div>
     </section>
 
-    <section class="board-section" id="sec-board" hidden>
-      <header class="board-section-head">
+    <section class="gm-tool-section board-section" id="sec-board" hidden>
+      <header class="gm-tool-section-head">
         <h2>Drafting board</h2>
         <a href="/board" target="_blank" rel="noopener">Open full canvas ↗</a>
       </header>
-      <iframe class="gm-board-frame" src="/board/?embed=1" title="The drafting board"></iframe>
+      <iframe class="gm-tool-frame gm-board-frame" src="/board/?embed=1" title="The drafting board"></iframe>
+    </section>
+
+    <section class="gm-tool-section music-section" id="sec-music" hidden>
+      <header class="gm-tool-section-head">
+        <h2>Music desk</h2>
+        <a href="/music" target="_blank" rel="noopener">Open full desk ↗</a>
+      </header>
+      <iframe class="gm-tool-frame gm-music-frame" src="/music/?embed=1" title="The music desk"></iframe>
     </section>
 
     <section id="sec-people" hidden>
