@@ -23,6 +23,13 @@
       <div id="playlist-list"></div>
       <button class="quiet rail-command" id="new-playlist">New playlist</button>
     </nav>
+    <section class="history-panel" aria-labelledby="queue-label">
+      <header class="history-head">
+        <div class="rail-label" id="queue-label">Up next</div>
+        <button class="history-clear" id="clear-queue" type="button" title="Clear the play queue">Clear</button>
+      </header>
+      <div class="history-list" id="queue-list" aria-live="polite"></div>
+    </section>
     <section class="history-panel" aria-labelledby="history-label">
       <header class="history-head">
         <div class="rail-label" id="history-label">Popped history</div>

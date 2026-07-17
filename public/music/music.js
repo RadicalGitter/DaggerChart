@@ -25,7 +25,7 @@ const state = {
   paintColor: null,
   selectedCharacter: null,
   playingId: null,
-  queue: [],
+  queue: loadQueue(),
   clickTimer: null,
   tagTransitioning: false
 };
@@ -66,6 +66,21 @@ function loadHistory() {
 
 function saveHistory() {
   localStorage.setItem("settlement-music-history", JSON.stringify(state.history));
+}
+
+// The play queue mirrors the popped history: songs wait in line until
+// they are played or struck, and survive a reload the same way.
+function loadQueue() {
+  try {
+    const value = JSON.parse(localStorage.getItem("settlement-music-queue") || "[]");
+    return Array.isArray(value) ? value.filter((id) => typeof id === "string").slice(0, 50) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveQueue() {
+  localStorage.setItem("settlement-music-queue", JSON.stringify(state.queue));
 }
 
 function loadBubbleLayouts() {
@@ -470,6 +485,53 @@ function rememberPop(songId) {
   renderHistory();
 }
 
+function renderQueue() {
+  const available = state.queue.filter((songId) => songById(songId));
+  if (available.length !== state.queue.length) {
+    state.queue = available;
+    saveQueue();
+  }
+  $("#queue-list").innerHTML = available.length ? available.map((songId, index) => {
+    const song = songById(songId);
+    const visual = bubbleVisual(song);
+    const detail = [`#${index + 1}`, song.duration ? formatTime(song.duration) : song.status].filter(Boolean).join(" · ");
+    return `<div class="history-song queue-song" data-queue-song="${esc(song.id)}" style="--history-color:${visual.a}" title="Play ${esc(song.title)} now; right-click for actions">
+      <span class="history-drop" aria-hidden="true"></span>
+      <span class="history-copy"><strong>${esc(song.title)}</strong><span>${esc(detail)}</span></span>
+      <button class="queue-remove" data-queue-remove="${esc(song.id)}" title="Strike from the queue" aria-label="Remove ${esc(song.title)} from the queue">×</button>
+    </div>`;
+  }).join("") : `<div class="history-empty">Queued songs wait here until played or struck.</div>`;
+
+  for (const row of document.querySelectorAll("[data-queue-song]")) {
+    row.onclick = (event) => {
+      if (event.target.closest("[data-queue-remove]")) return;
+      playSong(row.dataset.queueSong);
+    };
+    row.oncontextmenu = (event) => {
+      event.preventDefault();
+      showContextMenu(row.dataset.queueSong, event.clientX, event.clientY);
+    };
+  }
+  for (const x of document.querySelectorAll("[data-queue-remove]")) {
+    x.onclick = (event) => {
+      event.stopPropagation();
+      state.queue = state.queue.filter((id) => id !== x.dataset.queueRemove);
+      saveQueue();
+      renderQueue();
+    };
+  }
+}
+
+function queueSong(songId, { next = false } = {}) {
+  const song = songById(songId);
+  if (!song) return;
+  const rest = state.queue.filter((id) => id !== songId);
+  state.queue = next ? [songId, ...rest] : [...rest, songId];
+  saveQueue();
+  renderQueue();
+  toast(next ? `${song.title} is next.` : `${song.title} joins the queue.`);
+}
+
 function activeSongs() {
   const playlist = playlistById(state.playlistId);
   const ids = playlist ? new Set(playlist.songIds) : null;
@@ -735,6 +797,12 @@ function popAndPlay(songId) {
 function playSong(songId) {
   const song = songById(songId);
   if (!song?.audioUrl) return toast("No playable audio is available yet.");
+  // Played songs leave the queue, however they came to be played.
+  if (state.queue.includes(songId)) {
+    state.queue = state.queue.filter((id) => id !== songId);
+    saveQueue();
+    renderQueue();
+  }
   const audio = $("#audio");
   state.playingId = songId;
   audio.src = song.audioUrl;
@@ -761,7 +829,8 @@ function showContextMenu(songId, x, y) {
     .join("");
   menu.innerHTML = `
     <button data-action="play">Play</button>
-    <button data-action="queue">Queue next</button>
+    <button data-action="queue-next">Play next</button>
+    <button data-action="queue">Add to queue</button>
     <button data-action="reuse">Re-use prompt</button>
     <hr>${playlistItems}<hr>
     <button data-action="rename">Rename</button>
@@ -776,10 +845,8 @@ function showContextMenu(songId, x, y) {
     hideContextMenu();
     try {
       if (button.dataset.action === "play") playSong(songId);
-      if (button.dataset.action === "queue") {
-        state.queue = [songId, ...state.queue.filter((id) => id !== songId)];
-        toast(`${song.title} is next.`);
-      }
+      if (button.dataset.action === "queue-next") queueSong(songId, { next: true });
+      if (button.dataset.action === "queue") queueSong(songId);
       if (button.dataset.action === "reuse") {
         $("#song-description").value = song.description || "";
         $("#song-title").value = `${song.title} variation`;
@@ -1161,6 +1228,7 @@ async function load() {
     renderPlaylists();
     renderBubbles();
     renderHistory();
+    renderQueue();
     renderCharacters();
     renderProvider();
     renderSunoMirror();
@@ -1196,6 +1264,12 @@ $("#arrange-bubbles").onclick = () => {
   saveBubbleLayouts();
   renderBubbles();
 };
+$("#clear-queue").onclick = () => {
+  state.queue = [];
+  saveQueue();
+  renderQueue();
+};
+
 $("#clear-history").onclick = () => {
   state.history = [];
   saveHistory();
@@ -1384,8 +1458,8 @@ audio.ontimeupdate = () => {
   $("#time-label").textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
 };
 audio.onended = () => {
-  const next = state.queue.shift();
-  if (next) playSong(next);
+  const next = state.queue[0];
+  if (next) playSong(next); // playSong strikes it from the queue itself
   else updateTransport();
 };
 
@@ -1399,6 +1473,13 @@ document.addEventListener("keydown", (event) => {
     state.paintColor = null;
     renderPaintTool();
     closePaintPalette();
+  }
+  // Space is the desk's foot pedal: it always plays/pauses — unless the
+  // GM is actually typing somewhere.
+  if (event.code === "Space") {
+    if (event.target.closest?.("input, textarea, select, [contenteditable]")) return;
+    event.preventDefault();
+    $("#play-toggle").click();
   }
 });
 
