@@ -4,7 +4,7 @@ const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
 
-const palette = ["#7ba99a", "#b98183", "#7f9db3", "#b59a58", "#8f9d78", "#aa8cba"];
+const edgePalette = ["#6fb7bd", "#d68aa2", "#d7b25b", "#83b593", "#9e8bc2", "#df9679", "#789bc1"];
 const state = {
   data: { provider: {}, songs: [], playlists: [], characterTags: [] },
   playlistId: "library",
@@ -13,6 +13,7 @@ const state = {
   explicit: new Set(),
   excluded: new Set(),
   pins: loadPins(),
+  history: loadHistory(),
   selectedCharacter: null,
   playingId: null,
   queue: [],
@@ -30,6 +31,21 @@ function loadPins() {
 
 function savePins() {
   localStorage.setItem("settlement-music-pins", JSON.stringify(state.pins));
+}
+
+function loadHistory() {
+  try {
+    const value = JSON.parse(localStorage.getItem("settlement-music-history") || "[]");
+    return Array.isArray(value)
+      ? value.filter((entry) => entry?.songId).slice(0, 50)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory() {
+  localStorage.setItem("settlement-music-history", JSON.stringify(state.history));
 }
 
 async function api(url, options = {}) {
@@ -64,6 +80,66 @@ function playlistById(id) {
   return state.data.playlists.find((playlist) => playlist.id === id);
 }
 
+function songSeed(value) {
+  let hash = 2166136261;
+  for (const char of String(value || "")) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function bubbleVisual(song, index = 0) {
+  const seed = songSeed(song.id || song.title) + index;
+  return {
+    a: edgePalette[seed % edgePalette.length],
+    b: edgePalette[(seed + 2) % edgePalette.length],
+    c: edgePalette[(seed + 5) % edgePalette.length],
+    size: 124 + (seed % 3) * 10,
+    drift: 7 + (seed % 4),
+    turn: seed % 360
+  };
+}
+
+function historyAge(timestamp) {
+  const seconds = Math.max(0, Math.floor((Date.now() - Number(timestamp || 0)) / 1000));
+  if (seconds < 60) return "just now";
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  return `${Math.floor(seconds / 86400)}d ago`;
+}
+
+function renderHistory() {
+  const available = state.history.filter((entry) => songById(entry.songId));
+  if (available.length !== state.history.length) {
+    state.history = available;
+    saveHistory();
+  }
+  $("#history-list").innerHTML = available.length ? available.map((entry) => {
+    const song = songById(entry.songId);
+    const visual = bubbleVisual(song);
+    const detail = [song.duration ? formatTime(song.duration) : song.status, historyAge(entry.poppedAt)].filter(Boolean).join(" · ");
+    return `<button class="history-song" data-history-song="${esc(song.id)}" style="--history-color:${visual.a}" title="Play ${esc(song.title)}; right-click for actions">
+      <span class="history-drop" aria-hidden="true"></span>
+      <span class="history-copy"><strong>${esc(song.title)}</strong><span>${esc(detail)}</span></span>
+    </button>`;
+  }).join("") : `<div class="history-empty">Popped songs collect here.</div>`;
+
+  for (const row of document.querySelectorAll("[data-history-song]")) {
+    row.onclick = () => playSong(row.dataset.historySong);
+    row.oncontextmenu = (event) => {
+      event.preventDefault();
+      showContextMenu(row.dataset.historySong, event.clientX, event.clientY);
+    };
+  }
+}
+
+function rememberPop(songId) {
+  state.history = [{ songId, poppedAt: Date.now() }, ...state.history.filter((entry) => entry.songId !== songId)].slice(0, 50);
+  saveHistory();
+  renderHistory();
+}
+
 function activeSongs() {
   const playlist = playlistById(state.playlistId);
   const ids = playlist ? new Set(playlist.songIds) : null;
@@ -91,27 +167,66 @@ function renderPlaylists() {
 }
 
 function renderBubbles() {
+  hideBubbleInfo();
   const playlist = playlistById(state.playlistId);
   $("#collection-title").textContent = playlist?.name || "Library";
   const songs = activeSongs();
   $("#bubble-stage").innerHTML = songs.length ? songs.map((song, index) => {
+    const visual = bubbleVisual(song, index);
     const detail = song.status === "ready"
       ? [song.mode === "cover" ? "theme variation" : song.source, song.duration ? formatTime(song.duration) : ""].filter(Boolean).join(" · ")
       : song.status;
     return `<button class="song-bubble ${song.status !== "ready" ? "rendering" : ""}"
-      style="--bubble-color:${palette[index % palette.length]};--bubble-size:${122 + (index % 3) * 10}px;--drift:${7 + (index % 4)}s"
+      style="--edge-a:${visual.a};--edge-b:${visual.b};--edge-c:${visual.c};--bubble-size:${visual.size}px;--drift:${visual.drift}s;--bubble-turn:${visual.turn}deg"
       data-song="${esc(song.id)}" aria-label="Play ${esc(song.title)}">
       <strong>${esc(song.title)}</strong><span>${esc(detail)}</span>
     </button>`;
   }).join("") : `<div class="bubble-empty">${state.popped.size ? "The surface is quiet. Resurface the collection to bring the bubbles back." : "No songs are in this collection yet."}</div>`;
 
   for (const bubble of document.querySelectorAll("[data-song]")) {
+    const song = songById(bubble.dataset.song);
     bubble.onclick = () => popAndPlay(bubble.dataset.song, bubble);
+    bubble.onmouseenter = (event) => showBubbleInfo(song, event.clientX, event.clientY);
+    bubble.onmousemove = (event) => positionBubbleInfo(event.clientX, event.clientY);
+    bubble.onmouseleave = hideBubbleInfo;
+    bubble.onfocus = () => {
+      const rect = bubble.getBoundingClientRect();
+      showBubbleInfo(song, rect.right, rect.top + rect.height / 2);
+    };
+    bubble.onblur = hideBubbleInfo;
     bubble.oncontextmenu = (event) => {
       event.preventDefault();
       showContextMenu(bubble.dataset.song, event.clientX, event.clientY);
     };
   }
+}
+
+function positionBubbleInfo(x, y) {
+  const info = $("#bubble-info");
+  if (info.hidden) return;
+  const margin = 12;
+  const left = Math.max(margin, Math.min(x + 16, innerWidth - info.offsetWidth - margin));
+  const top = Math.max(margin, Math.min(y + 16, innerHeight - info.offsetHeight - margin));
+  info.style.left = `${left}px`;
+  info.style.top = `${top}px`;
+}
+
+function showBubbleInfo(song, x, y) {
+  if (!song) return;
+  const info = $("#bubble-info");
+  const detail = [
+    song.status,
+    song.duration ? formatTime(song.duration) : "",
+    song.mode === "cover" ? "character-theme variation" : song.source,
+    song.settings?.model || ""
+  ].filter(Boolean).join(" · ");
+  info.innerHTML = `<strong>${esc(song.title)}</strong><div class="bubble-info-meta">${esc(detail)}</div>${song.prompt ? `<p>${esc(song.prompt)}</p>` : ""}`;
+  info.hidden = false;
+  positionBubbleInfo(x, y);
+}
+
+function hideBubbleInfo() {
+  $("#bubble-info").hidden = true;
 }
 
 function popSound() {
@@ -140,6 +255,8 @@ function popAndPlay(songId, bubble) {
   popSound();
   bubble.classList.add("pop");
   state.popped.add(songId);
+  hideBubbleInfo();
+  rememberPop(songId);
   setTimeout(renderBubbles, 350);
   if (song.audioUrl) playSong(songId);
   else toast(song.error || "This draft is still being written.");
@@ -165,6 +282,8 @@ function updateTransport() {
 
 function showContextMenu(songId, x, y) {
   const song = songById(songId);
+  if (!song) return;
+  hideBubbleInfo();
   const menu = $("#context-menu");
   const playlistItems = state.data.playlists
     .filter((playlist) => !playlist.fixed || playlist.id === "library")
@@ -437,6 +556,7 @@ async function load() {
     }
     renderPlaylists();
     renderBubbles();
+    renderHistory();
     renderCharacters();
     renderProvider();
     renderIdentities();
@@ -447,6 +567,11 @@ async function load() {
 
 $("#song-search").oninput = renderBubbles;
 $("#resurface").onclick = () => { state.popped.clear(); renderBubbles(); };
+$("#clear-history").onclick = () => {
+  state.history = [];
+  saveHistory();
+  renderHistory();
+};
 $("#tag-back").onclick = goBack;
 $("#tag-start").onclick = () => { state.route = []; renderTags(); };
 $("#pin-form").onsubmit = (event) => {

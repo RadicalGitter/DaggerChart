@@ -23,6 +23,13 @@
       <div id="playlist-list"></div>
       <button class="quiet rail-command" id="new-playlist">New playlist</button>
     </nav>
+    <section class="history-panel" aria-labelledby="history-label">
+      <header class="history-head">
+        <div class="rail-label" id="history-label">Popped history</div>
+        <button class="history-clear" id="clear-history" type="button" title="Clear popped history">Clear</button>
+      </header>
+      <div class="history-list" id="history-list" aria-live="polite"></div>
+    </section>
     <div class="rail-foot">
       <span id="provider-dot" aria-hidden="true"></span>
       <span id="provider-label">Provider</span>
@@ -113,6 +120,7 @@
   </footer>
 </div>
 
+<div class="bubble-info" id="bubble-info" role="tooltip" hidden></div>
 <div class="context-menu" id="context-menu" hidden></div>
 <div class="toast" id="toast"></div>
 
