@@ -155,6 +155,81 @@ async function renderPreview() {
 
 $("#dt-effort").addEventListener("change", renderPreview);
 
+// --- preferences (this device only; campaign state never lives here) ---
+const PREFS_KEY = "settlement-gm-prefs";
+const prefs = (() => {
+  try { return { diceRoller: false, ...JSON.parse(localStorage.getItem(PREFS_KEY) || "{}") }; }
+  catch { return { diceRoller: false }; }
+})();
+function savePrefs() {
+  localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+  applyPrefs();
+}
+function applyPrefs() {
+  $("#dt-cast").hidden = !prefs.diceRoller;
+  if (!prefs.diceRoller) $("#dice-tray").hidden = true;
+  $("#pref-dice").checked = prefs.diceRoller;
+}
+$("#pref-dice").addEventListener("change", () => {
+  prefs.diceRoller = $("#pref-dice").checked;
+  savePrefs();
+});
+applyPrefs();
+
+// --- the dice (optional; spec §5: real 4d6 − 1d6, never a flat 0–30) ---
+const DIE_FACES = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+function d6() {
+  // Rejection sampling keeps every face exactly as likely as a real die.
+  const b = new Uint8Array(1);
+  do { crypto.getRandomValues(b); } while (b[0] >= 252);
+  return (b[0] % 6) + 1;
+}
+
+let casting = false;
+$("#dt-cast").addEventListener("click", () => {
+  if (casting) return;
+  casting = true;
+  const dice = [d6(), d6(), d6(), d6(), d6()];
+  const raw = dice[0] + dice[1] + dice[2] + dice[3] - dice[4];
+  $("#dt-raw").value = "";
+  $("#dice-tray").hidden = false;
+  const row = $("#dice-row");
+  row.innerHTML =
+    dice
+      .map(
+        (_, i) =>
+          `${i === 4 ? '<span class="dice-op">−</span>' : ""}<span class="die${i === 4 ? " neg" : ""}">${DIE_FACES[d6() - 1]}</span>`
+      )
+      .join("") + `<span class="dice-op">=</span><span class="dice-sum" id="dice-sum"></span>`;
+  const els = [...row.querySelectorAll(".die")];
+  const finish = () => {
+    $("#dice-sum").textContent = raw;
+    $("#dt-raw").value = raw;
+    casting = false;
+  };
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    els.forEach((el, i) => (el.textContent = DIE_FACES[dice[i] - 1]));
+    finish();
+    return;
+  }
+  els.forEach((el) => el.classList.add("tumbling"));
+  const spin = setInterval(() => {
+    for (const el of els) if (el.classList.contains("tumbling")) el.textContent = DIE_FACES[d6() - 1];
+  }, 90);
+  dice.forEach((v, i) => {
+    // Bone dice land in turn; the dark one waits an extra beat.
+    setTimeout(() => {
+      els[i].classList.remove("tumbling");
+      els[i].textContent = DIE_FACES[v - 1];
+      els[i].classList.add("settled");
+      if (i === 4) {
+        clearInterval(spin);
+        finish();
+      }
+    }, 700 + i * 330 + (i === 4 ? 480 : 0));
+  });
+});
+
 $("#dt-resolve").addEventListener("click", async () => {
   const raw = parseInt($("#dt-raw").value, 10);
   if (Number.isNaN(raw)) return toast("Enter the raw dice first.");

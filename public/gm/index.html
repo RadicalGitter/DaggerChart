@@ -34,6 +34,32 @@
   .building-pick.selected { border-color: var(--oxblood); box-shadow: 0 0 0 1px var(--oxblood); }
   .modline { display: flex; justify-content: space-between; padding: 0.2rem 0; }
   .modline.total { border-top: 1px solid var(--rule); font-weight: 600; margin-top: 0.3rem; padding-top: 0.4rem; }
+
+  /* The dice (optional, Preferences): four bone, one ink; the dark one lands last. */
+  #dice-tray { margin-top: 0.7rem; min-height: 3.2rem; }
+  .dice-row { display: flex; gap: 0.45rem; align-items: center; }
+  .die {
+    font-size: 2.9rem; line-height: 1; color: var(--ink);
+    display: inline-block; user-select: none;
+  }
+  .die.neg { color: var(--oxblood); }
+  .die.tumbling { animation: tumble 0.36s ease-in-out infinite; color: var(--ink-faint); }
+  .die.neg.tumbling { color: var(--oxblood); opacity: 0.45; }
+  .die.settled { animation: settle-die 0.25s ease; }
+  .dice-op { font-size: 1.6rem; color: var(--ink-soft); margin: 0 0.15rem; }
+  .dice-sum { font-size: 1.9rem; font-weight: 600; min-width: 2ch; }
+  @keyframes tumble {
+    0%, 100% { transform: rotate(-7deg) translateY(0); }
+    50% { transform: rotate(7deg) translateY(-3px); }
+  }
+  @keyframes settle-die {
+    0% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .die.tumbling { animation: none; }
+    .die.settled { animation: none; }
+  }
   #resolve-result { margin-top: 1.5rem; }
   .result-number {
     font-size: 3rem;
@@ -107,6 +133,8 @@
     <a href="/board" target="_blank" style="font-size:0.85rem;">The drafting board ↗</a>
     <a href="/table" target="_blank" style="font-size:0.85rem;">Open the table view ↗</a>
     <a href="/screen" target="_blank" style="font-size:0.85rem;">Open the screen ↗</a>
+    <hr class="rule" style="margin: 1rem 1.2rem;">
+    <a href="#prefs" data-nav="prefs" style="font-size:0.85rem;" class="muted">Preferences</a>
   </nav>
   <main>
     <section id="sec-season">
@@ -130,10 +158,29 @@
           <div class="formrow">
             <label>Raw dice</label>
             <input type="number" class="num" id="dt-raw" min="-2" max="23" placeholder="−2…23">
+            <button class="quiet" id="dt-cast" hidden>Cast the dice</button>
             <button id="dt-resolve">Resolve the season</button>
+          </div>
+          <div id="dice-tray" hidden>
+            <div class="dice-row" id="dice-row"></div>
           </div>
         </div>
         <div id="resolve-result"></div>
+      </div>
+    </section>
+
+    <section id="sec-prefs" hidden>
+      <h2>Preferences</h2>
+      <p class="muted">How this device behaves. Nothing here touches the campaign.</p>
+      <div class="card" style="max-width: 520px;">
+        <div class="formrow" style="align-items:flex-start;">
+          <label style="min-width:150px;">In-app dice roller</label>
+          <div>
+            <input type="checkbox" id="pref-dice">
+            <span class="muted" style="font-size:0.85rem;">show a "Cast the dice" button in the season runner.
+            Off, the ledger expects real bones: roll at the table, type the raw result.</span>
+          </div>
+        </div>
       </div>
     </section>
 
