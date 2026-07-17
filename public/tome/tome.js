@@ -13,6 +13,7 @@ import { sessionPoolsHtml } from "/shared/session-pools.js";
 import { mountPlayerChat } from "/shared/player-chat.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
+import "/shared/player-tools.js";
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) =>
@@ -133,10 +134,12 @@ const SECTION_ORDER = [
   { key: "inventory", title: "table.inventory", keepsake: "keyring", tab: "#b5893c", sway: "6.1s" },
   { key: "rules", title: "rules.title", keepsake: "cord", tab: "#4f7e82", sway: "7.2s" }
 ];
+const tomeParams = new URLSearchParams(location.search);
+const requestedSectionIndex = SECTION_ORDER.findIndex((section) => section.key === tomeParams.get("section"));
 
 let data = null;
 let characterData = null;
-let selectedIndex = 0;
+let selectedIndex = requestedSectionIndex >= 0 ? requestedSectionIndex : 0;
 let spreadIndex = 0;
 let bookOpen = false;
 let turning = false;
@@ -144,11 +147,14 @@ let sideKeys = { left: null, right: null };
 let characterOverride = null; // "picker" | "create" | null
 let turnFallback = null;
 let editingItem = null;
-let openOnArrival = new URLSearchParams(location.search).get("open") === "1";
+let openOnArrival = tomeParams.get("open") === "1" || requestedSectionIndex >= 0;
 
 const getPC = () =>
   localStorage.getItem("settlement-pc") || localStorage.getItem("settlement-journal-pc");
-const setPC = (id) => localStorage.setItem("settlement-pc", id);
+const setPC = (id) => {
+  localStorage.setItem("settlement-pc", id);
+  window.dispatchEvent(new Event("settlement:identity"));
+};
 const playerChat = mountPlayerChat({ slot: "#player-chat-slot", getPcId: getPC });
 const myIdentity = () => {
   const id = getPC();

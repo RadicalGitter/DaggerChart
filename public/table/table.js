@@ -8,6 +8,7 @@ import { t, term, initI18n, seasonLabel, TERMS } from "/shared/i18n.js";
 import { sessionPoolsHtml } from "/shared/session-pools.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
+import "/shared/player-tools.js";
 
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) =>
@@ -24,7 +25,10 @@ let panelOverride = null; // character card: "picker" | "create" forced views
 // One identity per device, shared with the journal and the creator.
 const getPC = () =>
   localStorage.getItem("settlement-pc") || localStorage.getItem("settlement-journal-pc");
-const setPC = (id) => localStorage.setItem("settlement-pc", id);
+const setPC = (id) => {
+  localStorage.setItem("settlement-pc", id);
+  window.dispatchEvent(new Event("settlement:identity"));
+};
 const myPC = () => {
   const id = getPC();
   return (id && (data?.identities || data?.party || []).find((p) => p.id === id)) || null;

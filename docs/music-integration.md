@@ -22,6 +22,10 @@ Optional values are documented in `.env.local.example`:
   polls task records, so a local-only server does not depend on callback
   delivery after the request is accepted.
 - `MUSIC_LIBRARY_DIR` moves the default `Visseren` audio root.
+- `FFMPEG_PATH` selects the local ffmpeg executable used to prepare reference
+  excerpts.
+- `MUSIC_WORLD_THEME_TITLE` changes the exact synced song title used by the
+  World Theme control. It defaults to `Vessa'rin`.
 
 The browser receives only `keyConfigured: true/false`; the key itself stays in
 the server process. `POST /api/music/provider/check` checks account credits
@@ -45,6 +49,18 @@ provider request from instrumental mode to `customMode: true` with
 The brackets are an intentional direction cue rather than a guarantee that
 the renderer will never vocalize the text. Without a Description, generation
 keeps the existing instrumental request shape.
+
+The **World Theme** slider uses the locally mirrored `0:03-0:13` excerpt of
+`Vessa'rin` as an upload-and-cover reference. `0%` uses ordinary generation;
+values from `1%` to `100%` map directly to the provider's `audioWeight` range
+of `0.01` to `1.00`. The excerpt is prepared on demand under
+`Visseren/World Theme` and uploaded through the provider's temporary file
+endpoint. World Theme is unavailable until the exact source song has been
+synced with local audio.
+
+The provider accepts one audio reference per cover request. Selecting a
+character theme therefore disables World Theme, and the server rejects a
+request that attempts to send both references.
 
 Removing a song from the desk removes metadata only. It never deletes audio.
 

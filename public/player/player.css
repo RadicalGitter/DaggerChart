@@ -54,9 +54,30 @@ main { width: min(1260px, 100%); margin: 0 auto; padding: clamp(1.4rem, 4vh, 3.5
 .hub-title { margin-bottom: clamp(1.2rem, 3vh, 2rem); }
 .hub-title .smallcaps { min-height: 1em; color: var(--hub-muted); }
 .hub-title h1 { margin: 0.2rem 0 0; font-size: clamp(1.7rem, 3vw, 2.55rem); font-weight: 500; }
+.essential-tools { margin: 0 0 clamp(2.5rem, 6vh, 4.6rem); }
+.essential-tools[hidden], .view-choice[hidden] { display: none; }
+.essential-tools h2, .view-choice h2 { margin: 0; font-size: 1.04rem; font-weight: 500; }
+.essential-actions {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: .75rem;
+  border-top: 1px solid #454c45; border-bottom: 1px solid #454c45;
+}
+.essential-actions a, .essential-actions button {
+  min-width: 0; min-height: 70px; display: flex; align-items: center; justify-content: center; gap: .55rem;
+  padding: .75rem .5rem; color: var(--hub-ink); border: 0; border-right: 1px solid #3b423c;
+  background: transparent; font: inherit; text-decoration: none; cursor: pointer;
+}
+.essential-actions > :last-child { border-right: 0; }
+.essential-actions a:hover, .essential-actions a:focus-visible,
+.essential-actions button:hover, .essential-actions button:focus-visible {
+  color: #fff4d8; background: #292f2a; outline: 1px solid var(--hub-gold); outline-offset: -1px;
+}
+.essential-actions span { width: 1.6rem; color: var(--hub-gold); font-size: 1.15rem; text-align: center; }
+.essential-actions strong { min-width: 0; font-size: .86rem; font-weight: 500; overflow-wrap: anywhere; }
+.view-choice > header { margin-bottom: 1rem; }
+.view-choice > header .smallcaps { display: block; margin-bottom: .12rem; color: var(--hub-muted); }
 .view-shelf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(1rem, 3vw, 2.4rem); }
 .view-artifact {
-  position: relative; min-width: 0; min-height: 460px; padding: 1rem 0.7rem 0.9rem;
+  position: relative; min-width: 0; min-height: 410px; padding: 1rem 0.7rem 0.9rem;
   display: grid; grid-template-rows: minmax(300px, 1fr) auto; align-items: end;
   color: var(--hub-ink); text-decoration: none; border: 0; border-bottom: 1px solid #4c514b;
   background: transparent; transition: translate 0.2s ease, border-color 0.2s ease;
@@ -129,6 +150,11 @@ main { width: min(1260px, 100%); margin: 0 auto; padding: clamp(1.4rem, 4vh, 3.5
   .identity-button { min-width: 0; width: 154px; }
   #identity-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   main { padding: 1.2rem 0.8rem 2rem; }
+  .essential-tools { margin-bottom: 2.5rem; }
+  .essential-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .essential-actions a, .essential-actions button { min-height: 62px; border-bottom: 1px solid #3b423c; }
+  .essential-actions > :nth-child(3) { border-right: 0; }
+  .essential-actions > :nth-child(n+4) { border-bottom: 0; }
   .view-shelf { grid-template-columns: 1fr; gap: 0.5rem; }
   .view-artifact { min-height: 170px; grid-template-columns: 44% 1fr; grid-template-rows: 1fr; padding: 0.6rem 0; }
   .artifact-stage { min-height: 145px; }

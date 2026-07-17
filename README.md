@@ -12,7 +12,10 @@ The reviewed session chronicler is documented in
 The GM lore index and reveal-one-result tables are documented in
 [docs/almanac.md](docs/almanac.md).
 Working rules for AI-assisted development are in [AGENTS.md](AGENTS.md) and
-[CLAUDE.md](CLAUDE.md).
+[CLAUDE.md](CLAUDE.md). The Music Desk's branching tag board (tri-state tag
+bubbles compiling a prompt) is documented as a reusable pattern in
+[tag-selector/SKILL.md](tag-selector/SKILL.md), packaged as an AI skill for
+building the same selector on other surfaces.
 
 ## Quick start
 

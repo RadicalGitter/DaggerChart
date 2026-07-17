@@ -9,11 +9,24 @@
 <link rel="stylesheet" href="/shared/paper.css">
 <style>
   :root { --sheet-primary: #8b7653; --sheet-secondary: #9fcdb7; }
-  .wrap { width: 100%; max-width: 680px; margin: 0 auto; padding: 1.4rem 1rem 3rem; box-sizing: border-box; overflow-x: clip; }
+  .wrap { width: 100%; max-width: 780px; margin: 0 auto; padding: 1.4rem 1rem 5.5rem; box-sizing: border-box; overflow-x: clip; }
   header { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; }
   header .portrait { width: 84px; height: 84px; overflow: hidden; border: 3px solid var(--sheet-primary); box-shadow: 0 0 0 2px var(--sheet-secondary); font-size: 2rem; }
   header .portrait img { width: 100%; height: 100%; object-fit: cover; }
   header h1 { color: color-mix(in srgb, var(--sheet-primary) 48%, #f0e3c7); font-size: 1.5rem; margin-bottom: 0.1rem; }
+  .sheet-nav {
+    position: sticky; z-index: 20; top: 0; height: 48px; display: flex; align-items: stretch; gap: 2px;
+    margin: 0 -1rem 1rem; padding: 0 1rem; overflow-x: auto; scrollbar-width: none;
+    border-top: 1px solid #3b3327; border-bottom: 1px solid #3b3327; background: rgba(24,22,17,.96); backdrop-filter: blur(8px);
+  }
+  .sheet-nav::-webkit-scrollbar { display: none; }
+  .sheet-nav a {
+    min-width: max-content; display: grid; place-items: center; padding: 0 .72rem; color: #a99c81;
+    border-bottom: 2px solid transparent; font-size: .72rem; text-decoration: none;
+  }
+  .sheet-nav a:hover, .sheet-nav a:focus-visible { color: #f0e3c7; outline: none; }
+  .sheet-nav a[aria-current="true"] { color: #f4e8cd; border-color: var(--sheet-secondary); }
+  .sheet-anchor { scroll-margin-top: 62px; }
   .traits-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; margin: 1rem 0; }
   .trait-tile { position: relative; min-width: 0; box-sizing: border-box; text-align: center; padding: 0.55rem 0.3rem 0.75rem; border-bottom: 2px solid color-mix(in srgb, var(--trait-accent) 60%, transparent); }
   .trait-sheet-symbol { width: 38px; height: 38px; display: grid; place-items: center; margin: 0 auto .2rem; color: var(--trait-accent); border: 1px solid currentColor; border-radius: 50%; }
@@ -81,6 +94,12 @@
   .theme-note { min-height: 1.1rem; color: #a89877; font-size: 0.82rem; }
   @keyframes theme-drift { 0%,100% { translate: 0 0; } 50% { translate: 0 -4px; } }
   @keyframes theme-preview { 0%, 100% { scale: 1; opacity: 1; } 48% { scale: 1.07; opacity: 0.84; filter: saturate(1.3) brightness(1.08); } }
+  @media (max-width: 520px) {
+    .wrap { padding-inline: .72rem; }
+    .sheet-head { align-items: flex-start; }
+    .sheet-head .portrait { width: 70px; height: 70px; flex: 0 0 70px; }
+    .sheet-nav { margin-inline: -.72rem; padding-inline: .72rem; }
+  }
   @media (prefers-reduced-motion: reduce) { .theme-bubble { animation: none; } .theme-bubble.preview-pulse { animation-duration: 0.01ms; } }
 </style>
 </head>

@@ -114,6 +114,14 @@
         <span class="term" data-term="music-description" role="button" tabindex="0">Description</span>
         <input id="song-description" maxlength="500" placeholder="Short overture, no sung words">
       </label>
+      <label class="world-theme-control">
+        <span class="world-theme-heading">
+          <span>World Theme</span>
+          <output id="world-theme-value" for="world-theme-weight">0%</output>
+        </span>
+        <input id="world-theme-weight" type="range" min="0" max="100" step="1" value="0">
+        <small id="world-theme-source">0:03-0:13 of Vessa'rin</small>
+      </label>
       <label>
         <span>Title</span>
         <input id="song-title" maxlength="100" placeholder="Name this cue">
@@ -134,7 +142,7 @@
           <label class="checkline"><input id="song-instrumental" type="checkbox" checked> Instrumental</label>
           <label><span>Style weight</span><input id="style-weight" type="range" min="0" max="1" step="0.05" value="0.65"></label>
           <label><span>Weirdness</span><input id="weirdness" type="range" min="0" max="1" step="0.05" value="0.45"></label>
-          <label><span>Theme weight</span><input id="audio-weight" type="range" min="0" max="1" step="0.05" value="0.7"></label>
+          <label><span>Character theme weight</span><input id="audio-weight" type="range" min="0" max="1" step="0.05" value="0.7" disabled></label>
         </div>
       </details>
       <button class="generate-button" id="generate-song" type="submit">Write two drafts</button>

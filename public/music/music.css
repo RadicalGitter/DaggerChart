@@ -330,6 +330,25 @@ button, input, textarea, select { letter-spacing: 0; }
 .generation-form { border-top: 1px solid var(--rule); padding-top: 0.8rem; display: grid; gap: 0.65rem; }
 .generation-form input, .generation-form textarea, .generation-form select { width: 100%; }
 .generation-form textarea { min-height: 100px; }
+.world-theme-control {
+  padding: 0.7rem 0.75rem 0.62rem;
+  border-block: 1px solid var(--rule);
+  background: linear-gradient(90deg, transparent, rgba(142, 207, 208, 0.1), transparent);
+}
+.generation-form .world-theme-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+.world-theme-heading output { color: var(--oxblood); font-variant-numeric: tabular-nums; }
+.world-theme-control input[type="range"] { accent-color: var(--music-mint); }
+.world-theme-control small { display: block; margin-top: 0.28rem; color: var(--ink-faint); font-size: 0.72rem; }
+.world-theme-control.unavailable { opacity: 0.62; }
+.generation-form input[type="range"]:disabled { cursor: not-allowed; opacity: 0.42; }
 .generation-form details summary { color: var(--ink-soft); cursor: pointer; font-size: 0.82rem; }
 .advanced-grid { display: grid; gap: 0.55rem; margin-top: 0.65rem; }
 .checkline { display: flex; align-items: center; gap: 0.5rem; color: var(--ink-soft); font-size: 0.82rem; }

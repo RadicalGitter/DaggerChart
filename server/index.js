@@ -258,7 +258,8 @@ app.post("/api/art/scenes", guardAsync(async (req, res) => {
     prompt: scenePrompt(input),
     negativePrompt: input.negativePrompt,
     width: SCENE_DIMENSIONS.width,
-    height: SCENE_DIMENSIONS.height
+    height: SCENE_DIMENSIONS.height,
+    embellishPrompt: input.embellishPrompt
   });
   if (!state.places.includes(input.place)) throw new Error("That location is no longer available.");
   const records = sceneRecords(input, result);
@@ -320,7 +321,8 @@ app.post("/api/art/portrait", guardAsync(async (req, res) => {
     tags: req.body.tags,
     armor: req.body.armor,
     mainHand: req.body.mainHand,
-    offHand: req.body.offHand
+    offHand: req.body.offHand,
+    embellishPrompt: req.body.embellishPrompt
   });
   res.json({ ...result, message: "The portrait is ready." });
 }));
@@ -437,7 +439,8 @@ app.post("/api/party/:id/portrait", guardAsync(async (req, res) => {
     tags: req.body.tags,
     armor: req.body.armor,
     mainHand: req.body.mainHand,
-    offHand: req.body.offHand
+    offHand: req.body.offHand,
+    embellishPrompt: req.body.embellishPrompt
   });
   if (!state.pcs.includes(pc)) throw new Error("That character is no longer available.");
   pc.portrait = result.url;
@@ -1009,7 +1012,8 @@ app.post("/api/people/:id/portrait", guardAsync(async (req, res) => {
     negativePrompt: req.body.negativePrompt,
     seed: req.body.seed,
     width: req.body.width,
-    height: req.body.height
+    height: req.body.height,
+    embellishPrompt: req.body.embellishPrompt
   });
   if (!state.people.includes(person)) throw new Error("That person is no longer available.");
   person.portrait = result.url;
@@ -1051,6 +1055,7 @@ app.post("/api/places/:id/image", guardAsync(async (req, res) => {
     selectedTagIds: [],
     excludedTagIds: [],
     pins: [],
+    embellishPrompt: req.body.embellishPrompt,
     castWhenReady: false
   }, state.places);
   const result = await artWorkshop.request({
@@ -1060,7 +1065,8 @@ app.post("/api/places/:id/image", guardAsync(async (req, res) => {
     negativePrompt: input.negativePrompt,
     seed: req.body.seed,
     width: SCENE_DIMENSIONS.width,
-    height: SCENE_DIMENSIONS.height
+    height: SCENE_DIMENSIONS.height,
+    embellishPrompt: input.embellishPrompt
   });
   if (!state.places.includes(place)) throw new Error("That place is no longer available.");
   const records = sceneRecords(input, result);

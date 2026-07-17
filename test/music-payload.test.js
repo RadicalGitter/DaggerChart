@@ -22,6 +22,15 @@ test("music descriptions are preserved verbatim inside a bracketed lyrics instru
   assert.equal(payload.instrumental, false);
   assert.equal(payload.prompt, "[  Short overture, no sung words  ]");
   assert.equal(payload.style, "warm fiddle, restrained frame drum, minor scale");
+  assert.equal(payload.audioWeight, 0.7);
+});
+
+test("audio reference influence is emitted as a bounded fraction", () => {
+  const payload = sunoGenerationPayload({
+    ...song,
+    settings: { ...song.settings, audioWeight: 1.4 }
+  }, { model: "V5_5", callBackUrl: "http://localhost/callback" });
+  assert.equal(payload.audioWeight, 1);
 });
 
 test("ordinary instrumental generation keeps its existing provider shape", () => {

@@ -27,9 +27,19 @@
     <main>
       <div class="hub-title">
         <div class="smallcaps" id="season-label"></div>
-        <h1 data-i18n="player.hub.chooseview">Choose a view</h1>
+        <h1 data-i18n="player.hub.atHand">At hand</h1>
       </div>
-      <div class="view-shelf" id="view-shelf" aria-live="polite"></div>
+      <section class="essential-tools" id="essential-tools" hidden>
+        <h2 data-i18n="player.hub.essentials">Everyday tools</h2>
+        <div class="essential-actions" id="essential-actions"></div>
+      </section>
+      <section class="view-choice" id="view-choice" hidden>
+        <header>
+          <span class="smallcaps" data-i18n="player.hub.views">Views</span>
+          <h2 data-i18n="player.hub.chooseview">Choose a view</h2>
+        </header>
+        <div class="view-shelf" id="view-shelf" aria-live="polite"></div>
+      </section>
       <section class="identity-gate" id="identity-gate" hidden>
         <h2 data-i18n="player.hub.choosepc">Choose your character</h2>
         <div id="identity-list"></div>

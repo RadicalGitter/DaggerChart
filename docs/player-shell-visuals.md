@@ -8,11 +8,12 @@ must not fork campaign state or widen what reaches the browser.
 
 ### Player root — `/player`
 
-The login chooser sends a completed PC here. It is a quiet hub, not another
-campaign view: the player can switch the device's `settlement-pc` identity and
-choose among three physical tools. The preferred view is stored only in
-`settlement-shell`; it does not fork character or campaign state. Every shell
-keeps a small Views control back to this root.
+The login chooser sends a completed PC here. It is a quiet utility hub, not
+another campaign view: Character, Notes, Journal, Inventory, and Rules are at
+hand before the player chooses among three physical shells. The player can
+switch the device's `settlement-pc` identity here. The preferred shell is stored
+only in `settlement-shell`; it does not fork character or campaign state. Every
+shell keeps a small Views control back to this root.
 
 ### Card deck — `/table`
 
@@ -56,6 +57,12 @@ explanation. `#player-chat-slot` mounts the private GM/PC thread in that same
 dock through `public/shared/player-chat.*`. The unread badge appears only for
 that chosen PC, the correspondence panel marks the player side read when it
 opens, and `Ctrl+Enter` sends without leaving the tome.
+
+Standalone player surfaces mount `public/shared/player-tools.*`, a fixed field
+kit for quick personal/group notes plus links to Character, Journal, Inventory,
+and Rules. It resolves only the current `settlement-pc`, posts through the
+existing notes route, and is omitted from embeds to avoid nested controls.
+`/tome?open=1&section=<key>` opens a named keepsake directly.
 
 Keepsakes are defined in the `KEEPSAKES` registry in `public/tome/tome.js` —
 one entry per object (art, label placement, sway). **Future player

@@ -2,6 +2,7 @@ import { t, initI18n, seasonLabel } from "/shared/i18n.js";
 import { SHELLS, DEFAULT_SHELL, shellEntryRoute, validShell } from "/shared/shells.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
+import "/shared/player-tools.js";
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) =>
@@ -11,6 +12,19 @@ let data = null;
 const currentPCId = () => localStorage.getItem("settlement-pc") || localStorage.getItem("settlement-journal-pc");
 const identities = () => data?.identities || data?.party || [];
 const currentPC = () => identities().find((pc) => pc.id === currentPCId()) || null;
+
+function setPC(id) {
+  localStorage.setItem("settlement-pc", id);
+  localStorage.removeItem("settlement-journal-pc");
+  window.dispatchEvent(new Event("settlement:identity"));
+}
+
+function clearStalePC() {
+  if (!currentPCId() || currentPC()) return;
+  localStorage.removeItem("settlement-pc");
+  localStorage.removeItem("settlement-journal-pc");
+  window.dispatchEvent(new Event("settlement:identity"));
+}
 
 function artifactHtml(id) {
   if (id === "tome") return `<span class="aged-tome-art" aria-hidden="true"><i></i><i></i></span>`;
@@ -36,8 +50,7 @@ function renderIdentity() {
   ].join("");
   for (const button of document.querySelectorAll("[data-pc]")) {
     button.onclick = () => {
-      localStorage.setItem("settlement-pc", button.dataset.pc);
-      localStorage.removeItem("settlement-journal-pc");
+      setPC(button.dataset.pc);
       closeIdentityMenu();
       render();
     };
@@ -58,9 +71,24 @@ function renderViews() {
   }
 }
 
+function renderEssentials() {
+  const pc = currentPC();
+  const section = $("#essential-tools");
+  section.hidden = !pc;
+  if (!pc) return;
+  const id = encodeURIComponent(pc.id);
+  $("#essential-actions").innerHTML = `
+    <a href="/character/${id}"><span aria-hidden="true">◇</span><strong>${esc(t("table.character"))}</strong></a>
+    <button type="button" data-open-notes><span aria-hidden="true">✎</span><strong>${esc(t("player.notes.open"))}</strong></button>
+    <a href="/journal/?pc=${id}"><span aria-hidden="true">▤</span><strong>${esc(t("journal.title"))}</strong></a>
+    <a href="/tome?open=1&amp;section=inventory"><span aria-hidden="true">▧</span><strong>${esc(t("table.inventory"))}</strong></a>
+    <a href="/rules"><span aria-hidden="true">⌘</span><strong>${esc(t("rules.title"))}</strong></a>`;
+  section.querySelector("[data-open-notes]").onclick = () => window.dispatchEvent(new Event("settlement:open-notes"));
+}
+
 function renderGate() {
   const pc = currentPC();
-  $("#view-shelf").hidden = !pc;
+  $("#view-choice").hidden = !pc;
   $("#identity-gate").hidden = Boolean(pc);
   if (pc) return;
   $("#identity-list").innerHTML = identities().map((entry) =>
@@ -68,8 +96,7 @@ function renderGate() {
   ).join("");
   for (const button of document.querySelectorAll("[data-gate-pc]")) {
     button.onclick = () => {
-      localStorage.setItem("settlement-pc", button.dataset.gatePc);
-      localStorage.removeItem("settlement-journal-pc");
+      setPC(button.dataset.gatePc);
       render();
     };
   }
@@ -77,11 +104,13 @@ function renderGate() {
 
 function render() {
   if (!data) return;
+  clearStalePC();
   setTelemetryMode(currentPC() ? "views" : "choose-character");
   document.title = `${t("player.hub.root")} — ${data.settlement.name}`;
   $("#settlement-name").textContent = data.settlement.name;
   $("#season-label").textContent = seasonLabel(data.settlement.seasonLabel);
   renderIdentity();
+  renderEssentials();
   renderViews();
   renderGate();
 }

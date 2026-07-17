@@ -17,18 +17,21 @@ presses **Use this prose**.
    **Save (API Format)**. A normal UI workflow export cannot be queued by the
    API.
 2. Put the API graphs here:
-   - `Vesserin Portraits.json` (the default portrait graph)
-   - `docs/comfyui/scenic-api-workflow.json`
+   - `docs/comfyui/workflows/Vessarin Portraits.json`
+   - `docs/comfyui/workflows/Vessarin Scene Cards.json`
 3. Put `{{prompt}}` in the workflow's positive text input. The app substitutes
-   this token in the parsed graph, so node IDs may change freely.
+   this token in the parsed graph, so node IDs may change freely. As a fallback,
+   the adapter also recognizes one `PrimitiveStringMultiline` input titled
+   `Prompt`, which is how the scenic graph exposes its request text.
 4. Ensure the graph ends in at least one `SaveImage`-style output. The app
    collects up to four returned images and chooses the first one for the
    character or place.
 
-The checked-in `Vesserin Portraits.json` is the production portrait graph. Its
-neutral sampler is Steps `10`, CFG `0.8`, and its latent frame is `1104 × 1472`.
-The earlier `waidrin-portraits-workflow.json` remains a UI-format visual
-reference and is not used by the server.
+The checked-in graphs under `docs/comfyui/workflows/` are the production API
+graphs. The portrait graph's neutral sampler is Steps `10`, CFG `0.8`, and its
+latent frame is `1104 × 1472`. The earlier
+`waidrin-portraits-workflow.json` remains a UI-format visual reference and is
+not used by the server.
 
 ## Optional tokens
 
@@ -64,6 +67,12 @@ The creator also exposes two deliberately nontechnical rendering choices.
 **Style 2** sets it to `dpmpp_3m_sde_gpu` / `beta`. The exact pair is archived
 with each attempt, and **Go again** reuses it.
 
+**Automatically embellish prompt** controls the graph's LLM-assisted prompt
+branch and defaults on. The adapter traces which side of each `LazySwitchKJ`
+actually reaches an `LLMs Chat` node, so it remains correct if a workflow export
+swaps `on_true` and `on_false`. Turning it off sends the assembled prompt through
+the graph's direct branch. Portrait attempts and scene records retain that choice.
+
 The default portrait source is `1104 × 1472`. Both dimensions are divisible by
 16 and exactly match the client's 3:4 portrait frame. Current clients display
 that source directly and let CSS size the frame. With five players this is
@@ -91,8 +100,8 @@ the gitignored `.env.local` when needed:
 
 ```dotenv
 COMFYUI_URL=http://127.0.0.1:5090
-COMFYUI_CHARACTER_WORKFLOW=Vesserin Portraits.json
-COMFYUI_SCENIC_WORKFLOW=docs/comfyui/scenic-api-workflow.json
+COMFYUI_CHARACTER_WORKFLOW=docs/comfyui/workflows/Vessarin Portraits.json
+COMFYUI_SCENIC_WORKFLOW=docs/comfyui/workflows/Vessarin Scene Cards.json
 COMFYUI_TIMEOUT_MS=180000
 ```
 

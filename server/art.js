@@ -10,8 +10,14 @@ const fromRoot = (value, fallback) => {
   return path.isAbsolute(selected) ? selected : path.join(ROOT, selected);
 };
 const DEFAULT_WORKFLOWS = {
-  portrait: fromRoot(process.env.COMFYUI_CHARACTER_WORKFLOW, "Vesserin Portraits.json"),
-  scenic: fromRoot(process.env.COMFYUI_SCENIC_WORKFLOW, path.join("docs", "comfyui", "scenic-api-workflow.json"))
+  portrait: fromRoot(
+    process.env.COMFYUI_CHARACTER_WORKFLOW,
+    path.join("docs", "comfyui", "workflows", "Vessarin Portraits.json")
+  ),
+  scenic: fromRoot(
+    process.env.COMFYUI_SCENIC_WORKFLOW,
+    path.join("docs", "comfyui", "workflows", "Vessarin Scene Cards.json")
+  )
 };
 const TOKEN_PATTERN = /\{\{([a-z_]+)\}\}/gi;
 const IMAGE_LIMIT = 32 * 1024 * 1024;
@@ -57,6 +63,28 @@ function applyPortraitStyle(graph, style) {
   return graph;
 }
 
+function branchReachesLlm(graph, input, seen = new Set()) {
+  if (!Array.isArray(input) || input.length < 1) return false;
+  const id = String(input[0]);
+  if (seen.has(id)) return false;
+  seen.add(id);
+  const node = graph[id];
+  if (!node) return false;
+  if (/^llms?\b/i.test(String(node.class_type || ""))) return true;
+  return Object.values(node.inputs || {}).some((value) => branchReachesLlm(graph, value, new Set(seen)));
+}
+
+function applyPromptEmbellishment(graph, enabled) {
+  for (const node of Object.values(graph)) {
+    if (node?.class_type !== "LazySwitchKJ" || typeof node?.inputs?.switch !== "boolean") continue;
+    const trueUsesLlm = branchReachesLlm(graph, node.inputs.on_true);
+    const falseUsesLlm = branchReachesLlm(graph, node.inputs.on_false);
+    if (trueUsesLlm === falseUsesLlm) continue;
+    node.inputs.switch = enabled ? trueUsesLlm : !trueUsesLlm;
+  }
+  return graph;
+}
+
 function workflowGraph(value) {
   if (!value || Array.isArray(value) || typeof value !== "object") throw new Error("The workflow is not a ComfyUI API graph.");
   const nodes = Object.entries(value);
@@ -64,6 +92,19 @@ function workflowGraph(value) {
     throw new Error("Export this workflow with ComfyUI's Save (API Format) command.");
   }
   return value;
+}
+
+function ensurePromptToken(graph) {
+  const raw = JSON.stringify(graph);
+  if (raw.includes("{{prompt}}") || raw.includes("{{positive_prompt}}")) return true;
+  const promptNodes = Object.values(graph).filter((node) =>
+    node?.class_type === "PrimitiveStringMultiline"
+    && /^prompt$/i.test(String(node?._meta?.title || "").trim())
+    && typeof node?.inputs?.value === "string"
+  );
+  if (promptNodes.length !== 1) return false;
+  promptNodes[0].inputs.value = "{{prompt}}";
+  return true;
 }
 
 function replaceTokens(value, tokens) {
@@ -114,8 +155,7 @@ export class ArtWorkshop {
     if (!file || !fs.existsSync(file)) return { ready: false, file: path.basename(file || ""), reason: "missing" };
     try {
       const graph = workflowGraph(JSON.parse(fs.readFileSync(file, "utf8")));
-      const raw = JSON.stringify(graph);
-      if (!raw.includes("{{prompt}}") && !raw.includes("{{positive_prompt}}")) {
+      if (!ensurePromptToken(graph)) {
         return { ready: false, file: path.basename(file), reason: "prompt-token-missing" };
       }
       return { ready: true, file: path.basename(file), reason: null };
@@ -134,7 +174,7 @@ export class ArtWorkshop {
     };
   }
 
-  loadWorkflow(kind, tokens) {
+  loadWorkflow(kind, tokens, embellishPrompt = true) {
     const file = this.workflows[kind];
     if (!file || !fs.existsSync(file)) {
       throw new Error(`The ${kind} API workflow is not installed yet.`);
@@ -145,11 +185,10 @@ export class ArtWorkshop {
     } catch (error) {
       throw new Error(`The ${kind} workflow cannot be used: ${error.message}`);
     }
-    const raw = JSON.stringify(graph);
-    if (!raw.includes("{{prompt}}") && !raw.includes("{{positive_prompt}}")) {
+    if (!ensurePromptToken(graph)) {
       throw new Error(`Add {{prompt}} to the ${kind} workflow's positive text input.`);
     }
-    return replaceTokens(graph, tokens);
+    return applyPromptEmbellishment(replaceTokens(graph, tokens), embellishPrompt !== false);
   }
 
   async comfy(pathname, options = {}, timeoutMs = 8_000) {
@@ -165,7 +204,7 @@ export class ArtWorkshop {
 
   async request({
     kind, entityId, prompt, negativePrompt = "", seed, width, height, stepsModifier = 0, cfgModifier = 0, style,
-    primaryColor = "", secondaryColor = "", tags = [], armor = "", mainHand = "", offHand = ""
+    primaryColor = "", secondaryColor = "", tags = [], armor = "", mainHand = "", offHand = "", embellishPrompt = true
   }) {
     if (kind !== "portrait" && kind !== "scenic") throw new Error("Unknown art workflow.");
     const positive = String(prompt || "").trim();
@@ -191,7 +230,7 @@ export class ArtWorkshop {
       main_hand: compactToken(mainHand),
       off_hand: compactToken(offHand)
     };
-    const graph = applySamplerModifiers(this.loadWorkflow(kind, tokens), stepsModifier, cfgModifier);
+    const graph = applySamplerModifiers(this.loadWorkflow(kind, tokens, embellishPrompt), stepsModifier, cfgModifier);
     if (kind === "portrait") applyPortraitStyle(graph, style);
     const clientId = crypto.randomUUID();
     const queued = await this.comfy("prompt", {

@@ -133,6 +133,15 @@ function formatTime(seconds) {
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
 }
 
+function songSourceLabel(song) {
+  if (song.mode === "cover") return "character-theme variation";
+  const influence = Number(song.settings?.worldThemeWeight);
+  if (Number.isFinite(influence) && influence > 0) {
+    return `world theme ${Math.round(influence * 100)}%`;
+  }
+  return song.source;
+}
+
 function songById(id) {
   return state.data.songs.find((song) => song.id === id);
 }
@@ -592,7 +601,7 @@ function renderBubbles() {
     const songTags = new Set(song.tagIds || []);
     const missesTags = filterIds.length && !filterIds.every((id) => songTags.has(id));
     const detail = song.status === "ready"
-      ? [song.mode === "cover" ? "theme variation" : song.source, song.duration ? formatTime(song.duration) : ""].filter(Boolean).join(" · ")
+      ? [songSourceLabel(song), song.duration ? formatTime(song.duration) : ""].filter(Boolean).join(" · ")
       : song.status;
     return `<button class="song-bubble ${song.status !== "ready" ? "rendering" : ""} ${missesTags ? "tag-miss" : ""} ${state.colors[song.id] ? "painted" : ""}"
       style="--edge-a:${visual.a};--edge-b:${visual.b};--edge-c:${visual.c};--paint-color:${paintColor};--bubble-size:${visual.size}px;--drift:${visual.drift}s;--bubble-turn:${visual.turn}deg;--bubble-shape-a:${visual.shapeA};--bubble-shape-b:${visual.shapeB}"
@@ -690,7 +699,7 @@ function showBubbleInfo(song, x, y) {
   const detail = [
     song.status,
     song.duration ? formatTime(song.duration) : "",
-    song.mode === "cover" ? "character-theme variation" : song.source,
+    songSourceLabel(song),
     song.settings?.model || ""
   ].filter(Boolean).join(" · ");
   const hasTagEnvelope = song.promptEnvelope?.start === PROMPT_ENVELOPE
@@ -808,7 +817,8 @@ function playSong(songId) {
   audio.src = song.audioUrl;
   audio.play().catch(() => toast("Press play once to allow audio on this device."));
   $("#playing-title").textContent = song.title;
-  $("#playing-detail").textContent = song.mode === "cover" ? "Character-theme variation" : (song.prompt || "Generated cue");
+  const source = songSourceLabel(song);
+  $("#playing-detail").textContent = source !== song.source ? source : (song.prompt || "Generated cue");
   updateTransport();
 }
 
@@ -1086,6 +1096,31 @@ function renderCharacters() {
   $("#source-note").textContent = selected
     ? `Covering ${selected.name}'s published theme`
     : "Original composition";
+  renderWorldThemeControl(selected);
+}
+
+function renderWorldThemeControl(selectedCharacter = null) {
+  const config = state.data.worldTheme || { title: "Vessa'rin", start: 3, end: 13, ready: false };
+  const slider = $("#world-theme-weight");
+  const characterWeight = $("#audio-weight");
+  const value = Math.max(0, Math.min(100, Number(slider.value) || 0));
+  const unavailable = Boolean(selectedCharacter) || !config.ready;
+
+  slider.disabled = unavailable;
+  characterWeight.disabled = !selectedCharacter;
+  $("#world-theme-value").textContent = `${value}%`;
+  $(".world-theme-control").classList.toggle("unavailable", unavailable);
+
+  if (selectedCharacter) {
+    $("#world-theme-source").textContent = "Character theme selected - one audio reference at a time.";
+    $("#source-note").textContent = `Covering ${selectedCharacter.name}'s published theme`;
+  } else if (!config.ready) {
+    $("#world-theme-source").textContent = `Sync ${config.title} to make its sample available.`;
+    $("#source-note").textContent = "Original composition";
+  } else {
+    $("#world-theme-source").textContent = `${formatTime(config.start)}-${formatTime(config.end)} of ${config.title}`;
+    $("#source-note").textContent = value > 0 ? `World Theme at ${value}%` : "Original composition";
+  }
 }
 
 async function captureSunoCollection(endpoint, targetName) {
@@ -1239,6 +1274,10 @@ async function load() {
 }
 
 $("#song-search").oninput = renderBubbles;
+$("#world-theme-weight").oninput = () => {
+  const selected = state.data.characterTags.find((entry) => entry.pcId === state.selectedCharacter);
+  renderWorldThemeControl(selected);
+};
 $("#paint-toggle").onclick = () => {
   const palette = $("#paint-palette");
   palette.hidden = !palette.hidden;
@@ -1326,7 +1365,8 @@ $("#generation-form").onsubmit = async (event) => {
           instrumental: $("#song-instrumental").checked,
           styleWeight: Number($("#style-weight").value),
           weirdnessConstraint: Number($("#weirdness").value),
-          audioWeight: Number($("#audio-weight").value)
+          audioWeight: Number($("#audio-weight").value),
+          worldThemeWeight: selected ? 0 : Number($("#world-theme-weight").value) / 100
         }
       })
     });

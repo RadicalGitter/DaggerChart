@@ -5,6 +5,7 @@ import { paperArtifactHtml } from "/shared/paper.js";
 import { traitAccent, traitGraphic } from "/shared/traits.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
+import "/shared/player-tools.js";
 
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) =>
@@ -14,6 +15,7 @@ const esc = (s) =>
 const id = location.pathname.split("/").filter(Boolean).pop();
 let PC = null;
 let THEMES = { songs: [], published: null, provider: {} };
+let sheetSectionObserver = null;
 const themeAudio = new Audio();
 
 const featHtml = (f) => `<div class="featline"><strong>${esc(f.name)}</strong> ${termify(esc(f.text))}</div>`;
@@ -36,7 +38,7 @@ function render() {
       ? `<tr><td>${label}</td><td><strong>${esc(wp.name)}</strong></td><td>${term("trait-" + wp.trait.toLowerCase(), esc(wp.trait))}</td><td>${term("range", esc(wp.range))}</td><td>${term("damage", esc(wp.damage))}</td><td>${termify(esc(wp.feature || ""))}</td></tr>`
       : "";
   $("#sheet").innerHTML = `
-    <header>
+    <header class="sheet-head">
       <div class="portrait">${p.portrait ? `<img src="${esc(p.portrait)}" alt="">` : esc(p.name[0] || "?")}</div>
       <div>
         <h1>${esc(p.name)}</h1>
@@ -46,8 +48,9 @@ function render() {
       </div>
     </header>
 
-    ${themeHtml(p)}
+    ${sheetNavHtml(p)}
 
+    <section class="sheet-anchor" id="sheet-overview">
     <div class="defenses card">
       <div><div class="value">${p.evasion}</div><div class="smallcaps">${term("evasion", t("vital.evasion"))}</div></div>
       <div><div class="value">${p.armor ? p.armor.score : 0}</div><div class="smallcaps">${term("armor-score", t("vital.armor"))}</div></div>
@@ -64,8 +67,9 @@ function render() {
     <div class="traits-grid">${TRAITS.map(
       (tr) => `<div class="trait-tile" style="--trait-accent:${traitAccent(tr)}"><span class="trait-sheet-symbol" aria-hidden="true">${traitGraphic(tr)}</span><div class="v">${p.traits[tr] >= 0 ? "+" : ""}${p.traits[tr]}</div><div class="smallcaps">${term("trait-" + tr.toLowerCase(), tr)}</div></div>`
     ).join("")}</div>
+    </section>
 
-    <div class="sheet-section">
+    <div class="sheet-section sheet-anchor" id="sheet-arms">
       <span class="smallcaps">${t("sheet.arms")}</span>
       <div class="card" style="overflow-x:auto;">
         <table class="ledger">
@@ -81,12 +85,12 @@ function render() {
       <div class="card">${p.experiences.map((e) => `<div class="featline"><strong>${esc(e.name)}</strong> +${e.bonus}</div>`).join("")}</div>
     </div>
 
-    <div class="sheet-section">
+    <div class="sheet-section sheet-anchor" id="sheet-cards">
       <span class="smallcaps">${term("domain", t("sheet.cards"))}</span>
       ${handHtml(p)}
     </div>
 
-    <div class="sheet-section">
+    <div class="sheet-section sheet-anchor" id="sheet-features">
       <span class="smallcaps">${t("sheet.features")}</span>
       <div class="card">
         ${p.features.hopeFeature ? `<div class="smallcaps">${term("hope", t("sheet.hopefeat"))}</div>${featHtml(p.features.hopeFeature)}` : ""}
@@ -98,7 +102,7 @@ function render() {
       </div>
     </div>
 
-    <div class="sheet-section">
+    <div class="sheet-section sheet-anchor" id="sheet-inventory">
       <span class="smallcaps">${t("sheet.carried")}</span>
       <div class="card"><ul class="inventory-list">${p.inventory.map((i) => i.kind === "paper"
         ? `<li><button class="inventory-paper" type="button" data-paper-open="${esc(i.id)}"><strong>${esc(i.name)}</strong><span>${esc(i.paperType === "covenant" ? t("contract.decree") : (i.body || "").slice(0, 110))}</span></button></li>`
@@ -107,22 +111,60 @@ function render() {
       </div>
     </div>
 
-    ${p.background.length
-      ? `<div class="sheet-section"><span class="smallcaps">${t("sheet.background")}</span><div class="card">${p.background
-          .map((b) => `<div class="qa"><div class="q">${esc(b.q)}</div><div>${esc(b.a)}</div></div>`)
-          .join("")}</div></div>`
-      : ""}
+    ${(p.background.length || p.connections.length) ? `<section class="sheet-anchor" id="sheet-story">
+      ${p.background.length
+        ? `<div class="sheet-section"><span class="smallcaps">${t("sheet.background")}</span><div class="card">${p.background
+            .map((b) => `<div class="qa"><div class="q">${esc(b.q)}</div><div>${esc(b.a)}</div></div>`)
+            .join("")}</div></div>`
+        : ""}
+      ${p.connections.length
+        ? `<div class="sheet-section"><span class="smallcaps">${t("sheet.connections")}</span><div class="card">${p.connections
+            .map((c) => `<div class="qa"><div class="q">${esc(c.q)}</div><div>${esc(c.note)}</div></div>`)
+            .join("")}</div></div>`
+        : ""}
+    </section>` : ""}
 
-    ${p.connections.length
-      ? `<div class="sheet-section"><span class="smallcaps">${t("sheet.connections")}</span><div class="card">${p.connections
-          .map((c) => `<div class="qa"><div class="q">${esc(c.q)}</div><div>${esc(c.note)}</div></div>`)
-          .join("")}</div></div>`
-      : ""}
+    ${themeHtml(p)}
   `;
   wirePips();
   wireHand();
   wireTheme();
   wireInventory();
+  wireSheetNav();
+}
+
+function sheetNavHtml(p) {
+  const sections = [
+    ["sheet-overview", "sheet.overview"],
+    ["sheet-arms", "sheet.arms"],
+    ["sheet-cards", "sheet.cards"],
+    ["sheet-features", "sheet.features"],
+    ["sheet-inventory", "table.inventory"],
+    ...((p.background?.length || p.connections?.length) ? [["sheet-story", "sheet.story"]] : []),
+    ["sheet-theme", "theme.title"]
+  ];
+  return `<nav class="sheet-nav" aria-label="${esc(t("sheet.sections"))}">${sections.map(([target, label], index) =>
+    `<a href="#${target}" data-sheet-target="${target}" ${index === 0 ? 'aria-current="true"' : ""}>${esc(t(label))}</a>`
+  ).join("")}</nav>`;
+}
+
+function wireSheetNav() {
+  sheetSectionObserver?.disconnect();
+  const links = [...document.querySelectorAll("[data-sheet-target]")];
+  for (const link of links) link.onclick = (event) => {
+    event.preventDefault();
+    const target = document.getElementById(link.dataset.sheetTarget);
+    target?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  };
+  sheetSectionObserver = new IntersectionObserver((entries) => {
+    const visible = entries.find((entry) => entry.isIntersecting);
+    if (!visible) return;
+    for (const link of links) link.setAttribute("aria-current", String(link.dataset.sheetTarget === visible.target.id));
+  }, { rootMargin: "-18% 0px -68%", threshold: 0 });
+  for (const link of links) {
+    const target = document.getElementById(link.dataset.sheetTarget);
+    if (target) sheetSectionObserver.observe(target);
+  }
 }
 
 function closePaperDialog() {
@@ -189,7 +231,7 @@ function themeHtml(p) {
   const publish = (THEMES.songs || []).filter((song) => song.status === "ready").map((song) =>
     `<button class="quiet" data-theme-publish="${esc(song.id)}" ${song.publishedAt ? "disabled" : ""}>${song.publishedAt ? t("theme.published") : `${t("theme.publish")}: ${esc(song.title)}`}</button>`
   ).join("");
-  return `<section class="sheet-section card theme-panel">
+  return `<section class="sheet-section sheet-anchor card theme-panel" id="sheet-theme">
     <div class="theme-head"><span class="smallcaps">${t("theme.title")}</span></div>
     <div class="theme-bubbles">${bubbles}</div>
     <div class="theme-publish">${publish}</div>

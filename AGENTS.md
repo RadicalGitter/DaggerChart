@@ -182,12 +182,13 @@ designing anything; it is the source of truth. Code map + API:
 - **All seven backend-first features in
   [docs/master-plan.md](docs/master-plan.md) are built.** Keep that document as
   architecture and acceptance context for incremental upgrades.
-- ComfyUI refinement: `/create` now uses the production `Vesserin Portraits`
+- ComfyUI refinement: `/create` now uses the production `Vessarin Portraits`
   API graph with prose, visual tags, colors, equipment toggles, bounded sampler
-  modifiers, fixed-seed retries, and an attempt archive. Next, complete the
-  scenic production workflow; later add campaign-year portrait aging. Review
-  the image-library, projector, and future wiki-writing workflows after the
-  first live session using [docs/playtest-review.md](docs/playtest-review.md).
+  modifiers, fixed-seed retries, and an attempt archive. Scenic generation uses
+  the production `Vessarin Scene Cards` API graph. Later add campaign-year
+  portrait aging. Review the image-library, projector, and future wiki-writing
+  workflows after the first live session using
+  [docs/playtest-review.md](docs/playtest-review.md).
 - In-app 4d6−1d6 roller with a reveal moment (Phase 4; simulate real dice,
   never flat 0–30).
 - Magic item cards: print-ready fronts matching the physical deck; scalable

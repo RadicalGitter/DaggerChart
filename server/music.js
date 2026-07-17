@@ -4,6 +4,8 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { Blob } from "node:buffer";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { ROOT, loadJson, saveJson } from "./store.js";
 import { musicDescription, sunoGenerationPayload } from "./music-payload.js";
 
@@ -12,10 +14,16 @@ const LIBRARY_ROOT = path.resolve(process.env.MUSIC_LIBRARY_DIR || path.join(ROO
 const CHARACTER_THEMES_DIR = path.join(LIBRARY_ROOT, "Character Themes");
 const GENERATED_DIR = path.join(LIBRARY_ROOT, "Generated");
 const SUNO_MIRROR_DIR = path.join(LIBRARY_ROOT, "Suno Mirror");
+const WORLD_THEME_DIR = path.join(LIBRARY_ROOT, "World Theme");
 const SUNO_API_BASE = (process.env.SUNO_API_URL || "https://api.sunoapi.org").replace(/\/$/, "");
 const SUNO_UPLOAD_URL = process.env.SUNO_UPLOAD_URL || "https://sunoapiorg.redpandaai.co/api/file-stream-upload";
+const FFMPEG_PATH = process.env.FFMPEG_PATH || "ffmpeg";
+const WORLD_THEME_TITLE = process.env.MUSIC_WORLD_THEME_TITLE || "Vessa'rin";
+const WORLD_THEME_START = 3;
+const WORLD_THEME_END = 13;
 const SUNO_AUDIO_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_MIRROR_AUDIO_BYTES = 80 * 1024 * 1024;
+const execFileAsync = promisify(execFile);
 const SEED_AUDIO = [
   "The Vessel of Ash - Punchy Master.wav",
   "The Vessel of Ash - Tribal Psy Master.wav"
@@ -40,6 +48,7 @@ const DEFAULT_MUSIC = {
 
 export const music = loadJson(MUSIC_FILE, DEFAULT_MUSIC);
 const providerCache = { credits: null, checkedAt: null, error: null };
+const worldThemeUploadCache = { url: null, expiresAt: 0, sourceMtimeMs: 0 };
 
 function now() {
   return new Date().toISOString();
@@ -193,6 +202,16 @@ function audioPath(song) {
   return absolute;
 }
 
+function worldThemeWeight(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? Math.round(Math.max(0, Math.min(1, numeric)) * 100) / 100 : 0;
+}
+
+function worldThemeSong() {
+  const title = WORLD_THEME_TITLE.toLocaleLowerCase("en");
+  return music.songs.find((song) => song.title?.trim().toLocaleLowerCase("en") === title && audioPath(song)) || null;
+}
+
 export function songAudioPath(songId) {
   return audioPath(music.songs.find((song) => song.id === songId));
 }
@@ -237,6 +256,12 @@ export function publishedThemeForPc(pcId) {
 export function musicView(pcs = []) {
   return {
     provider: providerStatus(),
+    worldTheme: {
+      title: WORLD_THEME_TITLE,
+      start: WORLD_THEME_START,
+      end: WORLD_THEME_END,
+      ready: Boolean(worldThemeSong())
+    },
     sunoMirror: structuredClone(music.sunoMirror),
     songs: music.songs.map((song) => songView(song)),
     playlists: music.playlists.map((playlist) => ({ ...playlist, songIds: [...playlist.songIds] })),
@@ -490,24 +515,79 @@ function livePayload(song) {
   return sunoGenerationPayload(song, { model: modelName(song.settings), callBackUrl: callbackUrl() });
 }
 
-async function uploadCoverSource(song) {
-  const source = audioPath(song);
-  if (!source) throw new Error("The character theme has no local audio to cover.");
+async function uploadAudioSource(source, { uploadPath, fileName, errorMessage }) {
   const form = new FormData();
   const bytes = fs.readFileSync(source);
   form.append("file", new Blob([bytes]), path.basename(source));
-  form.append("uploadPath", "audio/settlement-character-themes");
-  form.append("fileName", `${song.id}${path.extname(source) || ".wav"}`);
+  form.append("uploadPath", uploadPath);
+  form.append("fileName", fileName);
   const response = await fetch(SUNO_UPLOAD_URL, {
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.SUNO_API_KEY}` },
     body: form
   });
   const body = await response.json();
-  if (!response.ok || body.code !== 200 || !body.data?.downloadUrl) {
-    throw new Error(cleanText(body.msg || "The character theme could not be uploaded.", 300));
+  const url = body.data?.downloadUrl || body.data?.fileUrl;
+  if (!response.ok || body.code !== 200 || !url) {
+    throw new Error(cleanText(body.msg || errorMessage, 300));
   }
-  return body.data.downloadUrl;
+  return { url, expiresAt: Date.parse(body.data?.expiresAt || "") || Date.now() + (60 * 60 * 1000 * 60) };
+}
+
+async function uploadCoverSource(song) {
+  const source = audioPath(song);
+  if (!source) throw new Error("The character theme has no local audio to cover.");
+  const uploaded = await uploadAudioSource(source, {
+    uploadPath: "audio/settlement-character-themes",
+    fileName: `${song.id}${path.extname(source) || ".wav"}`,
+    errorMessage: "The character theme could not be uploaded."
+  });
+  return uploaded.url;
+}
+
+async function worldThemeClip() {
+  const song = worldThemeSong();
+  const source = audioPath(song);
+  if (!source) throw new Error(`Sync the ${WORLD_THEME_TITLE} track before using World Theme influence.`);
+  fs.mkdirSync(WORLD_THEME_DIR, { recursive: true });
+  const destination = path.join(WORLD_THEME_DIR, "vessarin-world-theme-03-13.mp3");
+  const sourceMtimeMs = fs.statSync(source).mtimeMs;
+  if (fs.existsSync(destination) && fs.statSync(destination).mtimeMs >= sourceMtimeMs) return destination;
+  const temp = `${destination}.${process.pid}-${Date.now()}.tmp.mp3`;
+  try {
+    await execFileAsync(FFMPEG_PATH, [
+      "-hide_banner", "-loglevel", "error", "-y",
+      "-ss", String(WORLD_THEME_START), "-i", source,
+      "-t", String(WORLD_THEME_END - WORLD_THEME_START),
+      "-vn", "-codec:a", "libmp3lame", "-q:a", "2", temp
+    ], { windowsHide: true });
+    if (fs.existsSync(destination)) fs.unlinkSync(destination);
+    fs.renameSync(temp, destination);
+  } catch (error) {
+    throw new Error(`The World Theme sample could not be prepared: ${cleanText(error.message, 220)}`);
+  } finally {
+    if (fs.existsSync(temp)) fs.unlinkSync(temp);
+  }
+  return destination;
+}
+
+async function uploadWorldThemeSource() {
+  const source = await worldThemeClip();
+  const sourceMtimeMs = fs.statSync(source).mtimeMs;
+  if (worldThemeUploadCache.url
+    && worldThemeUploadCache.sourceMtimeMs === sourceMtimeMs
+    && worldThemeUploadCache.expiresAt > Date.now() + (5 * 60 * 1000)) {
+    return worldThemeUploadCache.url;
+  }
+  const uploaded = await uploadAudioSource(source, {
+    uploadPath: "audio/settlement-world-theme",
+    fileName: `vessarin-world-theme-${Date.now()}.mp3`,
+    errorMessage: "The World Theme sample could not be uploaded."
+  });
+  worldThemeUploadCache.url = uploaded.url;
+  worldThemeUploadCache.expiresAt = uploaded.expiresAt;
+  worldThemeUploadCache.sourceMtimeMs = sourceMtimeMs;
+  return uploaded.url;
 }
 
 async function beginLiveTask(song, sourceSong) {
@@ -516,6 +596,10 @@ async function beginLiveTask(song, sourceSong) {
   if (song.mode === "cover") {
     route = "/api/v1/generate/upload-cover";
     payload.uploadUrl = await uploadCoverSource(sourceSong);
+  } else if (song.settings.worldThemeWeight > 0) {
+    route = "/api/v1/generate/upload-cover";
+    payload.uploadUrl = await uploadWorldThemeSource();
+    payload.audioWeight = song.settings.worldThemeWeight;
   }
   const data = await providerRequest(route, { method: "POST", body: JSON.stringify(payload) });
   if (!data?.taskId) throw new Error("Suno API did not return a task ID.");
@@ -633,7 +717,9 @@ export async function generateSong({
 }) {
   const provider = providerStatus();
   const sourceSong = sourceSongId ? music.songs.find((song) => song.id === sourceSongId) : null;
+  const worldInfluence = worldThemeWeight(settings.worldThemeWeight);
   if (mode === "cover" && !sourceSong) throw new Error("Choose a published character theme first.");
+  if (mode === "cover" && worldInfluence > 0) throw new Error("Choose either a character theme or the World Theme sample, not both.");
   const cleanedPrompt = cleanText(prompt, 7000);
   if (!cleanedPrompt) throw new Error("The music needs a prompt.");
 
@@ -663,13 +749,15 @@ export async function generateSong({
       negativeTags: cleanText(settings.negativeTags, 200),
       styleWeight: settings.styleWeight,
       weirdnessConstraint: settings.weirdnessConstraint,
-      audioWeight: settings.audioWeight
+      audioWeight: settings.audioWeight,
+      worldThemeWeight: worldInfluence
     },
     audioFile: null,
     provider: {
       name: provider.mode === "mock" ? "mock" : "Suno",
       generationId: null,
-      sourceId: sourceSong?.provider?.generationId || sourceSong?.id || null
+      sourceId: sourceSong?.provider?.generationId || sourceSong?.id
+        || (worldInfluence > 0 ? `world-theme:${WORLD_THEME_START}-${WORLD_THEME_END}` : null)
     },
     createdAt: now(),
     publishedAt: null

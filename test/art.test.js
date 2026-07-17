@@ -97,3 +97,23 @@ test("ArtWorkshop identifies UI-format and tokenless workflows before queueing",
   assert.equal(status.ready, false);
   assert.match(status.reason, /API graph|API Format/);
 });
+
+test("ArtWorkshop follows the LLM branch rather than trusting switch orientation", async (t) => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "settlement-art-switch-"));
+  const workflow = path.join(root, "portrait.json");
+  const graph = {
+    "1": { class_type: "PrimitiveStringMultiline", inputs: { value: "{{prompt}}" }, _meta: { title: "Prompt" } },
+    "2": { class_type: "LLMs Chat", inputs: { user_prompt: ["1", 0] } },
+    "3": { class_type: "LazySwitchKJ", inputs: { switch: true, on_false: ["2", 0], on_true: ["1", 0] }, _meta: { title: "Use LLM?" } },
+    "4": { class_type: "CLIPTextEncode", inputs: { text: ["3", 0] } }
+  };
+  await fs.writeFile(workflow, JSON.stringify(graph));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+
+  const workshop = new ArtWorkshop({ workflows: { portrait: workflow }, publicRoot: root });
+  const embellished = workshop.loadWorkflow("portrait", { prompt: "A quiet scholar" }, true);
+  const verbatim = workshop.loadWorkflow("portrait", { prompt: "A quiet scholar" }, false);
+
+  assert.equal(embellished["3"].inputs.switch, false);
+  assert.equal(verbatim["3"].inputs.switch, true);
+});

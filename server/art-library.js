@@ -276,6 +276,7 @@ export function sceneInput(body, places) {
     pins,
     tagDirection: text(body.tagDirection, "The compiled scene direction", 6_000) || compiledDirection,
     castWhenReady: body.castWhenReady === true,
+    embellishPrompt: body.embellishPrompt !== false,
     place
   };
 }
@@ -312,6 +313,7 @@ export function sceneRecords(input, result, createdAt = new Date().toISOString()
     tagDirection: input.tagDirection,
     prompt: scenePrompt(input),
     negativePrompt: input.negativePrompt,
+    embellishPrompt: input.embellishPrompt,
     url,
     seed: Number.isSafeInteger(Number(result.seed)) ? Number(result.seed) : null,
     width: SCENE_DIMENSIONS.width,
@@ -336,6 +338,7 @@ export function sceneLibraryView(scene, removable = true) {
     excludedTagIds: Array.isArray(scene.excludedTagIds) ? [...scene.excludedTagIds] : [],
     pins: Array.isArray(scene.pins) ? scene.pins.map((pin) => ({ ...pin })) : [],
     tagDirection: scene.tagDirection || "",
+    embellishPrompt: scene.embellishPrompt !== false,
     url: scene.url,
     width: Number(scene.width) || SCENE_DIMENSIONS.width,
     height: Number(scene.height) || SCENE_DIMENSIONS.height,

@@ -61,6 +61,7 @@ const draft = {
   portraitStepsModifier: 0,
   portraitCfgModifier: 0,
   portraitStyle: "style2",
+  portraitEmbellishPrompt: true,
   portraitAttempts: [],
   portraitSuggestion: "",
   portraitTags: [],
@@ -120,7 +121,8 @@ function normalizePortraitRequest(request = {}) {
     offHand: String(request.offHand || "").trim().slice(0, 300),
     stepsModifier: portraitModifier(request.stepsModifier),
     cfgModifier: portraitModifier(request.cfgModifier),
-    style: portraitStyle(request.style)
+    style: portraitStyle(request.style),
+    embellishPrompt: request.embellishPrompt !== false
   };
 }
 
@@ -201,7 +203,8 @@ function portraitRequestSnapshot(context = portraitRequestContext()) {
     offHand: context.offHand,
     stepsModifier: draft.portraitStepsModifier,
     cfgModifier: draft.portraitCfgModifier,
-    style: draft.portraitStyle
+    style: draft.portraitStyle,
+    embellishPrompt: draft.portraitEmbellishPrompt
   });
 }
 
@@ -210,10 +213,12 @@ function collectPortraitFields(root = document) {
   const negative = root.querySelector("#portrait-negative");
   const favorite = root.querySelector("#portrait-favorite-color");
   const fixSeed = root.querySelector("#portrait-fix-seed");
+  const embellishPrompt = root.querySelector("#portrait-embellish-prompt");
   if (prompt) draft.portraitPrompt = prompt.value.trim();
   if (negative) draft.portraitNegativePrompt = negative.value.trim();
   if (favorite) draft.favoriteColor = validDetailColor(favorite.value);
   if (fixSeed) draft.portraitFixSeed = fixSeed.checked;
+  if (embellishPrompt) draft.portraitEmbellishPrompt = embellishPrompt.checked;
   for (const input of root.querySelectorAll("[data-portrait-equipment]")) {
     draft.portraitEquipment[input.dataset.portraitEquipment] = input.checked;
   }
@@ -228,7 +233,7 @@ function portraitHistoryHtml() {
       <img src="${esc(attempt.url)}" alt="${esc(t("portrait.attempt", { number: attempt.number }))}" loading="lazy" draggable="false">
       <div class="portrait-attempt-copy">
         <strong>${t("portrait.attempt", { number: attempt.number })}</strong>
-        <small>${t("portrait.attemptSettings", { style: portraitStyleLabel(attempt.request.style), steps: portraitModifierLabel(attempt.request.stepsModifier), cfg: portraitModifierLabel(attempt.request.cfgModifier) })}</small>
+        <small>${t("portrait.attemptSettings", { style: portraitStyleLabel(attempt.request.style), steps: portraitModifierLabel(attempt.request.stepsModifier), cfg: portraitModifierLabel(attempt.request.cfgModifier), promptMode: t(attempt.request.embellishPrompt === false ? "portrait.promptModeVerbatim" : "portrait.promptModeEmbellished") })}</small>
         <span>${t("portrait.seedArchived")}</span>
       </div>
       <div class="portrait-attempt-actions">
@@ -285,6 +290,7 @@ function portraitStudioHtml() {
             <div class="portrait-modifier-buttons" role="group" aria-label="${t(label)}">${PORTRAIT_MODIFIERS.map((value) => `<button type="button" data-portrait-modifier="${kind}" data-value="${value}" class="${portraitModifier(current) === value ? "selected" : ""} ${value === 0 ? "recommended" : ""}" aria-pressed="${portraitModifier(current) === value}">${portraitModifierLabel(value)}${value === 0 ? `<small>${t("portrait.recommended")}</small>` : ""}</button>`).join("")}</div>
           </div>`).join("")}
         </div>
+        <label class="portrait-seed-toggle"><input id="portrait-embellish-prompt" type="checkbox" ${draft.portraitEmbellishPrompt ? "checked" : ""}><span><strong>${t("portrait.embellish")}</strong><small>${t("portrait.embellishHelp")}</small></span></label>
         <label class="portrait-seed-toggle"><input id="portrait-fix-seed" type="checkbox" ${draft.portraitFixSeed ? "checked" : ""}><span><strong>${t("portrait.fixSeed")}</strong><small>${t("portrait.fixSeedHelp")}</small></span></label>
       </fieldset>
       <details class="portrait-advanced">
@@ -933,6 +939,7 @@ function buildCharacter() {
       stepsModifier: draft.portraitStepsModifier,
       cfgModifier: draft.portraitCfgModifier,
       style: draft.portraitStyle,
+      embellishPrompt: draft.portraitEmbellishPrompt,
       lastSeed: Number.isSafeInteger(draft.portraitSeed) ? draft.portraitSeed : null,
       attempts: draft.portraitAttempts.map((attempt) => ({
         ...attempt,
@@ -1147,6 +1154,7 @@ function restoreDraft(serverSaved = null) {
     draft.portraitStepsModifier = portraitModifier(draft.portraitStepsModifier);
     draft.portraitCfgModifier = portraitModifier(draft.portraitCfgModifier);
     draft.portraitStyle = portraitStyle(draft.portraitStyle);
+    draft.portraitEmbellishPrompt = draft.portraitEmbellishPrompt !== false;
     draft.portraitAttempts = normalizePortraitAttempts(draft.portraitAttempts);
     draft.portraitSeed = draft.portraitSeed !== null && draft.portraitSeed !== "" && Number.isSafeInteger(Number(draft.portraitSeed))
       ? Number(draft.portraitSeed)

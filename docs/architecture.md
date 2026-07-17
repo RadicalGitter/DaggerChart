@@ -15,10 +15,10 @@ server/
   store.js    atomic JSON read/write (unique tmp+rename), timestamped backups
   views.js    audience whitelists for GM, shells, lore, PCs, and messages
 public/
-  shared/     themes, i18n, session pools, GM tools/messages, rules search, player chat, feedback and UX collectors
+  shared/     themes, i18n, session pools, GM tools/messages, rules search, player chat/notes, feedback and UX collectors
   gm/         GM console (campaign/session controls, Almanac, correspondence, quick table, feedback queue, and UX review map)
   login/      trusted-table chooser: movable portrait cards + draft side view
-  player/     player root: identity switcher and visual-tool shelf
+  player/     player root: identity switcher, everyday tools, and visual-tool shelf
   table/      general arcana-card shell over six player sections, including Rules
   table-book/ settlement folio: town, folk, and chronicle
   tome/       personal tome: journal, character, inventory, Rules, and private correspondence
@@ -221,6 +221,11 @@ Consumable reactions; see [inventory.md](inventory.md).
   dock for the current `settlement-pc`. It fetches only `/api/messages?pc=`,
   marks the player side read on open, and sends with `Ctrl+Enter`; EN/SV labels
   live in `shared/i18n.js`.
+- **Player field kit:** `shared/player-tools.*` mounts on standalone player
+  surfaces, follows `settlement-pc`, writes quick personal/group notes through
+  `/api/notes`, and keeps Character, Journal, Inventory, and Rules at hand.
+  Embedded pages omit it. The standalone sheet adds a sticky section index;
+  the tome accepts `?section=` deep links.
 - **Session chronicle:** GM **Sessions** is a gathering/review folio with
   attendance, completion seals, separate factual/emphasis fields, and an
   explicit publication gate. The Journal's fourth physical bookmark shows a

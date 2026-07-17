@@ -12,6 +12,10 @@ let ART_LIBRARY = { dimensions: { width: 1536, height: 864, aspect: "16:9" }, ta
 let selectedUxRoute = null;
 let imageLibraryView = "characters";
 
+const artEmbellishKey = (kind) => `settlement-art-embellish-${kind}`;
+const artEmbellishPreference = (kind) => localStorage.getItem(artEmbellishKey(kind)) !== "false";
+const rememberArtEmbellish = (kind, enabled) => localStorage.setItem(artEmbellishKey(kind), String(enabled));
+
 function storedScenePins() {
   try {
     const pins = JSON.parse(localStorage.getItem("settlement-scene-pins") || "[]");
@@ -659,6 +663,7 @@ async function generateScene(event) {
       excludedTagIds: [...sceneTagState.excluded],
       pins: sceneTagState.pins.filter((pin) => !pin.authored).map(({ id, label, payload }) => ({ id, label, payload })),
       tagDirection: $("#scene-tag-direction").value,
+      embellishPrompt: $("#scene-embellish").checked,
       castWhenReady: $("#scene-cast").checked
     } });
     $("#scene-name").value = "";
@@ -1200,6 +1205,7 @@ function renderPersonEditor(p) {
         : `<div class="formrow" style="align-items:flex-start;"><label>ComfyUI prompt</label>
             <div style="flex:1">
               <textarea id="pe-prompt" rows="2" style="width:100%" placeholder="what the artist should paint">${esc(p.portraitPrompt || p.description || "")}</textarea>
+              <label class="muted" style="display:flex;align-items:center;gap:.4rem;margin-top:.4rem;font-size:.78rem;"><input type="checkbox" id="pe-embellish" ${artEmbellishPreference("portrait") ? "checked" : ""}> Automatically embellish prompt</label>
               <div class="formrow" style="margin:0.4rem 0 0;">
                 <button class="quiet" id="pe-portrait-request" ${ART_STATUS.workflows?.portrait?.ready ? "" : "disabled"}>Request a portrait</button>
                 <span class="muted" style="font-size:0.8rem;">${esc(artHint("portrait"))}</span>
@@ -1236,7 +1242,9 @@ function renderPersonEditor(p) {
         requestBtn.disabled = true;
         requestBtn.textContent = "Painting…";
         try {
-          const r = await api(`/api/people/${p.id}/portrait`, { method: "POST", body: { prompt: $("#pe-prompt").value } });
+          const embellishPrompt = $("#pe-embellish").checked;
+          rememberArtEmbellish("portrait", embellishPrompt);
+          const r = await api(`/api/people/${p.id}/portrait`, { method: "POST", body: { prompt: $("#pe-prompt").value, embellishPrompt } });
           $("#pe-portrait").value = r.url;
           toast(r.message);
         } catch (e) {
@@ -1342,6 +1350,7 @@ function renderPlaceEditor(pl) {
     ${isNew ? `<p class="muted" style="font-size:0.85rem;">Save the place first, then request its scene.</p>` : `<div class="formrow" style="align-items:flex-start;"><label>ComfyUI prompt</label>
       <div style="flex:1">
         <textarea id="ple-prompt" rows="3" style="width:100%" placeholder="the place, weather, light, and viewpoint">${esc(pl.imagePrompt || pl.description || "")}</textarea>
+        <label class="muted" style="display:flex;align-items:center;gap:.4rem;margin-top:.4rem;font-size:.78rem;"><input type="checkbox" id="ple-embellish" ${artEmbellishPreference("scenic") ? "checked" : ""}> Automatically embellish prompt</label>
         <div class="formrow" style="margin:.4rem 0 0;">
           <button class="quiet" id="ple-image-request" ${ART_STATUS.workflows?.scenic?.ready ? "" : "disabled"}>Request a scene</button>
           <span class="muted" style="font-size:.8rem;">${esc(artHint("scenic"))}</span>
@@ -1362,7 +1371,9 @@ function renderPlaceEditor(pl) {
     imageRequest.disabled = true;
     imageRequest.textContent = "Painting…";
     try {
-      const result = await api(`/api/places/${encodeURIComponent(pl.id)}/image`, { method: "POST", body: { prompt: $("#ple-prompt").value } });
+      const embellishPrompt = $("#ple-embellish").checked;
+      rememberArtEmbellish("scenic", embellishPrompt);
+      const result = await api(`/api/places/${encodeURIComponent(pl.id)}/image`, { method: "POST", body: { prompt: $("#ple-prompt").value, embellishPrompt } });
       $("#ple-portrait").value = result.url;
       toast(result.message);
     } catch (error) {
@@ -2205,6 +2216,8 @@ document.querySelectorAll("[data-image-view]").forEach((button) => {
   button.addEventListener("click", () => setImageLibraryView(button.dataset.imageView));
 });
 $("#scene-place").addEventListener("change", updateSceneSublocations);
+$("#scene-embellish").checked = artEmbellishPreference("scenic");
+$("#scene-embellish").addEventListener("change", () => rememberArtEmbellish("scenic", $("#scene-embellish").checked));
 $("#scene-open-place").addEventListener("click", () => openPlaceFromLibrary($("#scene-place").value));
 $("#scene-tag-back").addEventListener("click", sceneTagBack);
 $("#scene-tag-start").addEventListener("click", () => {
