@@ -20,6 +20,11 @@ each other. Rules of the road:
 ## Lanes
 
 **2026-07-18 — Codex** · status: DONE
+Lane: universal player return control. Added one shared floating route back to
+`/player` across every top-level player surface, suppressed it inside embeds
+and on the player/login hubs, and verified live route coverage and navigation.
+
+**2026-07-18 — Codex** · status: DONE
 Lane: settlement construction and stores. Adding data-driven building costs,
 GM-resolved check gates, audited construction/upgrades, and responsive GM and
 player-facing building/store views. Working on top of the current live server
