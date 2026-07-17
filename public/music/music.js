@@ -835,7 +835,10 @@ function playSong(songId) {
   const audio = $("#audio");
   state.playingId = songId;
   audio.src = song.audioUrl;
-  audio.play().catch(() => toast("Press play once to allow audio on this device."));
+  audio.load();
+  audio.play()
+    .then(updateTransport)
+    .catch(() => toast("Playback was blocked. Press the play control once to continue."));
   $("#playing-title").textContent = song.title;
   const source = songSourceLabel(song);
   $("#playing-detail").textContent = source !== song.source ? source : (song.prompt || "Generated cue");
@@ -1487,7 +1490,7 @@ $("#check-provider").onclick = async () => {
 $("#play-toggle").onclick = () => {
   const audio = $("#audio");
   if (!audio.src && state.playingId) playSong(state.playingId);
-  else if (audio.paused) audio.play();
+  else if (audio.paused) audio.play().catch(() => toast("Playback is not available on this device yet."));
   else audio.pause();
 };
 $("#next-track").onclick = () => {

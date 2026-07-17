@@ -1,6 +1,8 @@
 import { t } from "/shared/i18n.js";
 import { playerFeatureEnabled } from "/shared/player-features.js";
 
+const DICE_TRAY_RELEASED = false;
+
 const SKINS = {
   cinder: {
     tray: "#321e21",
@@ -71,6 +73,8 @@ function withTimeout(promise, ms = 9000) {
 }
 
 function install() {
+  // Unreleased: keep the client inert until the physical tray passes live UX review.
+  if (!DICE_TRAY_RELEASED) return;
   if (new URLSearchParams(location.search).get("embed") === "1" || document.querySelector(".duality-tools")) return;
 
   const style = document.createElement("link");
