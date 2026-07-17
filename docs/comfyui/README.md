@@ -17,7 +17,7 @@ presses **Use this prose**.
    **Save (API Format)**. A normal UI workflow export cannot be queued by the
    API.
 2. Put the API graphs here:
-   - `docs/comfyui/character-api-workflow.json`
+   - `Vesserin Portraits.json` (the default portrait graph)
    - `docs/comfyui/scenic-api-workflow.json`
 3. Put `{{prompt}}` in the workflow's positive text input. The app substitutes
    this token in the parsed graph, so node IDs may change freely.
@@ -25,8 +25,10 @@ presses **Use this prose**.
    collects up to four returned images and chooses the first one for the
    character or place.
 
-The checked-in `waidrin-portraits-workflow.json` is the earlier UI-format
-workflow and remains a visual reference. It is not used by the server.
+The checked-in `Vesserin Portraits.json` is the production portrait graph. Its
+neutral sampler is Steps `10`, CFG `0.8`, and its latent frame is `960 × 1280`.
+The earlier `waidrin-portraits-workflow.json` remains a UI-format visual
+reference and is not used by the server.
 
 ## Optional tokens
 
@@ -38,8 +40,8 @@ token receives a number rather than a string.
 | `{{prompt}}` or `{{positive_prompt}}` | request text | request text |
 | `{{negative_prompt}}` | empty | empty |
 | `{{seed}}` | random | random |
-| `{{width}}` | 1000 | 1216 |
-| `{{height}}` | 1328 | 832 |
+| `{{width}}` | 960 | 1216 |
+| `{{height}}` | 1280 | 832 |
 | `{{filename_prefix}}` | generated entity prefix | generated entity prefix |
 | `{{primary_color}}` | class pigment, when supplied | empty |
 | `{{secondary_color}}` | favorite-color accent, when supplied | empty |
@@ -51,13 +53,25 @@ token receives a number rather than a string.
 Workflows may keep their own fixed dimensions, sampler, model, LoRAs, and
 other controls simply by omitting those tokens.
 
-The default portrait source is `1000 × 1328`. Both dimensions are divisible by
-8 for latent-image compatibility; the 3:4 client frame trims only two pixels
-from each side. Current clients display that source directly and let CSS size
-the frame. With five players this is acceptable on the local table; if the
-portrait library grows, generate cached `500 × 664` and `250 × 332`
-derivatives on the server rather than repeatedly resampling the full source in
-every browser.
+The creator exposes only four relative sampler choices: `-1`, `+0`, `+1`, and
+`+2`. `+0` is the default and recommended choice for both controls. Steps are
+whole-number offsets from the graph's authored value. CFG is deliberately a
+tenth-point offset: `+1` changes `0.8` to `0.9`, not `1.8`. Unsupported values
+fall back to `+0` at the server boundary.
+
+The default portrait source is `960 × 1280`. Both dimensions are divisible by
+8 and exactly match the client's 3:4 portrait frame. Current clients display
+that source directly and let CSS size the frame. With five players this is
+acceptable on the local table; if the portrait library grows, generate cached
+`480 × 640` and `240 × 320` derivatives on the server rather than repeatedly
+resampling the full source in every browser.
+
+Every creator result is retained in the unfinished draft with the exact request
+snapshot and generated seed. The normal UI never prints that seed. **Go again**
+replays an archived request with its seed, while **Fix the image seed** makes
+ordinary generation reuse the currently selected attempt's seed. The internal
+LLM remains free to rewrite its structured character description, so a fixed
+seed can still produce a new interpretation.
 
 ## Local configuration
 
@@ -66,7 +80,7 @@ the gitignored `.env.local` when needed:
 
 ```dotenv
 COMFYUI_URL=http://127.0.0.1:5090
-COMFYUI_CHARACTER_WORKFLOW=docs/comfyui/character-api-workflow.json
+COMFYUI_CHARACTER_WORKFLOW=Vesserin Portraits.json
 COMFYUI_SCENIC_WORKFLOW=docs/comfyui/scenic-api-workflow.json
 COMFYUI_TIMEOUT_MS=180000
 ```

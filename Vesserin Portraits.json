@@ -1,0 +1,313 @@
+{
+  "91": {
+    "inputs": {
+      "value": "{{prompt}}"
+    },
+    "class_type": "PrimitiveStringMultiline",
+    "_meta": {
+      "title": "Prompt"
+    }
+  },
+  "104": {
+    "inputs": {
+      "width": 960,
+      "height": 1280,
+      "batch_size": 1
+    },
+    "class_type": "EmptySD3LatentImage",
+    "_meta": {
+      "title": "EmptySD3LatentImage"
+    }
+  },
+  "105": {
+    "inputs": {
+      "text": [
+        "129",
+        0
+      ],
+      "clip": [
+        "111",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  },
+  "106": {
+    "inputs": {
+      "samples": [
+        "112",
+        0
+      ],
+      "vae": [
+        "110",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "107": {
+    "inputs": {
+      "shift": 3.1,
+      "model": [
+        "109",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingAuraFlow",
+    "_meta": {
+      "title": "ModelSamplingAuraFlow"
+    }
+  },
+  "108": {
+    "inputs": {
+      "text": "低分辨率，低画质，肢体畸形，手指畸形，画面过饱和，蜡像感，人脸无细节，过度光滑，画面具有AI感。构图混乱。文字模糊，扭曲。{{negative_prompt}}",
+      "clip": [
+        "111",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Negative Prompt)"
+    }
+  },
+  "109": {
+    "inputs": {
+      "ckpt_name": "Big\\Image\\Qwen Image\\qwen_image_2512_fp8_e4m3fn.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "110": {
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "111": {
+    "inputs": {
+      "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "112": {
+    "inputs": {
+      "add_noise": "enable",
+      "noise_seed": 665061175012162,
+      "steps": 10,
+      "cfg": 0.8,
+      "sampler_name": "dpmpp_3m_sde_gpu",
+      "scheduler": "beta",
+      "start_at_step": 0,
+      "end_at_step": 10000,
+      "return_with_leftover_noise": "disable",
+      "model": [
+        "113",
+        0
+      ],
+      "positive": [
+        "105",
+        0
+      ],
+      "negative": [
+        "108",
+        0
+      ],
+      "latent_image": [
+        "104",
+        0
+      ]
+    },
+    "class_type": "KSamplerAdvanced",
+    "_meta": {
+      "title": "KSampler (Advanced)"
+    }
+  },
+  "113": {
+    "inputs": {
+      "PowerLoraLoaderHeaderWidget": {
+        "type": "PowerLoraLoaderHeaderWidget"
+      },
+      "lora_1": {
+        "on": false,
+        "lora": "Qwen\\qwen_image_nsfw.safetensors",
+        "strength": 0.25
+      },
+      "lora_2": {
+        "on": false,
+        "lora": "Qwen\\adorablegirls.safetensors",
+        "strength": 0.2
+      },
+      "lora_3": {
+        "on": false,
+        "lora": "Qwen\\qwen_image_nsfw.safetensors",
+        "strength": 1
+      },
+      "lora_4": {
+        "on": false,
+        "lora": "Qwen\\Qwen-Image-2512-Lightning-4steps-V1.0-fp32.safetensors",
+        "strength": 1
+      },
+      "lora_5": {
+        "on": true,
+        "lora": "Qwen\\Qwen-Image-2512-Lightning-8steps-V1.0-fp32.safetensors",
+        "strength": 0.8
+      },
+      "lora_6": {
+        "on": false,
+        "lora": "Qwen\\Qwen Innie Vagina r1.safetensors",
+        "strength": 0.42
+      },
+      "➕ Add Lora": "",
+      "model": [
+        "109",
+        0
+      ],
+      "clip": [
+        "111",
+        0
+      ]
+    },
+    "class_type": "Power Lora Loader (rgthree)",
+    "_meta": {
+      "title": "Power Lora Loader (rgthree)"
+    }
+  },
+  "114": {
+    "inputs": {
+      "images": [
+        "106",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "115": {
+    "inputs": {
+      "sub_directory": [
+        "118",
+        0
+      ],
+      "filename_text_1": [
+        "116",
+        0
+      ],
+      "filename_text_2": "",
+      "filename_text_3": "",
+      "filename_separator": "",
+      "timestamp": "false",
+      "counter_type": "folder",
+      "filename_text_1_pos": 0,
+      "filename_text_2_pos": 2,
+      "filename_text_3_pos": 4,
+      "timestamp_pos": 1,
+      "timestamp_type": "save_time",
+      "counter_pos": 3,
+      "extra_metadata": "Extra Metadata",
+      "images": [
+        "106",
+        0
+      ]
+    },
+    "class_type": "Save Images Mikey",
+    "_meta": {
+      "title": "Save Images Mikey (Mikey)"
+    }
+  },
+  "116": {
+    "inputs": {
+      "text": "Portrait"
+    },
+    "class_type": "ttN text",
+    "_meta": {
+      "title": "File Name"
+    }
+  },
+  "118": {
+    "inputs": {
+      "text": "Vessarin"
+    },
+    "class_type": "ttN text",
+    "_meta": {
+      "title": "Folder"
+    }
+  },
+  "120": {
+    "inputs": {
+      "api": "default",
+      "model": "grok-4-1-fast-non-reasoning",
+      "system_prompt": [
+        "121",
+        0
+      ],
+      "user_prompt": [
+        "91",
+        0
+      ],
+      "temperature": 1,
+      "top_p": 1
+    },
+    "class_type": "LLMs Chat",
+    "_meta": {
+      "title": "Short System Illustrious Prompt"
+    }
+  },
+  "121": {
+    "inputs": {
+      "text": "I would like your help in writing a prompt to produce a portrait shot, angle is allowed if it is a good idea, of a human Dungeons & Dragons character, from the midsection up, based on the description given. Describe the face and the clothes in as much detail as you can. Prefer more details over perfect adherance to the prompt, but representing the character as well as possible the top priority. Work with the prompt to make the character feel like an actual person rather than feeling perfect. Behind the character is no scenery, only a gradient: always begin each description by clearly describing the background colour and feel (supplied in prompt), and after that define the constraint of the image disposition. Make the description a maximum of 200 words and do not output anything except the description. Do not describe weaponry that is not explicitly in the prompt. Use as much of the original prompt as is useful.\n\nDo not attempt to create a \"realistic\" portrait; make sure that it is fantasy themed and stylistic. Spend the time to describe each piece of clothing to make sure that the image is not anachronistic.\n\n---\n\n1. Structure Your Prompts\nThe model responds best to a organized structure that clearly defines the scene elements: \nSubject: Define the main focus clearly (e.g., \"A portrait of...\").\nAction/Pose: Describe what the subject is doing (e.g., \"...a woman leaning forward...\").\nAppearance/Clothing: Specifics about clothing, colors, or textures.\nEnvironment: Background details (e.g., \"...in a dimly lit cafe\").\nLighting/Mood: Specify lighting quality (e.g., \"soft natural light, dramatic shadows\").\nCamera: Framing (e.g., \"close-up, low-angle shot\"). \n\n2. Best Practices for Text Rendering (Posters/Design)\nQwen 2512 is exceptional at rendering text. Use these tips for better text adherence: \nUse Literal Quotes: Use quotation marks for exact text (e.g., poster with text \"Happy New Year\").\nDefine Layout: Describe the placement (e.g., \"large header at top\", \"small text in bottom-left corner\").\nFont Style: Request specific font styles like \"clean sans-serif,\" \"bold slab,\" or \"elegant script.\"\nColor Contrast: Specify high contrast, such as \"white text on dark navy background,\" to ensure legibility.\nKeep it Simple: Keep text short (6–8 words max) and break them into clear lines or blocks in your prompt. \n\n3. Achieving Photorealism\nTo avoid the \"plastic\" or overly smooth, AI-generated look: \nAvoid \"Buzzwords\": Instead of using \"photorealistic\" or \"4K,\" use descriptive words like \"raw photo,\" \"film grain,\" \"skin texture,\" \"visible pores,\" or \"natural lighting.\"\nSpecify Details: Mention specific camera details like \"shot on 35mm lens\" or \"f/1.8.\"\nNegative Prompts: Use negative prompts to remove unwanted styles: plastic skin, cartoon, 3d render, smooth skin, doll-like. "
+    },
+    "class_type": "ttN text",
+    "_meta": {
+      "title": "text"
+    }
+  },
+  "122": {
+    "inputs": {
+      "text_0": "A portrait of a broad-shouldered human man in his late forties, thick neck and heavy forearms, the look of a former sawyer’s apprentice. Tanned skin with a network of faint axe scars and sun-creased lines, quiet brown eyes set beneath a low brow, short-cropped dark hair silvering at the temples. He wears a coarse, earth-brown linen shirt open at the collar, sleeves rolled once to mid-forearm, and a faded waistcoat of thick charcoal wool fastened with simple horn buttons. A wide leather belt sits low on his hips, the edge darkened by years of sweat and sawdust.\n\nThe background is a smooth gradient from deep charcoal gray at the top to muted burnt umber at the bottom, no environment or props. The image is framed from mid-chest upward, slight three-quarter angle, soft directional lighting catching the rough nap of the wool and the texture of weathered skin. Fantasy style, painterly brushwork, cinematic yet stylized.",
+      "text": [
+        "129",
+        0
+      ]
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "129": {
+    "inputs": {
+      "switch": true,
+      "on_false": [
+        "91",
+        0
+      ],
+      "on_true": [
+        "120",
+        0
+      ]
+    },
+    "class_type": "LazySwitchKJ",
+    "_meta": {
+      "title": "Use LLM?"
+    }
+  }
+}

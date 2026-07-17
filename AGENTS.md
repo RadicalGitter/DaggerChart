@@ -182,10 +182,10 @@ designing anything; it is the source of truth. Code map + API:
 - **All seven backend-first features in
   [docs/master-plan.md](docs/master-plan.md) are built.** Keep that document as
   architecture and acceptance context for incremental upgrades.
-- ComfyUI refinement: the local API adapter and GM controls now accept
-  tokenized character and scenic API workflows. Next, expose the character
-  portrait experience in `/create` with prompt + restrained controls once the
-  production workflow is installed; later add portrait aging/archives.
+- ComfyUI refinement: `/create` now uses the production `Vesserin Portraits`
+  API graph with prose, visual tags, colors, equipment toggles, bounded sampler
+  modifiers, fixed-seed retries, and an attempt archive. Next, complete the
+  scenic production workflow; later add campaign-year portrait aging.
 - In-app 4d6−1d6 roller with a reveal moment (Phase 4; simulate real dice,
   never flat 0–30).
 - Magic item cards: print-ready fronts matching the physical deck; scalable

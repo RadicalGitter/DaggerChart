@@ -10,15 +10,32 @@ const fromRoot = (value, fallback) => {
   return path.isAbsolute(selected) ? selected : path.join(ROOT, selected);
 };
 const DEFAULT_WORKFLOWS = {
-  portrait: fromRoot(process.env.COMFYUI_CHARACTER_WORKFLOW, path.join("docs", "comfyui", "character-api-workflow.json")),
+  portrait: fromRoot(process.env.COMFYUI_CHARACTER_WORKFLOW, "Vesserin Portraits.json"),
   scenic: fromRoot(process.env.COMFYUI_SCENIC_WORKFLOW, path.join("docs", "comfyui", "scenic-api-workflow.json"))
 };
 const TOKEN_PATTERN = /\{\{([a-z_]+)\}\}/gi;
 const IMAGE_LIMIT = 32 * 1024 * 1024;
+const MODIFIER_VALUES = new Set([-1, 0, 1, 2]);
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const cleanId = (value) => String(value || "art").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 100) || "art";
 const compactToken = (value, limit = 300) => String(value || "").trim().slice(0, limit);
+const modifierValue = (value) => MODIFIER_VALUES.has(Number(value)) ? Number(value) : 0;
+
+function applySamplerModifiers(graph, stepsModifier, cfgModifier) {
+  const stepOffset = modifierValue(stepsModifier);
+  const cfgOffset = modifierValue(cfgModifier) * 0.1;
+  for (const node of Object.values(graph)) {
+    if (!node?.inputs || typeof node.inputs !== "object") continue;
+    if (typeof node.inputs.steps === "number" && Number.isFinite(node.inputs.steps)) {
+      node.inputs.steps = Math.max(1, Math.round(node.inputs.steps + stepOffset));
+    }
+    if (typeof node.inputs.cfg === "number" && Number.isFinite(node.inputs.cfg)) {
+      node.inputs.cfg = Math.max(0, Math.round((node.inputs.cfg + cfgOffset) * 100) / 100);
+    }
+  }
+  return graph;
+}
 
 function workflowGraph(value) {
   if (!value || Array.isArray(value) || typeof value !== "object") throw new Error("The workflow is not a ComfyUI API graph.");
@@ -127,7 +144,7 @@ export class ArtWorkshop {
   }
 
   async request({
-    kind, entityId, prompt, negativePrompt = "", seed, width, height,
+    kind, entityId, prompt, negativePrompt = "", seed, width, height, stepsModifier = 0, cfgModifier = 0,
     primaryColor = "", secondaryColor = "", tags = [], armor = "", mainHand = "", offHand = ""
   }) {
     if (kind !== "portrait" && kind !== "scenic") throw new Error("Unknown art workflow.");
@@ -136,8 +153,9 @@ export class ArtWorkshop {
     if (!positive) throw new Error("Write an image prompt first.");
     if (positive.length > 6_000 || negative.length > 4_000) throw new Error("That image prompt is too long.");
 
-    const numericSeed = Number.isSafeInteger(Number(seed)) ? Number(seed) : crypto.randomInt(0, 2_147_483_647);
-    const defaults = kind === "portrait" ? { width: 1000, height: 1328 } : { width: 1216, height: 832 };
+    const hasSeed = seed !== null && seed !== undefined && seed !== "" && Number.isSafeInteger(Number(seed));
+    const numericSeed = hasSeed ? Number(seed) : crypto.randomInt(0, 2_147_483_647);
+    const defaults = kind === "portrait" ? { width: 960, height: 1280 } : { width: 1216, height: 832 };
     const tokens = {
       prompt: positive,
       positive_prompt: positive,
@@ -153,7 +171,7 @@ export class ArtWorkshop {
       main_hand: compactToken(mainHand),
       off_hand: compactToken(offHand)
     };
-    const graph = this.loadWorkflow(kind, tokens);
+    const graph = applySamplerModifiers(this.loadWorkflow(kind, tokens), stepsModifier, cfgModifier);
     const clientId = crypto.randomUUID();
     const queued = await this.comfy("prompt", {
       method: "POST",

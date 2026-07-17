@@ -57,6 +57,10 @@ const draft = {
   portraitPrompt: "",
   portraitNegativePrompt: "",
   portraitSeed: null,
+  portraitFixSeed: false,
+  portraitStepsModifier: 0,
+  portraitCfgModifier: 0,
+  portraitAttempts: [],
   portraitSuggestion: "",
   portraitTags: [],
   portraitEquipment: { armor: true, mainHand: true, offHand: true },
@@ -82,6 +86,48 @@ const PORTRAIT_TAGS = [
   { id: "uncanny", label: "portrait.tag.uncanny", prompt: "uncanny" },
   { id: "practical", label: "portrait.tag.practical", prompt: "practical" }
 ];
+const PORTRAIT_MODIFIERS = [-1, 0, 1, 2];
+
+function portraitModifier(value) {
+  const numeric = Number(value);
+  return PORTRAIT_MODIFIERS.includes(numeric) ? numeric : 0;
+}
+
+function portraitModifierLabel(value) {
+  const numeric = portraitModifier(value);
+  return `${numeric >= 0 ? "+" : ""}${numeric}`;
+}
+
+function normalizePortraitRequest(request = {}) {
+  return {
+    prompt: String(request.prompt || "").trim().slice(0, 6_000),
+    negativePrompt: String(request.negativePrompt || "").trim().slice(0, 4_000),
+    primaryColor: String(request.primaryColor || "").trim().slice(0, 32),
+    secondaryColor: String(request.secondaryColor || "").trim().slice(0, 32),
+    tags: Array.isArray(request.tags) ? request.tags.slice(0, 20).map((tag) => String(tag).slice(0, 80)) : [],
+    armor: String(request.armor || "").trim().slice(0, 300),
+    mainHand: String(request.mainHand || "").trim().slice(0, 300),
+    offHand: String(request.offHand || "").trim().slice(0, 300),
+    stepsModifier: portraitModifier(request.stepsModifier),
+    cfgModifier: portraitModifier(request.cfgModifier)
+  };
+}
+
+function normalizePortraitAttempts(value) {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((attempt, index) => {
+    const url = String(attempt?.url || "");
+    const seed = Number(attempt?.seed);
+    if (!url.startsWith("/generated/art/portrait/") || !Number.isSafeInteger(seed)) return [];
+    return [{
+      id: String(attempt.id || `portrait_attempt_${index}_${seed}`).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 100),
+      url,
+      seed,
+      createdAt: String(attempt.createdAt || ""),
+      request: normalizePortraitRequest(attempt.request)
+    }];
+  });
+}
 
 const featHtml = (f) => `<div class="featline"><strong>${esc(f.name)}</strong> ${termify(esc(f.text))}</div>`;
 const campaignChoiceVisible = () => CAMPAIGNS.length > 1;
@@ -132,16 +178,53 @@ function portraitRequestContext() {
   return { prompt, primaryColor, secondaryColor, selectedTags, ...equipment };
 }
 
+function portraitRequestSnapshot(context = portraitRequestContext()) {
+  return normalizePortraitRequest({
+    prompt: context.prompt,
+    negativePrompt: draft.portraitNegativePrompt,
+    primaryColor: context.primaryColor,
+    secondaryColor: context.secondaryColor,
+    tags: context.selectedTags,
+    armor: context.armor,
+    mainHand: context.mainHand,
+    offHand: context.offHand,
+    stepsModifier: draft.portraitStepsModifier,
+    cfgModifier: draft.portraitCfgModifier
+  });
+}
+
 function collectPortraitFields(root = document) {
   const prompt = root.querySelector("#portrait-prompt");
   const negative = root.querySelector("#portrait-negative");
   const favorite = root.querySelector("#portrait-favorite-color");
+  const fixSeed = root.querySelector("#portrait-fix-seed");
   if (prompt) draft.portraitPrompt = prompt.value.trim();
   if (negative) draft.portraitNegativePrompt = negative.value.trim();
   if (favorite) draft.favoriteColor = validDetailColor(favorite.value);
+  if (fixSeed) draft.portraitFixSeed = fixSeed.checked;
   for (const input of root.querySelectorAll("[data-portrait-equipment]")) {
     draft.portraitEquipment[input.dataset.portraitEquipment] = input.checked;
   }
+}
+
+function portraitHistoryHtml() {
+  if (!draft.portraitAttempts.length) return "";
+  const attempts = draft.portraitAttempts.map((attempt, index) => ({ ...attempt, number: index + 1 })).reverse();
+  return `<section class="portrait-history" aria-labelledby="portrait-history-title">
+    <header><h3 id="portrait-history-title">${t("portrait.history")}</h3><p>${t("portrait.historyHelp")}</p></header>
+    <div class="portrait-history-grid">${attempts.map((attempt) => `<article class="portrait-attempt ${attempt.url === draft.portrait ? "selected" : ""}">
+      <img src="${esc(attempt.url)}" alt="${esc(t("portrait.attempt", { number: attempt.number }))}" loading="lazy" draggable="false">
+      <div class="portrait-attempt-copy">
+        <strong>${t("portrait.attempt", { number: attempt.number })}</strong>
+        <small>${t("portrait.attemptSettings", { steps: portraitModifierLabel(attempt.request.stepsModifier), cfg: portraitModifierLabel(attempt.request.cfgModifier) })}</small>
+        <span>${t("portrait.seedArchived")}</span>
+      </div>
+      <div class="portrait-attempt-actions">
+        <button class="quiet" type="button" data-portrait-use="${esc(attempt.id)}">${t("portrait.useAttempt")}</button>
+        <button type="button" data-portrait-retry="${esc(attempt.id)}">${t("portrait.goAgain")}</button>
+      </div>
+    </article>`).join("")}</div>
+  </section>`;
 }
 
 function portraitStudioHtml() {
@@ -178,6 +261,16 @@ function portraitStudioHtml() {
         <label><input type="checkbox" data-portrait-equipment="mainHand" ${draft.portraitEquipment.mainHand ? "checked" : ""}> <span>${t("portrait.includeMain")}</span></label>
         <label class="${offHandAvailable ? "" : "unavailable"}"><input type="checkbox" data-portrait-equipment="offHand" ${offHandAvailable && draft.portraitEquipment.offHand ? "checked" : ""} ${offHandAvailable ? "" : "disabled"}> <span>${t("portrait.includeOffhand")}</span></label>
       </fieldset>
+      <fieldset class="portrait-tuning">
+        <legend>${t("portrait.tuning")}</legend>
+        <div class="portrait-tuning-row">
+          ${[["steps", "portrait.steps", draft.portraitStepsModifier], ["cfg", "portrait.cfg", draft.portraitCfgModifier]].map(([kind, label, current]) => `<div class="portrait-modifier-group">
+            <span>${t(label)}</span>
+            <div class="portrait-modifier-buttons" role="group" aria-label="${t(label)}">${PORTRAIT_MODIFIERS.map((value) => `<button type="button" data-portrait-modifier="${kind}" data-value="${value}" class="${portraitModifier(current) === value ? "selected" : ""} ${value === 0 ? "recommended" : ""}" aria-pressed="${portraitModifier(current) === value}">${portraitModifierLabel(value)}${value === 0 ? `<small>${t("portrait.recommended")}</small>` : ""}</button>`).join("")}</div>
+          </div>`).join("")}
+        </div>
+        <label class="portrait-seed-toggle"><input id="portrait-fix-seed" type="checkbox" ${draft.portraitFixSeed ? "checked" : ""}><span><strong>${t("portrait.fixSeed")}</strong><small>${t("portrait.fixSeedHelp")}</small></span></label>
+      </fieldset>
       <details class="portrait-advanced">
         <summary>${t("portrait.negative")}</summary>
         <textarea id="portrait-negative" rows="2">${esc(draft.portraitNegativePrompt)}</textarea>
@@ -188,7 +281,49 @@ function portraitStudioHtml() {
       </div>
       <p class="portrait-status ${ready ? "ready" : ""}">${ready ? t("portrait.ready") : t("portrait.awaiting")}</p>
     </div>
-  </div>`;
+  </div>${portraitHistoryHtml()}`;
+}
+
+async function generatePortrait(button, request, seed) {
+  const payload = normalizePortraitRequest(request);
+  if (!payload.prompt) { $("#warn").textContent = t("portrait.prompt"); return; }
+  const originalLabel = button.textContent;
+  button.disabled = true;
+  button.textContent = t("portrait.generating");
+  $("#warn").textContent = "";
+  try {
+    const body = { draftId, ...payload };
+    if (Number.isSafeInteger(seed)) body.seed = seed;
+    const response = await fetch("/api/art/portrait", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || t("error.generic"));
+    const resultSeed = Number(result.seed);
+    const urls = (Array.isArray(result.urls) && result.urls.length ? result.urls : [result.url])
+      .map((url) => String(url || ""))
+      .filter((url) => url.startsWith("/generated/art/portrait/"));
+    if (!urls.length || !Number.isSafeInteger(resultSeed)) throw new Error(t("portrait.invalidResult"));
+    const createdAt = new Date().toISOString();
+    const requestCopy = normalizePortraitRequest(payload);
+    const additions = urls.map((url, index) => ({
+      id: `portrait_attempt_${crypto.randomUUID?.() || `${Date.now()}_${index}`}`,
+      url,
+      seed: resultSeed,
+      createdAt,
+      request: { ...requestCopy, tags: [...requestCopy.tags] }
+    }));
+    draft.portraitAttempts.push(...additions);
+    draft.portrait = String(result.url || additions[0].url);
+    draft.portraitSeed = resultSeed;
+    rerender();
+  } catch (error) {
+    $("#warn").textContent = error.message;
+    button.disabled = false;
+    button.textContent = originalLabel;
+  }
 }
 
 // ---------- steps ----------
@@ -583,42 +718,36 @@ const steps = [
           draft.portraitPrompt = draft.portraitSuggestion;
           rerender();
         };
+        for (const modifier of root.querySelectorAll("[data-portrait-modifier]")) modifier.onclick = () => {
+          collectPortraitFields(root);
+          const value = portraitModifier(modifier.dataset.value);
+          if (modifier.dataset.portraitModifier === "steps") draft.portraitStepsModifier = value;
+          if (modifier.dataset.portraitModifier === "cfg") draft.portraitCfgModifier = value;
+          rerender();
+        };
         const generate = root.querySelector("#portrait-generate");
         generate.onclick = async () => {
           collectPortraitFields(root);
           if (!draft.portraitPrompt) { $("#warn").textContent = t("portrait.prompt"); return; }
           const context = portraitRequestContext();
-          generate.disabled = true;
-          generate.textContent = t("portrait.generating");
-          try {
-            const response = await fetch("/api/art/portrait", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                draftId,
-                prompt: context.prompt,
-                negativePrompt: draft.portraitNegativePrompt,
-                primaryColor: context.primaryColor,
-                secondaryColor: context.secondaryColor,
-                tags: context.selectedTags,
-                armor: context.armor,
-                mainHand: context.mainHand,
-                offHand: context.offHand
-              })
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error || t("error.generic"));
-            draft.portrait = result.url;
-            draft.portraitSeed = result.seed;
-            rerender();
-          } catch (error) {
-            $("#warn").textContent = error.message;
-            generate.disabled = false;
-            generate.textContent = t("portrait.generate");
-          }
+          const seed = draft.portraitFixSeed && Number.isSafeInteger(draft.portraitSeed) ? draft.portraitSeed : undefined;
+          await generatePortrait(generate, portraitRequestSnapshot(context), seed);
         };
         const clear = root.querySelector("#portrait-clear");
-        if (clear) clear.onclick = () => { draft.portrait = null; draft.portraitSeed = null; rerender(); };
+        if (clear) clear.onclick = () => { draft.portrait = null; rerender(); };
+        for (const use of root.querySelectorAll("[data-portrait-use]")) use.onclick = () => {
+          const attempt = draft.portraitAttempts.find((candidate) => candidate.id === use.dataset.portraitUse);
+          if (!attempt) return;
+          collectPortraitFields(root);
+          draft.portrait = attempt.url;
+          draft.portraitSeed = attempt.seed;
+          rerender();
+        };
+        for (const retry of root.querySelectorAll("[data-portrait-retry]")) retry.onclick = async () => {
+          const attempt = draft.portraitAttempts.find((candidate) => candidate.id === retry.dataset.portraitRetry);
+          if (!attempt) return;
+          await generatePortrait(retry, attempt.request, attempt.seed);
+        };
         return;
       }
       for (const el of root.querySelectorAll("[data-pen]")) el.onclick = () => { draft.pen = el.dataset.pen; rerender(); };
@@ -777,6 +906,16 @@ function buildCharacter() {
       includeArmor: draft.portraitEquipment.armor,
       includeMainHand: draft.portraitEquipment.mainHand,
       includeOffHand: draft.portraitEquipment.offHand
+    },
+    portraitWorkshop: {
+      fixSeed: draft.portraitFixSeed,
+      stepsModifier: draft.portraitStepsModifier,
+      cfgModifier: draft.portraitCfgModifier,
+      lastSeed: Number.isSafeInteger(draft.portraitSeed) ? draft.portraitSeed : null,
+      attempts: draft.portraitAttempts.map((attempt) => ({
+        ...attempt,
+        request: { ...attempt.request, tags: [...attempt.request.tags] }
+      }))
     },
     notes: ""
   };
@@ -982,6 +1121,13 @@ function restoreDraft(serverSaved = null) {
       mainHand: draft.portraitEquipment?.mainHand !== false,
       offHand: draft.portraitEquipment?.offHand !== false
     };
+    draft.portraitFixSeed = draft.portraitFixSeed === true;
+    draft.portraitStepsModifier = portraitModifier(draft.portraitStepsModifier);
+    draft.portraitCfgModifier = portraitModifier(draft.portraitCfgModifier);
+    draft.portraitAttempts = normalizePortraitAttempts(draft.portraitAttempts);
+    draft.portraitSeed = draft.portraitSeed !== null && draft.portraitSeed !== "" && Number.isSafeInteger(Number(draft.portraitSeed))
+      ? Number(draft.portraitSeed)
+      : null;
     draft.favoriteColor = validDetailColor(draft.favoriteColor);
     step = Math.max(0, Math.min(steps.length - 1, saved.step));
     part = Math.max(0, Math.min(partTotal(steps[step]) - 1, Number(saved.part) || 0));

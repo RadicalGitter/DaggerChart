@@ -95,10 +95,11 @@ docs/         this file, the design spec, ComfyUI workflow
   environment, defaults `RETELL_MODEL` to `claude-opus-4-8`, times out after
   60 seconds, and retries one 429/5xx response. See
   [session-retellings.md](session-retellings.md).
-- **`art.js`** — validates tokenized ComfyUI API-format workflows, queues them
-  without fixed node IDs, polls one prompt's history, and copies returned
-  images into the gitignored player-static art directory. Portrait and scenic
-  setup is documented in [comfyui/README.md](comfyui/README.md).
+- **`art.js`** — validates tokenized ComfyUI API-format workflows, applies
+  bounded relative sampler modifiers without fixed node IDs, queues them,
+  polls one prompt's history, and copies returned images into the gitignored
+  player-static art directory. Portrait and scenic setup is documented in
+  [comfyui/README.md](comfyui/README.md).
 - **`portrait-suggest.js`** — sends only bounded, player-known portrait context
   to Anthropic and returns one editable prose suggestion. It never generates
   an image or writes character state.
@@ -167,7 +168,7 @@ docs/         this file, the design spec, ComfyUI workflow
 | `GET /api/gm-screen` | static flat SRD quick-reference sections for GM surfaces |
 | `POST/PUT/DELETE /api/people[/:id]` | wider-world NPCs: description public, `hidden.notes` private, `placeId` moves them, `items` carried, `revealed` gates player visibility |
 | `GET /api/art/status` | report local portrait/scenic graph validity and portrait-adviser readiness |
-| `POST /api/art/portrait` | generate an optional portrait for an unfinished character draft |
+| `POST /api/art/portrait` | generate an optional portrait for an unfinished character draft; accepts hidden seed reuse plus `-1..+2` Steps/CFG modifiers |
 | `POST /api/art/portrait/suggest` | ask Anthropic for one editable portrait-brief suggestion |
 | `POST /api/party/:id/portrait` | generate and attach a player-character portrait through ComfyUI |
 | `POST /api/people/:id/portrait` | save the prompt, generate, and attach a wider-world portrait through ComfyUI |
