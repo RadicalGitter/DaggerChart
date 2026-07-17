@@ -13,6 +13,7 @@ let ART_LIBRARY = { dimensions: { width: 1536, height: 864, aspect: "16:9" }, ta
 let selectedUxRoute = null;
 let imageLibraryView = "characters";
 let selectedFolkId = null;
+let selectedPartyId = localStorage.getItem("settlement-gm-party-selection") || null;
 
 const FOLK_AGE_BANDS = [
   ["unknown", "Unknown"], ["child", "Child"], ["young", "Young"], ["adult", "Adult"],
@@ -332,6 +333,7 @@ function showSection(key) {
   document.body.classList.toggle("folk-open", key === "folk");
   document.body.classList.toggle("board-open", key === "board");
   document.body.classList.toggle("music-open", key === "music");
+  document.body.classList.toggle("party-open", key === "party");
   if (key === "music") {
     requestAnimationFrame(() => {
       document.querySelector(".gm-music-frame")?.contentWindow?.postMessage(
@@ -343,6 +345,7 @@ function showSection(key) {
   if (key === "ux") requestAnimationFrame(renderUx);
   if (key === "almanac") setAlmanacView(almanacView);
   if (key === "images") requestAnimationFrame(renderImageLibrary);
+  if (key === "party") requestAnimationFrame(syncPartySheetFrame);
 }
 
 function artHint(kind) {
@@ -1649,52 +1652,110 @@ function renderPlaceEditor(pl) {
 }
 
 // --- party ---
-const activePartyMembers = () => (S.party || []).filter((pc) => pc.active !== false);
+const activePartyMembers = () => (S?.party || []).filter((pc) => pc.active !== false);
 
-function partyIdentity(p) {
-  const portrait = p.portrait
-    ? `<img src="${esc(p.portrait)}" alt="">`
-    : esc((p.name || "?").slice(0, 1).toUpperCase());
-  return `<div class="party-identity"><span class="party-portrait" aria-hidden="true">${portrait}</span><span><strong>${esc(p.name)}</strong>${p.player ? `<br><span class="muted" style="font-size:0.85rem;">${esc(p.player)}</span>` : ""}</span></div>`;
+function selectedPartyMember() {
+  return activePartyMembers().find((pc) => pc.id === selectedPartyId) || null;
 }
 
-function renderParty() {
-  const active = activePartyMembers();
-  const retired = (S.party || []).filter((pc) => pc.active === false);
-  const rows = active
-    .map(
-      (p) => `<tr>
-        <td>${partyIdentity(p)}</td>
-        <td>${esc(p.ancestry || "")} ${esc(p.class || "")}<br><span class="muted" style="font-size:0.85rem;">${esc(p.subclass || "")}</span></td>
-        <td><input type="number" class="num" min="1" max="10" value="${p.level}" data-pclevel="${esc(p.id)}" aria-label="Level for ${esc(p.name)}"></td>
-        <td><div class="condition-toggles" aria-label="Conditions for ${esc(p.name)}">${CONDITIONS.map((condition) => {
-          const applied = (p.conditions || []).includes(condition.id);
-          const action = applied ? "Clear" : "Apply";
-          return `<button class="condition-toggle${applied ? " active" : ""}" type="button" data-pccondition="${esc(p.id)}" data-condition="${condition.id}" aria-pressed="${applied}" title="${action} ${condition.name}">${conditionIcon(condition.id)}<span>${condition.name}</span></button>`;
-        }).join("")}</div></td>
-        <td><a class="sheet-link" href="/character/${encodeURIComponent(p.id)}">Open the sheet</a></td>
-        <td><button class="quiet" data-pcart="${esc(p.id)}" ${ART_STATUS.workflows?.portrait?.ready ? "" : "disabled"} title="${esc(artHint("portrait"))}">Portrait</button> <button class="quiet" data-pcretire="${esc(p.id)}">Retire</button></td>
-      </tr>`
-    )
-    .join("");
-  $("#party-table").innerHTML = `
-    <tr><th>Character</th><th>Class</th><th>Level</th><th>Conditions</th><th>Sheet</th><th></th></tr>
-    ${rows || '<tr><td colspan="6" class="muted">No active player characters. Send your players to /create or restore someone below.</td></tr>'}`;
-  $("#stepped-back").hidden = retired.length === 0;
-  $("#stepped-back-count").textContent = String(retired.length);
-  $("#stepped-back-list").innerHTML = retired.map((p) => `<div class="stepped-back-row">
-    <span class="party-portrait" aria-hidden="true">${p.portrait ? `<img src="${esc(p.portrait)}" alt="">` : esc((p.name || "?").slice(0, 1).toUpperCase())}</span>
-    <span><strong>${esc(p.name)}</strong><span class="muted">${[p.ancestry, p.class, p.player].filter(Boolean).map(esc).join(" · ") || "Character record preserved"}</span></span>
-    <button class="quiet" type="button" data-pcrestore="${esc(p.id)}">Return</button>
-  </div>`).join("");
-  for (const el of document.querySelectorAll("[data-pclevel]")) {
-    el.onchange = () =>
-      api(`/api/party/${el.dataset.pclevel}`, { method: "PUT", body: { level: clampNum(el, 1, 10) } })
-        .then(refresh).catch((e) => toast(e.message, true));
+function partyRosterCard(p) {
+  const classLine = [p.ancestry, p.class].filter(Boolean).join(" · ");
+  const portrait = p.portrait
+    ? `<img src="${esc(p.portrait)}" alt="">`
+    : `<span class="party-card-initial" aria-hidden="true">${esc((p.name || "?").slice(0, 1).toUpperCase())}</span>`;
+  return `<button type="button" class="party-roster-card" role="option" data-party-select="${esc(p.id)}"
+    aria-selected="${p.id === selectedPartyId}" aria-label="Open ${esc(p.name)}'s character sheet"
+    style="--party-primary:${esc(p.appearance?.primaryColor || "#765947")};--party-secondary:${esc(p.appearance?.secondaryColor || "#9fcdb7")}">
+    <span class="party-card-portrait">${portrait}</span>
+    <span class="party-card-copy"><strong>${esc(p.name)}</strong><span>${esc(classLine || "Character")}</span></span>
+  </button>`;
+}
+
+function syncPartySheetFrame() {
+  const frame = $("#party-sheet-frame");
+  const placeholder = $("#party-sheet-placeholder");
+  const selected = selectedPartyMember();
+  if (!selected) {
+    frame.hidden = true;
+    placeholder.hidden = false;
+    return;
   }
-  for (const el of document.querySelectorAll("[data-pccondition]")) {
+  if (frame.dataset.pcId !== selected.id) {
+    frame.dataset.pcId = selected.id;
+    frame.src = `/character/${encodeURIComponent(selected.id)}?embed=1&gm=1`;
+    frame.title = `${selected.name}'s character sheet`;
+  }
+  frame.hidden = false;
+  placeholder.hidden = true;
+}
+
+function wirePartyPortraitButtons(root) {
+  for (const el of root.querySelectorAll("[data-pcart]")) {
     el.onclick = async () => {
-      const p = S.party.find((x) => x.id === el.dataset.pccondition);
+      const p = S.party.find((candidate) => candidate.id === el.dataset.pcart);
+      if (!p) return;
+      const suggested = p.portraitPrompt || [p.name, p.ancestry, p.class, p.subclass, "fantasy character portrait"].filter(Boolean).join(", ");
+      const portraitPrompt = window.prompt(`Portrait prompt for ${p.name}`, suggested);
+      if (portraitPrompt === null) return;
+      const label = el.textContent;
+      el.disabled = true;
+      el.textContent = "Painting…";
+      try {
+        const result = await api(`/api/party/${encodeURIComponent(p.id)}/portrait`, { method: "POST", body: { prompt: portraitPrompt } });
+        toast(result.message);
+        await refresh();
+      } catch (error) {
+        toast(error.message, true);
+        el.disabled = false;
+        el.textContent = label;
+      }
+    };
+  }
+}
+
+function wirePartyRetireButtons(root) {
+  for (const el of root.querySelectorAll("[data-pcretire]")) {
+    el.onclick = async () => {
+      const p = S.party.find((candidate) => candidate.id === el.dataset.pcretire);
+      if (!p || !confirm(`Retire ${p.name}? Their sheet, inventory, notes, and drawings will be kept, but they will disappear from player choosers.`)) return;
+      try {
+        await api(`/api/party/${encodeURIComponent(p.id)}`, { method: "DELETE" });
+        toast(`${p.name} stepped back from the tale.`);
+        await refresh();
+      } catch (e) {
+        toast(e.message, true);
+      }
+    };
+  }
+}
+
+function renderSelectedPartyTools(p) {
+  const tools = $("#party-selected-tools");
+  if (!p) {
+    tools.innerHTML = `<div class="party-selected-identity"><strong>No active characters</strong><span>The next completed character will appear here.</span></div>`;
+    return;
+  }
+  tools.innerHTML = `
+    <div class="party-selected-identity"><strong>${esc(p.name)}</strong><span>${[p.ancestry, p.class, p.subclass, p.player].filter(Boolean).map(esc).join(" · ")}</span></div>
+    <div class="party-sheet-vitals">
+      <label class="party-level-control">Level <input type="number" min="1" max="10" value="${p.level}" data-pclevel="${esc(p.id)}" aria-label="Level for ${esc(p.name)}"></label>
+      <div class="condition-toggles" aria-label="Conditions for ${esc(p.name)}">${CONDITIONS.map((condition) => {
+        const applied = (p.conditions || []).includes(condition.id);
+        const action = applied ? "Clear" : "Apply";
+        return `<button class="condition-toggle${applied ? " active" : ""}" type="button" data-pccondition="${esc(p.id)}" data-condition="${condition.id}" aria-pressed="${applied}" aria-label="${action} ${condition.name}" title="${action} ${condition.name}">${conditionIcon(condition.id)}<span>${condition.name}</span></button>`;
+      }).join("")}</div>
+    </div>
+    <div class="party-selected-actions">
+      <button class="quiet" type="button" data-pcart="${esc(p.id)}" ${ART_STATUS.workflows?.portrait?.ready ? "" : "disabled"} title="${esc(artHint("portrait"))}">Portrait</button>
+      <button class="quiet party-actions-compact" type="button" data-party-actions-open>Party actions</button>
+      <button class="quiet" type="button" data-pcretire="${esc(p.id)}">Retire</button>
+    </div>`;
+  for (const el of tools.querySelectorAll("[data-pclevel]")) {
+    el.onchange = () => api(`/api/party/${el.dataset.pclevel}`, { method: "PUT", body: { level: clampNum(el, 1, 10) } })
+      .then(refresh).catch((e) => toast(e.message, true));
+  }
+  for (const el of tools.querySelectorAll("[data-pccondition]")) {
+    el.onclick = async () => {
       const current = new Set(p.conditions || []);
       if (current.has(el.dataset.condition)) current.delete(el.dataset.condition);
       else current.add(el.dataset.condition);
@@ -1706,19 +1767,55 @@ function renderParty() {
       }
     };
   }
-  for (const el of document.querySelectorAll("[data-pcretire]")) {
-    el.onclick = async () => {
-      const p = S.party.find((x) => x.id === el.dataset.pcretire);
-      if (!confirm(`Retire ${p.name}? Their sheet, inventory, notes, and drawings will be kept, but they will disappear from player choosers.`)) return;
-      try {
-        await api(`/api/party/${encodeURIComponent(p.id)}`, { method: "DELETE" });
-        toast(`${p.name} stepped back from the tale.`);
-        await refresh();
-      } catch (e) {
-        toast(e.message, true);
-      }
+  wirePartyPortraitButtons(tools);
+  wirePartyRetireButtons(tools);
+  tools.querySelector("[data-party-actions-open]")?.addEventListener("click", openPartyActions);
+}
+
+function selectPartyMember(id, { focus = false } = {}) {
+  const p = activePartyMembers().find((candidate) => candidate.id === id);
+  if (!p) return;
+  selectedPartyId = p.id;
+  localStorage.setItem("settlement-gm-party-selection", selectedPartyId);
+  for (const card of $("#party-card-grid").querySelectorAll("[data-party-select]")) {
+    const active = card.dataset.partySelect === selectedPartyId;
+    card.setAttribute("aria-selected", String(active));
+    card.tabIndex = active ? 0 : -1;
+    if (active && focus) card.focus({ preventScroll: true });
+  }
+  renderSelectedPartyTools(p);
+  syncPartySheetFrame();
+  const grant = $("#grant-pc");
+  if (grant && [...grant.options].some((option) => option.value === selectedPartyId)) grant.value = selectedPartyId;
+}
+
+function renderParty() {
+  const active = activePartyMembers();
+  const retired = (S.party || []).filter((pc) => pc.active === false);
+  if (!active.some((pc) => pc.id === selectedPartyId)) selectedPartyId = active[0]?.id || null;
+  if (selectedPartyId) localStorage.setItem("settlement-gm-party-selection", selectedPartyId);
+  $("#party-card-grid").innerHTML = active.length
+    ? active.map(partyRosterCard).join("")
+    : `<p class="party-roster-empty">No active player characters. Send your players to /create or restore someone below.</p>`;
+  for (const card of $("#party-card-grid").querySelectorAll("[data-party-select]")) {
+    card.tabIndex = card.dataset.partySelect === selectedPartyId ? 0 : -1;
+    card.onclick = () => selectPartyMember(card.dataset.partySelect);
+    card.onkeydown = (event) => {
+      if (!["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft"].includes(event.key)) return;
+      event.preventDefault();
+      const direction = ["ArrowDown", "ArrowRight"].includes(event.key) ? 1 : -1;
+      const index = active.findIndex((pc) => pc.id === card.dataset.partySelect);
+      selectPartyMember(active[(index + direction + active.length) % active.length].id, { focus: true });
     };
   }
+  renderSelectedPartyTools(selectedPartyMember());
+  if (document.body.classList.contains("party-open")) syncPartySheetFrame();
+  $("#stepped-back").hidden = retired.length === 0;
+  $("#stepped-back-count").textContent = String(retired.length);
+  $("#stepped-back-list").innerHTML = retired.map((p) => `<div class="stepped-back-row">
+    <span><strong>${esc(p.name)}</strong><span class="muted">${[p.ancestry, p.class, p.player].filter(Boolean).map(esc).join(" · ") || "Character record preserved"}</span></span>
+    <button class="quiet" type="button" data-pcrestore="${esc(p.id)}">Return</button>
+  </div>`).join("");
   for (const el of document.querySelectorAll("[data-pcrestore]")) {
     el.onclick = async () => {
       const p = S.party.find((x) => x.id === el.dataset.pcrestore);
@@ -1760,7 +1857,7 @@ function selectedConsumable() {
 
 function renderConsumableGrant() {
   const pcSelect = $("#grant-pc");
-  const selectedPc = pcSelect.value;
+  const selectedPc = pcSelect.value || selectedPartyId;
   const active = activePartyMembers();
   pcSelect.innerHTML = active.length
     ? active.map((pc) => `<option value="${esc(pc.id)}">${esc(pc.name)}</option>`).join("")
@@ -1809,6 +1906,17 @@ $("#paper-deliver").addEventListener("click", async () => {
       await refresh();
     }
   } catch (error) { toast(error.message, true); }
+});
+
+function openPartyActions() {
+  const dialog = $("#party-actions-dialog");
+  if (!dialog.open) dialog.showModal();
+}
+
+$("#party-actions-open").addEventListener("click", openPartyActions);
+$("#party-actions-close").addEventListener("click", () => $("#party-actions-dialog").close());
+$("#party-actions-dialog").addEventListener("click", (event) => {
+  if (event.target === $("#party-actions-dialog")) $("#party-actions-dialog").close();
 });
 
 // --- session chronicle ---
@@ -2194,26 +2302,6 @@ function renderWikiTree() {
     const label = `${node.source === "lore" ? "Private lore" : "Rules"} / ${crumb(node) || "Unsorted"}`;
     if (!groups.has(label)) groups.set(label, []);
     groups.get(label).push(node);
-  }
-  for (const el of document.querySelectorAll("[data-pcart]")) {
-    el.onclick = async () => {
-      const p = S.party.find((candidate) => candidate.id === el.dataset.pcart);
-      const suggested = p.portraitPrompt || [p.name, p.ancestry, p.class, p.subclass, "fantasy character portrait"].filter(Boolean).join(", ");
-      const portraitPrompt = window.prompt(`Portrait prompt for ${p.name}`, suggested);
-      if (portraitPrompt === null) return;
-      const label = el.textContent;
-      el.disabled = true;
-      el.textContent = "Painting…";
-      try {
-        const result = await api(`/api/party/${encodeURIComponent(p.id)}/portrait`, { method: "POST", body: { prompt: portraitPrompt } });
-        toast(result.message);
-        await refresh();
-      } catch (error) {
-        toast(error.message, true);
-        el.disabled = false;
-        el.textContent = label;
-      }
-    };
   }
   $("#wiki-index-status").textContent = `${nodes.length} ${nodes.length === 1 ? "page" : "pages"}`;
   $("#wiki-tree").innerHTML = nodes.length

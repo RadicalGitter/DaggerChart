@@ -47,6 +47,13 @@ body::before {
   box-shadow: inset 0 1px rgba(255,255,255,.28);
 }
 
+html.sheet-embedded body::before { border-width: 4px; }
+html.sheet-embedded .wrap { padding: .55rem .72rem 3rem; }
+html.sheet-embedded .sheet-toolrail { grid-template-columns: 1fr auto; margin-bottom: .45rem; }
+html.sheet-embedded .sheet-root-link { display: none; }
+html.sheet-embedded .sheet-tool-title { justify-self: start; }
+html.sheet-embedded .sheet-identity > div:last-child:has(a[href^="/journal"]) { display: none; }
+
 .sheet-head {
   position: relative; min-height: 286px; display: grid; grid-template-columns: 220px 1fr; align-items: center; gap: 2.5rem;
   margin: 0 0 1.15rem; padding: 1.65rem 8% 1.65rem 5%;
