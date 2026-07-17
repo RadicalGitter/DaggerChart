@@ -27,10 +27,19 @@ function clearStalePC() {
   window.dispatchEvent(new Event("settlement:identity"));
 }
 
-function artifactHtml(id) {
-  if (id === "tome") return `<span class="aged-tome-art" aria-hidden="true"><i></i><i></i></span>`;
-  if (id === "book") return `<span class="folio-art" aria-hidden="true"><i class="folio-page left"></i><i class="folio-page right"></i><i class="folio-spine"></i></span>`;
-  return `<span class="deck-art" aria-hidden="true"><i class="arcana-card"></i><i class="arcana-card"></i><i class="arcana-card"></i></span>`;
+function artifactHtml(id, pc) {
+  if (id === "tome") {
+    return `<span class="aged-tome-art" aria-hidden="true"><i></i><i></i><b class="tome-monogram">${esc(pc?.name?.slice(0, 1).toUpperCase() || "?")}</b></span>`;
+  }
+  if (id === "book") {
+    return `<span class="folio-art" aria-hidden="true">
+      <i class="folio-page-block"></i><i class="folio-cover"></i><i class="folio-spine"></i>
+      <i class="folio-corner corner-top"></i><i class="folio-corner corner-bottom"></i>
+      <i class="folio-tab tab-one"></i><i class="folio-tab tab-two"></i><i class="folio-tab tab-three"></i>
+      <b class="folio-seal">S</b>
+    </span>`;
+  }
+  return `<span class="deck-art" aria-hidden="true"><i class="arcana-card" data-sigil="✎"></i><i class="arcana-card" data-sigil="◇"></i><i class="arcana-card" data-sigil="§"></i></span>`;
 }
 
 function preferredShell(pc) {
@@ -63,14 +72,35 @@ function renderViews() {
   const availableShells = SHELLS.filter((shell) => !shell.feature || playerFeatureEnabled(shell.feature));
   const requested = preferredShell(pc);
   const preferred = availableShells.some((shell) => shell.id === requested) ? requested : DEFAULT_SHELL;
-  $("#view-shelf").innerHTML = availableShells.map((shell) => `
-    <a class="view-artifact" href="${esc(shellEntryRoute(shell.id))}" data-shell="${esc(shell.id)}">
+  const shelf = $("#view-shelf");
+  shelf.className = `view-shelf shell-count-${Math.min(3, availableShells.length)}`;
+  shelf.innerHTML = availableShells.map((shell) => `
+    <a class="view-artifact" href="${esc(shellEntryRoute(shell.id))}" data-shell="${esc(shell.id)}"${shell.id === preferred ? ` data-preferred="true" aria-current="true"` : ""}>
       ${shell.id === preferred ? `<span class="preferred-mark">${esc(t("player.hub.preferred"))}</span>` : ""}
-      <span class="artifact-stage">${artifactHtml(shell.id)}</span>
+      <span class="artifact-stage">${artifactHtml(shell.id, pc)}</span>
       <span class="artifact-copy"><strong>${esc(t(shell.name))}</strong><span class="artifact-scope">${esc(t(shell.scope))}</span></span>
     </a>`).join("");
   for (const link of document.querySelectorAll("[data-shell]")) {
     link.onclick = () => localStorage.setItem("settlement-shell", link.dataset.shell);
+  }
+  wireArtifactMotion();
+}
+
+function wireArtifactMotion() {
+  if (matchMedia("(pointer: coarse)").matches || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  for (const link of document.querySelectorAll(".view-artifact")) {
+    const stage = link.querySelector(".artifact-stage");
+    link.onpointermove = (event) => {
+      const bounds = link.getBoundingClientRect();
+      const x = (event.clientX - bounds.left) / bounds.width - 0.5;
+      const y = (event.clientY - bounds.top) / bounds.height - 0.5;
+      stage.style.setProperty("--tilt-x", `${(-y * 5).toFixed(2)}deg`);
+      stage.style.setProperty("--tilt-y", `${(x * 7).toFixed(2)}deg`);
+    };
+    link.onpointerleave = () => {
+      stage.style.removeProperty("--tilt-x");
+      stage.style.removeProperty("--tilt-y");
+    };
   }
 }
 
