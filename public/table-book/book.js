@@ -31,7 +31,7 @@ const getPC = () =>
 const setPC = (id) => localStorage.setItem("settlement-pc", id);
 const myPC = () => {
   const id = getPC();
-  return (id && data?.party?.find((pc) => pc.id === id)) || null;
+  return (id && (data?.identities || data?.party || []).find((pc) => pc.id === id)) || null;
 };
 
 function sectionCount(key) {
@@ -106,7 +106,7 @@ function chronicleHtml() {
 }
 
 function pickerHtml() {
-  const people = (data.party || []).map((pc) =>
+  const people = (data.identities || data.party || []).map((pc) =>
     `<button type="button" data-pick="${esc(pc.id)}">${esc(pc.name)}${pc.player ? ` <span class="book-muted">· ${esc(pc.player)}</span>` : ""}</button>`
   ).join("");
   return `<div class="character-picker">

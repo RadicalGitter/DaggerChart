@@ -152,7 +152,7 @@ const setPC = (id) => localStorage.setItem("settlement-pc", id);
 const playerChat = mountPlayerChat({ slot: "#player-chat-slot", getPcId: getPC });
 const myIdentity = () => {
   const id = getPC();
-  return (id && data?.party?.find((pc) => pc.id === id)) || null;
+  return (id && (data?.identities || data?.party || []).find((pc) => pc.id === id)) || null;
 };
 const chunks = (items, size) => Array.from({ length: Math.max(1, Math.ceil(items.length / size)) }, (_, i) => items.slice(i * size, i * size + size));
 
@@ -214,7 +214,7 @@ function chronicleSpreads() {
 }
 
 function pickerHtml() {
-  const people = (data.party || []).map((pc) =>
+  const people = (data.identities || data.party || []).map((pc) =>
     `<button type="button" data-pick="${esc(pc.id)}">${esc(pc.name)}${pc.player ? ` <span class="tome-muted">· ${esc(pc.player)}</span>` : ""}</button>`
   ).join("");
   return `<div class="character-picker"><div class="chapter-kicker">${t("table.whoareyou")}</div>${people}<button type="button" data-create>${t("create.title")} →</button></div>`;

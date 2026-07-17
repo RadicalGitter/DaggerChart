@@ -20,6 +20,16 @@ each other. Rules of the road:
 ## Lanes
 
 **2026-07-17 — Codex** · status: DONE
+Lane: campaigns (feature 6). Added boot migration and atomic persistence for
+campaigns, PC/draft/session/log ownership, guarded campaign management APIs,
+current-campaign party/chronicle whitelists, the GM campaign ledger, conditional
+creator choice, campaign-grouped draggable login bubbles, and cross-campaign
+identity recognition in personal shells. Verified duplicate/invalid/archive
+gates, migration idempotence, hidden/restored access, chronicle separation,
+EN/SV creator text, and desktop/390px/320px layouts against dummy data. Live
+campaign JSON and unrelated local media remain outside the commit.
+
+**2026-07-17 — Codex** · status: DONE
 Lane: rules wiki (feature 5). Added the official-SRD-derived
 `data/daggerheart/rules.json`, cacheable public API, responsive `/rules` page,
 shared ranked search, deep links/cross-references, glossary integration, i18n,

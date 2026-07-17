@@ -31,13 +31,13 @@ whitelisted server-side regardless).
 |---|---|---|
 | `/gm` | GM (private) | Console: campaign controls, private PC correspondence, playtest tickets, local UX map, settlement ledger, and a session quick table with rules search |
 | `/board` | GM (private) | Named Main/HUD drafting boards with infinite pan/zoom, live stat plates, counters, notes, and pinned camera views |
-| `/login` | everyone | Trusted-table chooser: finished-character bubbles, a separate resumable-drafts view, GM, and projector. Bare `/` lands here. |
+| `/login` | everyone | Trusted-table chooser: campaign-grouped character bubbles, a separate resumable-drafts view, GM, and projector. Bare `/` lands here. |
 | `/player` | players | Player root: switch the device's character and choose a focused physical view. |
 | `/table` | players | General arcana-card deck over Town, Folk, Chronicle, Journal, Character, and Rules. |
 | `/table-book` | players | Settlement folio for Town, Folk of Note, and Chronicle, with directional page turns. |
 | `/tome` | players | Personal keepsake tome for Journal, Character, Inventory, Rules, and private Keeper correspondence. |
 | `/screen` | everyone (projector) | The table screen: shows the one thing the GM projects — mood images, NPC portraits, cards, stores, free text |
-| `/create` | players | Guided Daggerheart character creation (all SRD data local) |
+| `/create` | players | Guided Daggerheart character creation with an active-campaign choice when needed (all SRD data local) |
 | `/character/:id` | one player each | Live character sheet: tap-to-mark HP/Stress/Hope/Armor, Loadout/Vault hand manager |
 | `/journal` | players | The party's journal: notes on people and places the GM reveals, plus a season-stamped diary — each note "for my eyes" or "for the table" |
 | `/rules` | everyone | Searchable Daggerheart table reference with grouped browsing, deep links, cross-references, and glossary notes |
@@ -64,15 +64,17 @@ All state is pretty-printed JSON in `data/` — hand-editable with the server
 stopped (or live; the GM console re-reads on refresh):
 
 - `settlement.json` — population, season, buildings (level, foreman, spent event numbers, effects)
+- `campaigns.json` — active/archived campaign names and the campaign currently at the table
 - `session.json` — live table state: bounded Fear pool and whether players may see it
+- `sessions.json` — campaign-scoped session records reserved for the session chronicler
 - `characters.json` — the folk (NPCs), including the GM-only hidden layer
-- `pcs.json` — player characters from the creator; `active: false` retires one without deleting its records
+- `pcs.json` — campaign-owned player characters from the creator; `active: false` retires one without deleting its records
 - `people.json` — the wider world's NPCs (not villagers): public description, GM-only notes, carried items, current place
 - `places.json` — the map beyond the palisade; the settlement itself is the fixed first entry
 - `notes.json` — the players' notes and journal entries
 - `messages.json` — one private GM thread per PC, including per-side read state
 - `journal-doodles.json` — per-PC pen and eraser layers for the Journal, People, and Places chapters
-- `log.json` — the season ledger; entries carry a `published` flag
+- `log.json` — the campaign-scoped season ledger; entries carry a `published` flag
 - `boards.json` — named `main` and `hud` drafting-board documents; boot migrates a legacy `board.json` once
 - `music.json` — song metadata, playlists, provider tasks, and published character-theme pointers
 - `character-drafts.json` — versioned resumable creator state, separate from completed PCs

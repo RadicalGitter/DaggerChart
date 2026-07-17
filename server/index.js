@@ -2,7 +2,7 @@ import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import "./env.js";
-import { state, persist, addLog, advanceSeason, resolveDowntime, modifierBreakdown, seasonLabel } from "./state.js";
+import { campaignById, createCampaignId, isActiveCampaign, state, persist, addLog, advanceSeason, resolveDowntime, modifierBreakdown, seasonLabel } from "./state.js";
 import { gmView, tableView, loreView, screenView, partyListView, playerCharacterView, gmMessagesView, playerMessagesView } from "./views.js";
 import { loadJson, saveJson } from "./store.js";
 import { addInventoryItem, consumables, grantConsumable, inventoryEntry, updateInventoryItem, useInventoryItem } from "./inventory.js";
@@ -32,7 +32,9 @@ const PORT = process.env.PORT || 4626;
 const STANDARD_CONDITIONS = new Set(["hidden", "restrained", "vulnerable"]);
 const rulesCorpus = loadJson("daggerheart/rules.json", { version: "1.0", source: null, nodes: [] });
 const isActivePc = (pc) => pc?.active !== false;
-const activePcById = (id) => state.pcs.find((pc) => pc.id === id && isActivePc(pc)) || null;
+const isPlayablePc = (pc) => isActivePc(pc) && isActiveCampaign(pc?.campaignId);
+const activePcById = (id) => state.pcs.find((pc) => pc.id === id && isPlayablePc(pc)) || null;
+const currentActivePcs = () => state.pcs.filter((pc) => isPlayablePc(pc) && pc.campaignId === state.campaigns.currentId);
 
 const app = express();
 app.use(express.json({ limit: "8mb" }));
@@ -137,15 +139,16 @@ app.get("/api/party", (_req, res) => res.json(partyListView()));
 
 app.get("/api/character-drafts", (_req, res) => res.json(state.characterDrafts.map((entry) => ({
   id: entry.id,
+  campaignId: entry.draft?.campaignId || state.campaigns.currentId,
   name: entry.draft?.name || "",
   player: entry.draft?.player || "",
   step: entry.step || 0,
   savedAt: entry.savedAt || null
-}))));
+})).filter((entry) => isActiveCampaign(entry.campaignId))));
 
 app.get("/api/character-drafts/:id", guard((req, res) => {
   const entry = state.characterDrafts.find((candidate) => candidate.id === req.params.id);
-  if (!entry) return res.status(404).json({ error: "No such character draft." });
+  if (!entry || !isActiveCampaign(entry.draft?.campaignId)) return res.status(404).json({ error: "No such character draft." });
   res.json(entry);
 }));
 
@@ -153,13 +156,15 @@ app.put("/api/character-drafts/:id", guard((req, res) => {
   if (!/^draft_[a-zA-Z0-9_-]{6,80}$/.test(req.params.id)) throw new Error("Invalid draft identifier.");
   if (!req.body.draft || typeof req.body.draft !== "object") throw new Error("A character draft is required.");
   if (JSON.stringify(req.body.draft).length > 200_000) throw new Error("That character draft is too large.");
+  const campaignId = String(req.body.draft.campaignId || state.campaigns.currentId);
+  if (!isActiveCampaign(campaignId)) throw new Error("Choose an active campaign.");
   const incoming = {
     id: req.params.id,
     version: 2,
     step: Math.max(0, Number.parseInt(req.body.step, 10) || 0),
     part: Math.max(0, Number.parseInt(req.body.part, 10) || 0),
     savedAt: String(req.body.savedAt || new Date().toISOString()),
-    draft: req.body.draft
+    draft: { ...req.body.draft, campaignId }
   };
   const index = state.characterDrafts.findIndex((candidate) => candidate.id === req.params.id);
   if (index === -1) state.characterDrafts.push(incoming);
@@ -182,14 +187,16 @@ app.get("/api/party/:id", guard((req, res) => {
 }));
 
 app.post("/api/party", guard((req, res) => {
-  const pc = req.body;
+  const campaignId = String(req.body?.campaignId || state.campaigns.currentId);
+  if (!isActiveCampaign(campaignId)) throw new Error("Choose an active campaign.");
+  const pc = { ...req.body, campaignId };
   if (!pc.name || !pc.name.trim()) throw new Error("A name is required.");
   pc.id = `pc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
   pc.createdAt = new Date().toISOString();
   pc.level = pc.level || 1;
   pc.active = true;
   state.pcs.push(pc);
-  addLog({ type: "party", summary: `${pc.name.trim()} takes their place in the settlement.`, published: true });
+  addLog({ type: "party", campaignId, summary: `${pc.name.trim()} takes their place in the settlement.`, published: true });
   persist();
   // Theme generation is separate from character persistence: a provider
   // failure must never keep a player from finishing their character.
@@ -201,9 +208,10 @@ app.post("/api/party", guard((req, res) => {
 }));
 
 app.put("/api/party/:id", guard((req, res) => {
-  const i = state.pcs.findIndex((p) => p.id === req.params.id && isActivePc(p));
+  const i = state.pcs.findIndex((p) => p.id === req.params.id && isPlayablePc(p));
   if (i === -1) throw new Error("No such character.");
   if (Object.hasOwn(req.body, "conditions")) throw new Error("Use the Conditions control.");
+  if (Object.hasOwn(req.body, "campaignId") && !isActiveCampaign(req.body.campaignId)) throw new Error("Choose an active campaign.");
   const prev = state.pcs[i];
   const next = { ...prev, ...req.body, id: prev.id };
   // Damage thresholds are armor base + level: keep them in step with level changes.
@@ -250,8 +258,8 @@ app.post("/api/party/:id/inventory", guard((req, res) => {
 app.post("/api/party/inventory/paper", guard((req, res) => {
   const target = String(req.body.target || "");
   const recipients = target === "group"
-    ? state.pcs.filter(isActivePc)
-    : state.pcs.filter((pc) => pc.id === target && isActivePc(pc));
+    ? currentActivePcs()
+    : state.pcs.filter((pc) => pc.id === target && isPlayablePc(pc));
   if (!recipients.length) throw new Error("Choose at least one character.");
   const delivered = recipients.map((pc) => {
     const item = addInventoryItem(pc, {
@@ -324,6 +332,49 @@ app.post("/api/party/:id/restore", guard((req, res) => {
 // --- GM API ---
 app.get("/api/state", (_req, res) => res.json(gmView()));
 
+app.post("/api/campaigns", guard((req, res) => {
+  const name = String(req.body?.name || "").trim();
+  if (!name) throw new Error("A campaign name is required.");
+  if (name.length > 80) throw new Error("Campaign names must be at most 80 characters.");
+  if (state.campaigns.campaigns.length >= 50) throw new Error("The campaign ledger is full.");
+  if (state.campaigns.campaigns.some((campaign) => campaign.name.toLocaleLowerCase() === name.toLocaleLowerCase())) throw new Error("That campaign name is already in the ledger.");
+  const campaign = { id: createCampaignId(), name, status: "active", createdAt: new Date().toISOString() };
+  state.campaigns.campaigns.push(campaign);
+  persist(); broadcast();
+  res.status(201).json(campaign);
+}));
+
+app.put("/api/campaigns/current", guard((req, res) => {
+  const campaign = campaignById(String(req.body?.id || ""));
+  if (!campaign || campaign.status !== "active") throw new Error("Choose an active campaign.");
+  state.campaigns.currentId = campaign.id;
+  persist(); broadcast();
+  res.json({ currentId: campaign.id });
+}));
+
+app.put("/api/campaigns/:id", guard((req, res) => {
+  const campaign = campaignById(req.params.id);
+  if (!campaign) throw new Error("No such campaign.");
+  let nextName = campaign.name;
+  let nextStatus = campaign.status;
+  if (req.body.name !== undefined) {
+    const name = String(req.body.name || "").trim();
+    if (!name) throw new Error("A campaign name is required.");
+    if (name.length > 80) throw new Error("Campaign names must be at most 80 characters.");
+    if (state.campaigns.campaigns.some((candidate) => candidate.id !== campaign.id && candidate.name.toLocaleLowerCase() === name.toLocaleLowerCase())) throw new Error("That campaign name is already in the ledger.");
+    nextName = name;
+  }
+  if (req.body.status !== undefined) {
+    if (!["active", "archived"].includes(req.body.status)) throw new Error("Unknown campaign status.");
+    if (req.body.status === "archived" && campaign.id === state.campaigns.currentId) throw new Error("Make another campaign current before archiving this one.");
+    nextStatus = req.body.status;
+  }
+  campaign.name = nextName;
+  campaign.status = nextStatus;
+  persist(); broadcast();
+  res.json(campaign);
+}));
+
 app.put("/api/session", guard((req, res) => {
   const hasFear = Object.prototype.hasOwnProperty.call(req.body || {}, "fear");
   const hasVisibility = Object.prototype.hasOwnProperty.call(req.body || {}, "showFearToPlayers");
@@ -377,7 +428,7 @@ app.put("/api/messages/read", guard((req, res) => {
   const side = req.body?.side;
   if (!MESSAGE_SIDES.has(side)) throw new Error("Unknown message reader.");
   const pc = state.pcs.find((candidate) => candidate.id === req.body?.pcId);
-  if (!pc || (side === "player" && !isActivePc(pc))) throw new Error("No such readable character thread.");
+  if (!pc || (side === "player" && !isPlayablePc(pc))) throw new Error("No such readable character thread.");
   let marked = 0;
   for (const message of state.messages) {
     if (message.pcId !== pc.id || message.read?.[side] === true) continue;
@@ -453,7 +504,7 @@ app.put("/api/feedback/:id", guard((req, res) => {
 }));
 
 // --- music desk & character themes ---
-app.get("/api/music", (_req, res) => res.json(musicView(state.pcs.filter(isActivePc))));
+app.get("/api/music", (_req, res) => res.json(musicView(currentActivePcs())));
 
 app.get("/api/music/themes/:pcId", guard((req, res) => {
   if (!activePcById(req.params.pcId)) throw new Error("No such character.");

@@ -9,7 +9,8 @@ const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) =>
 
 let data = null;
 const currentPCId = () => localStorage.getItem("settlement-pc") || localStorage.getItem("settlement-journal-pc");
-const currentPC = () => data?.party?.find((pc) => pc.id === currentPCId()) || null;
+const identities = () => data?.identities || data?.party || [];
+const currentPC = () => identities().find((pc) => pc.id === currentPCId()) || null;
 
 function artifactHtml(id) {
   if (id === "tome") return `<span class="aged-tome-art" aria-hidden="true"><i></i><i></i></span>`;
@@ -30,7 +31,7 @@ function renderIdentity() {
     ? `<img src="${esc(pc.portrait)}" alt="">`
     : esc(pc?.name?.slice(0, 1) || "?");
   $("#identity-menu").innerHTML = [
-    ...(data?.party || []).map((entry) => `<button type="button" data-pc="${esc(entry.id)}">${esc(entry.name)}${entry.player ? ` · ${esc(entry.player)}` : ""}</button>`),
+    ...identities().map((entry) => `<button type="button" data-pc="${esc(entry.id)}">${esc(entry.name)}${entry.player ? ` · ${esc(entry.player)}` : ""}</button>`),
     `<a href="/create/?return=/player">${esc(t("login.create"))}</a>`
   ].join("");
   for (const button of document.querySelectorAll("[data-pc]")) {
@@ -62,7 +63,7 @@ function renderGate() {
   $("#view-shelf").hidden = !pc;
   $("#identity-gate").hidden = Boolean(pc);
   if (pc) return;
-  $("#identity-list").innerHTML = (data?.party || []).map((entry) =>
+  $("#identity-list").innerHTML = identities().map((entry) =>
     `<button type="button" data-gate-pc="${esc(entry.id)}">${esc(entry.name)}${entry.player ? ` · ${esc(entry.player)}` : ""}</button>`
   ).join("");
   for (const button of document.querySelectorAll("[data-gate-pc]")) {
@@ -105,12 +106,15 @@ window.addEventListener("storage", (event) => {
   if (["settlement-pc", "settlement-shell"].includes(event.key)) render();
 });
 
+async function loadData() {
+  const [tableResponse, partyResponse] = await Promise.all([fetch("/api/table"), fetch("/api/party")]);
+  if (!tableResponse.ok || !partyResponse.ok) throw new Error(t("error.table"));
+  const [table, party] = await Promise.all([tableResponse.json(), partyResponse.json()]);
+  return { ...table, identities: party };
+}
+
 initI18n();
-fetch("/api/table")
-  .then((response) => {
-    if (!response.ok) throw new Error(t("error.table"));
-    return response.json();
-  })
+loadData()
   .then((payload) => { data = payload; render(); })
   .catch((error) => { $("#view-shelf").innerHTML = `<p>${esc(error.message)}</p>`; });
 
@@ -119,7 +123,6 @@ let refreshTimer = null;
 stream.onmessage = () => {
   clearTimeout(refreshTimer);
   refreshTimer = setTimeout(async () => {
-    const response = await fetch("/api/table");
-    if (response.ok) { data = await response.json(); render(); }
+    try { data = await loadData(); render(); } catch { /* keep the current hub */ }
   }, 180);
 };

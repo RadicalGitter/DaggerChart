@@ -145,14 +145,21 @@ designing anything; it is the source of truth. Code map + API:
   → body ranking shared by the standalone page and GM hotbar; bodies are
   escaped before `termify()`. `/table` embeds it as a sixth card and `/tome`
   carries it behind the knotted-cord keepsake.
+- Campaigns scope PCs, drafts, session records, and chronicle entries while
+  the settlement world remains singular. `data/campaigns.json` names one
+  active campaign as current; `/table`, `/api/lore`, downtime logging, group
+  paper delivery, and music character tags use it. Player identity whitelists
+  retain all active-campaign PCs so `/login` can group bubbles and personal
+  shells can recognize a chosen seat. Archiving hides access without deleting
+  campaign-owned records.
 
 ## What's next (agreed ambitions, in rough order)
 - **The remaining planned features have backend implementation plans in
   [docs/master-plan.md](docs/master-plan.md).** Read its Shared foundations
   before starting one; character lifecycle (feature 7), the Fear/Hope tracker
   (feature 1), GM quick tools (feature 2), and private messages (feature 3) are
-  built. Feature 5's searchable rules reference and shell/hotbar integrations
-  are built; continue in dependency order 6 → 4.
+  built. Features 5 (rules) and 6 (campaigns) are also built; feature 4, the
+  campaign-scoped session chronicler, is the remaining planned feature.
 - ComfyUI wiring: the GM-side request UI exists on People cards (prompt saved
   to `portraitPrompt`, `POST /api/people/:id/portrait` is a stub) — connect it
   to the local 5090 using `docs/comfyui/waidrin-portraits-workflow.json`

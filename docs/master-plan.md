@@ -33,10 +33,10 @@ Treat each plan's **Backend** section as settled architecture and its
   keepsake in the `KEEPSAKES` registry (`tome.js`) per
   [player-shell-visuals.md](player-shell-visuals.md).
 
-Suggested remaining order (dependencies, not importance): **6 → 4**.
-7 (soft delete), 1 (Fear/Hope), 2 (GM quick tools), 3 (private messages), and
-5 (rules reference) are built. Feature 6 (campaigns) must land before 4, which
-is campaign-scoped and the only feature needing network access.
+Suggested remaining order (dependencies, not importance): **4**.
+7 (soft delete), 1 (Fear/Hope), 2 (GM quick tools), 3 (private messages),
+5 (rules reference), and 6 (campaigns) are built. Feature 4 is now the only
+remaining planned feature and the only one needing network access.
 
 ---
 
@@ -340,7 +340,16 @@ name to its wiki node when one exists.
 
 ---
 
-## 6. Campaigns
+## 6. Campaigns — BUILT
+
+**Built on `beta` (2026-07-17).** Boot seeds `data/campaigns.json` from the
+settlement name and adopts legacy PCs, drafts, session records, and chronicle
+entries without deleting or replacing them. Guarded APIs manage create,
+rename, active/archive status, and the current campaign. Player whitelists
+separate current-campaign party state from all active public identities; the
+GM Settlement page has a responsive campaign ledger, the creator inserts a
+campaign part only when needed, and `/login` gives each active campaign its
+own preserved draggable bubble field.
 
 **Goal.** Multiple campaigns in one install. The GM manages them from the
 console; a player creating a character (which is how a "user" is created —
@@ -365,9 +374,8 @@ when a second *world* actually exists, not before.
 ```
 
 Seed on boot with one campaign (name from `settlement.json`) and adopt all
-existing PCs/sessions into it — the migration is: any `pcs.json` entry
-without `campaignId` gets the seeded id (same for sessions). PCs gain
-`campaignId`.
+existing PCs, drafts, sessions, and log entries into it. Any owned row without
+a valid `campaignId` gets the seeded id; nothing is deleted or replaced.
 
 **API.**
 - `GET` folded into `gmView()` (`campaigns`, `currentId`) and, whitelisted,
@@ -380,9 +388,9 @@ without `campaignId` gets the seeded id (same for sessions). PCs gain
 - `POST /api/party` accepts `campaignId` (validated against active
   campaigns; default `currentId`).
 - Filtering: `tableView().party` and `loreView().party` return the current
-  campaign's active PCs; `/login` groups by campaign using the whitelisted
-  campaign list + per-PC `campaignId` (add it to the party whitelists — it's
-  public grouping data).
+  campaign's active PCs. Their separate `identities` arrays and `/api/party`
+  contain all active-campaign public identities with `campaignId`; `/login`
+  uses those to group seats without mixing non-current Hope into the table.
 
 **Frontend sketch.** GM console: a small "Campaigns" block in the Settlement
 section (list, add, rename, archive, set current). Creator: a campaign picker

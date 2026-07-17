@@ -17,6 +17,55 @@ const DEFAULT_SESSION = {
   showFearToPlayers: true
 };
 
+const makeCampaignId = () => `cmp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+const cleanCampaignName = (value, fallback) => String(value || "").trim().slice(0, 80) || fallback;
+
+function normalizeCampaignState(raw, settlementName) {
+  const now = new Date().toISOString();
+  const source = Array.isArray(raw?.campaigns) ? raw.campaigns : [];
+  const seen = new Set();
+  let changed = !raw || !Array.isArray(raw.campaigns);
+  const campaigns = [];
+
+  for (const item of source) {
+    const id = String(item?.id || "");
+    if (!/^cmp_[a-zA-Z0-9_-]{3,80}$/.test(id) || seen.has(id)) {
+      changed = true;
+      continue;
+    }
+    seen.add(id);
+    const normalized = {
+      id,
+      name: cleanCampaignName(item.name, "Unnamed campaign"),
+      status: item.status === "archived" ? "archived" : "active",
+      createdAt: String(item.createdAt || now)
+    };
+    if (JSON.stringify(normalized) !== JSON.stringify(item)) changed = true;
+    campaigns.push(normalized);
+  }
+
+  if (!campaigns.length) {
+    campaigns.push({
+      id: makeCampaignId(),
+      name: cleanCampaignName(settlementName, "The Settlement"),
+      status: "active",
+      createdAt: now
+    });
+    changed = true;
+  }
+
+  if (!campaigns.some((campaign) => campaign.status === "active")) {
+    campaigns[0].status = "active";
+    changed = true;
+  }
+
+  const requestedCurrent = String(raw?.currentId || "");
+  const current = campaigns.find((campaign) => campaign.id === requestedCurrent && campaign.status === "active")
+    || campaigns.find((campaign) => campaign.status === "active");
+  if (current.id !== requestedCurrent) changed = true;
+  return { value: { currentId: current.id, campaigns }, changed };
+}
+
 const normalizeSession = (session) => ({
   fear: Number.isInteger(session?.fear) ? Math.max(0, Math.min(12, session.fear)) : DEFAULT_SESSION.fear,
   showFearToPlayers: typeof session?.showFearToPlayers === "boolean"
@@ -35,9 +84,14 @@ const DEFAULT_VILLAGE = {
   hidden: { notes: "" }
 };
 
+const settlement = loadJson("settlement.json", DEFAULT_SETTLEMENT);
+const campaignState = normalizeCampaignState(loadJson("campaigns.json", null), settlement.name);
+
 export const state = {
-  settlement: loadJson("settlement.json", DEFAULT_SETTLEMENT),
+  settlement,
+  campaigns: campaignState.value,
   session: normalizeSession(loadJson("session.json", DEFAULT_SESSION)),
+  sessions: loadJson("sessions.json", []),
   characters: loadJson("characters.json", []),
   pcs: loadJson("pcs.json", []),
   characterDrafts: loadJson("character-drafts.json", []),
@@ -52,6 +106,41 @@ export const state = {
   tables: loadEventTables(),
   reference: loadJson("daggerheart/reference.json", null)
 };
+
+if (!Array.isArray(state.sessions)) state.sessions = [];
+
+const knownCampaignIds = new Set(state.campaigns.campaigns.map((campaign) => campaign.id));
+let pcsMigrated = false;
+let draftsMigrated = false;
+let sessionsMigrated = false;
+let logMigrated = false;
+
+for (const pc of state.pcs) {
+  if (knownCampaignIds.has(pc.campaignId)) continue;
+  pc.campaignId = state.campaigns.currentId;
+  pcsMigrated = true;
+}
+for (const entry of state.characterDrafts) {
+  if (!entry?.draft || knownCampaignIds.has(entry.draft.campaignId)) continue;
+  entry.draft.campaignId = state.campaigns.currentId;
+  draftsMigrated = true;
+}
+for (const session of state.sessions) {
+  if (knownCampaignIds.has(session.campaignId)) continue;
+  session.campaignId = state.campaigns.currentId;
+  sessionsMigrated = true;
+}
+for (const entry of state.log) {
+  if (knownCampaignIds.has(entry.campaignId)) continue;
+  entry.campaignId = state.campaigns.currentId;
+  logMigrated = true;
+}
+
+if (campaignState.changed) saveJson("campaigns.json", state.campaigns);
+if (pcsMigrated) saveJson("pcs.json", state.pcs);
+if (draftsMigrated) saveJson("character-drafts.json", state.characterDrafts);
+if (sessionsMigrated) saveJson("sessions.json", state.sessions);
+if (logMigrated) saveJson("log.json", state.log);
 
 // Ensure every building in the event tables exists in settlement state.
 // New buildings pick up their suggested foreman by name if that character exists.
@@ -75,7 +164,9 @@ for (const [id, t] of Object.entries(state.tables.buildings)) {
 
 export function persist() {
   saveJson("settlement.json", state.settlement);
+  saveJson("campaigns.json", state.campaigns);
   saveJson("session.json", state.session);
+  saveJson("sessions.json", state.sessions);
   saveJson("characters.json", state.characters);
   saveJson("pcs.json", state.pcs);
   saveJson("character-drafts.json", state.characterDrafts);
@@ -91,6 +182,22 @@ export function persist() {
 
 export function getCharacter(id) {
   return state.characters.find((c) => c.id === id) || null;
+}
+
+export function campaignById(id) {
+  return state.campaigns.campaigns.find((campaign) => campaign.id === id) || null;
+}
+
+export function isActiveCampaign(id) {
+  return campaignById(id)?.status === "active";
+}
+
+export function activeCampaigns() {
+  return state.campaigns.campaigns.filter((campaign) => campaign.status === "active");
+}
+
+export function createCampaignId() {
+  return makeCampaignId();
 }
 
 export function seasonLabel() {
@@ -116,6 +223,7 @@ export function addLog(entry) {
     id: `log_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     ts: new Date().toISOString(),
     season: seasonLabel(),
+    campaignId: state.campaigns.currentId,
     published: false,
     ...entry
   };

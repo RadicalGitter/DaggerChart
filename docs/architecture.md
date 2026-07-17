@@ -38,8 +38,11 @@ docs/         this file, the design spec, ComfyUI workflow
   runs. `snapshot()` copies every `data/*.json` into
   `data/backups/<timestamp>/`; called on each downtime resolution. `DATA_DIR`
   env var overrides the data directory (used by tests/scratch runs).
-- **`state.js`** — owns the mutable `state` (settlement, live session, characters,
-  pcs, messages, log, event tables). `session.json` holds the bounded 0..12 Fear pool and
+- **`state.js`** — owns the mutable `state` (settlement, campaigns, live and
+  recorded sessions, characters, PCs, messages, log, event tables).
+  `campaigns.json` identifies the current campaign; boot seeds it from the
+  settlement name and adopts legacy PCs, drafts, sessions, and log entries.
+  `session.json` holds the bounded 0..12 Fear pool and
   its player-visibility switch. `resolveDowntime(buildingId, raw, effort)` implements §5 of the
   spec exactly: raw −2..23 validated, modifiers summed, clamp 0–30, spent-number
   tracking per building, stockpile wipe on 0, standing `effect` capture, log
@@ -55,8 +58,10 @@ docs/         this file, the design spec, ComfyUI workflow
   `gmMessagesView()` returns the GM thread list. `gmView()` and `loreView()`
   carry unread counts only, while `tableView()` carries neither counts nor text.
   `tableView()` exposes Fear only when the session switch permits it and adds
-  public Hope totals to active party identities. Never render player surfaces
-  from `gmView()`.
+  public Hope totals to current-campaign party identities. Its separate
+  `identities` whitelist carries all active-campaign PCs for trusted seat
+  selection without mixing their Hope into the current table. Never render
+  player surfaces from `gmView()`.
 - **`index.js`** — routes below, plus `GET /api/stream` (SSE). Mutating
   endpoints call `broadcast()` so open pages refresh. Named drafting-board PUTs
   deliberately do *not* broadcast (would echo the GM's own edits back); when
@@ -81,6 +86,9 @@ docs/         this file, the design spec, ComfyUI workflow
 |---|---|
 | `GET /api/state` | full GM state (private) |
 | `GET /api/table` | whitelisted player payload |
+| `POST /api/campaigns` | create an active campaign in the shared settlement world |
+| `PUT /api/campaigns/:id` | rename or archive/restore a campaign; the current campaign cannot be archived |
+| `PUT /api/campaigns/current` | switch the active campaign used by party, chronicle, downtime, group delivery, and music surfaces |
 | `PUT /api/session` | set bounded Fear and/or its player visibility; persists and broadcasts |
 | `GET /api/messages?pc=id` | one active PC's private GM thread only |
 | `GET /api/messages/gm` | all PC threads and per-thread unread counts for GM surfaces |
@@ -174,8 +182,16 @@ Consumable reactions; see [inventory.md](inventory.md).
   [player-shell-visuals.md](player-shell-visuals.md).
 - **Identity:** bare `/` redirects to `/login`. A completed-PC choice writes
   only `settlement-pc` and enters `/player`; unfinished drafts resume `/create`.
-  GM and projector choices set no player identity. See
-  [player-identity.md](player-identity.md).
+  GM and projector choices set no player identity. Login groups the public
+  `/api/party` identities by active campaign without changing bubble position
+  or paint keys. The creator inserts a campaign part only when multiple active
+  campaigns exist. See [player-identity.md](player-identity.md).
+- **Campaign boundary:** the settlement, buildings, folk, people/places, and
+  event tables remain singular. PCs, drafts, recorded sessions, and chronicle
+  entries carry `campaignId`. `tableView().party`, `loreView().party`, and the
+  GM session surfaces use the current campaign; `identities` remains the
+  explicit all-active-campaign public selector. Archiving removes player access
+  but retains every owned record.
 - **Character lifecycle:** missing `pc.active` reads as true. Retirement keeps
   the PC, inventory, papers, notes, doodles, and music files intact while all
   player whitelists and mutation routes reject the inactive identity. The GM

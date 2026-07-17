@@ -2,13 +2,15 @@
 // hidden fields never leave the server for that route (spec §8D).
 // This is the seam that later grows into per-character clients and the
 // board screen: each audience gets its own projection of the same state.
-import { state, seasonLabel } from "./state.js";
+import { activeCampaigns, isActiveCampaign, state, seasonLabel } from "./state.js";
 import { inventoryView } from "./inventory.js";
 
 const PLAYER_CONDITIONS = new Set(["hidden", "restrained", "vulnerable"]);
 const conditionView = (p) => [...new Set(p.conditions || [])].filter((id) => PLAYER_CONDITIONS.has(id));
 const isActivePc = (p) => p?.active !== false;
-const activePcs = () => state.pcs.filter(isActivePc);
+const activePcs = () => state.pcs.filter((pc) => isActivePc(pc) && isActiveCampaign(pc.campaignId));
+const currentPcs = () => activePcs().filter((pc) => pc.campaignId === state.campaigns.currentId);
+const publicCampaigns = () => activeCampaigns().map((campaign) => ({ id: campaign.id, name: campaign.name }));
 const numericView = (value, fallback = 0) => Number.isFinite(value) ? value : fallback;
 
 // Personalization stored on the character (chosen in the creator). Kept behind
@@ -37,6 +39,7 @@ const weaponView = (weapon) => weapon ? {
 
 const identityView = (p) => ({
   id: p.id,
+  campaignId: p.campaignId,
   name: p.name,
   player: p.player || "",
   portrait: p.portrait || null,
@@ -91,7 +94,7 @@ const tableIdentityView = (p) => ({
 // returning the stored PC object: future private character fields must not
 // silently cross this boundary.
 export function playerCharacterView(id) {
-  const p = state.pcs.find((pc) => pc.id === id && isActivePc(pc));
+  const p = activePcs().find((pc) => pc.id === id);
   if (!p) return null;
   return {
     ...identityView(p),
@@ -172,11 +175,16 @@ export function gmView() {
       fear: state.session.fear,
       showFearToPlayers: state.session.showFearToPlayers
     },
+    campaigns: {
+      currentId: state.campaigns.currentId,
+      campaigns: state.campaigns.campaigns.map((campaign) => ({ ...campaign }))
+    },
     unreadMessages: Object.fromEntries(state.pcs.map((pc) => [pc.id, unreadFor(pc.id, "gm")])),
     buildings,
     characters: state.characters,
-    party: state.pcs.map((p) => ({
+    party: state.pcs.filter((pc) => pc.campaignId === state.campaigns.currentId).map((p) => ({
       id: p.id,
+      campaignId: p.campaignId,
       name: p.name,
       player: p.player,
       portrait: p.portrait || null,
@@ -213,7 +221,7 @@ export function gmView() {
     people: state.people,
     places: state.places,
     screen: state.screen.current,
-    log: state.log
+    log: state.log.filter((entry) => entry.campaignId === state.campaigns.currentId)
   };
 }
 
@@ -337,7 +345,10 @@ export function loreView(pcId) {
   return {
     seasonLabel: seasonLabel(),
     unreadMessages: requestingPcId ? unreadFor(requestingPcId, "player") : 0,
-    party: activePcs().map(identityView),
+    campaigns: publicCampaigns(),
+    currentCampaignId: state.campaigns.currentId,
+    identities: activePcs().map(identityView),
+    party: currentPcs().map(identityView),
     people,
     places,
     notes
@@ -366,7 +377,7 @@ export function tableView() {
     traits: c.publicTraits ? c.traits : null
   }));
   const chronicle = state.log
-    .filter((l) => l.published)
+    .filter((l) => l.published && l.campaignId === state.campaigns.currentId)
     .map((l) => ({
       id: l.id,
       season: l.season,
@@ -380,10 +391,15 @@ export function tableView() {
     },
     resources: state.settlement.resources,
     fear: state.session.showFearToPlayers ? state.session.fear : null,
+    campaigns: publicCampaigns(),
+    currentCampaignId: state.campaigns.currentId,
     buildings,
     characters,
     chronicle,
-    // Player-shell/login identity card: public identity fields only.
-    party: activePcs().map(tableIdentityView)
+    // Player-shell/login identity cards: public identity fields only. Shared
+    // party resources stay current-campaign scoped; identity pickers can still
+    // recognize a character from another active campaign.
+    identities: activePcs().map(identityView),
+    party: currentPcs().map(tableIdentityView)
   };
 }

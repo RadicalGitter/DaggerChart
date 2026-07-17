@@ -27,7 +27,7 @@ const getPC = () =>
 const setPC = (id) => localStorage.setItem("settlement-pc", id);
 const myPC = () => {
   const id = getPC();
-  return (id && data?.party?.find((p) => p.id === id)) || null;
+  return (id && (data?.identities || data?.party || []).find((p) => p.id === id)) || null;
 };
 
 const SECTIONS = {
@@ -95,7 +95,7 @@ const SECTIONS = {
 function pickerHtml() {
   return `<div class="who">
     <div class="smallcaps" style="text-align:center; font-size:1rem;">${t("table.whoareyou")}</div>
-    ${(data.party || [])
+    ${(data.identities || data.party || [])
       .map(
         (p) => `<button data-pick="${p.id}">${esc(p.name)}${p.player ? ` <span style="opacity:0.7; font-size:0.85rem;">· ${esc(p.player)}</span>` : ""}</button>`
       )

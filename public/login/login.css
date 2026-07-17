@@ -113,13 +113,26 @@ body {
 }
 .heading-rule { height: 1px; flex: 1; background: linear-gradient(90deg, #5f4d34, transparent); }
 
+.campaign-groups { display: grid; gap: 1rem; }
+.login-campaign-group { min-width: 0; }
+.campaign-group-heading {
+  min-height: 28px; display: flex; align-items: center; gap: .55rem; color: #c5b181;
+  font: 500 .78rem Georgia, serif; font-variant: small-caps; letter-spacing: 0;
+}
+.campaign-group-heading small { color: #7f9b8f; font: inherit; font-size: .63rem; }
+.campaign-group-heading i { height: 1px; flex: 1; background: linear-gradient(90deg, rgba(130,109,70,.66), transparent); }
+.login-campaign-group.is-current .campaign-group-heading::before {
+  content: ""; width: 7px; height: 7px; flex: none; transform: rotate(45deg);
+  border: 1px solid #b99c5c; background: #31251a;
+}
+
 .player-grid {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: clamp(0.55rem, 1vw, 0.85rem);
 }
 
 .character-bubble-stage {
-  position: relative; min-height: 310px; overflow: hidden; isolation: isolate;
+  position: relative; min-height: 230px; overflow: hidden; isolation: isolate;
   border: 1px solid rgba(113,91,58,.42); border-radius: 6px;
   background:
     repeating-linear-gradient(0deg, transparent 0 31px, rgba(209,188,143,.025) 32px),
@@ -128,6 +141,8 @@ body {
   box-shadow: inset 0 0 45px rgba(0,0,0,.28);
   touch-action: none;
 }
+.login-campaign-group:only-child .character-bubble-stage:not(.unfinished-stage) { min-height: 310px; }
+.campaign-empty { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; }
 .character-view-window { position: relative; min-height: 352px; overflow: hidden; }
 .character-view { position: absolute; inset: 0; transition: transform 310ms cubic-bezier(.25,.78,.24,1), opacity 240ms ease; }
 .finished-view { transform: translateX(0); opacity: 1; }
@@ -222,7 +237,8 @@ body {
   .gm-card .identity-copy strong { font-size: 1.25rem; }
   .projector-card { grid-template-columns: 30% 1fr auto; }
   .player-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
-  .character-bubble-stage { min-height: 280px; }
+  .character-bubble-stage { min-height: 220px; }
+  .login-campaign-group:only-child .character-bubble-stage:not(.unfinished-stage) { min-height: 280px; }
   .unfinished-stage { min-height: 210px; }
   .character-view-window { min-height: 322px; }
   .create-card .create-mark { font-size: 3.4rem; }

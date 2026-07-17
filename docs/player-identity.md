@@ -17,21 +17,25 @@ The chooser has three kinds of entry:
   that opens `/screen`. It does not set a player identity.
 - **Finished player character** — a movable, paintable bubble. Choosing one
   writes its `pcId` to the device's `settlement-pc` localStorage key, then
-  opens `/player`.
+  opens `/player`. Bubbles are grouped into one draggable field per active
+  campaign; their saved positions and paint remain keyed to the character.
 - **Unfinished character** — kept in a separate lateral Drafts view. Choosing
   one resumes its server-mirrored creator state without writing a finished-PC
   identity.
 
 The character creator is the create-user path. `/create/?new=1` starts a fresh
-draft; `/create/?draft=<id>` resumes one. Successful creation stores the new PC
-identity and returns to `/player` after the final covenant is signed.
+draft; `/create/?draft=<id>` resumes one. With multiple active campaigns its
+first step chooses campaign membership; with one, that step is omitted.
+Successful creation stores the new PC identity and returns to `/player` after
+the final covenant is signed.
 
 ## Player-safe payload
 
-The chooser reads only `GET /api/table`. Its `party` entries contain:
+The chooser reads campaign names from `GET /api/table` and active identities
+from `GET /api/party`. Identity entries contain:
 
 ```text
-id, name, player, portrait
+id, campaignId, name, player, portrait, shell
 ```
 
 These are explicit public identity fields. Hidden character or event data must
@@ -42,7 +46,8 @@ not be added to the login payload.
 - Personal and group notes in `data/notes.json` retain their author `pcId`.
 - Journal drawing layers in `data/journal-doodles.json` are keyed by `pcId`.
 - Unfinished creator state in `data/character-drafts.json` has a draft id but
-  is not a PC and cannot own personal records.
+  is not a PC and cannot own personal records. It does retain `campaignId` so
+  login can group resumable drafts without exposing their full state.
 - The chosen identity is local to the browser device; selecting another PC
   simply changes `settlement-pc`.
 
@@ -64,6 +69,12 @@ picker naturally.
 The stored sheet, inventory, papers, personal notes, journal doodles, and
 theme files remain intact. Restoring the PC makes those records available
 again. Missing legacy `active` fields are treated as active.
+
+Archiving a campaign applies the same player-access gate to all of its PCs and
+drafts while preserving their sheets and owned records. Restoring the campaign
+returns its active PCs to identity lists. The server's current campaign scopes
+shared party state and the chronicle; personal shells can still recognize a
+chosen identity from another active campaign.
 
 ## Trust boundary
 

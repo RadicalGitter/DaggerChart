@@ -127,6 +127,30 @@
   .stepped-back-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .7rem; align-items: center; padding: .7rem 0; border-top: 1px dotted var(--rule-strong); }
   .stepped-back-row .party-portrait { filter: grayscale(.75); opacity: .72; }
   .stepped-back-row .muted { display: block; font-size: .78rem; }
+  .campaign-ledger { max-width: 760px; margin-bottom: 1rem; }
+  .campaign-ledger-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: .7rem; }
+  .campaign-ledger-head h3 { margin: 0; }
+  .campaign-ledger-head span { color: var(--ink-faint); font-size: .76rem; font-variant: small-caps; }
+  .campaign-list { border-top: 1px solid var(--rule-strong); }
+  .campaign-row {
+    display: grid; grid-template-columns: 26px minmax(170px, 1fr) auto; gap: .6rem;
+    align-items: center; padding: .65rem 0; border-bottom: 1px dotted var(--rule-strong);
+  }
+  .campaign-row.is-archived { opacity: .62; }
+  .campaign-mark {
+    width: 18px; height: 18px; display: grid; place-items: center; border: 1px solid var(--rule-strong);
+    transform: rotate(45deg); color: transparent; font-size: .62rem;
+  }
+  .campaign-row.is-current .campaign-mark { border-color: var(--oxblood); color: var(--oxblood); background: var(--paper-inset); }
+  .campaign-mark span { transform: rotate(-45deg); }
+  .campaign-copy { min-width: 0; }
+  .campaign-copy input { width: 100%; box-sizing: border-box; }
+  .campaign-meta { display: block; margin-top: .18rem; color: var(--ink-faint); font-size: .7rem; font-variant: small-caps; }
+  .campaign-actions { display: flex; align-items: center; justify-content: flex-end; gap: .35rem; flex-wrap: wrap; }
+  .campaign-actions button { padding: .3rem .52rem; font-size: .72rem; }
+  .campaign-actions button:disabled { opacity: .38; cursor: not-allowed; }
+  .campaign-create { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .55rem; margin-top: .8rem; }
+  .campaign-create input { min-width: 0; }
   .feedback-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 1rem; }
   .feedback-ticket img { display: block; width: 100%; max-height: 360px; object-fit: contain; border: 1px solid var(--rule-strong); background: #17120c; }
   .feedback-meta { margin: .55rem 0; color: var(--ink-soft); font-size: .78rem; }
@@ -206,6 +230,10 @@
     #party-table td[colspan] { grid-column: 1 / -1; }
     #party-table .condition-toggles { min-width: 0; }
     #party-table .party-identity { min-width: 0; }
+    .campaign-row { grid-template-columns: 22px minmax(0, 1fr); }
+    .campaign-actions { grid-column: 2; justify-content: flex-start; }
+    .campaign-ledger-head { display: block; }
+    .campaign-ledger-head span { display: block; margin-top: .2rem; }
   }
 </style>
 </head>
@@ -438,6 +466,17 @@
 
     <section id="sec-town" hidden>
       <h2>Settlement</h2>
+      <div class="card campaign-ledger" id="campaign-ledger">
+        <div class="campaign-ledger-head">
+          <h3>Campaigns</h3>
+          <span id="campaign-current-name"></span>
+        </div>
+        <div class="campaign-list" id="campaign-list"></div>
+        <form class="campaign-create" id="campaign-create">
+          <input type="text" id="campaign-new-name" maxlength="80" placeholder="Name a new campaign" aria-label="New campaign name">
+          <button type="submit" class="quiet">Add campaign</button>
+        </form>
+      </div>
       <div class="card" style="max-width: 520px;">
         <div class="formrow"><label>Name</label><input type="text" id="town-name" style="flex:1"></div>
         <div class="formrow"><label>Population</label><input type="number" class="num" id="town-pop"></div>

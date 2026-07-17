@@ -11,6 +11,7 @@ const LAYOUT_KEY = "settlement-login-bubbles-v1";
 const COLORS = ["#f4a7b9", "#9fcdb7", "#9db9e8", "#ef4c43", "#f2ca3a", "#3aa75d", "#7e65d8", "#40c9c2", "#d66bd6"];
 let data = null;
 let drafts = [];
+let identities = [];
 let paintColor = null;
 let drag = null;
 const bubbleState = (() => {
@@ -37,6 +38,32 @@ function bubbleHtml(item, kind, index) {
     <strong class="bubble-name">${esc(item.name || t("login.unnamedDraft"))}</strong>
     <span class="bubble-detail">${esc(detail)}</span>
   </button>`;
+}
+
+function campaignGroupsHtml(items, kind) {
+  const campaigns = Array.isArray(data?.campaigns) ? data.campaigns : [];
+  return campaigns.map((campaign, campaignIndex) => {
+    const members = items.filter((item) => item.campaignId === campaign.id);
+    const current = campaign.id === data.currentCampaignId;
+    return `<section class="login-campaign-group ${current ? "is-current" : ""}">
+      <div class="campaign-group-heading"><span>${esc(campaign.name)}</span>${current ? `<small>${t("campaign.current")}</small>` : ""}<i aria-hidden="true"></i></div>
+      <div class="character-bubble-stage ${kind === "draft" ? "unfinished-stage" : ""}" data-stage-kind="${kind}" data-campaign-id="${esc(campaign.id)}">
+        ${members.length
+          ? members.map((item, index) => bubbleHtml(item, kind, campaignIndex * 20 + index)).join("")
+          : `<p class="trust-note campaign-empty">${kind === "draft" ? t("login.noDrafts") : t("login.noCampaignCharacters")}</p>`}
+      </div>
+    </section>`;
+  }).join("");
+}
+
+function layoutCampaignStages() {
+  for (const stage of document.querySelectorAll(".character-bubble-stage")) {
+    positionStage(stage, stage.dataset.stageKind);
+    wireStage(stage);
+  }
+  const views = $("#character-views");
+  const activeView = views.dataset.view === "drafts" ? views.querySelector(".drafts-view") : views.querySelector(".finished-view");
+  views.style.height = `${Math.max(320, activeView.scrollHeight)}px`;
 }
 
 function positionStage(stage, kind) {
@@ -142,13 +169,8 @@ function render() {
   $("#settlement-name").textContent = data.settlement.name;
   $("#settlement-season").textContent = seasonLabel(data.settlement.seasonLabel);
 
-  const finished = data.party || [];
-  $("#finished-characters").innerHTML = finished.length
-    ? finished.map((pc, index) => bubbleHtml(pc, "pc", index)).join("")
-    : `<p class="trust-note">${t("login.noFinished")}</p>`;
-  $("#unfinished-characters").innerHTML = drafts.length
-    ? drafts.map((entry, index) => bubbleHtml(entry, "draft", index)).join("")
-    : `<p class="trust-note">${t("login.noDrafts")}</p>`;
+  $("#finished-characters").innerHTML = campaignGroupsHtml(identities, "pc");
+  $("#unfinished-characters").innerHTML = campaignGroupsHtml(drafts, "draft");
   if (!drafts.length && $("#character-views").dataset.view === "drafts") {
     $("#character-views").dataset.view = "finished";
     $("#character-views").querySelector(".finished-view").inert = false;
@@ -157,18 +179,13 @@ function render() {
   setTelemetryMode($("#character-views").dataset.view === "drafts" ? "drafts" : "finished");
   $("#draft-view-toggle").hidden = drafts.length === 0;
   $("#draft-view-label").textContent = $("#character-views").dataset.view === "drafts" ? t("login.backFinished") : t("login.showDrafts", { n: drafts.length });
-  requestAnimationFrame(() => {
-    positionStage($("#finished-characters"), "pc");
-    positionStage($("#unfinished-characters"), "draft");
-    wireStage($("#finished-characters"));
-    wireStage($("#unfinished-characters"));
-  });
+  requestAnimationFrame(layoutCampaignStages);
 }
 
 async function refresh() {
-  const [tableResponse, draftResponse] = await Promise.all([fetch("/api/table"), fetch("/api/character-drafts")]);
-  if (!tableResponse.ok || !draftResponse.ok) throw new Error(t("error.characters"));
-  [data, drafts] = await Promise.all([tableResponse.json(), draftResponse.json()]);
+  const [tableResponse, draftResponse, partyResponse] = await Promise.all([fetch("/api/table"), fetch("/api/character-drafts"), fetch("/api/party")]);
+  if (!tableResponse.ok || !draftResponse.ok || !partyResponse.ok) throw new Error(t("error.characters"));
+  [data, drafts, identities] = await Promise.all([tableResponse.json(), draftResponse.json(), partyResponse.json()]);
   render();
 }
 
@@ -181,7 +198,7 @@ $("#draft-view-toggle").onclick = () => {
   $("#draft-view-toggle").setAttribute("aria-pressed", String(showDrafts));
   $("#draft-view-label").textContent = showDrafts ? t("login.backFinished") : t("login.showDrafts", { n: drafts.length });
   setTelemetryMode(showDrafts ? "drafts" : "finished");
-  requestAnimationFrame(() => positionStage(showDrafts ? $("#unfinished-characters") : $("#finished-characters"), showDrafts ? "draft" : "pc"));
+  requestAnimationFrame(layoutCampaignStages);
 };
 
 $("#character-paint").onclick = () => {
@@ -193,8 +210,7 @@ $("#character-paint").onclick = () => {
 };
 
 window.addEventListener("resize", () => {
-  positionStage($("#finished-characters"), "pc");
-  positionStage($("#unfinished-characters"), "draft");
+  layoutCampaignStages();
 });
 window.addEventListener("storage", (event) => { if (event.key === "settlement-pc") render(); });
 

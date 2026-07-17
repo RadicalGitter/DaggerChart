@@ -53,6 +53,7 @@ async function refresh() {
   renderPlaces();
   renderParty();
   renderLedger();
+  renderCampaigns();
   renderTown();
   renderScreen();
   renderFeedback();
@@ -1202,6 +1203,69 @@ $("#note-add").addEventListener("click", async () => {
 });
 
 // --- settlement ---
+function renderCampaigns() {
+  if (document.activeElement?.matches("#campaign-new-name, [data-campaign-name]")) return;
+  const ledger = S.campaigns || { currentId: null, campaigns: [] };
+  const current = ledger.campaigns.find((campaign) => campaign.id === ledger.currentId);
+  $("#campaign-current-name").textContent = current ? `Current table: ${current.name}` : "No current campaign";
+  $("#campaign-list").innerHTML = ledger.campaigns.map((campaign) => {
+    const isCurrent = campaign.id === ledger.currentId;
+    const archived = campaign.status === "archived";
+    const created = campaign.createdAt ? new Date(campaign.createdAt).toLocaleDateString() : "undated";
+    return `<div class="campaign-row ${isCurrent ? "is-current" : ""} ${archived ? "is-archived" : ""}">
+      <span class="campaign-mark" aria-label="${isCurrent ? "Current campaign" : "Campaign"}"><span>◆</span></span>
+      <label class="campaign-copy">
+        <input type="text" maxlength="80" value="${esc(campaign.name)}" data-campaign-name="${esc(campaign.id)}" aria-label="Campaign name">
+        <span class="campaign-meta">${isCurrent ? "current table" : archived ? "archived" : "active"} · entered ${esc(created)}</span>
+      </label>
+      <div class="campaign-actions">
+        <button type="button" class="quiet" data-campaign-save="${esc(campaign.id)}">Rename</button>
+        ${!archived && !isCurrent ? `<button type="button" class="quiet" data-campaign-current="${esc(campaign.id)}">Set current</button>` : ""}
+        ${archived
+          ? `<button type="button" class="quiet" data-campaign-status="${esc(campaign.id)}" data-status="active">Restore</button>`
+          : `<button type="button" class="quiet" data-campaign-status="${esc(campaign.id)}" data-status="archived" ${isCurrent ? "disabled title=\"Choose another current campaign first\"" : ""}>Archive</button>`}
+      </div>
+    </div>`;
+  }).join("");
+
+  for (const button of document.querySelectorAll("[data-campaign-save]")) button.onclick = async () => {
+    const id = button.dataset.campaignSave;
+    const name = document.querySelector(`[data-campaign-name="${CSS.escape(id)}"]`).value;
+    try {
+      await api(`/api/campaigns/${encodeURIComponent(id)}`, { method: "PUT", body: { name } });
+      toast("Campaign renamed.");
+      await refresh();
+    } catch (error) { toast(error.message, true); }
+  };
+  for (const button of document.querySelectorAll("[data-campaign-current]")) button.onclick = async () => {
+    try {
+      await api("/api/campaigns/current", { method: "PUT", body: { id: button.dataset.campaignCurrent } });
+      toast("The table has changed campaigns.");
+      await refresh();
+    } catch (error) { toast(error.message, true); }
+  };
+  for (const button of document.querySelectorAll("[data-campaign-status]")) button.onclick = async () => {
+    const status = button.dataset.status;
+    const campaign = ledger.campaigns.find((entry) => entry.id === button.dataset.campaignStatus);
+    if (status === "archived" && !confirm(`Archive ${campaign?.name || "this campaign"}? Its characters and drafts will be hidden until restored.`)) return;
+    try {
+      await api(`/api/campaigns/${encodeURIComponent(button.dataset.campaignStatus)}`, { method: "PUT", body: { status } });
+      toast(status === "archived" ? "Campaign archived." : "Campaign restored.");
+      await refresh();
+    } catch (error) { toast(error.message, true); }
+  };
+}
+
+$("#campaign-create").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    await api("/api/campaigns", { method: "POST", body: { name: $("#campaign-new-name").value } });
+    $("#campaign-new-name").value = "";
+    toast("Campaign added to the ledger.");
+    await refresh();
+  } catch (error) { toast(error.message, true); }
+});
+
 function renderTown() {
   if (document.activeElement && document.activeElement.closest("#sec-town")) return;
   $("#town-name").value = S.settlement.name;

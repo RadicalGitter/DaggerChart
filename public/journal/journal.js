@@ -75,7 +75,7 @@ const fetchDoodles = async () => {
   };
 };
 
-const me = () => LORE.party.find((p) => p.id === PCID) || null;
+const me = () => (LORE.identities || LORE.party).find((p) => p.id === PCID) || null;
 const matches = (q, ...fields) => fields.some((f) => (f || "").toLowerCase().includes(q));
 
 // --- notes ---
@@ -533,8 +533,9 @@ $("#j-search").addEventListener("input", () => {
 function showPicker() {
   $("#app").hidden = true;
   $("#picker").hidden = false;
-  $("#pick-list").innerHTML = LORE.party.length
-    ? LORE.party
+  const identities = LORE.identities || LORE.party;
+  $("#pick-list").innerHTML = identities.length
+    ? identities
         .map(
           (p) => `<button data-pick="${p.id}">${esc(p.name)}${p.player ? ` <span style="opacity:0.7; font-size:0.85rem;">· ${esc(p.player)}</span>` : ""}</button>`
         )

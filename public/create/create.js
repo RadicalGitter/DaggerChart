@@ -14,6 +14,8 @@ const esc = (s) =>
 
 let REF = null;
 let PARTY = [];
+let CAMPAIGNS = [];
+let CURRENT_CAMPAIGN_ID = null;
 let step = 0;
 let part = 0;
 let moving = false;
@@ -31,6 +33,7 @@ const draftId = draftParams.get("draft") || localStorage.getItem(DRAFT_ID_KEY) |
 localStorage.setItem(DRAFT_ID_KEY, draftId);
 
 const draft = {
+  campaignId: null,
   name: "", player: "", pronouns: "",
   classId: null, subclassId: null, classItem: null,
   ancestryId: null, communityId: null,
@@ -53,20 +56,38 @@ const wpn = (id) => REF.weapons.find((w) => w.id === id) || null;
 const arm = () => REF.armors.find((a) => a.id === draft.armorId) || null;
 
 const featHtml = (f) => `<div class="featline"><strong>${esc(f.name)}</strong> ${termify(esc(f.text))}</div>`;
+const campaignChoiceVisible = () => CAMPAIGNS.length > 1;
+const campaignParty = () => PARTY.filter((pc) => pc.campaignId === draft.campaignId);
 
 // ---------- steps ----------
 const steps = [
   {
-    title: () => t("step.who.title"),
-    sub: () => t("step.who.sub"),
-    render() {
+    title: (currentPart) => campaignChoiceVisible() && currentPart === 0 ? t("step.campaign.title") : t("step.who.title"),
+    sub: (currentPart) => campaignChoiceVisible() && currentPart === 0 ? t("step.campaign.sub") : t("step.who.sub"),
+    parts: () => campaignChoiceVisible() ? 2 : 1,
+    render(currentPart) {
+      if (campaignChoiceVisible() && currentPart === 0) return `<div class="campaign-options">${CAMPAIGNS.map((campaign, index) => `
+        <button class="card pick campaign-pick ${draft.campaignId === campaign.id ? "selected" : ""}" type="button" data-campaign-pick="${esc(campaign.id)}" aria-pressed="${draft.campaignId === campaign.id}" style="--campaign-accent:${["#b08a50", "#668b78", "#8b6258", "#6b7895"][index % 4]}">
+          <span class="campaign-sigil" aria-hidden="true"><i>${index + 1}</i></span>
+          <span class="campaign-copy"><strong>${esc(campaign.name)}</strong><small>${campaign.id === CURRENT_CAMPAIGN_ID ? t("campaign.current") : t("campaign.available")}</small></span>
+        </button>`).join("")}</div>`;
       return `<div class="card">
         <div class="formrow"><label>${t("label.charname")}</label><input type="text" id="f-name" value="${esc(draft.name)}"></div>
         <div class="formrow"><label>${t("label.pronouns")}</label><input type="text" id="f-pronouns" value="${esc(draft.pronouns)}"></div>
         <div class="formrow"><label>${t("label.player")}</label><input type="text" id="f-player" value="${esc(draft.player)}"></div>
       </div>`;
     },
-    collect() {
+    wire(root) {
+      for (const button of root.querySelectorAll("[data-campaign-pick]")) button.onclick = () => {
+        draft.campaignId = button.dataset.campaignPick;
+        rerender();
+      };
+    },
+    collect(currentPart) {
+      if (campaignChoiceVisible() && currentPart === 0) {
+        if (!CAMPAIGNS.some((campaign) => campaign.id === draft.campaignId)) return t("warn.campaign");
+        return;
+      }
       draft.name = $("#f-name").value.trim();
       draft.pronouns = $("#f-pronouns").value.trim();
       draft.player = $("#f-player").value.trim();
@@ -332,8 +353,9 @@ const steps = [
     parts: () => cls()?.connectionQuestions.length || 1,
     render(currentPart) {
       const q = cls().connectionQuestions[currentPart];
-      const party = PARTY.length
-        ? `<div class="count-note">${t("conn.party", { names: PARTY.map((p) => esc(p.name)).join(", ") })}</div>`
+      const peers = campaignParty();
+      const party = peers.length
+        ? `<div class="count-note">${t("conn.party", { names: peers.map((p) => esc(p.name)).join(", ") })}</div>`
         : "";
       return `<div class="qa card">
         <div class="q">${esc(q)}</div>
@@ -442,6 +464,7 @@ function buildCharacter() {
   const ar = arm();
   const level = 1;
   return {
+    campaignId: draft.campaignId,
     name: draft.name,
     pronouns: draft.pronouns,
     player: draft.player,
@@ -533,8 +556,8 @@ function rerender(direction = null) {
   $("#progress").innerHTML = steps
     .map((_, i) => `<div class="dot ${i < step ? "done" : i === step ? "now" : ""}"></div>`)
     .join("");
-  const sub = typeof st.sub === "function" ? st.sub() : st.sub;
-  const heading = typeof st.title === "function" ? st.title() : st.title;
+  const sub = typeof st.sub === "function" ? st.sub(part) : st.sub;
+  const heading = typeof st.title === "function" ? st.title(part) : st.title;
   const enter = direction === "next" ? " enter-right" : direction === "back" ? " enter-left" : "";
   $("#step").innerHTML = `<div class="step-panel${enter}"><h2 class="step-title">${heading}</h2><div class="step-sub">${sub}</div>${st.render(part)}</div>`;
   $("#warn").textContent = "";
@@ -704,11 +727,23 @@ $("#draft-reset").onclick = () => {
 Promise.all([
   fetch("/api/reference").then((r) => r.json()),
   fetch("/api/party").then((r) => r.json()),
-  fetch(`/api/character-drafts/${encodeURIComponent(draftId)}`).then((r) => r.ok ? r.json() : null)
-]).then(([ref, party, saved]) => {
+  fetch(`/api/character-drafts/${encodeURIComponent(draftId)}`).then((r) => r.ok ? r.json() : null),
+  fetch("/api/table").then((r) => r.json())
+]).then(([ref, party, saved, table]) => {
   if (ref.error) { $("#step").innerHTML = `<p class="warn">${esc(ref.error)}</p>`; return; }
   REF = ref;
   PARTY = party;
+  CAMPAIGNS = Array.isArray(table.campaigns) ? table.campaigns : [];
+  CURRENT_CAMPAIGN_ID = table.currentCampaignId || CAMPAIGNS[0]?.id || null;
   restoreDraft(saved);
+  if (!draft.campaignId) draft.campaignId = CURRENT_CAMPAIGN_ID;
+  else if (!CAMPAIGNS.some((campaign) => campaign.id === draft.campaignId)) {
+    draftComplete = true;
+    $("#step").innerHTML = `<p class="warn">${esc(t("error.campaignInactive"))}</p>`;
+    $("#btn-back").hidden = true;
+    $("#btn-next").hidden = true;
+    $("#subprogress").hidden = true;
+    return;
+  }
   rerender();
 });
