@@ -310,6 +310,22 @@ app.post("/api/party/:id/restore", guard((req, res) => {
 // --- GM API ---
 app.get("/api/state", (_req, res) => res.json(gmView()));
 
+app.put("/api/session", guard((req, res) => {
+  const hasFear = Object.prototype.hasOwnProperty.call(req.body || {}, "fear");
+  const hasVisibility = Object.prototype.hasOwnProperty.call(req.body || {}, "showFearToPlayers");
+  if (hasFear) {
+    if (!Number.isInteger(req.body.fear)) throw new Error("Fear must be a whole number.");
+    state.session.fear = Math.max(0, Math.min(12, req.body.fear));
+  }
+  if (hasVisibility) {
+    if (typeof req.body.showFearToPlayers !== "boolean") throw new Error("Fear visibility must be true or false.");
+    state.session.showFearToPlayers = req.body.showFearToPlayers;
+  }
+  persist();
+  broadcast();
+  res.json({ ...state.session });
+}));
+
 // Local UX evidence. Batches never broadcast: a heartbeat must not cause
 // every open client to refetch campaign state.
 app.get("/api/telemetry", (_req, res) => res.json(telemetryView()));

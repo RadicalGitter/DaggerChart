@@ -20,6 +20,12 @@ each other. Rules of the road:
 ## Lanes
 
 **2026-07-17 — Codex** · status: DONE
+Lane: Fear/Hope tracker (feature 1): `server/state.js`, `server/views.js`,
+session route in `server/index.js`, `public/shared/session-pools.*`, the three
+player shells, `public/gm/*`, and docs. Live campaign JSON and local media
+remain out of the commit.
+
+**2026-07-17 — Codex** · status: DONE
 Lane: reversible PC retirement (feature 7): `server/views.js`, party routes in
 `server/index.js`, `public/gm/*`, and lifecycle documentation. Live campaign
 JSON and local media remain out of the commit.

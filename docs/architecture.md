@@ -12,7 +12,7 @@ server/
   store.js    atomic JSON read/write (tmp+rename), timestamped backups
   views.js    audience whitelists: gmView(), tableView(), loreView()
 public/
-  shared/     themes, i18n.js, player registries, feedback and UX collectors
+  shared/     themes, i18n.js, session pools, player registries, feedback and UX collectors
   gm/         GM console (campaign controls, feedback queue, and UX review map)
   login/      trusted-table chooser: finished-character bubbles + draft side view
   player/     player root: identity switcher and visual-tool shelf
@@ -35,8 +35,9 @@ docs/         this file, the design spec, ComfyUI workflow
   atomic (write `.tmp`, rename). `snapshot()` copies every `data/*.json` into
   `data/backups/<timestamp>/`; called on each downtime resolution. `DATA_DIR`
   env var overrides the data directory (used by tests/scratch runs).
-- **`state.js`** — owns the mutable `state` (settlement, characters, pcs, log,
-  event tables). `resolveDowntime(buildingId, raw, effort)` implements §5 of the
+- **`state.js`** — owns the mutable `state` (settlement, live session, characters,
+  pcs, log, event tables). `session.json` holds the bounded 0..12 Fear pool and
+  its player-visibility switch. `resolveDowntime(buildingId, raw, effort)` implements §5 of the
   spec exactly: raw −2..23 validated, modifiers summed, clamp 0–30, spent-number
   tracking per building, stockpile wipe on 0, standing `effect` capture, log
   entry, snapshot. `modifierBreakdown()` returns visible modifiers itemized and
@@ -47,7 +48,9 @@ docs/         this file, the design spec, ComfyUI workflow
   people/places, and unfired event text never leave the server on `/api/table`
   or `/api/lore`. A person standing in an unrevealed place gets `placeId: null`.
   Personal notes ship only when the request carries the owner's `?pc=`.
-  Never render player surfaces from `gmView()`.
+  `tableView()` exposes Fear only when the session switch permits it and adds
+  public Hope totals to active party identities. Never render player surfaces
+  from `gmView()`.
 - **`index.js`** — routes below, plus `GET /api/stream` (SSE). Mutating
   endpoints call `broadcast()` so open pages refresh; `PUT /api/board`
   deliberately does *not* broadcast (would echo the GM's own board edits back).
@@ -69,6 +72,7 @@ docs/         this file, the design spec, ComfyUI workflow
 |---|---|
 | `GET /api/state` | full GM state (private) |
 | `GET /api/table` | whitelisted player payload |
+| `PUT /api/session` | set bounded Fear and/or its player visibility; persists and broadcasts |
 | `GET /api/stream` | SSE; any broadcast → clients refetch |
 | `GET /api/downtime/preview?building=id` | foreman + modifier breakdown before rolling |
 | `POST /api/downtime/resolve` | `{buildingId, raw, effort}` → single entry revealed |

@@ -24,6 +24,34 @@
   }
   nav a.active { color: var(--oxblood); border-right: 3px solid var(--oxblood); background: var(--paper); }
   nav a:hover { color: var(--ink); }
+  .gm-fear {
+    margin: 0 0.8rem 1rem;
+    padding: 0.65rem;
+    border: 1px solid var(--rule);
+    background: rgba(250, 245, 234, 0.58);
+  }
+  .gm-fear-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; margin-bottom: 0.45rem; }
+  .gm-fear-head span { color: var(--oxblood); font-variant: small-caps; font-size: 0.82rem; }
+  .gm-fear-head output { color: var(--ink-soft); font-size: 0.72rem; }
+  .gm-fear-controls { display: grid; grid-template-columns: 28px minmax(0, 1fr) 28px; align-items: center; gap: 0.42rem; }
+  .gm-fear-step {
+    width: 28px; height: 28px; padding: 0;
+    display: grid; place-items: center;
+    color: var(--oxblood); border-color: var(--rule-strong); background: transparent;
+    font-size: 1.15rem; line-height: 1;
+  }
+  .gm-fear-step:hover:not(:disabled) { color: var(--paper-raised); background: var(--oxblood); }
+  .gm-fear-step:disabled { color: var(--ink-faint); border-color: var(--rule); background: transparent; opacity: 0.55; }
+  .gm-fear-track { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+  .gm-fear-token {
+    aspect-ratio: 1; min-width: 0;
+    border: 1px solid var(--oxblood-soft);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    opacity: 0.28;
+  }
+  .gm-fear-token.is-filled { background: var(--oxblood); opacity: 1; }
+  .gm-fear-visible { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.5rem; color: var(--ink-faint); font-size: 0.7rem; }
+  .gm-fear-visible input { margin: 0; accent-color: var(--oxblood); }
   main { padding: 2rem 2.5rem; max-width: 980px; }
   section[hidden] { display: none; }
 
@@ -182,6 +210,12 @@
     nav { padding: .65rem .55rem; border-right: 0; border-bottom: 1px solid var(--rule-strong); }
     nav .title { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: .15rem .45rem .55rem; margin-bottom: .4rem; }
     nav .title h1 { margin: 0; }
+    .gm-fear { margin: 0.35rem 0.45rem 0.55rem; display: grid; grid-template-columns: auto minmax(190px, 1fr) auto; align-items: center; gap: 0.55rem; }
+    .gm-fear-head { margin: 0; display: block; }
+    .gm-fear-head output { display: block; }
+    .gm-fear-visible { margin: 0; }
+    .gm-fear-controls { min-width: 0; }
+    .gm-fear-track { grid-template-columns: repeat(12, 1fr); }
     nav a { display: inline-block; padding: .34rem .48rem; font-size: .76rem; }
     nav a.active { border-right: 0; border-bottom: 2px solid var(--oxblood); }
     nav hr.rule { display: none; }
@@ -214,6 +248,15 @@
     <div class="title">
       <h1 id="nav-name">The Settlement</h1>
       <div class="smallcaps" id="nav-season">—</div>
+    </div>
+    <div class="gm-fear" id="gm-fear">
+      <div class="gm-fear-head"><span>Fear</span><output id="gm-fear-count">0 / 12</output></div>
+      <div class="gm-fear-controls">
+        <button class="gm-fear-step" id="gm-fear-spend" type="button" aria-label="Spend one Fear" title="Spend one Fear">−</button>
+        <div class="gm-fear-track" id="gm-fear-track" aria-hidden="true"></div>
+        <button class="gm-fear-step" id="gm-fear-gain" type="button" aria-label="Gain one Fear" title="Gain one Fear">+</button>
+      </div>
+      <label class="gm-fear-visible"><input id="gm-fear-visible" type="checkbox"> Visible to players</label>
     </div>
     <a href="#season" data-nav="season" class="active">Season</a>
     <a href="#stores" data-nav="stores">Stores</a>

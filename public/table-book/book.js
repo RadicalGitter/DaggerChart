@@ -1,6 +1,7 @@
 // Standalone physical-book experiment for the player table.
 // It consumes only the same server-whitelisted /api/table payload as /table.
 import { t, term, initI18n, seasonLabel, TERMS } from "/shared/i18n.js";
+import { sessionPoolsHtml } from "/shared/session-pools.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
 
@@ -194,6 +195,7 @@ function renderCover() {
   $("#folio-stores").innerHTML = Object.entries(data.resources)
     .map(([name, value]) => `<span class="folio-store"><strong>${value}</strong>${esc(name)}</span>`)
     .join("");
+  $("#session-pools").innerHTML = sessionPoolsHtml(data);
 }
 
 function renderBookmarks() {

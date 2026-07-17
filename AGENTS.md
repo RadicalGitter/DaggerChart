@@ -145,8 +145,9 @@ designing anything; it is the source of truth. Code map + API:
 ## What's next (agreed ambitions, in rough order)
 - **The remaining planned features have backend implementation plans in
   [docs/master-plan.md](docs/master-plan.md).** Read its Shared foundations
-  before starting one; character lifecycle (feature 7) is built, so the
-  remaining suggested dependency order is 1 → 2 → 3 → 5 → 6 → 4.
+  before starting one; character lifecycle (feature 7) and the Fear/Hope
+  tracker (feature 1) are built, so the remaining suggested dependency order
+  is 2 → 3 → 5 → 6 → 4.
 - ComfyUI wiring: the GM-side request UI exists on People cards (prompt saved
   to `portraitPrompt`, `POST /api/people/:id/portrait` is a stub) — connect it
   to the local 5090 using `docs/comfyui/waidrin-portraits-workflow.json`

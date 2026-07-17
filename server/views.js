@@ -42,6 +42,12 @@ const identityView = (p) => ({
   shell: shellOf(p)
 });
 
+const tableIdentityView = (p) => ({
+  ...identityView(p),
+  hope: Number.isInteger(p.hope) ? Math.max(0, p.hope) : 0,
+  hopeMax: Number.isInteger(p.hopeMax) ? Math.max(0, p.hopeMax) : 6
+});
+
 // A character sheet is player-facing too. Keep it explicit rather than
 // returning the stored PC object: future private character fields must not
 // silently cross this boundary.
@@ -123,6 +129,10 @@ export function gmView() {
       chronicleNotes: state.settlement.chronicleNotes
     },
     resources: state.settlement.resources,
+    session: {
+      fear: state.session.fear,
+      showFearToPlayers: state.session.showFearToPlayers
+    },
     buildings,
     characters: state.characters,
     party: state.pcs.map((p) => ({
@@ -307,10 +317,11 @@ export function tableView() {
       seasonLabel: seasonLabel()
     },
     resources: state.settlement.resources,
+    fear: state.session.showFearToPlayers ? state.session.fear : null,
     buildings,
     characters,
     chronicle,
     // Player-shell/login identity card: public identity fields only.
-    party: activePcs().map(identityView)
+    party: activePcs().map(tableIdentityView)
   };
 }

@@ -69,6 +69,9 @@ Every player-shell visual must preserve these boundaries:
   player whitelist returned by `GET /api/party/:id`; never use the stored PC
   object or a GM view as a shortcut.
 - Listen to `/api/stream` and refetch after broadcasts.
+- Render the shared `session-pools` strip from `/api/table`: the deck and folio
+  show party Hope, the personal tome shows only its chosen PC, and Fear is
+  omitted entirely when the payload carries `null`.
 - Keep Conditions on the chosen-character whitelist and reuse the shared
   registry rather than inventing route-specific identifiers or symbols.
 - Use the single device identity key `settlement-pc` (the legacy

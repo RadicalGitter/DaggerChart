@@ -33,15 +33,21 @@ Treat each plan's **Backend** section as settled architecture and its
   keepsake in the `KEEPSAKES` registry (`tome.js`) per
   [player-shell-visuals.md](player-shell-visuals.md).
 
-Suggested order (dependencies, not importance): **7 → 1 → 2 → 3 → 5 → 6 → 4**.
-7 (soft delete) is small and removes a live data-loss bug; 1 is an afternoon;
-2 sets up boards for the hotbar; 3 is independent; 5 is mostly data
+Suggested remaining order (dependencies, not importance): **2 → 3 → 5 → 6 → 4**.
+7 (soft delete) and 1 (Fear/Hope) are built. 2 sets up boards for the hotbar;
+3 is independent; 5 is mostly data
 authoring; 6 (campaigns) must land before 4, which is campaign-scoped and the
 only feature needing network access.
 
 ---
 
-## 1. Fear/Hope tracker
+## 1. Fear/Hope tracker — BUILT
+
+**Built on `beta` (2026-07-17).** Session state persists in
+`data/session.json`; the GM rail has bounded spend/gain controls and a player
+visibility switch. `/table` and `/table-book` show the active party's Hope,
+while `/tome` shows only the chosen character's Hope. All three pair it with
+visibility-gated Fear and update through the existing SSE refetch contract.
 
 **Goal.** A GM tracker for the Daggerheart Fear pool, always at hand;
 players' Hope already lives on their sheets (`pcs.json` `hope`/`hopeMax`,

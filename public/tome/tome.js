@@ -9,6 +9,7 @@
 import { t, term, termify, initI18n, seasonLabel, lang } from "/shared/i18n.js";
 import { CONDITIONS, conditionIcon } from "/shared/conditions.js";
 import { paperArtifactHtml } from "/shared/paper.js";
+import { sessionPoolsHtml } from "/shared/session-pools.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
 
@@ -414,7 +415,8 @@ function renderPlayerDock() {
     return;
   }
   dock.hidden = false;
-  dock.setAttribute("aria-label", t("conditions.label"));
+  dock.setAttribute("aria-label", `${t("session.pool")}; ${t("conditions.label")}`);
+  $("#session-pools").innerHTML = sessionPoolsHtml(data, { pcId: characterData.id });
   const active = new Set(characterData.conditions || []);
   const shown = $("#condition-popover").dataset.condition;
   if (shown && !active.has(shown)) closeConditionPopover();

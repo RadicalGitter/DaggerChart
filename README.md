@@ -63,6 +63,7 @@ All state is pretty-printed JSON in `data/` — hand-editable with the server
 stopped (or live; the GM console re-reads on refresh):
 
 - `settlement.json` — population, season, buildings (level, foreman, spent event numbers, effects)
+- `session.json` — live table state: bounded Fear pool and whether players may see it
 - `characters.json` — the folk (NPCs), including the GM-only hidden layer
 - `pcs.json` — player characters from the creator; `active: false` retires one without deleting its records
 - `people.json` — the wider world's NPCs (not villagers): public description, GM-only notes, carried items, current place

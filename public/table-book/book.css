@@ -34,8 +34,8 @@ body {
 }
 
 .folio-head {
-  position: relative; z-index: 60; min-height: 72px;
-  display: flex; justify-content: center; align-items: center; gap: 2rem;
+  position: relative; z-index: 60; min-height: 94px;
+  display: flex; justify-content: center; align-items: center; align-content: center; flex-wrap: wrap; gap: 0.35rem 2rem;
   padding: 0.75rem 4rem 0; color: #a99979;
   font-variant: small-caps; letter-spacing: 0.09em;
 }
@@ -49,9 +49,17 @@ body {
 .folio-season { white-space: nowrap; }
 .folio-stores { display: flex; gap: 1.2rem; flex-wrap: wrap; justify-content: center; }
 .folio-store strong { color: #d8c89f; font-size: 1.05rem; font-weight: 500; margin-right: 0.25rem; }
+.folio-session-pools {
+  flex: 0 0 100%;
+  --session-text: #d2c19a;
+  --session-muted: #8f8066;
+  --session-rule: rgba(189, 167, 126, 0.26);
+  --session-fear: #bb7162;
+  --session-hope: #d4b86a;
+}
 
 .book-viewport {
-  position: relative; z-index: 2; height: calc(100vh - 108px); min-height: 500px;
+  position: relative; z-index: 2; height: calc(100vh - 130px); min-height: 500px;
   display: flex; justify-content: center; align-items: flex-start;
   overflow: hidden; padding-top: 4px;
 }
@@ -361,9 +369,11 @@ body.book-open .book-instruction { opacity: 0; }
 
 @media (max-width: 760px) {
   body { overflow: auto; }
-  .folio-head { min-height: 62px; padding: 0.65rem 2.8rem 0; gap: 0.7rem; flex-direction: column; font-size: 0.78rem; }
+  .folio-head { min-height: 92px; padding: 0.65rem 2.8rem 0; gap: 0.35rem; flex-direction: column; font-size: 0.78rem; }
+  .folio-season { max-width: calc(100vw - 10rem); overflow: hidden; text-overflow: ellipsis; }
   .folio-stores { display: none; }
-  .book-viewport { height: calc(100vh - 76px); overflow: auto; justify-content: flex-start; padding-left: 12px; }
+  .folio-session-pools { max-width: calc(100vw - 1rem); }
+  .book-viewport { height: calc(100vh - 102px); overflow: auto; justify-content: flex-start; padding-left: 12px; }
   .book-scale { transform-origin: top left; }
   .view-root { width: 30px; height: 30px; justify-content: center; padding: 0; }
   .view-root-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }

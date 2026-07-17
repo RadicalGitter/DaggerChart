@@ -5,6 +5,7 @@
 // whole deck into a stack at the left — selection on top — and the card's
 // contents take the rest of the row. Pressing the stack puts the deck back.
 import { t, term, initI18n, seasonLabel, TERMS } from "/shared/i18n.js";
+import { sessionPoolsHtml } from "/shared/session-pools.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
 
@@ -275,6 +276,7 @@ async function render() {
       return `<div class="stat"><div class="value">${v}</div><div class="smallcaps">${label}</div></div>`;
     })
     .join("");
+  $("#session-pools").innerHTML = sessionPoolsHtml(data);
 
   renderFaces();
   updatePanel();

@@ -1,0 +1,69 @@
+.session-pools-host:empty { display: none; }
+
+.session-pools {
+  --session-text: #594a37;
+  --session-muted: #88765b;
+  --session-rule: rgba(105, 84, 56, 0.34);
+  --session-fear: #995343;
+  --session-hope: #b28a37;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem 1rem;
+  min-width: 0;
+  color: var(--session-text);
+  font-size: 0.72rem;
+  font-variant: normal;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.session-pool,
+.session-hope-member,
+.session-hope-members,
+.session-pips {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.session-pool { gap: 0.42rem; }
+.session-pool + .session-pool { padding-left: 1rem; border-left: 1px solid var(--session-rule); }
+.session-pool-label {
+  color: var(--session-muted);
+  font-variant: small-caps;
+  font-size: 0.68rem;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.session-pips { gap: 3px; flex: none; }
+.session-pip {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border: 1px solid currentColor;
+  opacity: 0.32;
+}
+.session-pip.is-filled { opacity: 1; background: currentColor; }
+.session-fear-pip { color: var(--session-fear); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.session-hope-pip { color: var(--session-hope); border-radius: 50%; }
+.session-pool-count { color: var(--session-text); font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
+.session-pool-count span { color: var(--session-muted); font-size: 0.62rem; font-weight: 400; }
+.session-hope-members { flex-wrap: wrap; gap: 0.32rem 0.72rem; }
+.session-hope-member { gap: 0.32rem; }
+.session-member-name {
+  max-width: 8rem;
+  overflow: hidden;
+  color: var(--session-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .session-pools { gap: 0.35rem 0.65rem; font-size: 0.68rem; }
+  .session-pool + .session-pool { padding-left: 0.65rem; }
+  .session-pip { width: 6px; height: 6px; }
+  .session-member-name { max-width: 5.5rem; }
+  .session-hope-members { gap: 0.28rem 0.55rem; }
+}

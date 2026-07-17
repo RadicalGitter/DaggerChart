@@ -12,6 +12,18 @@ const DEFAULT_SETTLEMENT = {
   buildings: {}
 };
 
+const DEFAULT_SESSION = {
+  fear: 0,
+  showFearToPlayers: true
+};
+
+const normalizeSession = (session) => ({
+  fear: Number.isInteger(session?.fear) ? Math.max(0, Math.min(12, session.fear)) : DEFAULT_SESSION.fear,
+  showFearToPlayers: typeof session?.showFearToPlayers === "boolean"
+    ? session.showFearToPlayers
+    : DEFAULT_SESSION.showFearToPlayers
+});
+
 const DEFAULT_VILLAGE = {
   id: "place_village",
   name: "The Settlement",
@@ -25,6 +37,7 @@ const DEFAULT_VILLAGE = {
 
 export const state = {
   settlement: loadJson("settlement.json", DEFAULT_SETTLEMENT),
+  session: normalizeSession(loadJson("session.json", DEFAULT_SESSION)),
   characters: loadJson("characters.json", []),
   pcs: loadJson("pcs.json", []),
   characterDrafts: loadJson("character-drafts.json", []),
@@ -61,6 +74,7 @@ for (const [id, t] of Object.entries(state.tables.buildings)) {
 
 export function persist() {
   saveJson("settlement.json", state.settlement);
+  saveJson("session.json", state.session);
   saveJson("characters.json", state.characters);
   saveJson("pcs.json", state.pcs);
   saveJson("character-drafts.json", state.characterDrafts);
