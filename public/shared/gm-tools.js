@@ -22,7 +22,6 @@ if (root) {
   };
 
   root.innerHTML = `
-    <div class="gm-duality-feed" id="gm-duality-feed" aria-live="assertive" aria-atomic="false"></div>
     <div class="gm-tools-bar" aria-label="GM quick tools">
       <span class="gm-tools-handle" aria-hidden="true"></span>
       <div class="gm-tools-fear" role="group" aria-label="Fear pool">
@@ -110,101 +109,7 @@ if (root) {
   let lastFocus = null;
   let messagesLastFocus = null;
   let noticeTimer = null;
-  let criticalAudio = null;
-  let criticalFallbackAudio = null;
-
-  function criticalChimeUrl() {
-    const sampleRate = 22050;
-    const duration = 1.15;
-    const sampleCount = Math.floor(sampleRate * duration);
-    const buffer = new ArrayBuffer(44 + sampleCount * 2);
-    const view = new DataView(buffer);
-    const write = (offset, text) => [...text].forEach((char, index) => view.setUint8(offset + index, char.charCodeAt(0)));
-    write(0, "RIFF");
-    view.setUint32(4, 36 + sampleCount * 2, true);
-    write(8, "WAVEfmt ");
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, 1, true);
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * 2, true);
-    view.setUint16(32, 2, true);
-    view.setUint16(34, 16, true);
-    write(36, "data");
-    view.setUint32(40, sampleCount * 2, true);
-    const notes = [523.25, 659.25, 783.99, 1046.5];
-    for (let index = 0; index < sampleCount; index++) {
-      const time = index / sampleRate;
-      let sample = 0;
-      notes.forEach((frequency, noteIndex) => {
-        const local = time - noteIndex * .065;
-        if (local < 0 || local > .76) return;
-        const attack = Math.min(1, local / .018);
-        const decay = Math.exp(-4.8 * local);
-        sample += Math.sin(2 * Math.PI * frequency * local) * attack * decay;
-        sample += Math.sin(4 * Math.PI * frequency * local) * attack * decay * .16;
-      });
-      const value = Math.max(-1, Math.min(1, sample * .24));
-      view.setInt16(44 + index * 2, value * 32767, true);
-    }
-    return URL.createObjectURL(new Blob([buffer], { type: "audio/wav" }));
-  }
-
-  function ensureCriticalAudio() {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (AudioContext && !criticalAudio) criticalAudio = new AudioContext();
-    if (criticalAudio?.state === "suspended") void criticalAudio.resume();
-    if (!criticalFallbackAudio && typeof Audio !== "undefined") {
-      criticalFallbackAudio = new Audio(criticalChimeUrl());
-      criticalFallbackAudio.preload = "auto";
-      criticalFallbackAudio.volume = .68;
-    }
-    return criticalAudio;
-  }
-
-  function prepareCriticalAudio() {
-    const context = ensureCriticalAudio();
-    if (context?.state === "suspended") void context.resume();
-    if (!criticalFallbackAudio) return;
-    criticalFallbackAudio.volume = 0;
-    void criticalFallbackAudio.play().then(() => {
-      criticalFallbackAudio.pause();
-      criticalFallbackAudio.currentTime = 0;
-      criticalFallbackAudio.volume = .68;
-    }).catch(() => { criticalFallbackAudio.volume = .68; });
-  }
-
-  function playCriticalChime() {
-    const context = ensureCriticalAudio();
-    if (!context || context.state !== "running") {
-      if (criticalFallbackAudio) {
-        criticalFallbackAudio.currentTime = 0;
-        criticalFallbackAudio.volume = .68;
-        void criticalFallbackAudio.play().catch(() => {});
-      }
-      return;
-    }
-    const start = context.currentTime;
-    const master = context.createGain();
-    master.gain.setValueAtTime(.0001, start);
-    master.gain.exponentialRampToValueAtTime(.16, start + .025);
-    master.gain.exponentialRampToValueAtTime(.0001, start + 1.25);
-    master.connect(context.destination);
-    [523.25, 659.25, 783.99, 1046.5].forEach((frequency, index) => {
-      const voice = context.createOscillator();
-      const envelope = context.createGain();
-      const onset = start + index * .065;
-      voice.type = index === 3 ? "sine" : "triangle";
-      voice.frequency.setValueAtTime(frequency, onset);
-      voice.detune.setValueAtTime(index % 2 ? 4 : -3, onset);
-      envelope.gain.setValueAtTime(.0001, onset);
-      envelope.gain.exponentialRampToValueAtTime(index === 3 ? .28 : .5, onset + .018);
-      envelope.gain.exponentialRampToValueAtTime(.0001, onset + .72);
-      voice.connect(envelope).connect(master);
-      voice.start(onset);
-      voice.stop(onset + .75);
-    });
-  }
+  const hudCounterBusy = new Set();
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -223,33 +128,6 @@ if (root) {
     notice.hidden = false;
     clearTimeout(noticeTimer);
     noticeTimer = setTimeout(() => { notice.hidden = true; }, 3200);
-  }
-
-  function showDualityRoll(roll) {
-    const hope = Number(roll?.hope);
-    const fear = Number(roll?.fear);
-    const total = Number(roll?.total);
-    const modifier = Number(roll?.modifier || 0);
-    const outcome = ["critical", "hope", "fear"].includes(roll?.outcome) ? roll.outcome : null;
-    if (![hope, fear, total, modifier].every(Number.isFinite) || !outcome) return;
-    const feed = $("#gm-duality-feed");
-    const item = document.createElement("article");
-    item.className = `gm-duality-roll is-${outcome}`;
-    const name = String(roll.pcName || "A player");
-    const portrait = roll.portrait
-      ? `<img src="${esc(roll.portrait)}" alt="">`
-      : `<span class="gm-duality-initial" aria-hidden="true">${esc(name.slice(0, 1) || "?")}</span>`;
-    const outcomeLabel = outcome === "critical" ? "Critical success" : outcome === "hope" ? "With Hope" : "With Fear";
-    item.innerHTML = `
-      <div class="gm-duality-portrait">${portrait}</div>
-      <div class="gm-duality-copy"><strong>${esc(name)}</strong><span>Duality roll</span></div>
-      <div class="gm-duality-dice"><span class="is-hope"><small>Hope</small><b>${hope}</b></span><strong>${total}</strong><span class="is-fear"><small>Fear</small><b>${fear}</b></span></div>
-      <div class="gm-duality-outcome">${esc(outcomeLabel)}${modifier ? ` · ${esc(modifier > 0 ? `+${modifier}` : modifier)}` : ""}</div>`;
-    feed.append(item);
-    if (outcome === "critical") playCriticalChime();
-    while (feed.children.length > 4) feed.firstElementChild.remove();
-    setTimeout(() => item.classList.add("is-leaving"), 3700);
-    setTimeout(() => item.remove(), 4200);
   }
 
   function renderFear() {
@@ -441,7 +319,11 @@ if (root) {
   function hudItemHtml(item) {
     const props = item.props || {};
     if (item.type === "note") return `<article class="gm-tools-hud-item"><span class="gm-tools-hud-kind">Note</span><h3>${esc(props.title || "Untitled note")}</h3><p class="gm-tools-pre">${esc(props.text || "")}</p></article>`;
-    if (item.type === "counter") return `<article class="gm-tools-hud-item gm-tools-counter"><span class="gm-tools-hud-kind">Counter</span><h3>${esc(props.label || "Counter")}</h3><strong>${bounded(props.value, -9999, 9999)}</strong></article>`;
+    if (item.type === "counter") return `<article class="gm-tools-hud-item gm-tools-counter"><span class="gm-tools-hud-kind">Counter</span><h3>${esc(props.label || "Counter")}</h3><div class="gm-tools-counter-controls">
+      <button type="button" data-hud-counter="${esc(item.id)}" data-step="-1" aria-label="Decrease ${esc(props.label || "counter")}" title="Decrease" ${hudCounterBusy.has(item.id) ? "disabled" : ""}>${icon("minus")}</button>
+      <strong>${bounded(props.value, -9999, 9999)}</strong>
+      <button type="button" data-hud-counter="${esc(item.id)}" data-step="1" aria-label="Increase ${esc(props.label || "counter")}" title="Increase" ${hudCounterBusy.has(item.id) ? "disabled" : ""}>${icon("plus")}</button>
+    </div></article>`;
     if (item.type === "character") return `<article class="gm-tools-hud-item"><span class="gm-tools-hud-kind">Character</span>${compactCharacter((state?.party || []).find((pc) => pc.id === props.pcId))}</article>`;
     if (item.type === "folk") {
       const person = (state?.characters || []).find((candidate) => candidate.id === props.charId);
@@ -464,6 +346,27 @@ if (root) {
     $("#gm-tools-hud").innerHTML = items.length
       ? items.map(hudItemHtml).join("")
       : `<p class="gm-tools-empty">The HUD board is empty. Place only the notes and counters you need during play.</p>`;
+    for (const button of $("#gm-tools-hud").querySelectorAll("[data-hud-counter]")) {
+      button.addEventListener("click", () => updateHudCounter(button.dataset.hudCounter, Number(button.dataset.step)));
+    }
+  }
+
+  async function updateHudCounter(itemId, step) {
+    const item = (hud.items || []).find((candidate) => candidate.id === itemId && candidate.type === "counter");
+    if (!item || !Number.isInteger(step) || hudCounterBusy.has(itemId)) return;
+    const previous = bounded(item.props?.value, -9999, 9999);
+    item.props = { ...(item.props || {}), value: bounded(previous + step, -9999, 9999) };
+    hudCounterBusy.add(itemId);
+    renderHud();
+    try {
+      hud = await api("/api/board/hud", { method: "PUT", body: hud });
+    } catch (error) {
+      item.props.value = previous;
+      showNotice(error.message);
+    } finally {
+      hudCounterBusy.delete(itemId);
+      renderHud();
+    }
   }
 
   function renderReference() {
@@ -628,15 +531,8 @@ if (root) {
     if (event.key === "Escape" && messagesOpen) closeMessages();
     else if (event.key === "Escape" && overlayOpen) closeOverlay();
   });
-  document.addEventListener("pointerdown", prepareCriticalAudio, { once: true, capture: true });
-  document.addEventListener("keydown", prepareCriticalAudio, { once: true, capture: true });
-
   let refreshTimer = null;
   const stream = new EventSource("/api/stream");
-  stream.addEventListener("duality-roll", (event) => {
-    try { showDualityRoll(JSON.parse(event.data)); }
-    catch { /* Ignore malformed transient events without interrupting live updates. */ }
-  });
   stream.onmessage = () => {
     clearTimeout(refreshTimer);
     refreshTimer = setTimeout(() => refreshData().catch((error) => showNotice(error.message)), 140);

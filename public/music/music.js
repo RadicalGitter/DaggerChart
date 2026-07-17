@@ -1,6 +1,7 @@
 import { TAGS, ROOT_IDS, findTag, childIds, descendantIds } from "./taxonomy.js";
 import { initTerms } from "/shared/i18n.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
+import { fetchJsonWithRetry } from "/shared/reliable-fetch.js";
 import "/shared/feedback.js";
 
 initTerms();
@@ -42,6 +43,9 @@ const bubblePhysics = {
   stageHeight: 0,
   layoutMode: null
 };
+let musicLoadInFlight = null;
+let musicLoadQueued = false;
+let playAttempt = 0;
 
 function loadPins() {
   try {
@@ -384,7 +388,8 @@ function moveBubbleDrag(event, bubble) {
   drag.lastX = drag.item.x;
   drag.lastY = drag.item.y;
   drag.lastAt = now;
-  drag.moved ||= Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 5;
+  const dragThreshold = event.pointerType === "touch" ? 14 : 8;
+  drag.moved ||= Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > dragThreshold;
   if (drag.moved) bubble.classList.add(drag.mode === "resize" ? "resizing" : "dragging");
   hideBubbleInfo();
   resolveBubbleCollisions();
@@ -840,12 +845,21 @@ function playSong(songId) {
     renderQueue();
   }
   const audio = $("#audio");
+  const attempt = ++playAttempt;
+  resetPlaybackMix();
   state.playingId = songId;
-  audio.src = song.audioUrl;
-  audio.load();
+  const nextUrl = new URL(song.audioUrl, location.href).href;
+  if (audio.src !== nextUrl) audio.src = song.audioUrl;
+  else audio.currentTime = 0;
   audio.play()
     .then(updateTransport)
-    .catch(() => toast("Playback was blocked. Press the play control once to continue."));
+    .catch((error) => {
+      if (attempt !== playAttempt || error?.name === "AbortError") return;
+      toast(error?.name === "NotAllowedError"
+        ? "Press the play control once to allow sound on this device."
+        : "This track could not be played. Try it again or choose another song.");
+      updateTransport();
+    });
   $("#playing-title").textContent = song.title;
   const source = songSourceLabel(song);
   $("#playing-detail").textContent = source !== song.source ? source : (song.prompt || "Generated cue");
@@ -1283,9 +1297,9 @@ function renderIdentities() {
   }
 }
 
-async function load() {
+async function loadMusicData() {
   try {
-    state.data = await api("/api/music");
+    state.data = await fetchJsonWithRetry("/api/music", { attempts: 3, timeoutMs: 4500 });
     if (!playlistById(state.playlistId)) state.playlistId = "library";
     if (state.selectedCharacter && !state.data.characterTags.some((entry) => entry.pcId === state.selectedCharacter)) {
       state.selectedCharacter = null;
@@ -1301,6 +1315,21 @@ async function load() {
   } catch (error) {
     toast(error.message);
   }
+}
+
+function load() {
+  if (musicLoadInFlight) {
+    musicLoadQueued = true;
+    return musicLoadInFlight;
+  }
+  musicLoadInFlight = loadMusicData().finally(() => {
+    musicLoadInFlight = null;
+    if (musicLoadQueued) {
+      musicLoadQueued = false;
+      void load();
+    }
+  });
+  return musicLoadInFlight;
 }
 
 $("#song-search").oninput = renderBubbles;
@@ -1522,53 +1551,19 @@ $("#loop-toggle").onclick = () => { $("#audio").loop = !$("#audio").loop; update
 const audio = $("#audio");
 let userVolume = Number($("#volume").value);
 let fadeGain = 1;
-let duckGain = 1;
-let duckTimer = null;
-let duckResetTimer = null;
+let fadeTimer = null;
 
 function applyMusicVolume() {
-  const effectiveVolume = Math.max(0, Math.min(1, userVolume * fadeGain * duckGain));
+  const effectiveVolume = Math.max(0, Math.min(1, userVolume * fadeGain));
   audio.volume = effectiveVolume;
   audio.dataset.effectiveVolume = effectiveVolume.toFixed(3);
-  audio.dataset.duckGain = duckGain.toFixed(3);
 }
 
-function duckForCritical() {
-  const start = performance.now();
-  const initial = duckGain;
-  const target = 10 ** (-4 / 20);
-  const attack = 180;
-  const hold = 950;
-  const release = 1250;
-  clearInterval(duckTimer);
-  clearTimeout(duckResetTimer);
-  duckTimer = setInterval(() => {
-    const elapsed = performance.now() - start;
-    if (elapsed < attack) {
-      const progress = elapsed / attack;
-      duckGain = initial + (target - initial) * progress;
-    } else if (elapsed < attack + hold) {
-      duckGain = target;
-    } else {
-      const progress = Math.min(1, (elapsed - attack - hold) / release);
-      const smooth = progress * progress * (3 - 2 * progress);
-      duckGain = target + (1 - target) * smooth;
-    }
-    applyMusicVolume();
-    if (elapsed >= attack + hold + release) {
-      clearInterval(duckTimer);
-      duckTimer = null;
-      duckGain = 1;
-      applyMusicVolume();
-    }
-  }, 30);
-  // Background tabs can throttle intervals; this guarantees eventual recovery.
-  duckResetTimer = setTimeout(() => {
-    clearInterval(duckTimer);
-    duckTimer = null;
-    duckGain = 1;
-    applyMusicVolume();
-  }, attack + hold + release + 250);
+function resetPlaybackMix() {
+  clearInterval(fadeTimer);
+  fadeTimer = null;
+  fadeGain = 1;
+  applyMusicVolume();
 }
 
 $("#volume").oninput = (event) => {
@@ -1580,14 +1575,15 @@ $("#seek").oninput = (event) => {
   if (Number.isFinite(audio.duration)) audio.currentTime = audio.duration * Number(event.target.value) / 1000;
 };
 $("#fade-out").onclick = () => {
-  const startingGain = fadeGain;
-  const timer = setInterval(() => {
+  clearInterval(fadeTimer);
+  fadeTimer = setInterval(() => {
     fadeGain = Math.max(0, fadeGain - 0.04);
     applyMusicVolume();
     if (fadeGain <= 0) {
-      clearInterval(timer);
+      clearInterval(fadeTimer);
+      fadeTimer = null;
       audio.pause();
-      fadeGain = startingGain;
+      fadeGain = 1;
       applyMusicVolume();
     }
   }, 100);
@@ -1596,6 +1592,11 @@ $("#fade-out").onclick = () => {
 applyMusicVolume();
 audio.onplay = updateTransport;
 audio.onpause = updateTransport;
+audio.onerror = () => {
+  if (!state.playingId) return;
+  toast("The audio file could not be read. Try the track again.");
+  updateTransport();
+};
 audio.ontimeupdate = () => {
   $("#seek").value = Number.isFinite(audio.duration) ? String(audio.currentTime / audio.duration * 1000) : "0";
   $("#time-label").textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
@@ -1648,12 +1649,6 @@ load();
 
 const stream = new EventSource("/api/stream");
 let reloadTimer = null;
-stream.addEventListener("duality-roll", (event) => {
-  try {
-    const roll = JSON.parse(event.data);
-    if (roll?.outcome === "critical") duckForCritical();
-  } catch { /* Ignore malformed transient events without interrupting music. */ }
-});
 stream.onmessage = () => {
   clearTimeout(reloadTimer);
   reloadTimer = setTimeout(load, 400);

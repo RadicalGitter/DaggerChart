@@ -77,9 +77,10 @@ main { width: min(1260px, 100%); margin: 0 auto; padding: clamp(1.4rem, 4vh, 3.5
 .view-choice > header { margin-bottom: 1rem; }
 .view-choice > header .smallcaps { display: block; margin-bottom: .12rem; color: var(--hub-muted); }
 .view-shelf {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(1rem, 3vw, 2.4rem);
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(0.8rem, 2.2vw, 1.8rem);
   perspective: 1100px;
 }
+.view-shelf.shell-count-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .view-shelf.shell-count-2 { width: min(830px, 100%); grid-template-columns: repeat(2, minmax(0, 1fr)); margin-inline: auto; }
 .view-shelf.shell-count-1 { width: min(410px, 100%); grid-template-columns: 1fr; margin-inline: auto; }
 .view-artifact {
@@ -91,6 +92,7 @@ main { width: min(1260px, 100%); margin: 0 auto; padding: clamp(1.4rem, 4vh, 3.5
 .view-artifact[data-shell="tome"] { --mode-accent: #9b6956; }
 .view-artifact[data-shell="book"] { --mode-accent: #a8894e; }
 .view-artifact[data-shell="table"] { --mode-accent: #668c86; }
+.view-artifact[data-shell="sheet"] { --mode-accent: var(--hub-gold); }
 .view-artifact:hover, .view-artifact:focus-visible { border-color: var(--mode-accent); outline: none; }
 .view-artifact[data-preferred="true"] { border-color: color-mix(in srgb, var(--mode-accent) 70%, #4c514b); }
 .artifact-stage {
@@ -135,6 +137,40 @@ main { width: min(1260px, 100%); margin: 0 auto; padding: clamp(1.4rem, 4vh, 3.5
   position: absolute; z-index: 2; inset: 0; display: grid; place-items: center;
   color: #d6b978; font-size: 3rem; font-weight: 400; font-variant: small-caps; text-shadow: 0 1px 0 #24140f;
 }
+
+.field-sheet-art {
+  position: relative; width: min(90%, 250px); aspect-ratio: .78; transform: rotate(-2deg) translateZ(7px);
+  color: #3d2b1c; filter: drop-shadow(12px 17px 13px rgba(0,0,0,.4));
+}
+.field-sheet-page {
+  position: absolute; inset: 2% 1% 0 0; clip-path: polygon(3% 1%, 52% 0, 97% 3%, 100% 45%, 96% 98%, 48% 96%, 1% 100%, 2% 49%);
+  border: 1px solid #9f7e49; background:
+    linear-gradient(105deg, transparent 0 63%, color-mix(in srgb, var(--artifact-secondary) 22%, transparent) 64% 65%, transparent 66%),
+    repeating-linear-gradient(0deg, transparent 0 25px, rgba(77,53,28,.12) 26px, transparent 27px),
+    linear-gradient(145deg, #ead9ac, #d8bd83 70%, #bd965e);
+  box-shadow: inset 8px 0 18px rgba(91,56,24,.1);
+}
+.field-sheet-page::before {
+  content: ""; position: absolute; inset: 5%; border-top: 5px solid var(--artifact-primary);
+  border-bottom: 1px solid color-mix(in srgb, var(--artifact-primary) 62%, #5a3d24);
+}
+.field-sheet-fold {
+  position: absolute; z-index: 2; right: -1%; top: 2%; width: 22%; height: 17%;
+  clip-path: polygon(0 0, 100% 0, 100% 100%); background: linear-gradient(45deg, #b6935e, #ead6a5);
+  opacity: .88;
+}
+.field-sheet-portrait {
+  position: absolute; z-index: 3; left: 11%; top: 17%; width: 40%; aspect-ratio: .82; overflow: hidden;
+  display: grid; place-items: center; color: #ead9ac; border: 3px solid var(--artifact-primary);
+  background: color-mix(in srgb, var(--artifact-primary) 72%, #2a221b); box-shadow: 4px 5px 0 color-mix(in srgb, var(--artifact-secondary) 58%, #7b613e);
+  font-size: 2rem;
+}
+.field-sheet-portrait img { width: 100%; height: 100%; object-fit: cover; }
+.field-sheet-art b, .field-sheet-art em {
+  position: absolute; z-index: 3; left: 57%; right: 7%; overflow-wrap: anywhere; font-style: normal; text-align: left;
+}
+.field-sheet-art b { top: 23%; font-size: 1rem; font-weight: 600; }
+.field-sheet-art em { top: 41%; color: #765b38; font-size: .68rem; }
 
 .folio-art {
   position: relative; width: min(94%, 340px); aspect-ratio: 1.45; transform: rotate(2.5deg) translateZ(8px);
@@ -189,11 +225,12 @@ main { width: min(1260px, 100%); margin: 0 auto; padding: clamp(1.4rem, 4vh, 3.5
   .essential-actions > :nth-child(3) { border-right: 0; }
   .essential-actions > :nth-child(n+4) { border-bottom: 0; }
   .view-shelf { grid-template-columns: 1fr; gap: 0.5rem; }
-  .view-shelf.shell-count-2, .view-shelf.shell-count-1 { width: 100%; grid-template-columns: 1fr; }
+  .view-shelf.shell-count-3, .view-shelf.shell-count-2, .view-shelf.shell-count-1 { width: 100%; grid-template-columns: 1fr; }
   .view-artifact { min-height: 170px; grid-template-columns: 44% 1fr; grid-template-rows: 1fr; padding: 0.6rem 0; }
   .artifact-stage { min-height: 145px; }
   .artifact-copy { align-self: center; padding: 0 0.5rem; text-align: left; }
   .aged-tome-art { width: 90px; }
+  .field-sheet-art { width: 94px; }
   .folio-art { width: 145px; }
   .deck-art { width: 135px; height: 150px; transform: scale(0.54) translateZ(7px); }
   .preferred-mark { top: 0.45rem; right: 0; }

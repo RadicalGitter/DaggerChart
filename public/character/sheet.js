@@ -14,13 +14,18 @@ const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-const id = location.pathname.split("/").filter(Boolean).pop();
+const routeId = location.pathname.split("/").filter(Boolean).pop();
+const id = routeId === "character"
+  ? localStorage.getItem("settlement-pc") || localStorage.getItem("settlement-journal-pc")
+  : routeId;
+if (!id) location.replace("/player");
 let PC = null;
 let THEMES = { songs: [], published: null, provider: {} };
 let sheetSectionObserver = null;
 let loadInFlight = null;
 let loadQueued = false;
 let themeLoadVersion = 0;
+let arrangingModules = false;
 const themeAudio = new Audio();
 
 const featHtml = (f) => `<div class="featline"><strong>${esc(f.name)}</strong> ${termify(esc(f.text))}</div>`;
@@ -35,6 +40,7 @@ function pips(kind, marked, max, harm) {
 function render() {
   setTelemetryMode("sheet");
   const p = PC;
+  document.body.dataset.sheetClass = p.class?.id || "core_class_unknown";
   document.documentElement.style.setProperty("--sheet-primary", p.appearance?.primaryColor || "#8b7653");
   document.documentElement.style.setProperty("--sheet-secondary", p.appearance?.secondaryColor || "#9fcdb7");
   const w = p.weapons || {};
@@ -43,9 +49,18 @@ function render() {
       ? `<tr><td>${label}</td><td><strong>${esc(wp.name)}</strong></td><td>${term("trait-" + wp.trait.toLowerCase(), esc(wp.trait))}</td><td>${term("range", esc(wp.range))}</td><td>${term("damage", esc(wp.damage))}</td><td>${termify(esc(wp.feature || ""))}</td></tr>`
       : "";
   $("#sheet").innerHTML = `
-    <header class="sheet-head">
-      <div class="portrait">${p.portrait ? `<img src="${esc(p.portrait)}" alt="">` : esc(p.name[0] || "?")}</div>
-      <div>
+    <nav class="sheet-toolrail" aria-label="${esc(t("sheet.tool.navigation"))}">
+      <a class="sheet-root-link" href="/player"><span aria-hidden="true">&#8592;</span> ${esc(t("player.hub.root"))}</a>
+      <span class="sheet-tool-title">${esc(t("shell.sheet.name"))}</span>
+      <span class="sheet-layout-actions">
+        <button class="sheet-layout-reset" id="sheet-layout-reset" type="button" hidden>${esc(t("sheet.tool.restore"))}</button>
+        <button class="sheet-layout-toggle" id="sheet-layout-toggle" type="button" aria-pressed="false"><span aria-hidden="true">&#9986;</span> <span data-layout-label>${esc(t("sheet.tool.arrange"))}</span></button>
+      </span>
+    </nav>
+    <header class="sheet-head" data-class-name="${esc(p.class.name)}">
+      <div class="sheet-portrait-wrap"><div class="portrait">${p.portrait ? `<img src="${esc(p.portrait)}" alt="">` : esc(p.name[0] || "?")}</div><i aria-hidden="true"></i></div>
+      <div class="sheet-identity">
+        <div class="sheet-class-kicker">${esc(p.class.name)} · ${esc(t("sheet.tool.record"))}</div>
         <div class="sheet-name-row"><h1>${esc(p.name)}</h1><button class="name-edit" id="rename-character" type="button" aria-label="${esc(t("sheet.renameName"))}" title="${esc(t("sheet.renameName"))}">✎</button></div>
         <div class="muted">${esc(p.ancestry.name)} ${esc(p.class.name)} — ${esc(p.subclass.name)} · ${term("level", t("sheet.level"))} ${p.level}</div>
         <div class="muted" style="font-size:0.85rem;">${esc(p.community.name)}${p.pronouns ? ` · ${esc(p.pronouns)}` : ""}${p.player ? ` · ${esc(p.player)}` : ""}</div>
@@ -74,7 +89,8 @@ function render() {
     ).join("")}</div>
     </section>
 
-    <div class="sheet-section sheet-anchor" id="sheet-arms">
+    <div class="sheet-modules" id="sheet-modules">
+    <section class="sheet-section sheet-anchor" id="sheet-arms" data-sheet-module="arms">
       <span class="smallcaps">${t("sheet.arms")}</span>
       <div class="card" style="overflow-x:auto;">
         <table class="ledger">
@@ -83,19 +99,19 @@ function render() {
         </table>
         ${p.armor ? `<div class="featline" style="margin-top:0.6rem;"><strong>${esc(p.armor.name)}</strong> ${termify(esc(p.armor.feature || ""))}</div>` : ""}
       </div>
-    </div>
+    </section>
 
-    <div class="sheet-section">
+    <section class="sheet-section" id="sheet-experiences" data-sheet-module="experiences">
       <span class="smallcaps">${term("experience", t("sheet.exp"))}</span>
       <div class="card">${p.experiences.map((e) => `<div class="featline"><strong>${esc(e.name)}</strong> +${e.bonus}</div>`).join("")}</div>
-    </div>
+    </section>
 
-    <div class="sheet-section sheet-anchor" id="sheet-cards">
+    <section class="sheet-section sheet-anchor" id="sheet-cards" data-sheet-module="cards">
       <span class="smallcaps">${term("domain", t("sheet.cards"))}</span>
       ${handHtml(p)}
-    </div>
+    </section>
 
-    <div class="sheet-section sheet-anchor" id="sheet-features">
+    <section class="sheet-section sheet-anchor" id="sheet-features" data-sheet-module="features">
       <span class="smallcaps">${t("sheet.features")}</span>
       <div class="card">
         ${p.features.hopeFeature ? `<div class="smallcaps">${term("hope", t("sheet.hopefeat"))}</div>${featHtml(p.features.hopeFeature)}` : ""}
@@ -105,18 +121,18 @@ function render() {
         <div class="smallcaps">${esc(p.ancestry.name)}</div>${(p.features.ancestry || []).map(featHtml).join("")}
         <div class="smallcaps">${esc(p.community.name)}</div>${(p.features.community || []).map(featHtml).join("")}
       </div>
-    </div>
+    </section>
 
-    ${playerFeatureEnabled("inventory") ? `<div class="sheet-section sheet-anchor" id="sheet-inventory">
+    ${playerFeatureEnabled("inventory") ? `<section class="sheet-section sheet-anchor" id="sheet-inventory" data-sheet-module="inventory">
       <span class="smallcaps">${t("sheet.carried")}</span>
       <div class="card"><ul class="inventory-list">${p.inventory.map((i) => i.kind === "paper"
         ? `<li><button class="inventory-paper" type="button" data-paper-open="${esc(i.id)}"><strong>${esc(i.name)}</strong><span>${esc(i.paperType === "covenant" ? t("contract.decree") : (i.body || "").slice(0, 110))}</span></button></li>`
         : `<li><strong>${esc(i.name)}</strong>${i.quantity > 1 ? ` ×${i.quantity}` : ""}${i.description ? `<div class="muted">${termify(esc(i.description))}</div>` : ""}</li>`).join("")}</ul>
         <div class="inventory-tools"><button class="quiet" id="paper-new" type="button">${t("inventory.write")}</button></div>
       </div>
-    </div>` : ""}
+    </section>` : ""}
 
-    ${(p.background.length || p.connections.length) ? `<section class="sheet-anchor" id="sheet-story">
+    ${(p.background.length || p.connections.length) ? `<section class="sheet-anchor sheet-story-module" id="sheet-story" data-sheet-module="story">
       ${p.background.length
         ? `<div class="sheet-section"><span class="smallcaps">${t("sheet.background")}</span><div class="card">${p.background
             .map((b) => `<div class="qa"><div class="q">${esc(b.q)}</div><div>${esc(b.a)}</div></div>`)
@@ -130,6 +146,7 @@ function render() {
     </section>` : ""}
 
     ${playerFeatureEnabled("music") ? themeHtml(p) : ""}
+    </div>
   `;
   wirePips();
   wireHand();
@@ -137,6 +154,7 @@ function render() {
   wireInventory();
   wireSheetNav();
   wireIdentity();
+  wireModules();
 }
 
 function sheetNavHtml(p) {
@@ -171,6 +189,112 @@ function wireSheetNav() {
     const target = document.getElementById(link.dataset.sheetTarget);
     if (target) sheetSectionObserver.observe(target);
   }
+}
+
+const DEFAULT_MODULE_ORDERS = {
+  core_class_warrior: ["arms", "experiences", "features", "cards", "inventory", "story", "theme"],
+  core_class_guardian: ["arms", "features", "experiences", "cards", "inventory", "story", "theme"],
+  core_class_ranger: ["arms", "experiences", "cards", "features", "inventory", "story", "theme"],
+  core_class_wizard: ["features", "cards", "experiences", "arms", "inventory", "story", "theme"],
+  core_class_sorcerer: ["features", "experiences", "cards", "arms", "inventory", "story", "theme"],
+  core_class_seraph: ["features", "experiences", "arms", "cards", "inventory", "story", "theme"],
+  core_class_druid: ["features", "experiences", "cards", "arms", "story", "inventory", "theme"],
+  core_class_bard: ["experiences", "features", "arms", "cards", "story", "inventory", "theme"],
+  core_class_rogue: ["experiences", "arms", "features", "cards", "inventory", "story", "theme"]
+};
+
+const moduleLayoutKey = () => "settlement-sheet-layout:" + PC.id;
+const defaultModuleOrder = () => DEFAULT_MODULE_ORDERS[PC.class?.id] || DEFAULT_MODULE_ORDERS.core_class_warrior;
+
+function savedModuleOrder() {
+  try {
+    const order = JSON.parse(localStorage.getItem(moduleLayoutKey()) || "[]");
+    return Array.isArray(order) ? order.filter((key) => typeof key === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function arrangeModuleNodes(container, order) {
+  const modules = [...container.querySelectorAll(":scope > [data-sheet-module]")];
+  const byKey = new Map(modules.map((module) => [module.dataset.sheetModule, module]));
+  for (const key of order) if (byKey.has(key)) container.append(byKey.get(key));
+  for (const module of modules) if (!order.includes(module.dataset.sheetModule)) container.append(module);
+}
+
+function saveModuleOrder(container) {
+  const order = [...container.querySelectorAll(":scope > [data-sheet-module]")].map((module) => module.dataset.sheetModule);
+  localStorage.setItem(moduleLayoutKey(), JSON.stringify(order));
+}
+
+function moveModule(container, module, direction) {
+  const modules = [...container.querySelectorAll(":scope > [data-sheet-module]")];
+  const index = modules.indexOf(module);
+  const target = modules[index + direction];
+  if (!target) return;
+  if (direction < 0) container.insertBefore(module, target);
+  else container.insertBefore(target, module);
+  saveModuleOrder(container);
+  module.querySelector(".module-grip")?.focus();
+}
+
+function wireModules() {
+  const container = $("#sheet-modules");
+  const toggle = $("#sheet-layout-toggle");
+  const reset = $("#sheet-layout-reset");
+  if (!container || !toggle || !reset) return;
+  const saved = savedModuleOrder();
+  arrangeModuleNodes(container, saved.length ? saved : defaultModuleOrder());
+
+  const setArranging = (active) => {
+    arrangingModules = active;
+    document.body.classList.toggle("arranging-sheet", active);
+    toggle.setAttribute("aria-pressed", String(active));
+    toggle.querySelector("[data-layout-label]").textContent = t(active ? "sheet.tool.done" : "sheet.tool.arrange");
+    reset.hidden = !active;
+    for (const module of container.querySelectorAll(":scope > [data-sheet-module]")) module.draggable = active;
+  };
+
+  for (const module of container.querySelectorAll(":scope > [data-sheet-module]")) {
+    const tools = document.createElement("div");
+    tools.className = "module-tools";
+    tools.innerHTML =
+      '<button class="module-grip" type="button" title="' + esc(t("sheet.tool.drag")) + '" aria-label="' + esc(t("sheet.tool.drag")) + '"><span aria-hidden="true">&#8942;&#8942;</span></button>' +
+      '<span>' + esc(t("sheet.tool.move")) + '</span>' +
+      '<button type="button" data-module-up title="' + esc(t("sheet.tool.up")) + '" aria-label="' + esc(t("sheet.tool.up")) + '">&#8593;</button>' +
+      '<button type="button" data-module-down title="' + esc(t("sheet.tool.down")) + '" aria-label="' + esc(t("sheet.tool.down")) + '">&#8595;</button>';
+    module.prepend(tools);
+    tools.querySelector("[data-module-up]").onclick = () => moveModule(container, module, -1);
+    tools.querySelector("[data-module-down]").onclick = () => moveModule(container, module, 1);
+    module.addEventListener("dragstart", (event) => {
+      if (!arrangingModules) return event.preventDefault();
+      module.classList.add("module-dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", module.dataset.sheetModule);
+    });
+    module.addEventListener("dragend", () => {
+      module.classList.remove("module-dragging");
+      saveModuleOrder(container);
+    });
+  }
+
+  container.addEventListener("dragover", (event) => {
+    if (!arrangingModules) return;
+    event.preventDefault();
+    const moving = container.querySelector(".module-dragging");
+    const target = event.target.closest("[data-sheet-module]");
+    if (!moving || !target || moving === target || target.parentElement !== container) return;
+    const bounds = target.getBoundingClientRect();
+    const before = event.clientY < bounds.top + bounds.height / 2;
+    container.insertBefore(moving, before ? target : target.nextSibling);
+  });
+
+  toggle.onclick = () => setArranging(!arrangingModules);
+  reset.onclick = () => {
+    localStorage.removeItem(moduleLayoutKey());
+    arrangeModuleNodes(container, defaultModuleOrder());
+  };
+  setArranging(arrangingModules);
 }
 
 function closePaperDialog() {
@@ -284,7 +408,7 @@ function themeHtml(p) {
   const publish = (THEMES.songs || []).filter((song) => song.status === "ready").map((song) =>
     `<button class="quiet" data-theme-publish="${esc(song.id)}" ${song.publishedAt ? "disabled" : ""}>${song.publishedAt ? t("theme.published") : `${t("theme.publish")}: ${esc(song.title)}`}</button>`
   ).join("");
-  return `<section class="sheet-section sheet-anchor card theme-panel" id="sheet-theme">
+  return `<section class="sheet-section sheet-anchor card theme-panel" id="sheet-theme" data-sheet-module="theme">
     <div class="theme-head"><span class="smallcaps">${t("theme.title")}</span></div>
     <div class="theme-bubbles">${bubbles}</div>
     <div class="theme-publish">${publish}</div>
@@ -631,6 +755,8 @@ async function loadCharacter() {
   try {
     const data = await fetchJsonWithRetry(`/api/party/${id}`, { attempts: 3, timeoutMs: 3500 });
     PC = data;
+    localStorage.setItem("settlement-pc", PC.id);
+    localStorage.removeItem("settlement-journal-pc");
     PC.playerFeatures = setPlayerFeatureContext(PC, PC.id);
     document.title = `${PC.name} — The Settlement`;
     render();

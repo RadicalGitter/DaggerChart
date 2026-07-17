@@ -10,6 +10,22 @@
 
 export const SHELLS = [
   {
+    id: "sheet",
+    feature: "character",
+    route: "/character",
+    entryRoute: "/character",
+    name: "shell.sheet.name",
+    blurb: "shell.sheet.blurb",
+    scope: "shell.sheet.scope",
+    thumb: `<svg viewBox="0 0 120 90" aria-hidden="true">
+      <path d="M25 13 C40 10 78 15 94 10 L97 73 C77 78 45 69 22 76 Z" fill="#dfc995" stroke="#8a7346" stroke-width="1.6"/>
+      <path d="M34 25 C45 21 75 24 87 20" fill="none" stroke="#815e35" stroke-width="1.4"/>
+      <circle cx="42" cy="42" r="10" fill="#4a3324" stroke="#b58b4d" stroke-width="1.5"/>
+      <path d="M58 35 h25 M58 42 h19 M34 58 h49 M34 64 h38" stroke="#9c7b46" stroke-width="1.4"/>
+      <path d="M88 16 l8 -5 -2 14" fill="#8a2c22" opacity=".82"/>
+    </svg>`
+  },
+  {
     id: "tome",
     route: "/tome",
     entryRoute: "/tome/?open=1",

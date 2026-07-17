@@ -28,6 +28,15 @@ function clearStalePC() {
 }
 
 function artifactHtml(id, pc) {
+  if (id === "sheet") {
+    const primary = pc?.appearance?.primaryColor || "#8b7653";
+    const secondary = pc?.appearance?.secondaryColor || "#9fcdb7";
+    return `<span class="field-sheet-art" aria-hidden="true" style="--artifact-primary:${esc(primary)};--artifact-secondary:${esc(secondary)}">
+      <i class="field-sheet-page"></i><i class="field-sheet-fold"></i>
+      <span class="field-sheet-portrait">${pc?.portrait ? `<img src="${esc(pc.portrait)}" alt="">` : esc(pc?.name?.slice(0, 1) || "?")}</span>
+      <b>${esc(pc?.name || "")}</b><em>${esc(pc?.player || "")}</em>
+    </span>`;
+  }
   if (id === "tome") {
     return `<span class="aged-tome-art" aria-hidden="true"><i></i><i></i><b class="tome-monogram">${esc(pc?.name?.slice(0, 1).toUpperCase() || "?")}</b></span>`;
   }
@@ -73,13 +82,16 @@ function renderViews() {
   const requested = preferredShell(pc);
   const preferred = availableShells.some((shell) => shell.id === requested) ? requested : DEFAULT_SHELL;
   const shelf = $("#view-shelf");
-  shelf.className = `view-shelf shell-count-${Math.min(3, availableShells.length)}`;
-  shelf.innerHTML = availableShells.map((shell) => `
-    <a class="view-artifact" href="${esc(shellEntryRoute(shell.id))}" data-shell="${esc(shell.id)}"${shell.id === preferred ? ` data-preferred="true" aria-current="true"` : ""}>
+  shelf.className = `view-shelf shell-count-${Math.min(4, availableShells.length)}`;
+  shelf.innerHTML = availableShells.map((shell) => {
+    const href = shell.id === "sheet" ? `/character/${encodeURIComponent(pc.id)}` : shellEntryRoute(shell.id);
+    return `
+    <a class="view-artifact" href="${esc(href)}" data-shell="${esc(shell.id)}"${shell.id === preferred ? ` data-preferred="true" aria-current="true"` : ""}>
       ${shell.id === preferred ? `<span class="preferred-mark">${esc(t("player.hub.preferred"))}</span>` : ""}
       <span class="artifact-stage">${artifactHtml(shell.id, pc)}</span>
       <span class="artifact-copy"><strong>${esc(t(shell.name))}</strong><span class="artifact-scope">${esc(t(shell.scope))}</span></span>
-    </a>`).join("");
+    </a>`;
+  }).join("");
   for (const link of document.querySelectorAll("[data-shell]")) {
     link.onclick = () => localStorage.setItem("settlement-shell", link.dataset.shell);
   }
