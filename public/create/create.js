@@ -65,6 +65,7 @@ const draft = {
   portraitEmbellishPrompt: true,
   portraitAttempts: [],
   portraitSuggestion: "",
+  portraitTextSource: "mine",
   portraitTags: [],
   portraitEquipment: { armor: true, mainHand: true, offHand: true },
   favoriteColor: DEFAULT_FAVORITE_COLOR,
@@ -180,9 +181,12 @@ function portraitRequestContext() {
     equipment.mainHand && `main hand: ${equipment.mainHand}`,
     equipment.offHand && `off hand: ${equipment.offHand}`
   ].filter(Boolean);
+  const sourceText = draft.portraitTextSource === "suggestion" && draft.portraitSuggestion
+    ? draft.portraitSuggestion
+    : draft.portraitPrompt;
   const prompt = [
     "A character portrait balancing atmosphere and concrete physical specifics equally.",
-    draft.portraitPrompt.trim(),
+    sourceText.trim(),
     selectedTags.length ? `Visual identity: ${selectedTags.join(", ")}.` : "",
     `Use ${primaryColor} as the primary class detail color and ${secondaryColor} as the secondary favorite-color accent.`,
     equipmentText.length ? `Visible equipment: ${equipmentText.join("; ")}.` : "Do not feature equipment."
@@ -249,6 +253,7 @@ function portraitStudioHtml() {
   const primaryColor = classColor(draft.classId);
   const secondaryColor = validDetailColor(draft.favoriteColor);
   const offHandAvailable = Boolean(wpn(draft.secondaryId));
+  const textSource = draft.portraitTextSource === "suggestion" && draft.portraitSuggestion ? "suggestion" : "mine";
   const preview = draft.portrait
     ? `<img src="${esc(draft.portrait)}" alt="">`
     : `<span aria-hidden="true">${esc((draft.name || "?").slice(0, 1).toUpperCase())}</span><small>${t("portrait.empty")}</small>`;
@@ -259,10 +264,14 @@ function portraitStudioHtml() {
       <p class="portrait-balance">${t("portrait.balance")}</p>
       <textarea id="portrait-prompt" rows="5" placeholder="${esc([draft.name, anc()?.name, cls()?.name].filter(Boolean).join(", "))}">${esc(draft.portraitPrompt)}</textarea>
       <div class="portrait-writing-tools">
+        <div class="portrait-source-buttons" role="group" aria-label="${t("portrait.textSource")}">
+          <button id="portrait-use-own" type="button" class="${textSource === "mine" ? "selected" : ""}" aria-pressed="${textSource === "mine"}">${t("portrait.useOwn")}</button>
+          <button id="portrait-use-suggestion" type="button" class="${textSource === "suggestion" ? "selected" : ""}" aria-pressed="${textSource === "suggestion"}" ${draft.portraitSuggestion ? "" : "disabled"}>${t("portrait.useSuggestion")}</button>
+        </div>
         <button class="quiet" id="portrait-suggest" type="button" ${adviserReady ? "" : "disabled"}>${t("portrait.suggest")}</button>
         <small>${adviserReady ? t("portrait.suggestReady") : t("portrait.suggestAwaiting")}</small>
       </div>
-      ${draft.portraitSuggestion ? `<aside class="portrait-suggestion"><p>${esc(draft.portraitSuggestion)}</p><button class="quiet" id="portrait-use-suggestion" type="button">${t("portrait.useSuggestion")}</button></aside>` : ""}
+      ${draft.portraitSuggestion ? `<aside class="portrait-suggestion"><p>${esc(draft.portraitSuggestion)}</p></aside>` : ""}
       <div class="portrait-pigments">
         <span class="portrait-pigment"><i style="--pigment:${primaryColor}" aria-hidden="true"></i><span><small>${t("portrait.classColor")}</small><strong>${esc(cls()?.name || "")}</strong></span></span>
         <label class="portrait-pigment" for="portrait-favorite-color"><input id="portrait-favorite-color" type="color" value="${secondaryColor}" aria-label="${t("portrait.favoriteColor")}"><span><small>${t("portrait.favoriteColor")}</small><strong id="portrait-favorite-value">${secondaryColor}</strong></span></label>
@@ -627,6 +636,22 @@ const steps = [
           root.querySelector("#portrait-favorite-value").textContent = draft.favoriteColor;
           root.querySelector(".portrait-canvas").style.setProperty("--portrait-secondary", draft.favoriteColor);
         };
+        const ownText = root.querySelector("#portrait-use-own");
+        const suggestedText = root.querySelector("#portrait-use-suggestion");
+        const promptInput = root.querySelector("#portrait-prompt");
+        const selectTextSource = (source) => {
+          draft.portraitTextSource = source === "suggestion" && draft.portraitSuggestion ? "suggestion" : "mine";
+          ownText.classList.toggle("selected", draft.portraitTextSource === "mine");
+          ownText.setAttribute("aria-pressed", String(draft.portraitTextSource === "mine"));
+          suggestedText.classList.toggle("selected", draft.portraitTextSource === "suggestion");
+          suggestedText.setAttribute("aria-pressed", String(draft.portraitTextSource === "suggestion"));
+        };
+        ownText.onclick = () => { collectPortraitFields(root); selectTextSource("mine"); };
+        suggestedText.onclick = () => { collectPortraitFields(root); selectTextSource("suggestion"); };
+        promptInput.oninput = () => {
+          draft.portraitPrompt = promptInput.value;
+          selectTextSource("mine");
+        };
         const suggest = root.querySelector("#portrait-suggest");
         suggest.onclick = async () => {
           collectPortraitFields(root);
@@ -664,12 +689,6 @@ const steps = [
             suggest.textContent = t("portrait.suggest");
           }
         };
-        const useSuggestion = root.querySelector("#portrait-use-suggestion");
-        if (useSuggestion) useSuggestion.onclick = () => {
-          collectPortraitFields(root);
-          draft.portraitPrompt = draft.portraitSuggestion;
-          rerender();
-        };
         for (const modifier of root.querySelectorAll("[data-portrait-modifier]")) modifier.onclick = () => {
           collectPortraitFields(root);
           const value = portraitModifier(modifier.dataset.value);
@@ -685,7 +704,10 @@ const steps = [
         const generate = root.querySelector("#portrait-generate");
         generate.onclick = async () => {
           collectPortraitFields(root);
-          if (!draft.portraitPrompt) { $("#warn").textContent = t("portrait.prompt"); return; }
+          const sourceText = draft.portraitTextSource === "suggestion" && draft.portraitSuggestion
+            ? draft.portraitSuggestion
+            : draft.portraitPrompt;
+          if (!sourceText.trim()) { $("#warn").textContent = t("portrait.prompt"); return; }
           const context = portraitRequestContext();
           const seed = draft.portraitFixSeed && Number.isSafeInteger(draft.portraitSeed) ? draft.portraitSeed : undefined;
           await generatePortrait(generate, portraitRequestSnapshot(context), seed);
@@ -1085,6 +1107,7 @@ function restoreDraft(serverSaved = null) {
     draft.portraitStyle = portraitStyle(draft.portraitStyle);
     draft.portraitEmbellishPrompt = draft.portraitEmbellishPrompt !== false;
     draft.portraitAttempts = normalizePortraitAttempts(draft.portraitAttempts);
+    draft.portraitTextSource = draft.portraitTextSource === "suggestion" && draft.portraitSuggestion ? "suggestion" : "mine";
     draft.portraitSeed = draft.portraitSeed !== null && draft.portraitSeed !== "" && Number.isSafeInteger(Number(draft.portraitSeed))
       ? Number(draft.portraitSeed)
       : null;

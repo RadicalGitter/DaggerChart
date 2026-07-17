@@ -16,6 +16,7 @@ import { artWorkshop } from "./art.js";
 import { resolveDualityRoll } from "./duality-roll.js";
 import { DEFAULT_PLAYER_FEATURES, normalizePlayerFeatures, playerFeaturePatch } from "./player-features.js";
 import { normalizeCharacterName, renameCharacter } from "./party-name.js";
+import { normalizeCharacterDraftVersion } from "./character-draft.js";
 import {
   SCENE_DIMENSIONS,
   SCENE_ROOT_IDS,
@@ -379,7 +380,7 @@ app.put("/api/character-drafts/:id", guard((req, res) => {
   if (!isActiveCampaign(campaignId)) throw new Error("Choose an active campaign.");
   const incoming = {
     id: req.params.id,
-    version: 2,
+    version: normalizeCharacterDraftVersion(req.body.version),
     step: Math.max(0, Number.parseInt(req.body.step, 10) || 0),
     part: Math.max(0, Number.parseInt(req.body.part, 10) || 0),
     savedAt: String(req.body.savedAt || new Date().toISOString()),
