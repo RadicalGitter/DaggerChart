@@ -74,10 +74,14 @@
   .b-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; width: min(1100px, 92vw); }
   .b-card {
     background: #221b12; border: 1px solid #453824; border-radius: 10px;
-    padding: 1.1rem 1.3rem; text-align: left;
+    padding: 1.1rem 1.3rem; text-align: left; border-top: 3px solid #667b63;
   }
+  .b-card.unraised { border-top-color: #c36e3f; background: #271c13; }
   .b-card strong { font-size: 1.25rem; }
   .b-card .muted { color: #a89877; font-size: 0.95rem; }
+  .b-cost { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .75rem; padding-top: .55rem; border-top: 1px solid #453824; }
+  .b-cost span { width: 100%; color: #a89877; font-size: .72rem; font-variant: small-caps; }
+  .b-cost b { padding: .15rem .35rem; border: 1px solid #5b4930; color: #dfcda7; font-size: .74rem; font-weight: 500; }
 
   /* text */
   .text-title { font-size: clamp(1.8rem, 4.5vw, 3.2rem); }

@@ -78,10 +78,17 @@ function leftPageHtml(section, index) {
 function townHtml() {
   return data.buildings.length
     ? `<h2 class="page-heading">${t("table.town")}</h2><div class="book-grid">${data.buildings
-        .map((building) => `<article class="book-card">
+        .map((building) => `<article class="book-card building-leaf ${building.constructed ? "built" : "unraised"}">
           <strong>${esc(building.name)}</strong>
-          <div class="book-muted">${esc(building.resource)} · ${term("building-level", t("table.level"))} ${building.level}</div>
+          <div class="book-muted">${building.constructed
+            ? `${esc(building.resource)} · ${term("building-level", t("table.level"))} ${building.level}`
+            : `${t("table.unraised")} · ${t("table.willproduce", { resource: esc(building.resource) })}`}</div>
           <div>${building.foreman ? term("foreman", esc(building.foreman)) : `<span class="book-muted">${t("table.noforeman")}</span>`}</div>
+          ${building.project ? `<div class="building-leaf-project">
+            <span>${t("table.project.cost")}</span>
+            <div>${Object.entries(building.project.cost).map(([resource, amount]) => `<b>${amount} ${esc(resource)}</b>`).join("")}</div>
+            <em class="${esc(building.project.checkStatus)}">${t(`table.project.${building.project.checkStatus}`)}</em>
+          </div>` : ""}
         </article>`)
         .join("")}</div>`
     : `<p class="book-empty">${t("table.nobuildings")}</p>`;

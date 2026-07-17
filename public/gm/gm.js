@@ -731,9 +731,11 @@ window.addEventListener("resize", () => {
 // --- downtime runner ---
 function renderDowntimePicker() {
   const grid = $("#dt-buildings");
-  const list = S.buildings;
+  const list = S.buildings.filter((building) => building.constructed === true);
   if (!list.length) {
-    grid.innerHTML = `<p class="muted">No buildings yet. The wilderness is waiting.</p>`;
+    selectedBuilding = null;
+    $("#dt-panel").hidden = true;
+    grid.innerHTML = `<p class="muted">No buildings are ready for seasonal work. Raise one in Buildings first.</p>`;
     return;
   }
   grid.innerHTML = list
@@ -826,13 +828,49 @@ function renderResult(r) {
 }
 
 // --- stores ---
+const STORE_ORDER = ["Lumber", "Food", "Morale", "Security", "Supplies"];
+
+function orderedResources() {
+  return STORE_ORDER.filter((resource) => Object.hasOwn(S.resources, resource))
+    .concat(Object.keys(S.resources).filter((resource) => !STORE_ORDER.includes(resource)));
+}
+
+function openProjectTotals() {
+  const totals = Object.fromEntries(orderedResources().map((resource) => [resource, 0]));
+  for (const building of S.buildings) {
+    for (const [resource, amount] of Object.entries(building.project?.cost || {})) {
+      totals[resource] = (totals[resource] || 0) + amount;
+    }
+  }
+  return totals;
+}
+
 function renderStores() {
-  $("#stores-strip").innerHTML = Object.entries(S.resources)
-    .map(
-      ([name, v]) => `<div class="stat card"><div class="value">${v}</div><div class="smallcaps">${esc(name)}</div></div>`
-    )
-    .join("");
-  $("#adj-resource").innerHTML = Object.keys(S.resources)
+  const resources = orderedResources();
+  const totals = openProjectTotals();
+  const projects = S.buildings.filter((building) => building.project);
+  const covered = projects.filter((building) => building.project.affordable).length;
+  $("#stores-summary").textContent = projects.length
+    ? `${projects.length} open ${projects.length === 1 ? "project" : "projects"}; ${covered} can be paid from the present stores.`
+    : "No further building commitments are open.";
+  $("#stores-strip").innerHTML = resources.map((name) => {
+    const current = Number(S.resources[name] || 0);
+    const needed = Number(totals[name] || 0);
+    return `<article class="store-vault">
+      <strong class="store-vault-value">${current}</strong>
+      <span class="store-vault-name">${esc(name)}</span>
+      <span class="store-vault-need ${needed > current ? "short" : ""}">${needed ? `${needed} across open work` : "No present claim"}</span>
+    </article>`;
+  }).join("");
+  $("#stores-outlook").innerHTML = `
+    <div class="outlook-row outlook-head"><span>Resource</span><span>Stored</span><span>Open work</span><span>After all</span></div>
+    ${resources.map((name) => {
+      const current = Number(S.resources[name] || 0);
+      const needed = Number(totals[name] || 0);
+      const after = current - needed;
+      return `<div class="outlook-row"><strong>${esc(name)}</strong><span>${current}</span><span>${needed}</span><strong class="${after < 0 ? "negative" : ""}">${after}</strong></div>`;
+    }).join("")}`;
+  $("#adj-resource").innerHTML = resources
     .map((r) => `<option>${esc(r)}</option>`)
     .join("");
 }
@@ -857,9 +895,33 @@ $("#adj-apply").addEventListener("click", async () => {
 });
 
 // --- buildings ---
+function constructionCostTokens(project) {
+  if (!project) return "";
+  return orderedResources().filter((resource) => project.cost[resource]).map((resource) => {
+    const amount = project.cost[resource];
+    const enough = Number(S.resources[resource] || 0) >= amount;
+    return `<span class="cost-token ${enough ? "enough" : "short"}">${amount} ${esc(resource)}</span>`;
+  }).join("");
+}
+
+function projectBlocker(building) {
+  const project = building.project;
+  if (!project) return { text: "The building has reached its present limit.", className: "" };
+  if (project.check.status === "failed") return { text: "The last attempt did not clear the work.", className: "failed" };
+  if (project.check.status !== "passed") return { text: "No successful table ruling recorded.", className: "" };
+  if (!project.affordable) {
+    const short = Object.entries(project.shortages).map(([resource, amount]) => `${amount} ${resource}`).join(", ");
+    return { text: `Short ${short}.`, className: "short" };
+  }
+  return { text: "The ruling and stores are ready.", className: "" };
+}
+
 function renderBuildings() {
-  const rows = S.buildings
-    .map((b) => {
+  const builtCount = S.buildings.filter((building) => building.constructed === true).length;
+  const readyCount = S.buildings.filter((building) => building.project?.check.status === "passed" && building.project.affordable).length;
+  $("#construction-summary").innerHTML = `<span class="pill">${builtCount} raised</span><span class="pill">${readyCount} ready</span><span class="pill">${S.buildings.length - builtCount} foundations</span>`;
+  const grid = $("#buildings-grid");
+  grid.innerHTML = S.buildings.length ? S.buildings.map((b) => {
       const options = ['<option value="">— none —</option>']
         .concat(
           S.characters
@@ -870,30 +932,69 @@ function renderBuildings() {
       const effects = b.effects?.length
         ? b.effects.map((e) => `<div class="pill" title="from a roll of ${e.source}">${esc(e.label)}</div>`).join(" ")
         : '<span class="muted">—</span>';
-      return `<tr>
-        <td><strong>${esc(b.name)}</strong><br><span class="muted" style="font-size:0.85rem;">${esc(b.resource)}</span></td>
-        <td><input type="number" class="num" min="1" value="${b.level}" data-level="${b.id}"></td>
-        <td><select data-foreman="${b.id}">${options}</select></td>
-        <td>${b.producedTotal}</td>
-        <td>${b.spentCount} of ${b.totalEntries}</td>
-        <td>${effects}</td>
-      </tr>`;
-    })
-    .join("");
-  $("#buildings-table").innerHTML = `
-    <tr><th>Building</th><th>Level</th><th>Foreman</th><th>Produced</th><th>Events discovered</th><th>Standing effects</th></tr>
-    ${rows || '<tr><td colspan="6" class="muted">No buildings yet. The wilderness is waiting.</td></tr>'}`;
-  for (const el of document.querySelectorAll("[data-level]")) {
-    el.onchange = () =>
-      api(`/api/buildings/${el.dataset.level}`, { method: "PUT", body: { level: parseInt(el.value, 10) } })
-        .then(refresh)
-        .catch((e) => toast(e.message, true));
-  }
-  for (const el of document.querySelectorAll("[data-foreman]")) {
+      const project = b.project;
+      const blocker = projectBlocker(b);
+      const checkStatus = project?.check.status || "pending";
+      const projectName = !project ? "No further work" : project.kind === "construction" ? "Raise the building" : `Improve to level ${project.targetLevel}`;
+      const actionLabel = project?.kind === "construction" ? "Raise building" : `Improve to level ${project?.targetLevel || b.level}`;
+      const canComplete = project?.check.status === "passed" && project.affordable;
+      const record = b.constructionHistory?.[0];
+      return `<article class="construction-card ${b.constructed ? "built" : "available"}" data-building-card="${esc(b.id)}">
+        <header class="construction-card-head">
+          <div><h3>${esc(b.name)}</h3><div class="construction-subtitle">${b.constructed ? "Produces" : "Will produce"} ${esc(b.resource)}</div></div>
+          <span class="construction-seal">${b.constructed ? `Level ${b.level}` : "Unraised"}</span>
+        </header>
+        ${project ? `<div class="project-block">
+          <div class="project-heading"><strong>${projectName}</strong><span class="muted">table ruling + materials</span></div>
+          <div class="project-costs">${constructionCostTokens(project)}</div>
+          <div class="project-ruling">
+            <label>Table ruling<input type="text" maxlength="240" data-check-note value="${esc(project.check.note || "")}" placeholder="What was asked or established"></label>
+            <div class="ruling-modes" aria-label="Table ruling">
+              <button type="button" class="${checkStatus === "pending" ? "selected" : ""}" data-check-status="pending">Not yet</button>
+              <button type="button" class="${checkStatus === "failed" ? "selected" : ""}" data-check-status="failed">Failed</button>
+              <button type="button" class="${checkStatus === "passed" ? "selected" : ""}" data-check-status="passed">Passed</button>
+            </div>
+          </div>
+          <div class="project-action-row"><span class="project-blocker ${blocker.className}">${esc(blocker.text)}</span><button type="button" class="project-action" data-complete-project ${canComplete ? "" : "disabled"}>${actionLabel}</button></div>
+        </div>` : `<div class="project-block"><div class="project-heading"><strong>${projectName}</strong></div><div class="project-blocker">The present plans end at level ${b.level}.</div></div>`}
+        <div class="building-operations">
+          <label>${b.constructed ? "Foreman" : "Proposed foreman"}<select data-foreman="${esc(b.id)}">${options}</select></label>
+          <details class="building-record"><summary>Ledger record</summary><div class="building-record-line"><span>${b.producedTotal} ${esc(b.resource)} produced</span><span>${b.spentCount} of ${b.totalEntries} events</span>${record ? `<span>Last work: ${esc(record.kind)} to level ${record.toLevel}</span>` : ""}</div><div class="building-record-line">${effects}</div></details>
+        </div>
+      </article>`;
+    }).join("") : '<p class="muted">No building plans are available.</p>';
+
+  for (const el of grid.querySelectorAll("[data-foreman]")) {
     el.onchange = () =>
       api(`/api/buildings/${el.dataset.foreman}`, { method: "PUT", body: { foremanId: el.value || null } })
         .then(refresh)
         .catch((e) => toast(e.message, true));
+  }
+  for (const button of grid.querySelectorAll("[data-check-status]")) {
+    button.onclick = async () => {
+      const card = button.closest("[data-building-card]");
+      try {
+        await api(`/api/buildings/${encodeURIComponent(card.dataset.buildingCard)}/check`, {
+          method: "PUT",
+          body: { status: button.dataset.checkStatus, note: card.querySelector("[data-check-note]").value }
+        });
+        toast(button.dataset.checkStatus === "passed" ? "Successful ruling recorded." : button.dataset.checkStatus === "failed" ? "Failed attempt recorded." : "Ruling cleared.");
+        await refresh();
+      } catch (error) { toast(error.message, true); }
+    };
+  }
+  for (const button of grid.querySelectorAll("[data-complete-project]")) {
+    button.onclick = async () => {
+      const card = button.closest("[data-building-card]");
+      const building = S.buildings.find((candidate) => candidate.id === card.dataset.buildingCard);
+      const spend = Object.entries(building.project.cost).map(([resource, amount]) => `${amount} ${resource}`).join(", ");
+      if (!confirm(`${button.textContent} for ${spend}?`)) return;
+      try {
+        await api(`/api/buildings/${encodeURIComponent(building.id)}/complete-project`, { method: "POST" });
+        toast(building.constructed ? `${building.name} improved.` : `${building.name} raised.`);
+        await refresh();
+      } catch (error) { toast(error.message, true); }
+    };
   }
 }
 

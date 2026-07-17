@@ -562,6 +562,73 @@
   .chance-reveal .entry-reward { max-width: 62ch; margin: .8rem 0; padding-left: .8rem; border-left: 3px solid var(--rule-strong); }
   .chance-reveal .seen { color: var(--ink-faint); font-size: .78rem; font-style: italic; }
 
+  /* Settlement construction: visible commitments, rulings, and audited costs. */
+  .settlement-section-head { display: flex; justify-content: space-between; align-items: end; gap: 1rem; margin-bottom: 1.1rem; }
+  .settlement-section-head h2 { margin-bottom: .15rem; }
+  .settlement-section-head p { margin: 0; max-width: 700px; }
+  .stores-vault-grid { display: grid; grid-template-columns: repeat(5, minmax(112px, 1fr)); gap: .7rem; margin-bottom: 1rem; }
+  .store-vault {
+    min-height: 116px; padding: .85rem .9rem; position: relative; overflow: hidden;
+    border: 1px solid rgba(119, 76, 43, .38); border-bottom: 3px solid #c96335;
+    background: linear-gradient(155deg, rgba(255,255,255,.5), rgba(236,218,180,.54));
+    box-shadow: 0 8px 20px rgba(63, 39, 20, .08);
+  }
+  .store-vault::after { content: ""; position: absolute; inset: auto -18% -46% 32%; height: 75%; background: radial-gradient(ellipse, rgba(218,117,62,.18), transparent 68%); pointer-events: none; }
+  .store-vault-value { display: block; font: 600 2.25rem/1 Georgia, serif; color: var(--ink); }
+  .store-vault-name { display: block; margin-top: .35rem; color: var(--ink-faint); font-size: .67rem; font-variant: small-caps; letter-spacing: .08em; }
+  .store-vault-need { display: block; margin-top: .7rem; font-size: .75rem; color: var(--ink-faint); }
+  .store-vault-need.short { color: var(--grave); font-weight: 600; }
+  .stores-workspace { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(290px, .75fr); gap: 1.2rem; align-items: start; }
+  .material-outlook { min-width: 0; padding-top: .2rem; }
+  .material-outlook h3 { margin-top: 0; }
+  .outlook-row { display: grid; grid-template-columns: minmax(90px, 1fr) repeat(3, minmax(70px, .65fr)); gap: .6rem; align-items: center; padding: .58rem .15rem; border-bottom: 1px solid rgba(96,67,39,.18); }
+  .outlook-row.outlook-head { color: var(--ink-faint); font-size: .63rem; font-variant: small-caps; }
+  .outlook-row strong { font-variant-numeric: tabular-nums; }
+  .outlook-row .negative { color: var(--grave); }
+  .store-adjustment { margin: 0; max-width: none; }
+  .store-adjustment .formrow { display: grid; grid-template-columns: 76px minmax(0, 1fr); }
+  .store-adjustment input, .store-adjustment select { width: 100%; }
+  .construction-summary { display: flex; gap: .55rem; flex-wrap: wrap; justify-content: flex-end; }
+  .construction-summary .pill { background: rgba(255,255,255,.38); }
+  .construction-grid { display: grid; grid-template-columns: repeat(2, minmax(320px, 1fr)); gap: 1rem; }
+  .construction-card {
+    min-width: 0; padding: 1rem; position: relative; overflow: hidden;
+    border: 1px solid rgba(112,73,42,.36); border-left: 4px solid #8d755a;
+    background: linear-gradient(145deg, rgba(255,255,255,.48), rgba(231,211,171,.48));
+    box-shadow: 0 9px 24px rgba(63,39,20,.09);
+  }
+  .construction-card.built { border-left-color: #55745d; }
+  .construction-card.available { border-left-color: #c96335; }
+  .construction-card-head { display: flex; justify-content: space-between; gap: .8rem; align-items: start; }
+  .construction-card h3 { margin: 0; font-size: 1.18rem; }
+  .construction-subtitle { color: var(--ink-faint); font-size: .78rem; margin-top: .15rem; }
+  .construction-seal { flex: 0 0 auto; border: 1px solid currentColor; padding: .18rem .45rem; color: #80543d; font-size: .62rem; font-variant: small-caps; }
+  .construction-card.built .construction-seal { color: #496554; }
+  .project-block { margin-top: .9rem; padding-top: .75rem; border-top: 1px solid rgba(105,70,39,.2); }
+  .project-heading { display: flex; justify-content: space-between; gap: .6rem; align-items: baseline; margin-bottom: .5rem; }
+  .project-heading strong { font-size: .84rem; }
+  .project-costs { display: flex; flex-wrap: wrap; gap: .35rem; min-height: 28px; }
+  .cost-token { padding: .23rem .48rem; border: 1px solid rgba(94,67,42,.36); background: rgba(255,255,255,.42); font-size: .72rem; }
+  .cost-token.enough { border-color: rgba(67,104,75,.48); color: #405e47; }
+  .cost-token.short { border-color: rgba(145,55,42,.5); color: var(--grave); background: rgba(145,55,42,.06); }
+  .project-ruling { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; align-items: end; margin-top: .7rem; }
+  .project-ruling label { min-width: 0; color: var(--ink-faint); font-size: .65rem; font-variant: small-caps; }
+  .project-ruling input { display: block; width: 100%; margin-top: .26rem; }
+  .ruling-modes { display: flex; gap: 2px; }
+  .ruling-modes button { min-height: 34px; padding: .35rem .56rem; border-color: rgba(201,99,53,.55); color: #8f492c; background: rgba(255,255,255,.34); font-size: .68rem; }
+  .ruling-modes button.selected { color: #fff8ed; border-color: #9f4a27; background: linear-gradient(#dc7946, #ad4d27); box-shadow: inset 0 1px rgba(255,255,255,.38), 0 2px 8px rgba(118,51,24,.2); }
+  .project-action-row { display: flex; justify-content: space-between; align-items: center; gap: .75rem; margin-top: .7rem; }
+  .project-blocker { color: var(--ink-faint); font-size: .73rem; line-height: 1.25; }
+  .project-blocker.failed, .project-blocker.short { color: var(--grave); }
+  .project-action { flex: 0 0 auto; min-width: 132px; }
+  .project-action:disabled { opacity: .45; cursor: not-allowed; }
+  .building-operations { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .7rem; align-items: end; margin-top: .8rem; }
+  .building-operations label { color: var(--ink-faint); font-size: .65rem; font-variant: small-caps; }
+  .building-operations select { display: block; width: 100%; margin-top: .25rem; }
+  .building-record { color: var(--ink-faint); font-size: .74rem; }
+  .building-record summary { cursor: pointer; }
+  .building-record-line { display: flex; flex-wrap: wrap; gap: .4rem .8rem; margin-top: .45rem; }
+
   /* Image library: a catalog and working scene desk. */
   body.images-open main { max-width: 1280px; }
   .image-library-head {
@@ -753,6 +820,16 @@
     .chance-controls label { flex: 1 1 128px; }
     .chance-controls input, .chance-controls select { width: 100%; max-width: none; }
     .chance-controls button { flex: 1 1 128px; }
+    .settlement-section-head { align-items: flex-start; }
+    .stores-vault-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .store-vault:last-child { grid-column: 1 / -1; }
+    .stores-workspace, .construction-grid { grid-template-columns: 1fr; }
+    .outlook-row { grid-template-columns: minmax(78px, 1fr) repeat(3, minmax(52px, .55fr)); gap: .35rem; }
+    .construction-summary { justify-content: flex-start; }
+    .project-ruling { grid-template-columns: 1fr; }
+    .ruling-modes { width: 100%; }
+    .ruling-modes button { flex: 1; }
+    .building-operations { grid-template-columns: 1fr; }
     .image-library-head { align-items: stretch; }
     .scene-tag-stage { min-height: 470px; }
     .scene-root-grid, .scene-tag-row { gap: .45rem; }
@@ -849,20 +926,31 @@
     </section>
 
     <section id="sec-stores" hidden>
-      <h2>Stores</h2>
-      <div class="stat-strip" id="stores-strip" style="margin-bottom:1.2rem;"></div>
-      <div class="card" style="max-width: 520px;">
-        <h3>Adjust the stores</h3>
-        <div class="formrow"><label>Resource</label><select id="adj-resource"></select></div>
-        <div class="formrow"><label>Change</label><input type="number" class="num" id="adj-delta" placeholder="±"></div>
-        <div class="formrow"><label>Reason</label><input type="text" id="adj-reason" style="flex:1" placeholder="everything is auditable"></div>
-        <div class="formrow"><label></label><button id="adj-apply" class="quiet">Record adjustment</button></div>
+      <header class="settlement-section-head">
+        <div><h2>Stores</h2><p class="muted" id="stores-summary"></p></div>
+      </header>
+      <div class="stores-vault-grid" id="stores-strip"></div>
+      <div class="stores-workspace">
+        <section class="material-outlook" aria-labelledby="outlook-title">
+          <h3 id="outlook-title">Open commitments</h3>
+          <div id="stores-outlook"></div>
+        </section>
+        <div class="card store-adjustment">
+          <h3>Adjust the stores</h3>
+          <div class="formrow"><label>Resource</label><select id="adj-resource"></select></div>
+          <div class="formrow"><label>Change</label><input type="number" class="num" id="adj-delta" placeholder="±"></div>
+          <div class="formrow"><label>Reason</label><input type="text" id="adj-reason" style="flex:1" placeholder="everything is auditable"></div>
+          <div class="formrow"><label></label><button id="adj-apply" class="quiet">Record adjustment</button></div>
+        </div>
       </div>
     </section>
 
     <section id="sec-buildings" hidden>
-      <h2>Buildings</h2>
-      <table class="ledger" id="buildings-table"></table>
+      <header class="settlement-section-head">
+        <div><h2>Buildings</h2><p class="muted">The work before the settlement, one ruling and one payment at a time.</p></div>
+        <div class="construction-summary" id="construction-summary"></div>
+      </header>
+      <div class="construction-grid" id="buildings-grid"></div>
     </section>
 
     <section id="sec-folk" hidden>

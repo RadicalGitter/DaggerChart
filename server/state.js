@@ -2,6 +2,15 @@
 import { loadJson, saveJson, loadEventTables, snapshot } from "./store.js";
 import { DEFAULT_PLAYER_FEATURES, normalizePlayerFeatures } from "./player-features.js";
 import { normalizeFolkProfile } from "./folk-profile.js";
+import {
+  STARTER_STORES,
+  completeProject as applyConstructionProject,
+  costText,
+  normalizeProjectCheck,
+  normalizeSettlementConstruction,
+  projectFor,
+  recordProjectCheck
+} from "./construction.js";
 
 const SEASONS = ["Spring", "Summer", "Autumn", "Winter"];
 
@@ -10,7 +19,8 @@ const DEFAULT_SETTLEMENT = {
   population: 50,
   season: { name: "Spring", year: 1 },
   chronicleNotes: "",
-  resources: { Lumber: 0, Food: 0, Morale: 0, Security: 0, Supplies: 0 },
+  constructionVersion: 1,
+  resources: { ...STARTER_STORES },
   buildings: {}
 };
 
@@ -169,12 +179,21 @@ for (const [id, t] of Object.entries(state.tables.buildings)) {
       name: t.name,
       resource: t.resource,
       level: 1,
+      constructed: false,
+      projectCheck: normalizeProjectCheck(),
+      constructionHistory: [],
       foremanId: suggested ? suggested.id : null,
       spent: [],
       effects: [],
       producedTotal: 0
     };
   }
+}
+
+const constructionMigration = normalizeSettlementConstruction(state.settlement);
+if (constructionMigration.changed) {
+  if (constructionMigration.freshStart) snapshot("construction-migration");
+  saveJson("settlement.json", state.settlement);
 }
 
 let folkProfilesMigrated = false;
@@ -262,11 +281,40 @@ export function addLog(entry) {
   return row;
 }
 
+export function buildingProject(buildingId) {
+  return projectFor(state.settlement.buildings[buildingId], state.settlement.resources);
+}
+
+export function setBuildingProjectCheck(buildingId, status, note = "") {
+  const building = state.settlement.buildings[buildingId];
+  const check = recordProjectCheck(building, { status, note });
+  persist();
+  return { check, project: projectFor(building, state.settlement.resources) };
+}
+
+export function completeBuildingProject(buildingId) {
+  const building = state.settlement.buildings[buildingId];
+  if (!building) throw new Error("Unknown building.");
+  snapshot("construction");
+  const result = applyConstructionProject(state.settlement, building);
+  addLog({
+    type: "construction",
+    buildingId,
+    projectKind: result.kind,
+    cost: result.cost,
+    summary: result.kind === "construction"
+      ? `${building.name} was raised. -${costText(result.cost)}.`
+      : `${building.name} was improved to level ${result.toLevel}. -${costText(result.cost)}.`
+  });
+  persist();
+  return { ...result, buildingId, building: building.name };
+}
+
 // --- The roll (spec §5 — exact math, do not improve) ---
 
 export function modifierBreakdown(buildingId, playerEffort) {
   const b = state.settlement.buildings[buildingId];
-  if (!b) return null;
+  if (!b || b.constructed !== true) return null;
   const foreman = b.foremanId ? getCharacter(b.foremanId) : null;
   const visible = [
     { label: "Building level", value: b.level },
@@ -299,6 +347,7 @@ export function resolveDowntime({ buildingId, raw, playerEffort = false, note = 
   const b = state.settlement.buildings[buildingId];
   const table = state.tables.buildings[buildingId];
   if (!b || !table) throw new Error("Unknown building.");
+  if (b.constructed !== true) throw new Error("Raise the building before resolving its season.");
   if (!Number.isInteger(raw) || raw < -2 || raw > 23) {
     throw new Error("Raw dice must be a whole number from −2 to 23 (4d6 − 1d6).");
   }

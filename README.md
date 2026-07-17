@@ -118,7 +118,7 @@ provider configuration.
 Per the spec's build phases, plus ambitions agreed at the table:
 
 - **Phase 3 — The Map**: hex overlay on the GM's scanned map (deferred until the scan is available).
-- **Phase 4 — Dice & depth**: in-app 4d6−1d6 roller with a reveal moment; building improvement flow; library building migration.
+- **Phase 4 — Dice & depth**: the [construction and building improvement flow](docs/construction.md) is live; the in-app 4d6−1d6 reveal and library-building unlock remain deferred.
 - **Board screen**: a mood/status display in front of the table (another whitelisted route, like `/table`).
 - **ComfyUI art workshop**: local portrait and scenic generation accepts tokenized API-format workflows without fixed node IDs; setup lives in [docs/comfyui/README.md](docs/comfyui/README.md).
 - **Magic item cards**: print-ready card fronts matching the physical deck ("mold" idea — layered paper in a sleeve).

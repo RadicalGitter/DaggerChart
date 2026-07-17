@@ -6,6 +6,7 @@ import { activeCampaigns, isActiveCampaign, state, seasonLabel } from "./state.j
 import { inventoryView } from "./inventory.js";
 import { normalizePlayerFeatures, PLAYER_FEATURE_DEFINITIONS } from "./player-features.js";
 import { domainCardEntitlement } from "../public/shared/domain-card-rules.js";
+import { projectFor } from "./construction.js";
 
 const PLAYER_CONDITIONS = new Set(["hidden", "restrained", "vulnerable"]);
 const conditionView = (p) => [...new Set(p.conditions || [])].filter((id) => PLAYER_CONDITIONS.has(id));
@@ -18,6 +19,25 @@ const publicCampaigns = () => activeCampaigns().map((campaign) => ({
   playerFeatures: normalizePlayerFeatures(campaign.playerFeatures)
 }));
 const numericView = (value, fallback = 0) => Number.isFinite(value) ? value : fallback;
+const publicProjectView = (project) => project ? ({
+  kind: project.kind,
+  targetLevel: project.targetLevel,
+  cost: { ...project.cost },
+  affordable: project.affordable,
+  shortages: { ...project.shortages },
+  checkStatus: project.check.status
+}) : null;
+const publicBuildingView = (building) => ({
+  id: building.id,
+  name: building.name,
+  resource: building.resource,
+  level: building.level,
+  constructed: building.constructed === true,
+  foreman: building.foremanId
+    ? (state.characters.find((character) => character.id === building.foremanId)?.name ?? null)
+    : null,
+  project: publicProjectView(projectFor(building, state.settlement.resources))
+});
 
 // Personalization stored on the character (chosen in the creator). Kept behind
 // a validated default so unknown or legacy-missing values never reach a client
@@ -170,6 +190,7 @@ export function partyListView() {
 export function gmView() {
   const buildings = Object.values(state.settlement.buildings).map((b) => ({
     ...b,
+    project: projectFor(b, state.settlement.resources),
     // Spoiler safety (§8A): the GM sees a count of discovered events,
     // never a browsable list of table contents.
     spent: undefined,
@@ -285,14 +306,7 @@ export function screenView() {
     case "buildings":
       return {
         type: "buildings",
-        buildings: Object.values(state.settlement.buildings).map((b) => ({
-          name: b.name,
-          resource: b.resource,
-          level: b.level,
-          foreman: b.foremanId
-            ? (state.characters.find((c) => c.id === b.foremanId)?.name ?? null)
-            : null
-        }))
+        buildings: Object.values(state.settlement.buildings).map(publicBuildingView)
       };
     case "folk": {
       const c = state.characters.find((x) => x.id === cur.refId);
@@ -423,15 +437,7 @@ export function loreView(pcId) {
 }
 
 export function tableView() {
-  const buildings = Object.values(state.settlement.buildings).map((b) => ({
-    id: b.id,
-    name: b.name,
-    resource: b.resource,
-    level: b.level,
-    foreman: b.foremanId
-      ? (state.characters.find((c) => c.id === b.foremanId)?.name ?? null)
-      : null
-  }));
+  const buildings = Object.values(state.settlement.buildings).map(publicBuildingView);
   const characters = state.characters.map((c) => ({
     id: c.id,
     name: c.name,

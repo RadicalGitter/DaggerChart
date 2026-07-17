@@ -33,10 +33,13 @@ function html(v) {
     case "buildings":
       return `<div class="b-grid">${v.buildings
         .map(
-          (b) => `<div class="b-card">
+          (b) => `<div class="b-card ${b.constructed ? "built" : "unraised"}">
             <strong>${esc(b.name)}</strong>
-            <div class="muted">${esc(b.resource)} · ${t("table.level")} ${b.level}</div>
+            <div class="muted">${b.constructed
+              ? `${esc(b.resource)} · ${t("table.level")} ${b.level}`
+              : `${t("table.unraised")} · ${t("table.willproduce", { resource: esc(b.resource) })}`}</div>
             <div>${b.foreman ? esc(b.foreman) : `<span class="muted">${t("table.noforeman")}</span>`}</div>
+            ${b.project ? `<div class="b-cost"><span>${t("table.project.cost")}</span>${Object.entries(b.project.cost).map(([resource, amount]) => `<b>${amount} ${esc(resource)}</b>`).join("")}</div>` : ""}
           </div>`
         )
         .join("")}</div>`;

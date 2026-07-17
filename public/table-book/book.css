@@ -334,6 +334,15 @@ body {
 }
 .book-card strong { color: #3d2c20; }
 .book-muted { color: #786648; font-size: 0.78rem; }
+.building-leaf { position: relative; overflow: hidden; border-left: 3px solid #aa633d; }
+.building-leaf.built { border-left-color: #587058; }
+.building-leaf-project { margin-top: 0.5rem; padding-top: 0.4rem; border-top: 1px dotted rgba(91,65,35,0.3); }
+.building-leaf-project > span { display: block; color: #80694a; font-size: 0.62rem; font-variant: small-caps; }
+.building-leaf-project > div { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.18rem; }
+.building-leaf-project b { padding: 0.08rem 0.25rem; border: 1px solid rgba(125,91,51,0.3); color: #59412c; font-size: 0.61rem; font-weight: 500; }
+.building-leaf-project em { display: block; margin-top: 0.3rem; color: #7e6a4b; font-size: 0.67rem; }
+.building-leaf-project em.passed { color: #496349; }
+.building-leaf-project em.failed { color: #873f31; }
 .book-portrait { width: 42px; height: 42px; border-radius: 50%; overflow: hidden; flex: none; display: grid; place-items: center; background: #aa9364; color: #f4ead0; border: 1px solid #876d44; }
 .book-portrait img { width: 100%; height: 100%; object-fit: cover; }
 .folk-row { display: flex; align-items: center; gap: 0.55rem; }

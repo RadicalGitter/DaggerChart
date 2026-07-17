@@ -19,6 +19,12 @@ each other. Rules of the road:
 
 ## Lanes
 
+**2026-07-18 — Codex** · status: DONE
+Lane: settlement construction and stores. Adding data-driven building costs,
+GM-resolved check gates, audited construction/upgrades, and responsive GM and
+player-facing building/store views. Working on top of the current live server
+and feature-gating changes without reverting their uncommitted work.
+
 **2026-07-17 — Codex** · status: DONE
 Lane: player-session release pass. Added campaign-scoped feature rollout
 controls, player navigation gates, duality dice and GM critical feedback (with

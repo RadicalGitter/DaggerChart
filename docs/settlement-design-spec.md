@@ -56,6 +56,15 @@ Get this right — it shapes every label, empty state, and piece of microcopy in
 - **The roll** — see §5.
 - **Event table** — 31 entries (0–30) per building. Each entry has a one-time *event* and a repeatable *resource payout*. Already authored; see §6.
 - **Resources** — abstract, Rogue Trader–style town-level pools (Lumber, Food, Morale, Security, Supplies; more later). Not coinage. Personal coin belongs to player characters and is out of scope for this tool.
+
+### Construction economy
+
+The founding stores cover the five starter buildings exactly. Construction is
+gated by a GM-recorded table ruling (pending, passed, or failed), but the app
+does not prescribe the check. Only a passed project can spend materials; a
+failed attempt spends nothing. Buildings start seasonal work at level 1 and
+can be improved through increasingly expensive projects to level 5. Exact
+costs and operating details live in [construction.md](construction.md).
 - **Hex map** — a grid overlaying a scanned map image. Hexes start hidden (black); the GM reveals them as players explore. Clicking a revealed hex shows its notes.
 
 ---
@@ -174,7 +183,7 @@ No player accounts or remote play. No PC (player character) sheets — this tool
 
 **Phase 3 — The Map.** Hex overlay on the scanned image, reveal toggles, per-hex notes, player-visible summaries.
 
-**Phase 4 — The Dice & The Depth.** In-app 4d6−1d6 roller with a nice reveal moment (build anticipation — the roll matters); building improvements/leveling UI; new-building unlock flow (library migrates in here); groundwork for trade once the fiction earns it.
+**Phase 4 — The Dice & The Depth.** Construction and building improvements are implemented through GM-resolved project checks and audited resource costs. The in-app 4d6−1d6 roller, new-building authoring/unlocks, and groundwork for trade remain deferred until the fiction earns them.
 
 Each phase ends in something the GM can actually run a session with.
 

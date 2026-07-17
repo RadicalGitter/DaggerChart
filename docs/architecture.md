@@ -140,7 +140,9 @@ docs/         this file, the design spec, ComfyUI workflow
 | `POST /api/season/advance` | Spring→Summer→Autumn→Winter, year++ |
 | `POST /api/resources/adjust` | `{resource, delta, reason}` (audited) |
 | `PUT /api/settlement` | population, chronicle text |
-| `PUT /api/buildings/:id` | level, foreman assignment |
+| `PUT /api/buildings/:id` | trusted foreman assignment; levels cannot be edited directly |
+| `PUT /api/buildings/:id/check` | record the GM's pending/passed/failed project ruling and optional note |
+| `POST /api/buildings/:id/complete-project` | atomically spend the current construction/upgrade cost after a passed ruling |
 | `POST/PUT /api/characters[/:id]` | folk (NPC) cards incl. hidden layer |
 | `POST /api/log`, `POST /api/log/:id/publish` | chronicle notes, publish to table |
 | `GET /api/reference` | SRD creation data (classes, ancestries, cards…) |

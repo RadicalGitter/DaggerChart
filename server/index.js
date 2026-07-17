@@ -3,7 +3,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import "./env.js";
-import { campaignById, createCampaignId, isActiveCampaign, state, persist, addLog, advanceSeason, resolveDowntime, modifierBreakdown, seasonLabel } from "./state.js";
+import { campaignById, completeBuildingProject, createCampaignId, isActiveCampaign, state, persist, addLog, advanceSeason, resolveDowntime, modifierBreakdown, seasonLabel, setBuildingProjectCheck } from "./state.js";
 import { gmView, tableView, loreView, screenView, partyListView, playerCharacterView, gmMessagesView, playerMessagesView } from "./views.js";
 import { normalizeFolkProfile } from "./folk-profile.js";
 import { loadJson, saveJson } from "./store.js";
@@ -987,6 +987,7 @@ app.post("/api/resources/adjust", guard((req, res) => {
   if (!(resource in state.settlement.resources)) throw new Error("Unknown resource.");
   if (!Number.isInteger(delta)) throw new Error("Delta must be a whole number.");
   if (!reason || !reason.trim()) throw new Error("Enter a reason for the adjustment.");
+  if (state.settlement.resources[resource] + delta < 0) throw new Error("The stores cannot fall below zero.");
   state.settlement.resources[resource] += delta;
   addLog({
     type: "adjust",
@@ -1014,10 +1015,7 @@ app.put("/api/buildings/:id", guard((req, res) => {
   const b = state.settlement.buildings[req.params.id];
   if (!b) throw new Error("Unknown building.");
   const { level, foremanId } = req.body;
-  if (level !== undefined) {
-    if (!Number.isInteger(level) || level < 1) throw new Error("Level must be 1 or higher.");
-    b.level = level;
-  }
+  if (level !== undefined && level !== b.level) throw new Error("Building levels change through construction projects.");
   if (foremanId !== undefined) {
     const foreman = foremanId ? state.characters.find((character) => character.id === foremanId) : null;
     if (foremanId && (!foreman || foreman.status !== "alive" || foreman.trustedForWork !== true)) {
@@ -1028,6 +1026,18 @@ app.put("/api/buildings/:id", guard((req, res) => {
   persist();
   broadcast();
   res.json({ ok: true });
+}));
+
+app.put("/api/buildings/:id/check", guard((req, res) => {
+  const result = setBuildingProjectCheck(req.params.id, req.body?.status, req.body?.note);
+  broadcast();
+  res.json(result);
+}));
+
+app.post("/api/buildings/:id/complete-project", guard((req, res) => {
+  const result = completeBuildingProject(req.params.id);
+  broadcast();
+  res.json(result);
 }));
 
 app.post("/api/characters", guard((req, res) => {
