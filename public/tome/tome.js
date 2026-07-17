@@ -6,7 +6,8 @@
 // little label sits. When players one day choose their own bookmark at
 // character creation, that choice should resolve to a key in this registry
 // (or a player-supplied variant of one); nothing else needs to change.
-import { t, term, initI18n, seasonLabel } from "/shared/i18n.js";
+import { t, term, termify, initI18n, seasonLabel, lang } from "/shared/i18n.js";
+import { CONDITIONS, conditionIcon } from "/shared/conditions.js";
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) =>
@@ -89,194 +90,277 @@ const KEEPSAKES = {
       <path d="M110 17 L 109 27 M 118 16.5 L 117.5 27.5 M 126 17 L 125 27" stroke="#7a6a4c" stroke-width="1" opacity="0.75"/>
       <path d="M132 16 C 134 20, 131 24, 133 28" stroke="#8a795a" stroke-width="0.5" fill="none" opacity="0.7"/>
     </svg>`
+  },
+  keyring: {
+    label: { right: "42px", top: "28%", tilt: "1deg" },
+    art: `<svg viewBox="0 0 168 46" aria-hidden="true">
+      <path d="M0 22 C 32 20, 65 24, 96 22" stroke="#39281c" stroke-width="2" fill="none"/>
+      <circle cx="102" cy="22" r="8" fill="none" stroke="#8b6a2d" stroke-width="2.2"/>
+      <path d="M109 22 L145 22 L151 27 L145 31 L139 26 L131 31 L126 26 L109 26 Z"
+        fill="#b38a3d" stroke="#6d5227" stroke-width="0.9"/>
+      <path d="M113 23 L143 23" stroke="#e1c477" stroke-width="0.8" opacity="0.65"/>
+    </svg>`
   }
 };
 
-// Chapter order + which keepsake marks it, and where it sits on the fore-edge.
-// `hang` is the bookmark's resting depth in the page block — a keepsake keeps
-// its height even when it migrates to the left edge, like a real one would.
+// Chapter order + which keepsake marks it. Inventory sits beside Character,
+// deliberately: the sheet is two paper pages; possessions live in their own
+// chapter and may occupy further spreads without making either page scroll.
+// The keepsakes hang from the TOP edge as a fixed left→right row of tabs — they
+// never change sides, so the eye can always find a chapter where it left it.
+// `tab` is the section's signature colour; `sway` still animates the emblem.
 const SECTION_ORDER = [
-  { key: "town", title: "table.town", keepsake: "ribbon", hang: 96, tilt: "-1.6deg", sway: "5.6s" },
-  { key: "folk", title: "table.folk", keepsake: "feather", hang: 190, tilt: "1.1deg", sway: "7.3s" },
-  { key: "chronicle", title: "table.chronicle", keepsake: "scrap", hang: 288, tilt: "-0.7deg", sway: "6.4s" },
-  { key: "journal", title: "journal.title", keepsake: "flower", hang: 384, tilt: "2deg", sway: "8.1s" },
-  { key: "character", title: "table.character", keepsake: "charm", hang: 474, tilt: "-1.2deg", sway: "5.2s" }
+  { key: "town", title: "table.town", keepsake: "ribbon", tab: "#a8402f", sway: "5.6s" },
+  { key: "folk", title: "table.folk", keepsake: "feather", tab: "#4a5270", sway: "7.3s" },
+  { key: "chronicle", title: "table.chronicle", keepsake: "scrap", tab: "#b8975a", sway: "6.4s" },
+  { key: "journal", title: "journal.title", keepsake: "flower", tab: "#9d7fae", sway: "8.1s" },
+  { key: "character", title: "table.character", keepsake: "charm", tab: "#c3ad7e", sway: "5.2s" },
+  { key: "inventory", title: "table.inventory", keepsake: "keyring", tab: "#b5893c", sway: "6.1s" }
 ];
 
 let data = null;
+let characterData = null;
 let selectedIndex = 0;
+let spreadIndex = 0;
 let bookOpen = false;
 let turning = false;
-let contentKey = null;
+let sideKeys = { left: null, right: null };
 let characterOverride = null; // "picker" | "create" | null
 let turnFallback = null;
+let editingItem = null;
 
 const getPC = () =>
   localStorage.getItem("settlement-pc") || localStorage.getItem("settlement-journal-pc");
 const setPC = (id) => localStorage.setItem("settlement-pc", id);
-const myPC = () => {
+const myIdentity = () => {
   const id = getPC();
   return (id && data?.party?.find((pc) => pc.id === id)) || null;
 };
+const chunks = (items, size) => Array.from({ length: Math.max(1, Math.ceil(items.length / size)) }, (_, i) => items.slice(i * size, i * size + size));
 
-function sectionCount(key) {
-  if (!data) return "—";
-  if (key === "town") return data.buildings.length;
-  if (key === "folk") return data.characters.length;
-  if (key === "chronicle") return data.chronicle.length;
-  if (key === "journal") return "✎";
-  const pc = myPC();
-  return pc ? esc(pc.name.slice(0, 1).toUpperCase()) : "?";
+function pageHeading(title, kicker = "") {
+  return `<div class="chapter-kicker">${esc(kicker)}</div><h1 class="chapter-title">${esc(title)}</h1><div class="chapter-rule"></div>`;
 }
 
-// ---------- page content ----------
-
-function storesHtml() {
-  return `<div class="mini-stores">${Object.entries(data.resources)
-    .map(([name, value]) => `<div class="mini-store">${esc(name)} <strong>${value}</strong></div>`)
-    .join("")}</div>`;
-}
-
-function leftPageHtml(section, index) {
-  const title = t(section.title);
-  return `<div class="chapter-kicker">${t("table.book.chapter")} ${toRoman(index + 1)}</div>
-    <h1 class="chapter-title">${esc(title)}</h1>
-    <div class="chapter-rule"></div>
-    <div class="chapter-copy"><span class="chapter-initial">${esc(title.slice(0, 1))}</span>
-      <div class="chapter-count"><strong>${sectionCount(section.key)}</strong>${esc(title)}</div>
+function townSpreads() {
+  const stores = Object.entries(data.resources).map(([name, value]) =>
+    `<div class="town-store"><strong>${value}</strong><span>${esc(name)}</span></div>`
+  ).join("");
+  const left = `<div class="town-page">${pageHeading(data.settlement.name, t("table.town"))}
+    <div class="town-at-glance">
+      <div><strong>${data.settlement.population}</strong><span>${t("table.population")}</span></div>
+      <div><strong>${esc(seasonLabel(data.settlement.seasonLabel))}</strong><span>${t("table.season")}</span></div>
     </div>
-    ${storesHtml()}`;
+    <h2 class="page-heading">${t("table.stores")}</h2><div class="town-stores">${stores}</div></div>`;
+  const right = data.buildings.length
+    ? `<h2 class="page-heading">${t("table.buildings")}</h2><div class="tome-grid">${data.buildings.map((building) => `<article class="tome-card">
+        <strong>${esc(building.name)}</strong>
+        <div class="tome-muted">${esc(building.resource)} · ${term("building-level", t("table.level"))} ${building.level}</div>
+        <div>${building.foreman ? term("foreman", esc(building.foreman)) : `<span class="tome-muted">${t("table.noforeman")}</span>`}</div>
+      </article>`).join("")}</div>`
+    : `<h2 class="page-heading">${t("table.buildings")}</h2><p class="tome-empty">${t("table.nobuildings")}</p>`;
+  return [{ key: "town", left: { html: left, volatile: true }, right: { html: right, volatile: true } }];
 }
 
-function townHtml() {
-  return data.buildings.length
-    ? `<h2 class="page-heading">${t("table.town")}</h2><div class="tome-grid">${data.buildings
-        .map((building) => `<article class="tome-card">
-          <strong>${esc(building.name)}</strong>
-          <div class="tome-muted">${esc(building.resource)} · ${term("building-level", t("table.level"))} ${building.level}</div>
-          <div>${building.foreman ? term("foreman", esc(building.foreman)) : `<span class="tome-muted">${t("table.noforeman")}</span>`}</div>
-        </article>`)
-        .join("")}</div>`
-    : `<p class="tome-empty">${t("table.nobuildings")}</p>`;
+function folkCard(person) {
+  const gone = person.status !== "alive";
+  const traits = person.traits ? `<div class="tome-traits">${TRAITS.map((trait) =>
+    `<span class="tome-pill term" data-term="trait-${trait.toLowerCase()}">${trait.slice(0, 3)} ${person.traits[trait] >= 0 ? "+" : ""}${person.traits[trait] ?? 0}</span>`
+  ).join("")}</div>` : "";
+  return `<article class="tome-card"${gone ? ` style="opacity:.58"` : ""}>
+    <div class="folk-row"><div class="tome-portrait">${person.portrait ? `<img src="${esc(person.portrait)}" alt="">` : esc(person.name[0] || "?")}</div>
+    <div><strong>${esc(person.name)}</strong>${gone ? ` <span class="tome-pill">${esc(person.status)}</span>` : ""}<div class="tome-muted">${esc(person.role || "")}</div></div></div>
+    <p>${esc(person.description || "")}</p>${traits}</article>`;
 }
 
-function folkHtml() {
-  return data.characters.length
-    ? `<h2 class="page-heading">${t("table.folk")}</h2><div class="tome-grid">${data.characters
-        .map((person) => {
-          const gone = person.status !== "alive";
-          const traits = person.traits
-            ? `<div class="tome-traits">${TRAITS.map((trait) =>
-                `<span class="tome-pill term" data-term="trait-${trait.toLowerCase()}">${trait.slice(0, 3)} ${person.traits[trait] >= 0 ? "+" : ""}${person.traits[trait] ?? 0}</span>`
-              ).join("")}</div>`
-            : "";
-          return `<article class="tome-card"${gone ? ` style="opacity:.58"` : ""}>
-            <div class="folk-row">
-              <div class="tome-portrait">${person.portrait ? `<img src="${esc(person.portrait)}" alt="">` : esc(person.name[0] || "?")}</div>
-              <div><strong>${esc(person.name)}</strong>${gone ? ` <span class="tome-pill">${esc(person.status)}</span>` : ""}
-              <div class="tome-muted">${esc(person.role || "")}</div></div>
-            </div>
-            <p>${esc(person.description || "")}</p>${traits}
-          </article>`;
-        })
-        .join("")}</div>`
-    : `<p class="tome-empty">${t("table.nofolk")}</p>`;
+function folkSpreads() {
+  if (!data.characters.length) return [{ key: "folk-empty", left: { html: pageHeading(t("table.folk")), volatile: true }, right: { html: `<p class="tome-empty">${t("table.nofolk")}</p>`, volatile: true } }];
+  return chunks(data.characters, 6).map((group, i) => ({
+    key: `folk:${i}`,
+    left: { html: `${i === 0 ? pageHeading(t("table.folk")) : `<h2 class="page-heading">${t("table.folk")}</h2>`}<div class="tome-grid">${group.slice(0, 3).map(folkCard).join("")}</div>`, volatile: true },
+    right: { html: `<div class="tome-grid page-continuation">${group.slice(3).map(folkCard).join("")}</div>`, volatile: true }
+  }));
 }
 
-function chronicleHtml() {
-  return data.chronicle.length
-    ? `<h2 class="page-heading">${t("table.chronicle")}</h2>${data.chronicle
-        .map((entry) => `<article class="tome-entry"><div class="season">${esc(seasonLabel(entry.season))}</div><div>${esc(entry.text)}</div></article>`)
-        .join("")}`
-    : `<p class="tome-empty">${t("table.nochronicle")}</p>`;
+function chronicleEntry(entry) {
+  return `<article class="tome-entry"><div class="season">${esc(seasonLabel(entry.season))}</div><div>${esc(entry.text)}</div></article>`;
+}
+
+function chronicleSpreads() {
+  if (!data.chronicle.length) return [{ key: "chronicle-empty", left: { html: pageHeading(t("table.chronicle")), volatile: true }, right: { html: `<p class="tome-empty">${t("table.nochronicle")}</p>`, volatile: true } }];
+  return chunks(data.chronicle, 8).map((group, i) => ({
+    key: `chronicle:${i}`,
+    left: { html: `${i === 0 ? pageHeading(t("table.chronicle")) : `<h2 class="page-heading">${t("table.chronicle")}</h2>`}${group.slice(0, 4).map(chronicleEntry).join("")}`, volatile: true },
+    right: { html: `<div class="page-continuation">${group.slice(4).map(chronicleEntry).join("")}</div>`, volatile: true }
+  }));
 }
 
 function pickerHtml() {
   const people = (data.party || []).map((pc) =>
     `<button type="button" data-pick="${esc(pc.id)}">${esc(pc.name)}${pc.player ? ` <span class="tome-muted">· ${esc(pc.player)}</span>` : ""}</button>`
   ).join("");
-  return `<div class="character-picker">
-    <div class="chapter-kicker">${t("table.whoareyou")}</div>
-    ${people}
-    <button type="button" data-create>${t("create.title")} →</button>
+  return `<div class="character-picker"><div class="chapter-kicker">${t("table.whoareyou")}</div>${people}<button type="button" data-create>${t("create.title")} →</button></div>`;
+}
+
+function featureHtml(feature) {
+  return feature ? `<div class="sheet-feature"><strong>${esc(feature.name)}</strong> ${termify(esc(feature.text))}</div>` : "";
+}
+
+function vitalPips(kind, marked, max) {
+  return `<div class="sheet-pips" data-pips="${kind}">${Array.from({ length: max || 0 }, (_, i) =>
+    `<button type="button" class="sheet-pip ${i < marked ? "marked" : ""} ${kind === "hope" ? "hope" : ""}" data-vital="${kind}" data-index="${i}" aria-label="${kind} ${i + 1}"></button>`
+  ).join("")}</div>`;
+}
+
+function characterSpreads() {
+  if (characterOverride === "create") return [{ key: "character-create", left: { html: pageHeading(t("create.title")) }, right: { key: "create", embed: true, html: `<iframe title="${esc(t("create.title"))}" src="/create/?return=/tome"></iframe>` } }];
+  if (characterOverride === "picker" || !characterData) return [{ key: "character-picker", left: { html: pageHeading(t("table.character")), volatile: true }, right: { html: pickerHtml(), volatile: true } }];
+  const p = characterData;
+  const traits = TRAITS.map((trait) => `<div class="sheet-trait"><strong>${p.traits[trait] >= 0 ? "+" : ""}${p.traits[trait]}</strong><span>${trait}</span></div>`).join("");
+  const experiences = (p.experiences || []).map((e) => `<div class="sheet-line"><strong>${esc(e.name)}</strong> +${e.bonus}</div>`).join("");
+  const background = (p.background || []).map((b) => `<div class="sheet-note"><strong>${esc(b.q)}</strong><span>${esc(b.a)}</span></div>`).join("");
+  const connections = (p.connections || []).map((c) => `<div class="sheet-note"><strong>${esc(c.q)}</strong><span>${esc(c.note)}</span></div>`).join("");
+  const left = `<div class="character-sheet-page">
+    <div class="sheet-identity"><div class="sheet-portrait">${p.portrait ? `<img src="${esc(p.portrait)}" alt="">` : esc(p.name[0] || "?")}</div>
+      <div><h1>${esc(p.name)}</h1><div>${esc(p.ancestry.name)} ${esc(p.class.name)} · ${esc(p.subclass.name)}</div>
+      <div class="tome-muted">${esc(p.community.name)} · ${t("sheet.level")} ${p.level}${p.pronouns ? ` · ${esc(p.pronouns)}` : ""}</div></div></div>
+    <div class="sheet-traits">${traits}</div>
+    <h2>${t("sheet.exp")}</h2><div class="sheet-lines">${experiences}</div>
+    ${background ? `<h2>${t("sheet.background")}</h2><div class="sheet-notes">${background}</div>` : ""}
+    ${connections ? `<h2>${t("sheet.connections")}</h2><div class="sheet-notes">${connections}</div>` : ""}
   </div>`;
+  const featureGroups = [
+    p.features?.hopeFeature ? `<h2>${t("sheet.hopefeat")}</h2>${featureHtml(p.features.hopeFeature)}` : "",
+    `<h2>${t("sheet.class")}</h2>${(p.features?.classFeatures || []).map(featureHtml).join("")}`,
+    `<h2>${esc(p.subclass.name)}</h2>${(p.features?.foundation || []).map(featureHtml).join("")}`,
+    `<div class="sheet-feature-columns"><div><h2>${esc(p.ancestry.name)}</h2>${(p.features?.ancestry || []).map(featureHtml).join("")}</div><div><h2>${esc(p.community.name)}</h2>${(p.features?.community || []).map(featureHtml).join("")}</div></div>`
+  ].join("");
+  const right = `<div class="character-sheet-page">
+    <a class="switch-pc" data-switch>${t("journal.notyou")}</a>
+    <div class="sheet-defenses"><div><strong>${p.evasion}</strong><span>${t("vital.evasion")}</span></div><div><strong>${p.armor?.score || 0}</strong><span>${t("vital.armor")}</span></div><div><strong>${p.thresholds.major}/${p.thresholds.severe}</strong><span>${t("arms.thresholds")}</span></div></div>
+    <div class="sheet-vitals"><div><span>${t("vital.hp")}</span>${vitalPips("hp", p.hp, p.hpMax)}</div><div><span>${t("vital.stress")}</span>${vitalPips("stress", p.stress, p.stressMax)}</div><div><span>${t("vital.hope")}</span>${vitalPips("hope", p.hope, p.hopeMax)}</div>${p.armor ? `<div><span>${t("vital.armorslots")}</span>${vitalPips("armorMarked", p.armorMarked, p.armor.score)}</div>` : ""}</div>
+    <div class="sheet-features">${featureGroups}</div>
+  </div>`;
+  return [{ key: `character:${p.id}`, left: { html: left, volatile: true, sheet: true }, right: { html: right, volatile: true, sheet: true } }];
 }
 
-function rightPage(section) {
-  if (section.key === "town") return { key: "town", html: townHtml(), volatile: true };
-  if (section.key === "folk") return { key: "folk", html: folkHtml(), volatile: true };
-  if (section.key === "chronicle") return { key: "chronicle", html: chronicleHtml(), volatile: true };
-  if (section.key === "journal") {
-    const pc = getPC();
-    return {
-      key: `journal:${pc || ""}`,
-      embed: true,
-      html: `<iframe title="${esc(t("journal.title"))}" src="/journal/?embed=1${pc ? `&pc=${encodeURIComponent(pc)}` : ""}"></iframe>`
-    };
-  }
-  if (characterOverride === "create") {
-    return { key: "create", embed: true, html: `<iframe title="${esc(t("create.title"))}" src="/create/"></iframe>` };
-  }
-  const pc = characterOverride === "picker" ? null : myPC();
-  if (pc) {
-    return {
-      key: `character:${pc.id}`,
-      embed: true,
-      html: `<a class="switch-pc" data-switch>${t("journal.notyou")}</a><iframe title="${esc(pc.name)}" src="/character/${encodeURIComponent(pc.id)}"></iframe>`
-    };
-  }
-  return { key: "character-picker", html: pickerHtml() };
+function weaponHtml(label, weapon) {
+  if (!weapon) return "";
+  return `<article class="inventory-card"><div class="tome-muted">${esc(label)}</div><h3>${esc(weapon.name)}</h3>
+    <div class="inventory-facts">${esc(weapon.trait)} · ${esc(weapon.range)} · ${esc(weapon.damage)} · ${esc(weapon.burden)}</div>
+    ${weapon.feature ? `<p>${termify(esc(weapon.feature))}</p>` : ""}</article>`;
 }
 
-function wirePageActions() {
-  for (const button of $("#right-content").querySelectorAll("[data-pick]")) {
-    button.onclick = () => {
-      setPC(button.dataset.pick);
-      characterOverride = null;
-      contentKey = null;
-      renderSpread(true);
-    };
+function carriedItemHtml(item) {
+  const description = lang === "sv" && item.descriptionSv ? item.descriptionSv : item.description;
+  const kind = item.kind === "consumable" ? t("inventory.consumable") : t("inventory.item");
+  return `<button class="inventory-card inventory-entry" type="button" data-inventory-edit="${esc(item.id)}" aria-label="${esc(t("inventory.editName", { name: item.name }))}">
+    <div class="inventory-facts">${kind}${item.quantity > 1 ? ` · ${t("inventory.quantityShort", { n: item.quantity })}` : ""}</div>
+    <h3>${esc(item.name)}</h3>${description ? `<p>${termify(esc(description))}</p>` : ""}${item.notes ? `<p class="inventory-note">${esc(item.notes)}</p>` : ""}
+  </button>`;
+}
+
+function domainCardHtml(card) {
+  return `<article class="inventory-card domain-item"><div class="tome-muted">${esc(card.location === "vault" ? "Vault" : "Loadout")} · ${esc(card.domain)} · ${esc(card.type)} · ${term("recall", "Recall")} ${card.recallCost}</div><h3>${esc(card.name)}</h3><p>${termify(esc(card.text))}</p></article>`;
+}
+
+function inventorySpreads() {
+  if (characterOverride === "create") return characterSpreads();
+  if (characterOverride === "picker" || !characterData) return [{ key: "inventory-picker", left: { html: pageHeading(t("table.inventory")), volatile: true }, right: { html: pickerHtml(), volatile: true } }];
+  const p = characterData;
+  const equipped = `${weaponHtml(t("sheet.primary"), p.weapons?.primary)}${weaponHtml(t("sheet.secondary"), p.weapons?.secondary)}${p.armor ? `<article class="inventory-card"><div class="tome-muted">${t("vital.armor")}</div><h3>${esc(p.armor.name)}</h3><div class="inventory-facts">${t("vital.armor")} ${p.armor.score} · ${t("arms.thresholds")} ${p.thresholds.major}/${p.thresholds.severe}</div>${p.armor.feature ? `<p>${termify(esc(p.armor.feature))}</p>` : ""}</article>` : ""}`;
+  const carriedItems = p.inventory || [];
+  const firstCarried = carriedItems.slice(0, 6).map(carriedItemHtml).join("") || `<p class="tome-empty">${t("inventory.empty")}</p>`;
+  const spreads = [{
+    key: `inventory:${p.id}:gear`,
+    left: { html: `<h1 class="page-heading">${t("inventory.equipped")}</h1>${equipped}`, volatile: true },
+    right: { html: `<div class="inventory-heading"><h1 class="page-heading">${t("inventory.pack")}</h1><button class="inventory-add" type="button" data-inventory-add>${t("inventory.add")}</button></div>${firstCarried}`, volatile: true }
+  }];
+  for (const [i, items] of chunks(carriedItems.slice(6), 8).entries()) {
+    if (!items.length) break;
+    spreads.push({
+      key: `inventory:${p.id}:carried:${i}`,
+      left: { html: `<h1 class="page-heading">${t("inventory.pack")}</h1>${items.slice(0, 4).map(carriedItemHtml).join("")}`, volatile: true },
+      right: { html: `<div class="page-continuation">${items.slice(4).map(carriedItemHtml).join("")}</div>`, volatile: true }
+    });
   }
-  const create = $("#right-content").querySelector("[data-create]");
-  if (create) create.onclick = () => {
-    characterOverride = "create";
-    contentKey = null;
-    renderSpread(true);
-  };
-  const switcher = $("#right-content").querySelector("[data-switch]");
-  if (switcher) switcher.onclick = () => {
-    characterOverride = "picker";
-    contentKey = null;
-    renderSpread(true);
-  };
+  for (const [i, cards] of chunks(p.domainCards || [], 4).entries()) {
+    if (!cards.length) break;
+    const midpoint = Math.ceil(cards.length / 2);
+    spreads.push({
+      key: `inventory:${p.id}:cards:${i}`,
+      left: { html: `<h1 class="page-heading">${t("inventory.cards")}</h1>${cards.slice(0, midpoint).map(domainCardHtml).join("")}`, volatile: true },
+      right: { html: `<div class="page-continuation">${cards.slice(midpoint).map(domainCardHtml).join("")}</div>`, volatile: true }
+    });
+  }
+  return spreads;
+}
+
+function journalSpreads() {
+  const pc = getPC();
+  return [{ key: `journal:${pc || ""}`, left: { html: `${pageHeading(t("journal.title"))}<p class="chapter-copy">${t("journal.sub")}</p>` }, right: { key: `journal:${pc || ""}`, embed: true, html: `<iframe title="${esc(t("journal.title"))}" src="/journal/?embed=1${pc ? `&pc=${encodeURIComponent(pc)}` : ""}"></iframe>` } }];
+}
+
+function spreadsFor(section = SECTION_ORDER[selectedIndex]) {
+  if (section.key === "town") return townSpreads();
+  if (section.key === "folk") return folkSpreads();
+  if (section.key === "chronicle") return chronicleSpreads();
+  if (section.key === "journal") return journalSpreads();
+  if (section.key === "character") return characterSpreads();
+  return inventorySpreads();
+}
+
+function renderSide(side, descriptor, force) {
+  const root = $(`#${side}-content`);
+  root.classList.toggle("embed", !!descriptor.embed);
+  root.classList.toggle("sheet-page-content", !!descriptor.sheet);
+  const key = descriptor.key || `${SECTION_ORDER[selectedIndex].key}:${spreadIndex}:${side}`;
+  if (force || descriptor.volatile || sideKeys[side] !== key) {
+    root.innerHTML = descriptor.html;
+    sideKeys[side] = key;
+  }
+}
+
+function pageStartNumber() {
+  let pages = 1;
+  for (let i = 0; i < selectedIndex; i += 1) pages += spreadsFor(SECTION_ORDER[i]).length * 2;
+  return pages + spreadIndex * 2;
 }
 
 function renderSpread(force = false) {
   if (!data) return;
-  const section = SECTION_ORDER[selectedIndex];
-  $("#left-content").innerHTML = leftPageHtml(section, selectedIndex);
-  $("#left-number").textContent = String(selectedIndex * 2 + 1);
-  $("#right-number").textContent = String(selectedIndex * 2 + 2);
+  const spreads = spreadsFor();
+  spreadIndex = Math.min(spreadIndex, spreads.length - 1);
+  const spread = spreads[spreadIndex];
+  renderSide("left", spread.left, force);
+  renderSide("right", spread.right, force);
+  const firstPage = pageStartNumber();
+  $("#left-number").textContent = String(firstPage);
+  $("#right-number").textContent = String(firstPage + 1);
+  $("#spread-prev").hidden = spreadIndex === 0;
+  $("#spread-next").hidden = spreadIndex >= spreads.length - 1;
+  $("#spread-prev").setAttribute("aria-label", t("table.book.previous"));
+  $("#spread-next").setAttribute("aria-label", t("table.book.next"));
+  wirePageActions();
+  fitCharacterPages();
+}
 
-  const desired = rightPage(section);
-  const right = $("#right-content");
-  right.classList.toggle("embed", !!desired.embed);
-  if (force || desired.volatile || desired.key !== contentKey) {
-    right.innerHTML = desired.html;
-    contentKey = desired.key;
-    wirePageActions();
-  }
+function fitCharacterPages() {
+  requestAnimationFrame(() => {
+    for (const root of document.querySelectorAll(".paper-scroll.sheet-page-content")) {
+      const page = root.querySelector(".character-sheet-page");
+      if (!page) continue;
+      page.style.zoom = "";
+      const scale = Math.min(1, (root.clientHeight - 2) / Math.max(1, page.scrollHeight));
+      page.style.zoom = String(scale);
+    }
+  });
 }
 
 function renderCover() {
   if (!data) return;
   $("#cover-title").textContent = data.settlement.name;
-  $("#cover-season").textContent = seasonLabel(data.settlement.seasonLabel);
   $("#front-cover").setAttribute("aria-label", t("table.book.open"));
-  $("#folio-season").textContent = `${data.settlement.name} · ${seasonLabel(data.settlement.seasonLabel)} · ${t("table.folkcount", { n: data.settlement.population })}`;
-  $("#folio-stores").innerHTML = Object.entries(data.resources)
-    .map(([name, value]) => `<span class="folio-store"><strong>${value}</strong>${esc(name)}</span>`)
-    .join("");
 }
 
 function renderKeepsakes() {
@@ -284,20 +368,203 @@ function renderKeepsakes() {
   const nav = $("#keepsakes");
   nav.innerHTML = SECTION_ORDER.map((section, index) => {
     const style = KEEPSAKES[section.keepsake] || KEEPSAKES.ribbon;
-    const isLeft = bookOpen && index < selectedIndex;
     const active = bookOpen && index === selectedIndex;
-    const labelStyle = `--label-tilt:${style.label.tilt}; top:${style.label.top}; ${isLeft ? "left" : "right"}:${style.label.right};`;
-    return `<button type="button"
-      class="keepsake ks-${section.keepsake}${isLeft ? " side-left" : ""}${active ? " active" : ""}"
-      data-index="${index}" style="--hang:${section.hang}px; --tilt:${section.tilt}; --sway:${section.sway}"
-      ${active ? `aria-current="page"` : ""} aria-label="${esc(t(section.title))}">
-      <span class="keepsake-art">${style.art}</span>
-      <span class="keepsake-label" style="${labelStyle}">${esc(t(section.title))}</span>
-    </button>`;
+    return `<button type="button" class="keepsake ks-${section.keepsake}${active ? " active" : ""}" data-index="${index}" style="--tab:${section.tab}; --sway:${section.sway}" ${active ? `aria-current="page"` : ""} aria-label="${esc(t(section.title))}"><span class="keepsake-emblem" aria-hidden="true">${style.art}</span><span class="keepsake-label">${esc(t(section.title))}</span></button>`;
   }).join("");
-  for (const button of nav.querySelectorAll("[data-index]")) {
-    button.onclick = () => chooseSection(Number(button.dataset.index));
+  for (const button of nav.querySelectorAll("[data-index]")) button.onclick = () => chooseSection(Number(button.dataset.index));
+}
+
+async function loadCharacter() {
+  const identity = myIdentity();
+  if (!identity || characterOverride === "picker") { characterData = null; return; }
+  const response = await fetch(`/api/party/${encodeURIComponent(identity.id)}`);
+  characterData = response.ok ? await response.json() : null;
+}
+
+function closeConditionPopover() {
+  $("#condition-popover").hidden = true;
+  delete $("#condition-popover").dataset.condition;
+}
+
+function openConditionPopover(id) {
+  const condition = CONDITIONS.find((entry) => entry.id === id);
+  if (!condition) return;
+  $("#condition-popover-mark").innerHTML = conditionIcon(id);
+  $("#condition-popover-title").textContent = condition.name;
+  $("#condition-popover-copy").textContent = t(`condition.${id}.description`);
+  $("#condition-popover").dataset.condition = id;
+  $("#condition-popover").hidden = false;
+}
+
+function renderPlayerDock() {
+  const dock = $("#player-dock");
+  if (!characterData) {
+    dock.hidden = true;
+    closeConditionPopover();
+    return;
   }
+  dock.hidden = false;
+  dock.setAttribute("aria-label", t("conditions.label"));
+  const active = new Set(characterData.conditions || []);
+  const shown = $("#condition-popover").dataset.condition;
+  if (shown && !active.has(shown)) closeConditionPopover();
+  const tokens = CONDITIONS.filter(({ id }) => active.has(id)).map((condition) =>
+    `<button class="condition-token" type="button" data-status="${condition.id}" aria-label="${condition.name}" title="${condition.name}">${conditionIcon(condition.id)}<span>${condition.name}</span></button>`
+  ).join("");
+  $("#condition-bar").innerHTML = `<span class="condition-bar-label">${esc(t("conditions.label"))}</span>${tokens || `<span class="condition-none">${esc(t("conditions.none"))}</span>`}`;
+  for (const button of document.querySelectorAll("[data-status]")) button.onclick = () => openConditionPopover(button.dataset.status);
+}
+
+const localizedItemDescription = (item) => lang === "sv" && item.descriptionSv ? item.descriptionSv : item.description;
+
+function inventoryArt(icon = "satchel") {
+  const art = {
+    potion: `<path d="M9 3h6M10 3v4l-4 5.5V18c0 2 1.6 3 6 3s6-1 6-3v-5.5L14 7V3"/><path class="liquid" d="M7 14h10v4c0 1.2-1.7 1.8-5 1.8S7 19.2 7 18z"/><path d="M8.4 11h7.2"/>`,
+    herb: `<path d="M12 21c-1-7 1-13 7-17-1 8-3 13-7 17z"/><path d="M12 21C9 13 6 9 3 7c0 7 3 12 9 14z"/><path d="M12 21V9"/>`,
+    shard: `<path d="M12 2l6 7-3 12-7-3-2-9z"/><path d="M12 2l-1 10 4 9M6 9l5 3 7-3"/>`,
+    satchel: `<path d="M7 8h10l2 13H5z"/><path d="M9 8V6a3 3 0 016 0v2M5.7 13h12.6"/>`
+  };
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${art[icon] || art.satchel}</svg>`;
+}
+
+async function inventoryRequest(path, options = {}) {
+  const response = await fetch(path, { headers: { "Content-Type": "application/json" }, ...options, body: options.body ? JSON.stringify(options.body) : undefined });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || t("inventory.error"));
+  return result;
+}
+
+function closeInventoryDialog() {
+  $("#inventory-dialog").hidden = true;
+  editingItem = null;
+}
+
+function useFields(reaction) {
+  if (!reaction) return `<p>${t("inventory.consumeConfirm")}</p>`;
+  if (["clear", "sun-tree", "feast"].includes(reaction.kind)) return `<label>${t("inventory.dieResult", { die: `d${reaction.die}` })}<input id="inventory-roll" type="number" min="1" max="${reaction.die}" inputmode="numeric"></label>`;
+  if (reaction.kind === "choose-clear") return `<label>${t("inventory.clearWhat")}<select id="inventory-choice"><option value="hp">HP</option><option value="stress">Stress</option></select></label><label>${t("inventory.dieResult", { die: `d${reaction.die}` })}<input id="inventory-roll" type="number" min="1" max="${reaction.die}" inputmode="numeric"></label>`;
+  if (reaction.kind === "spend-clear") return `<label>${t("inventory.hopeSpend")}<input id="inventory-spend" type="number" min="1" max="${Math.min(characterData.hope || 0, characterData.armorMarked || 0)}" inputmode="numeric"></label>`;
+  return `<p>${t("inventory.consumeConfirm")}</p>`;
+}
+
+function effectHtml(effect) {
+  const lines = effect.changes.map((entry) => {
+    const target = entry.target === "armorMarked" ? t("vital.armorslots") : entry.target.toUpperCase();
+    if (!entry.amount) return t("inventory.noChange", { target });
+    return entry.mode === "clear" || entry.mode === "spend"
+      ? t("inventory.cleared", { n: entry.amount, target })
+      : t("inventory.gained", { n: entry.amount, target });
+  });
+  if (effect.note === "scar") lines.push(t("inventory.scar"));
+  if (!lines.length) lines.push(t("inventory.consumed"));
+  return `${effect.roll ? `<div class="use-roll">${effect.roll}</div>` : ""}<p>${lines.map(esc).join("<br>")}</p><p class="tome-muted">${t("inventory.remaining", { n: effect.remaining })}</p>`;
+}
+
+function openInventoryDialog(item = null) {
+  editingItem = item;
+  const catalog = !!item?.catalogId;
+  const description = item ? localizedItemDescription(item) : "";
+  const kind = item?.kind || "mundane";
+  $("#inventory-dialog-body").innerHTML = `<div class="inventory-dialog-grid">
+    <div class="inventory-art ${kind === "consumable" ? "is-consumable" : ""}" id="inventory-art">${inventoryArt(item?.icon)}</div>
+    <div>
+      <div class="inventory-facts">${item ? (kind === "consumable" ? t("inventory.consumable") : t("inventory.item")) : t("inventory.new")}</div>
+      <h2 id="inventory-dialog-title">${esc(item?.name || t("inventory.new"))}</h2>
+      ${catalog ? `<p class="inventory-rules">${termify(esc(description))}</p>` : ""}
+    </div>
+  </div>
+  <div class="inventory-form">
+    ${catalog ? `<label>${t("inventory.notes")}<textarea id="inventory-notes" rows="2">${esc(item.notes || "")}</textarea></label>` : `<label>${t("inventory.kind")}<select id="inventory-kind"><option value="mundane" ${kind === "mundane" ? "selected" : ""}>${t("inventory.item")}</option><option value="consumable" ${kind === "consumable" ? "selected" : ""}>${t("inventory.consumable")}</option></select></label><label>${t("inventory.name")}<input id="inventory-name" value="${esc(item?.name || "")}"></label><label>${t("inventory.description")}<textarea id="inventory-description" rows="3">${esc(item?.description || "")}</textarea></label>`}
+    <label>${t("inventory.quantity")}<input id="inventory-quantity" type="number" min="1" max="${kind === "consumable" ? 5 : 99}" value="${item?.quantity || 1}"></label>
+  </div>
+  <div class="inventory-use-panel" id="inventory-use-panel" hidden></div>
+  <div class="inventory-result" id="inventory-result" hidden></div>
+  <div class="inventory-dialog-actions" id="inventory-dialog-actions"><button type="button" id="inventory-save">${t("inventory.save")}</button>${item?.kind === "consumable" ? `<button type="button" class="consume" id="inventory-consume">${t("inventory.consume")}</button>` : ""}${item ? `<button type="button" class="quiet grave" id="inventory-remove">${t("inventory.remove")}</button>` : ""}</div>`;
+  $("#inventory-dialog").hidden = false;
+  $("#inventory-save").onclick = saveInventoryItem;
+  if ($("#inventory-remove")) $("#inventory-remove").onclick = removeInventoryItem;
+  if ($("#inventory-consume")) $("#inventory-consume").onclick = prepareInventoryUse;
+}
+
+async function saveInventoryItem() {
+  const body = editingItem?.catalogId
+    ? { notes: $("#inventory-notes").value, quantity: Number($("#inventory-quantity").value) }
+    : { kind: $("#inventory-kind").value, name: $("#inventory-name").value, description: $("#inventory-description").value, quantity: Number($("#inventory-quantity").value) };
+  try {
+    characterData = await inventoryRequest(`/api/party/${encodeURIComponent(characterData.id)}/inventory${editingItem ? `/${encodeURIComponent(editingItem.id)}` : ""}`, { method: editingItem ? "PUT" : "POST", body });
+    renderSpread(true);
+    closeInventoryDialog();
+  } catch (error) { $("#inventory-result").hidden = false; $("#inventory-result").textContent = error.message; }
+}
+
+async function removeInventoryItem() {
+  if (!confirm(t("inventory.removeConfirm", { name: editingItem.name }))) return;
+  try {
+    characterData = await inventoryRequest(`/api/party/${encodeURIComponent(characterData.id)}/inventory/${encodeURIComponent(editingItem.id)}`, { method: "DELETE" });
+    spreadIndex = Math.min(spreadIndex, inventorySpreads().length - 1);
+    renderSpread(true);
+    closeInventoryDialog();
+  } catch (error) { $("#inventory-result").hidden = false; $("#inventory-result").textContent = error.message; }
+}
+
+function prepareInventoryUse() {
+  const panel = $("#inventory-use-panel");
+  panel.innerHTML = `<h3>${t("inventory.useTitle", { name: editingItem.name })}</h3>${useFields(editingItem.reaction)}<button type="button" class="consume" id="inventory-use-confirm">${t("inventory.confirmUse")}</button>`;
+  panel.hidden = false;
+  $("#inventory-use-confirm").onclick = useInventoryItem;
+}
+
+async function useInventoryItem() {
+  const body = { roll: $("#inventory-roll")?.value, choice: $("#inventory-choice")?.value, spend: $("#inventory-spend")?.value };
+  try {
+    const result = await inventoryRequest(`/api/party/${encodeURIComponent(characterData.id)}/inventory/${encodeURIComponent(editingItem.id)}/use`, { method: "POST", body });
+    $("#inventory-art").classList.add("is-using");
+    $("#inventory-use-panel").hidden = true;
+    $("#inventory-dialog-actions").hidden = true;
+    const output = $("#inventory-result");
+    output.innerHTML = effectHtml(result.effect);
+    output.hidden = false;
+    characterData = result.pc;
+    setTimeout(() => {
+      $("#inventory-art").classList.add("is-used");
+      renderSpread(true);
+      renderPlayerDock();
+    }, 450);
+  } catch (error) { $("#inventory-result").hidden = false; $("#inventory-result").textContent = error.message; }
+}
+
+function wirePageActions() {
+  for (const button of document.querySelectorAll("[data-pick]")) {
+    button.onclick = async () => {
+      setPC(button.dataset.pick);
+      characterOverride = null;
+      await loadCharacter();
+      renderPlayerDock();
+      sideKeys = { left: null, right: null };
+      renderSpread(true);
+    };
+  }
+  for (const create of document.querySelectorAll("[data-create]")) create.onclick = () => {
+    characterOverride = "create";
+    sideKeys = { left: null, right: null };
+    renderSpread(true);
+  };
+  for (const switcher of document.querySelectorAll("[data-switch]")) switcher.onclick = () => {
+    characterOverride = "picker";
+    characterData = null;
+    sideKeys = { left: null, right: null };
+    renderSpread(true);
+  };
+  for (const pip of document.querySelectorAll("[data-vital]")) pip.onclick = async () => {
+    const kind = pip.dataset.vital;
+    const index = Number(pip.dataset.index);
+    const next = index + 1 === characterData[kind] ? index : index + 1;
+    characterData[kind] = next;
+    renderSpread(true);
+    await fetch(`/api/party/${encodeURIComponent(characterData.id)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [kind]: next }) });
+  };
+  for (const button of document.querySelectorAll("[data-inventory-edit]")) button.onclick = () => openInventoryDialog(characterData.inventory.find((item) => item.id === button.dataset.inventoryEdit));
+  for (const button of document.querySelectorAll("[data-inventory-add]")) button.onclick = () => openInventoryDialog();
 }
 
 function chooseSection(nextIndex) {
@@ -305,13 +572,20 @@ function chooseSection(nextIndex) {
   characterOverride = null;
   if (!bookOpen) {
     selectedIndex = nextIndex;
-    contentKey = null;
+    spreadIndex = 0;
+    sideKeys = { left: null, right: null };
     renderSpread(true);
     openBook();
     return;
   }
   if (nextIndex === selectedIndex) return;
-  turnPage(nextIndex);
+  turnTo(nextIndex, 0, nextIndex > selectedIndex ? "forward" : "backward");
+}
+
+function chooseSpread(nextIndex) {
+  const total = spreadsFor().length;
+  if (turning || nextIndex < 0 || nextIndex >= total || nextIndex === spreadIndex) return;
+  turnTo(selectedIndex, nextIndex, nextIndex > spreadIndex ? "forward" : "backward");
 }
 
 function openBook() {
@@ -340,25 +614,20 @@ function finishTurn() {
   turning = false;
 }
 
-function turnPage(nextIndex) {
+function turnTo(nextSection, nextSpread, direction) {
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const direction = nextIndex > selectedIndex ? "forward" : "backward";
-  selectedIndex = nextIndex;
-  contentKey = null;
+  selectedIndex = nextSection;
+  spreadIndex = nextSpread;
+  sideKeys = { left: null, right: null };
   renderSpread(true);
   renderKeepsakes();
   if (reduced) return;
-
   turning = true;
   const sheet = $("#turn-sheet");
   sheet.hidden = false;
   sheet.className = `turn-sheet ${direction}`;
   sheet.addEventListener("animationend", finishTurn, { once: true });
   turnFallback = setTimeout(finishTurn, 950);
-}
-
-function toRoman(number) {
-  return ["I", "II", "III", "IV", "V"][number - 1] || String(number);
 }
 
 // ---------- the room ----------
@@ -378,13 +647,21 @@ function spawnDust() {
 
 function layoutBook() {
   const compact = window.innerWidth <= 760;
-  // Total visual width: the spread plus keepsakes poking out both sides.
-  const widthScale = (window.innerWidth - (compact ? 12 : 30)) / 1500;
-  const heightScale = (window.innerHeight - (compact ? 96 : 120)) / 690;
+  // Keepsakes now hang from the top edge, so the spread no longer needs side
+  // room; instead reserve a little headroom above for the tab row.
+  const widthScale = (window.innerWidth - (compact ? 12 : 30)) / 1290;
+  const heightScale = (window.innerHeight - (compact ? 96 : 120)) / 726;
   const closedObjectScale = (window.innerWidth - 8) / 780;
   const scale = compact ? Math.min(0.66, heightScale, closedObjectScale) : Math.min(1, widthScale, heightScale);
-  $("#tome-scale").style.transform = `scale(${scale})`;
-  $("#tome-scale").dataset.scale = String(scale);
+  const scaler = $("#tome-scale");
+  // On narrow screens zoom participates in layout; a transform would leave
+  // the 1240px unscaled box centred far off-screen and make panning mostly
+  // empty room. Desktop keeps the smoother transform animation.
+  scaler.style.zoom = compact ? String(scale) : "";
+  scaler.style.transform = compact ? "none" : `scale(${scale})`;
+  scaler.style.position = compact ? "relative" : "";
+  scaler.style.left = compact ? `${Math.max(0, (1240 * scale - window.innerWidth) / 2)}px` : "";
+  scaler.dataset.scale = String(scale);
   centerBookSoon();
 }
 
@@ -403,8 +680,10 @@ function centerBookSoon() {
 
 async function refresh() {
   const response = await fetch("/api/table");
-  if (!response.ok) throw new Error("The player ledger could not be opened.");
+  if (!response.ok) throw new Error(t("error.table"));
   data = await response.json();
+  await loadCharacter();
+  renderPlayerDock();
   renderCover();
   renderKeepsakes();
   if (bookOpen) renderSpread();
@@ -416,20 +695,46 @@ $("#front-cover").onclick = () => {
   openBook();
 };
 $("#close-tome").onclick = closeBook;
+$("#spread-prev").onclick = () => chooseSpread(spreadIndex - 1);
+$("#spread-next").onclick = () => chooseSpread(spreadIndex + 1);
 
 window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !$("#inventory-dialog").hidden) {
+    closeInventoryDialog();
+    return;
+  }
+  if (event.key === "Escape" && !$("#condition-popover").hidden) {
+    closeConditionPopover();
+    return;
+  }
   if (!bookOpen || turning || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) return;
   if (event.key === "Escape") closeBook();
-  if (event.key === "ArrowRight" && selectedIndex < SECTION_ORDER.length - 1) chooseSection(selectedIndex + 1);
-  if (event.key === "ArrowLeft" && selectedIndex > 0) chooseSection(selectedIndex - 1);
+  if (event.key === "ArrowRight") {
+    if (spreadIndex < spreadsFor().length - 1) chooseSpread(spreadIndex + 1);
+    else if (selectedIndex < SECTION_ORDER.length - 1) chooseSection(selectedIndex + 1);
+  }
+  if (event.key === "ArrowLeft") {
+    if (spreadIndex > 0) chooseSpread(spreadIndex - 1);
+    else if (selectedIndex > 0) chooseSection(selectedIndex - 1);
+  }
 });
 
-window.addEventListener("storage", (event) => {
+window.addEventListener("storage", async (event) => {
   if (event.key !== "settlement-pc") return;
   characterOverride = null;
-  contentKey = null;
+  spreadIndex = 0;
+  sideKeys = { left: null, right: null };
+  await loadCharacter();
+  renderPlayerDock();
   renderKeepsakes();
-  if (bookOpen && SECTION_ORDER[selectedIndex].key === "character") renderSpread(true);
+  if (bookOpen && ["character", "inventory"].includes(SECTION_ORDER[selectedIndex].key)) renderSpread(true);
+});
+
+$("#condition-popover-close").onclick = closeConditionPopover;
+$("#inventory-dialog-close").onclick = closeInventoryDialog;
+document.addEventListener("pointerdown", (event) => {
+  if ($("#condition-popover").hidden || event.target.closest("#condition-popover") || event.target.closest("[data-status]")) return;
+  closeConditionPopover();
 });
 
 let resizeFrame = null;

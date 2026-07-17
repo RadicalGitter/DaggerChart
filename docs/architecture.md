@@ -10,7 +10,7 @@ server/
   store.js    atomic JSON read/write (tmp+rename), timestamped backups
   views.js    audience whitelists: gmView(), tableView(), loreView()
 public/
-  shared/     ledger.css (light GM theme), lamplight.css (dark player theme), i18n.js
+  shared/     themes, i18n.js, and small player-facing registries
   gm/         GM console (sections: downtime, buildings, folk, people, places, party, stores, ledger, settlement)
   login/      trusted-table identity chooser (GM, projector, PCs, creator)
   table/      read-only projectable dashboard (card-deck navigation)
@@ -37,7 +37,8 @@ docs/         this file, the design spec, ComfyUI workflow
   tracking per building, stockpile wipe on 0, standing `effect` capture, log
   entry, snapshot. `modifierBreakdown()` returns visible modifiers itemized and
   hidden ones only as part of the total (spoiler rule §8B).
-- **`views.js`** — **the** spoiler boundary. `tableView()` and `loreView()`
+- **`views.js`** — **the** spoiler boundary. `tableView()`, `loreView()`, and
+  `playerCharacterView()`
   build player payloads from explicit whitelists; hidden fields, unrevealed
   people/places, and unfired event text never leave the server on `/api/table`
   or `/api/lore`. A person standing in an unrevealed place gets `placeId: null`.
@@ -63,7 +64,12 @@ docs/         this file, the design spec, ComfyUI workflow
 | `POST/PUT /api/characters[/:id]` | folk (NPC) cards incl. hidden layer |
 | `POST /api/log`, `POST /api/log/:id/publish` | chronicle notes, publish to table |
 | `GET /api/reference` | SRD creation data (classes, ancestries, cards…) |
-| `GET/POST/PUT/DELETE /api/party[/:id]` | player characters |
+| `GET/POST/PUT/DELETE /api/party[/:id]` | player characters; list and single-character responses are explicit player whitelists |
+| `PUT /api/party/:id/conditions` | replace a PC's validated standard Conditions; broadcasts to player clients |
+| `GET /api/items/consumables` | the 60-entry standard Consumables catalog |
+| `POST /api/party/:id/inventory/grant` | give a standard Consumable, stacking to the rules limit of five |
+| `POST/PUT/DELETE /api/party/:id/inventory[/:itemId]` | add, edit, or remove a typed carried item |
+| `POST /api/party/:id/inventory/:itemId/use` | atomically resolve a reaction and consume one quantity |
 | `GET/PUT /api/board` | drafting-board document `{items, pins}` |
 | `POST/PUT/DELETE /api/people[/:id]` | wider-world NPCs: description public, `hidden.notes` private, `placeId` moves them, `items` carried, `revealed` gates player visibility |
 | `POST /api/people/:id/portrait` | ComfyUI request stub — saves `portraitPrompt`, returns "not wired yet" |
@@ -76,11 +82,19 @@ docs/         this file, the design spec, ComfyUI workflow
 
 `PUT /api/party/:id` merges partial bodies (the sheet PUTs single fields like
 `{hp: 3}`); if `level` changes it shifts damage thresholds by the same delta.
+Conditions are a separate validated mutation (`hidden`, `restrained`, or
+`vulnerable`) and are explicitly included in `playerCharacterView()`.
+Inventory uses a backward-compatible typed-item whitelist and declarative
+Consumable reactions; see [inventory.md](inventory.md).
 
 ## Frontend conventions
 
 - No framework, no build. Each page is `index.html` + one JS module; shared
   code only in `public/shared/`.
+- **Creator sub-steps:** a main creation section may define a static or
+  data-driven `parts` count. The fixed footer renders secondary progress and
+  moves forward content left/backward content right; `step`, `part`, and the
+  draft are restored together from per-tab session storage.
 - **Themes:** GM surfaces use `ledger.css` (light, steward's-ledger). Player
   surfaces use `lamplight.css` (dark). Tone per spec §2: quiet, warm, no
   gamified fanfare; microcopy per §12.

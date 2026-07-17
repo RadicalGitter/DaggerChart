@@ -1,4 +1,5 @@
 import { t, initI18n, seasonLabel } from "/shared/i18n.js";
+import { shellRoute } from "/shared/shells.js";
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) =>
@@ -15,7 +16,7 @@ function portraitHtml(person) {
 
 function realPlayerCard(pc) {
   const current = pc.id === currentPC();
-  return `<a class="player-card${current ? " current" : ""}" href="/table" data-pc="${esc(pc.id)}">
+  return `<a class="player-card${current ? " current" : ""}" href="${esc(shellRoute(pc.shell))}" data-pc="${esc(pc.id)}">
     ${portraitHtml(pc)}<span class="player-shade"></span>
     ${current ? `<span class="player-tag">${t("login.current")}</span>` : ""}
     <span class="player-copy"><strong>${esc(pc.name)}</strong><span>${esc(pc.player || t("login.players"))}</span></span>
@@ -64,7 +65,7 @@ function render() {
 
 async function refresh() {
   const response = await fetch("/api/table");
-  if (!response.ok) throw new Error("The table ledger could not be opened.");
+  if (!response.ok) throw new Error(t("error.characters"));
   data = await response.json();
   render();
 }

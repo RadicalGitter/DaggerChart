@@ -51,7 +51,7 @@ async function api(path, opts = {}) {
     body: opts.body ? JSON.stringify(opts.body) : undefined
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Something went wrong.");
+  if (!res.ok) throw new Error(data.error || t("error.generic"));
   return data;
 }
 

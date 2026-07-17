@@ -297,7 +297,7 @@ function centerBookSoon() {
 
 async function refresh() {
   const response = await fetch("/api/table");
-  if (!response.ok) throw new Error("The player ledger could not be opened.");
+  if (!response.ok) throw new Error(t("error.table"));
   data = await response.json();
   renderCover();
   renderBookmarks();

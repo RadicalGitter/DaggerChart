@@ -80,7 +80,7 @@ stopped (or live; the GM console re-reads on refresh):
 - `log.json` — the season ledger; entries carry a `published` flag
 - `board.json` — drafting-board plates and pins
 - `event-tables/*.json` — **do not open** (see above)
-- `daggerheart/reference.json` — SRD reference data (classes, ancestries, communities, domain cards, weapons, armor, items)
+- `daggerheart/reference.json` — SRD reference data (classes, ancestries, communities, domain cards, weapons, armor, and the 60-entry Consumables catalog)
 - `backups/` — automatic snapshots (gitignored)
 
 ## Roadmap

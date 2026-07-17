@@ -89,7 +89,7 @@ function render() {
 
     <div class="sheet-section">
       <span class="smallcaps">${t("sheet.carried")}</span>
-      <div class="card"><ul>${p.inventory.map((i) => `<li>${esc(i)}</li>`).join("")}</ul></div>
+      <div class="card"><ul>${p.inventory.map((i) => `<li><strong>${esc(i.name)}</strong>${i.quantity > 1 ? ` ×${i.quantity}` : ""}${i.description ? `<div class="muted">${termify(esc(i.description))}</div>` : ""}</li>`).join("")}</ul></div>
     </div>
 
     ${p.background.length

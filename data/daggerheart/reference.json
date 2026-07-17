@@ -3401,5 +3401,621 @@
       "baseSevereThreshold": 17,
       "feature": "Very Heavy: -2 to Evasion; -1 to Agility"
     }
+  ],
+  "consumables": [
+    {
+      "id": "core_consumable_stride_potion",
+      "roll": 1,
+      "name": "Stride Potion",
+      "description": "You gain a +1 bonus to your next Agility Roll.",
+      "descriptionSv": "Du f?r +1 p? n?sta Agility Roll.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_bolster_potion",
+      "roll": 2,
+      "name": "Bolster Potion",
+      "description": "You gain a +1 bonus to your next Strength Roll.",
+      "descriptionSv": "Du f?r +1 p? n?sta Strength Roll.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_control_potion",
+      "roll": 3,
+      "name": "Control Potion",
+      "description": "You gain a +1 bonus to your next Finesse Roll.",
+      "descriptionSv": "Du f?r +1 p? n?sta Finesse Roll.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_attune_potion",
+      "roll": 4,
+      "name": "Attune Potion",
+      "description": "You gain a +1 bonus to your next Instinct Roll.",
+      "descriptionSv": "Du f?r +1 p? n?sta Instinct Roll.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_charm_potion",
+      "roll": 5,
+      "name": "Charm Potion",
+      "description": "You gain a +1 bonus to your next Presence Roll.",
+      "descriptionSv": "Du f?r +1 p? n?sta Presence Roll.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_enlighten_potion",
+      "roll": 6,
+      "name": "Enlighten Potion",
+      "description": "You gain a +1 bonus to your next Knowledge Roll.",
+      "descriptionSv": "Du f?r +1 p? n?sta Knowledge Roll.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_minor_health_potion",
+      "roll": 7,
+      "name": "Minor Health Potion",
+      "description": "Clear 1d4 HP.",
+      "descriptionSv": "Rensa 1d4 HP.",
+      "icon": "potion",
+      "reaction": {
+        "kind": "clear",
+        "target": "hp",
+        "die": 4,
+        "bonus": 0
+      }
+    },
+    {
+      "id": "core_consumable_minor_stamina_potion",
+      "roll": 8,
+      "name": "Minor Stamina Potion",
+      "description": "Clear 1d4 Stress.",
+      "descriptionSv": "Rensa 1d4 Stress.",
+      "icon": "potion",
+      "reaction": {
+        "kind": "clear",
+        "target": "stress",
+        "die": 4,
+        "bonus": 0
+      }
+    },
+    {
+      "id": "core_consumable_grindletooth_venom",
+      "roll": 9,
+      "name": "Grindletooth Venom",
+      "description": "You can apply this venom to a weapon that deals physical damage to add a d6 to your next damage roll with that weapon.",
+      "descriptionSv": "Applicera giftet p? ett vapen som g?r physical damage f?r att l?gga till en d6 p? n?sta damage roll med vapnet.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_varik_leaves",
+      "roll": 10,
+      "name": "Varik Leaves",
+      "description": "You can eat these paired leaves to immediately gain 2 Hope.",
+      "descriptionSv": "?t de hopparade bladen f?r att omedelbart f? 2 Hope.",
+      "icon": "satchel",
+      "reaction": {
+        "kind": "gain",
+        "target": "hope",
+        "amount": 2
+      }
+    },
+    {
+      "id": "core_consumable_vial_of_moondrip",
+      "roll": 11,
+      "name": "Vial of Moondrip",
+      "description": "When you drink the contents of this vial, you can see in total darkness until your next rest.",
+      "descriptionSv": "Drick inneh?llet f?r att kunna se i fullst?ndigt m?rker fram till n?sta vila.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_unstable_arcane_shard",
+      "roll": 12,
+      "name": "Unstable Arcane Shard",
+      "description": "You can make a Finesse Roll to throw this shard at a group of adversaries within Far range. Targets you succeed against take 1d20 magic damage.",
+      "descriptionSv": "G?r ett Finesse Roll f?r att kasta sk?rvan mot en grupp adversaries inom Far range. M?l du lyckas mot tar 1d20 magic damage.",
+      "icon": "shard",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_potion_of_stability",
+      "roll": 13,
+      "name": "Potion of Stability",
+      "description": "You can drink this potion to choose one additional downtime move.",
+      "descriptionSv": "Drick drycken f?r att v?lja ytterligare ett downtime move.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_improved_grindletooth_venom",
+      "roll": 14,
+      "name": "Improved Grindletooth Venom",
+      "description": "You can apply this venom to a weapon that deals physical damage to add a d8 to your next damage roll with that weapon.",
+      "descriptionSv": "Applicera giftet p? ett vapen som g?r physical damage f?r att l?gga till en d8 p? n?sta damage roll med vapnet.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_morphing_clay",
+      "roll": 15,
+      "name": "Morphing Clay",
+      "description": "You can spend a Hope to use this clay, altering your face enough to make you unrecognizable until your next rest.",
+      "descriptionSv": "Spendera 1 Hope f?r att anv?nda leran och f?r?ndra ditt ansikte s? att du inte kan k?nnas igen fram till n?sta vila.",
+      "icon": "satchel",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_vial_of_darksmoke",
+      "roll": 16,
+      "name": "Vial of Darksmoke",
+      "description": "When an adversary attacks you, use this vial and roll a number of d6s equal to your Agility. Add the highest result to your Evasion against the attack.",
+      "descriptionSv": "N?r en adversary anfaller dig anv?nder du flaskan och sl?r lika m?nga d6 som din Agility. L?gg det h?gsta resultatet till din Evasion mot anfallet.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_jumping_root",
+      "roll": 17,
+      "name": "Jumping Root",
+      "description": "Eat this root to leap up to Far range once without needing to roll.",
+      "descriptionSv": "?t roten f?r att hoppa upp till Far range en g?ng utan att sl?.",
+      "icon": "herb",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_snap_powder",
+      "roll": 18,
+      "name": "Snap Powder",
+      "description": "Mark a Stress and clear a HP.",
+      "descriptionSv": "Markera 1 Stress och rensa 1 HP.",
+      "icon": "satchel",
+      "reaction": {
+        "kind": "adjust",
+        "changes": [
+          {
+            "target": "stress",
+            "mode": "mark",
+            "amount": 1
+          },
+          {
+            "target": "hp",
+            "mode": "clear",
+            "amount": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "core_consumable_health_potion",
+      "roll": 19,
+      "name": "Health Potion",
+      "description": "Clear 1d4+1 HP.",
+      "descriptionSv": "Rensa 1d4+1 HP.",
+      "icon": "potion",
+      "reaction": {
+        "kind": "clear",
+        "target": "hp",
+        "die": 4,
+        "bonus": 1
+      }
+    },
+    {
+      "id": "core_consumable_stamina_potion",
+      "roll": 20,
+      "name": "Stamina Potion",
+      "description": "Clear 1d4+1 Stress.",
+      "descriptionSv": "Rensa 1d4+1 Stress.",
+      "icon": "potion",
+      "reaction": {
+        "kind": "clear",
+        "target": "stress",
+        "die": 4,
+        "bonus": 1
+      }
+    },
+    {
+      "id": "core_consumable_armor_stitcher",
+      "roll": 21,
+      "name": "Armor Stitcher",
+      "description": "You can use this stitcher to spend any number of Hope and clear that many Armor Slots.",
+      "descriptionSv": "Spendera valfritt antal Hope och rensa lika m?nga Armor Slots.",
+      "icon": "satchel",
+      "reaction": {
+        "kind": "spend-clear",
+        "spend": "hope",
+        "target": "armorMarked"
+      }
+    },
+    {
+      "id": "core_consumable_gill_salve",
+      "roll": 22,
+      "name": "Gill Salve",
+      "description": "You can apply this salve to your neck to breathe underwater for a number of minutes equal to your level.",
+      "descriptionSv": "Stryk salvan p? halsen f?r att kunna andas under vatten i lika m?nga minuter som din level.",
+      "icon": "satchel",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_replication_parchment",
+      "roll": 23,
+      "name": "Replication Parchment",
+      "description": "By touching this piece of parchment to another, you can perfectly copy the second parchment's contents. Once used, this parchment becomes mundane paper.",
+      "descriptionSv": "R?r pergamentet vid ett annat pergament f?r att kopiera dess inneh?ll perfekt. Efter?t blir det vanligt papper.",
+      "icon": "satchel",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_improved_arcane_shard",
+      "roll": 24,
+      "name": "Improved Arcane Shard",
+      "description": "You can make a Finesse Roll to throw this shard at a group of adversaries within Far range. Targets you succeed against take 2d20 magic damage.",
+      "descriptionSv": "G?r ett Finesse Roll f?r att kasta sk?rvan mot en grupp adversaries inom Far range. M?l du lyckas mot tar 2d20 magic damage.",
+      "icon": "shard",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_major_stride_potion",
+      "roll": 25,
+      "name": "Major Stride Potion",
+      "description": "You gain a +1 bonus to your Agility until your next rest.",
+      "descriptionSv": "Du f?r +1 Agility fram till n?sta vila.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_major_bolster_potion",
+      "roll": 26,
+      "name": "Major Bolster Potion",
+      "description": "You gain a +1 bonus to your Strength until your next rest.",
+      "descriptionSv": "Du f?r +1 Strength fram till n?sta vila.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_major_control_potion",
+      "roll": 27,
+      "name": "Major Control Potion",
+      "description": "You gain a +1 bonus to your Finesse until your next rest.",
+      "descriptionSv": "Du f?r +1 Finesse fram till n?sta vila.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_major_attune_potion",
+      "roll": 28,
+      "name": "Major Attune Potion",
+      "description": "You gain a +1 bonus to your Instinct until your next rest.",
+      "descriptionSv": "Du f?r +1 Instinct fram till n?sta vila.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_major_charm_potion",
+      "roll": 29,
+      "name": "Major Charm Potion",
+      "description": "You gain a +1 bonus to your Presence until your next rest.",
+      "descriptionSv": "Du f?r +1 Presence fram till n?sta vila.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_major_enlighten_potion",
+      "roll": 30,
+      "name": "Major Enlighten Potion",
+      "description": "You gain a +1 bonus to your Knowledge until your next rest.",
+      "descriptionSv": "Du f?r +1 Knowledge fram till n?sta vila.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_blood_of_the_yorgi",
+      "roll": 31,
+      "name": "Blood of the Yorgi",
+      "description": "You can drink this blood to disappear from where you are and immediately reappear at a point you can see within Very Far range.",
+      "descriptionSv": "Drick blodet f?r att f?rsvinna och omedelbart dyka upp p? en plats du kan se inom Very Far range.",
+      "icon": "satchel",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_homet_s_secret_potion",
+      "roll": 32,
+      "name": "Homet's Secret Potion",
+      "description": "After drinking this potion, the next successful attack you make critically succeeds.",
+      "descriptionSv": "Efter att du druckit drycken blir n?sta lyckade anfall en critical success.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_redthorn_saliva",
+      "roll": 33,
+      "name": "Redthorn Saliva",
+      "description": "You can apply this saliva to a weapon that deals physical damage to add a d12 to your next damage roll with that weapon.",
+      "descriptionSv": "Applicera saliven p? ett vapen som g?r physical damage f?r att l?gga till en d12 p? n?sta damage roll med vapnet.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_channelstone",
+      "roll": 34,
+      "name": "Channelstone",
+      "description": "You can use this stone to take a spell or grimoire from your vault, use it once, and return it to your vault.",
+      "descriptionSv": "Anv?nd stenen f?r att ta en spell eller grimoire fr?n din vault, anv?nda den en g?ng och l?gga tillbaka den.",
+      "icon": "shard",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_mythic_dust",
+      "roll": 35,
+      "name": "Mythic Dust",
+      "description": "You can apply this dust to a weapon that deals magic damage to add a d12 to your next damage roll with that weapon.",
+      "descriptionSv": "Applicera stoftet p? ett vapen som g?r magic damage f?r att l?gga till en d12 p? n?sta damage roll med vapnet.",
+      "icon": "satchel",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_acidpaste",
+      "roll": 36,
+      "name": "Acidpaste",
+      "description": "This paste eats away walls and other surfaces in bright flashes.",
+      "descriptionSv": "Pastan fr?ter sig genom v?ggar och andra ytor i ljusa blixtar.",
+      "icon": "satchel",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_hopehold_flare",
+      "roll": 37,
+      "name": "Hopehold Flare",
+      "description": "When you use this flare, allies within Close range roll a d6 when they spend a Hope. On a result of 6, they gain the effect of that Hope without spending it. The flare lasts until the end of the scene.",
+      "descriptionSv": "N?r facklan anv?nds sl?r allierade inom Close range en d6 n?r de spenderar Hope. Vid 6 f?r de effekten utan att spendera Hope. Varar till scenens slut.",
+      "icon": "satchel",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_major_arcane_shard",
+      "roll": 38,
+      "name": "Major Arcane Shard",
+      "description": "You can make a Finesse Roll to throw this shard at a group of adversaries within Far range. Targets you succeed against take 4d20 magic damage.",
+      "descriptionSv": "G?r ett Finesse Roll f?r att kasta sk?rvan mot en grupp adversaries inom Far range. M?l du lyckas mot tar 4d20 magic damage.",
+      "icon": "shard",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_featherbone",
+      "roll": 39,
+      "name": "Featherbone",
+      "description": "You can use this bone to control your falling speed for a number of minutes equal to your level.",
+      "descriptionSv": "Anv?nd benet f?r att styra fallhastigheten i lika m?nga minuter som din level.",
+      "icon": "satchel",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_circle_of_the_void",
+      "roll": 40,
+      "name": "Circle of the Void",
+      "description": "Mark a Stress to create a void that extends up to Far range. No magic can be cast inside the void, and creatures within the void are immune to magic damage.",
+      "descriptionSv": "Markera 1 Stress f?r att skapa ett tomrum upp till Far range. Ingen magic kan anv?ndas d?r och varelser i omr?det ?r immuna mot magic damage.",
+      "icon": "satchel",
+      "reaction": {
+        "kind": "adjust",
+        "changes": [
+          {
+            "target": "stress",
+            "mode": "mark",
+            "amount": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "core_consumable_sun_tree_sap",
+      "roll": 41,
+      "name": "Sun Tree Sap",
+      "description": "Consume this sap to roll a d6. On a result of 5?6, clear 2 HP. On a result of 2?4, clear 3 Stress. On a result of 1, see through the veil of death and return changed, gaining one scar.",
+      "descriptionSv": "Sl? en d6. Vid 5?6 rensar du 2 HP. Vid 2?4 rensar du 3 Stress. Vid 1 ser du genom d?dens sl?ja, ?terv?nder f?r?ndrad och f?r ett scar.",
+      "icon": "potion",
+      "reaction": {
+        "kind": "sun-tree",
+        "die": 6
+      }
+    },
+    {
+      "id": "core_consumable_dripfang_poison",
+      "roll": 42,
+      "name": "Dripfang Poison",
+      "description": "A creature who consumes this poison takes 8d10 direct magic damage.",
+      "descriptionSv": "En varelse som dricker giftet tar 8d10 direct magic damage.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_major_health_potion",
+      "roll": 43,
+      "name": "Major Health Potion",
+      "description": "Clear 1d4+2 HP.",
+      "descriptionSv": "Rensa 1d4+2 HP.",
+      "icon": "potion",
+      "reaction": {
+        "kind": "clear",
+        "target": "hp",
+        "die": 4,
+        "bonus": 2
+      }
+    },
+    {
+      "id": "core_consumable_major_stamina_potion",
+      "roll": 44,
+      "name": "Major Stamina Potion",
+      "description": "Clear 1d4+2 Stress.",
+      "descriptionSv": "Rensa 1d4+2 Stress.",
+      "icon": "potion",
+      "reaction": {
+        "kind": "clear",
+        "target": "stress",
+        "die": 4,
+        "bonus": 2
+      }
+    },
+    {
+      "id": "core_consumable_ogre_musk",
+      "roll": 45,
+      "name": "Ogre Musk",
+      "description": "You can use this musk to prevent anyone from tracking you by mundane or magical means until your next rest.",
+      "descriptionSv": "Anv?nd mysket f?r att f?rhindra att n?gon sp?rar dig, med vanliga eller magiska medel, fram till n?sta vila.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_wingsprout",
+      "roll": 46,
+      "name": "Wingsprout",
+      "description": "You gain magic wings that allow you to fly for a number of minutes equal to your level.",
+      "descriptionSv": "Du f?r magiska vingar och kan flyga i lika m?nga minuter som din level.",
+      "icon": "herb",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_jar_of_lost_voices",
+      "roll": 47,
+      "name": "Jar of Lost Voices",
+      "description": "You can open this jar to release a deafening echo of voices for a number of minutes equal to your Instinct. Creatures within Far range unprepared for the sound take 6d8 magic damage.",
+      "descriptionSv": "?ppna burken f?r att sl?ppa ut ett ?ronbed?vande eko i lika m?nga minuter som din Instinct. Of?rberedda varelser inom Far range tar 6d8 magic damage.",
+      "icon": "satchel",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_dragonbloom_tea",
+      "roll": 48,
+      "name": "Dragonbloom Tea",
+      "description": "You can drink this tea to unleash a fiery breath attack. Make an Instinct Roll against all adversaries in front of you within Close range. Targets you succeed against take d20 physical damage using your Proficiency.",
+      "descriptionSv": "Drick teet och g?r ett Instinct Roll mot alla adversaries framf?r dig inom Close range. M?l du lyckas mot tar d20 physical damage med din Proficiency.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_bridge_seed",
+      "roll": 49,
+      "name": "Bridge Seed",
+      "description": "Thick vines grow from your location to a point of your choice within Far range, allowing you to climb up or across them. The vines dissipate on your next short rest.",
+      "descriptionSv": "Tjocka rankor v?xer till en vald plats inom Far range s? att de kan kl?ttras p?. De f?rsvinner vid n?sta short rest.",
+      "icon": "herb",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_sleeping_sap",
+      "roll": 50,
+      "name": "Sleeping Sap",
+      "description": "You can drink this potion to fall asleep for a full night's rest. You clear all Stress upon waking.",
+      "descriptionSv": "Drick drycken f?r att sova en hel natts vila. N?r du vaknar rensar du all Stress.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_feast_of_xuria",
+      "roll": 51,
+      "name": "Feast of Xuria",
+      "description": "You can eat this meal to clear all HP and Stress and gain 1d4 Hope.",
+      "descriptionSv": "?t m?ltiden f?r att rensa all HP och Stress och f? 1d4 Hope.",
+      "icon": "herb",
+      "reaction": {
+        "kind": "feast",
+        "die": 4
+      }
+    },
+    {
+      "id": "core_consumable_bonding_honey",
+      "roll": 52,
+      "name": "Bonding Honey",
+      "description": "This honey can be used to glue two objects together permanently.",
+      "descriptionSv": "Honungen limmar permanent ihop tv? f?rem?l.",
+      "icon": "herb",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_shrinking_potion",
+      "roll": 53,
+      "name": "Shrinking Potion",
+      "description": "You can drink this potion to halve your size until you choose to drop this form or your next rest. While in this form, you have a +2 bonus to Agility and a -1 penalty to your Proficiency.",
+      "descriptionSv": "Drick drycken f?r att halvera din storlek tills du l?mnar formen eller vilar. Du f?r +2 Agility och ?1 Proficiency.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_growing_potion",
+      "roll": 54,
+      "name": "Growing Potion",
+      "description": "You can drink this potion to double your size until you choose to drop this form or your next rest. While in this form, you have a +2 bonus to Strength and a +1 bonus to your Proficiency.",
+      "descriptionSv": "Drick drycken f?r att dubbla din storlek tills du l?mnar formen eller vilar. Du f?r +2 Strength och +1 Proficiency.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_knowledge_stone",
+      "roll": 55,
+      "name": "Knowledge Stone",
+      "description": "If you die while holding this stone, an ally can take a card from your loadout to place in their loadout or vault. After they take this knowledge, the stone crumbles.",
+      "descriptionSv": "Om du d?r med stenen kan en allierad ta ett kort fr?n din loadout till sin loadout eller vault. D?refter smulas stenen s?nder.",
+      "icon": "shard",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_sweet_moss",
+      "roll": 56,
+      "name": "Sweet Moss",
+      "description": "You can consume this moss during a rest to clear 1d10 HP or 1d10 Stress.",
+      "descriptionSv": "?t mossan under en vila f?r att rensa 1d10 HP eller 1d10 Stress.",
+      "icon": "herb",
+      "reaction": {
+        "kind": "choose-clear",
+        "targets": [
+          "hp",
+          "stress"
+        ],
+        "die": 10
+      }
+    },
+    {
+      "id": "core_consumable_blinding_orb",
+      "roll": 57,
+      "name": "Blinding Orb",
+      "description": "You can activate this orb to create a flash of bright light. All targets within Close range become Vulnerable until they mark HP.",
+      "descriptionSv": "Aktivera klotet f?r att skapa en stark ljusblixt. Alla m?l inom Close range blir Vulnerable tills de markerar HP.",
+      "icon": "shard",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_death_tea",
+      "roll": 58,
+      "name": "Death Tea",
+      "description": "After you drink this tea, you instantly kill your target when you critically succeed on an attack. If you don't critically succeed on an attack before your next long rest, you die.",
+      "descriptionSv": "Efter att du druckit teet d?dar du omedelbart ditt m?l vid en critical success p? ett anfall. Om det inte sker f?re n?sta long rest d?r du.",
+      "icon": "potion",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_mirror_of_marigold",
+      "roll": 59,
+      "name": "Mirror of Marigold",
+      "description": "When you take damage, you can spend a Hope to negate that damage, after which the mirror shatters.",
+      "descriptionSv": "N?r du tar damage kan du spendera 1 Hope f?r att upph?va skadan. Spegeln krossas d?refter.",
+      "icon": "shard",
+      "reaction": null
+    },
+    {
+      "id": "core_consumable_stardrop",
+      "roll": 60,
+      "name": "Stardrop",
+      "description": "You can use this stardrop to summon a hailstorm of comets that deals 8d20 physical damage to all targets within Very Far range.",
+      "descriptionSv": "?kalla en kometstorm som g?r 8d20 physical damage p? alla m?l inom Very Far range.",
+      "icon": "shard",
+      "reaction": null
+    }
   ]
 }

@@ -2,12 +2,14 @@ import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { state, persist, addLog, advanceSeason, resolveDowntime, modifierBreakdown, seasonLabel } from "./state.js";
-import { gmView, tableView, loreView, screenView } from "./views.js";
+import { gmView, tableView, loreView, screenView, partyListView, playerCharacterView } from "./views.js";
 import { loadJson, saveJson } from "./store.js";
+import { addInventoryItem, consumables, grantConsumable, inventoryEntry, updateInventoryItem, useInventoryItem } from "./inventory.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(__dirname, "..", "public");
 const PORT = process.env.PORT || 4626;
+const STANDARD_CONDITIONS = new Set(["hidden", "restrained", "vulnerable"]);
 
 const app = express();
 app.use(express.json());
@@ -61,10 +63,10 @@ app.get("/api/reference", guard((_req, res) => {
   res.json(state.reference);
 }));
 
-app.get("/api/party", (_req, res) => res.json(state.pcs));
+app.get("/api/party", (_req, res) => res.json(partyListView()));
 
 app.get("/api/party/:id", guard((req, res) => {
-  const pc = state.pcs.find((p) => p.id === req.params.id);
+  const pc = playerCharacterView(req.params.id);
   if (!pc) throw new Error("No such character.");
   res.json(pc);
 }));
@@ -79,12 +81,13 @@ app.post("/api/party", guard((req, res) => {
   addLog({ type: "party", summary: `${pc.name.trim()} takes their place in the settlement.`, published: true });
   persist();
   broadcast();
-  res.json(pc);
+  res.json(playerCharacterView(pc.id));
 }));
 
 app.put("/api/party/:id", guard((req, res) => {
   const i = state.pcs.findIndex((p) => p.id === req.params.id);
   if (i === -1) throw new Error("No such character.");
+  if (Object.hasOwn(req.body, "conditions")) throw new Error("Use the Conditions control.");
   const prev = state.pcs[i];
   const next = { ...prev, ...req.body, id: prev.id };
   // Damage thresholds are armor base + level: keep them in step with level changes.
@@ -98,7 +101,63 @@ app.put("/api/party/:id", guard((req, res) => {
   state.pcs[i] = next;
   persist();
   broadcast();
-  res.json(next);
+  res.json(playerCharacterView(next.id));
+}));
+
+app.get("/api/items/consumables", (_req, res) => res.json(consumables(state.reference)));
+
+app.put("/api/party/:id/conditions", guard((req, res) => {
+  const pc = state.pcs.find((p) => p.id === req.params.id);
+  if (!pc) throw new Error("No such character.");
+  if (!Array.isArray(req.body.conditions)) throw new Error("Conditions must be a list.");
+  const conditions = [...new Set(req.body.conditions)];
+  if (conditions.some((id) => !STANDARD_CONDITIONS.has(id))) throw new Error("Unknown condition.");
+  pc.conditions = conditions;
+  persist();
+  broadcast();
+  res.json(playerCharacterView(pc.id));
+}));
+
+function pcForInventory(id) {
+  const pc = state.pcs.find((entry) => entry.id === id);
+  if (!pc) throw new Error("No such character.");
+  return pc;
+}
+
+app.post("/api/party/:id/inventory", guard((req, res) => {
+  const pc = pcForInventory(req.params.id);
+  addInventoryItem(pc, req.body, state.reference);
+  persist(); broadcast();
+  res.json(playerCharacterView(pc.id));
+}));
+
+app.post("/api/party/:id/inventory/grant", guard((req, res) => {
+  const pc = pcForInventory(req.params.id);
+  grantConsumable(pc, req.body.catalogId, req.body.quantity, state.reference);
+  persist(); broadcast();
+  res.json(playerCharacterView(pc.id));
+}));
+
+app.put("/api/party/:id/inventory/:itemId", guard((req, res) => {
+  const pc = pcForInventory(req.params.id);
+  updateInventoryItem(pc, req.params.itemId, req.body, state.reference);
+  persist(); broadcast();
+  res.json(playerCharacterView(pc.id));
+}));
+
+app.delete("/api/party/:id/inventory/:itemId", guard((req, res) => {
+  const pc = pcForInventory(req.params.id);
+  const { index } = inventoryEntry(pc, req.params.itemId, state.reference);
+  pc.inventory.splice(index, 1);
+  persist(); broadcast();
+  res.json(playerCharacterView(pc.id));
+}));
+
+app.post("/api/party/:id/inventory/:itemId/use", guard((req, res) => {
+  const pc = pcForInventory(req.params.id);
+  const effect = useInventoryItem(pc, req.params.itemId, req.body, state.reference);
+  persist(); broadcast();
+  res.json({ pc: playerCharacterView(pc.id), effect });
 }));
 
 app.delete("/api/party/:id", guard((req, res) => {
@@ -152,7 +211,7 @@ app.post("/api/resources/adjust", guard((req, res) => {
   const { resource, delta, reason } = req.body;
   if (!(resource in state.settlement.resources)) throw new Error("Unknown resource.");
   if (!Number.isInteger(delta)) throw new Error("Delta must be a whole number.");
-  if (!reason || !reason.trim()) throw new Error("A reason is required — everything is auditable.");
+  if (!reason || !reason.trim()) throw new Error("Enter a reason for the adjustment.");
   state.settlement.resources[resource] += delta;
   addLog({
     type: "adjust",
@@ -322,7 +381,7 @@ app.put("/api/places/:id", guard((req, res) => {
 app.delete("/api/places/:id", guard((req, res) => {
   const i = state.places.findIndex((p) => p.id === req.params.id);
   if (i === -1) throw new Error("Unknown place.");
-  if (state.places[i].fixed) throw new Error("The settlement itself stays on the map.");
+  if (state.places[i].fixed) throw new Error("The settlement cannot be deleted.");
   const [gone] = state.places.splice(i, 1);
   for (const person of state.people) {
     if (person.placeId === gone.id) person.placeId = null;
@@ -344,7 +403,7 @@ app.put("/api/screen", guard((req, res) => {
   if (type === null) {
     state.screen.current = null;
   } else {
-    if (!SCREEN_TYPES.has(type)) throw new Error("Nothing of that kind fits on the screen.");
+    if (!SCREEN_TYPES.has(type)) throw new Error("Unsupported screen type.");
     if (type === "image" && (!url || !url.trim())) throw new Error("An image needs a URL.");
     if (type === "text" && !(title || "").trim() && !(body || "").trim()) throw new Error("Write something first.");
     if (type === "folk" && !state.characters.find((c) => c.id === refId)) throw new Error("Unknown folk.");
@@ -411,7 +470,7 @@ app.post("/api/notes", guard((req, res) => {
   if (!NOTE_KINDS.has(kind)) throw new Error("Unknown kind of note.");
   if (!text || !text.trim()) throw new Error("Write something first.");
   const pc = state.pcs.find((p) => p.id === pcId);
-  if (!pc) throw new Error("Whose note is this? No such character.");
+  if (!pc) throw new Error("No such character.");
   if (kind === "person" && !state.people.find((p) => p.id === refId && p.revealed))
     throw new Error("Unknown person.");
   if (kind === "place" && !state.places.find((p) => p.id === refId && p.revealed))
@@ -437,7 +496,7 @@ app.post("/api/notes", guard((req, res) => {
 app.put("/api/notes/:id", guard((req, res) => {
   const note = state.notes.find((n) => n.id === req.params.id);
   if (!note) throw new Error("No such note.");
-  if (note.pcId !== req.body.pcId) throw new Error("Only the hand that wrote it may change it.");
+  if (note.pcId !== req.body.pcId) throw new Error("Only the character who wrote this note can edit it.");
   if (typeof req.body.text === "string" && req.body.text.trim()) note.text = req.body.text.trim();
   if (req.body.scope === "personal" || req.body.scope === "group") note.scope = req.body.scope;
   note.updated = new Date().toISOString();
@@ -449,7 +508,7 @@ app.put("/api/notes/:id", guard((req, res) => {
 app.delete("/api/notes/:id", guard((req, res) => {
   const i = state.notes.findIndex((n) => n.id === req.params.id);
   if (i === -1) throw new Error("No such note.");
-  if (state.notes[i].pcId !== req.query.pc) throw new Error("Only the hand that wrote it may strike it.");
+  if (state.notes[i].pcId !== req.query.pc) throw new Error("Only the character who wrote this note can remove it.");
   state.notes.splice(i, 1);
   persist();
   broadcast();

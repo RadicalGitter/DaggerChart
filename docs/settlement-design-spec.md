@@ -182,6 +182,11 @@ Each phase ends in something the GM can actually run a session with.
 
 ## 12. Voice & microcopy reference
 
+- **Clarity before atmosphere.** Use in-world language when it names the
+  actual object or action: *Open the journal*, *Advance the season*, *Enter it
+  in the chronicle*. Utility choices should be plain: *Choose your character*,
+  *Add note*, *Next*. Do not turn navigation into a riddle. Destructive
+  actions must say exactly what they remove.
 - Season log entry style: *"Autumn, Year 1 — The Lumber Camp (Garrick). Rolled 17: fine boards. +5 Lumber."*
 - Catastrophe style: plain and grave. *"The storehouse is lost. All Supplies destroyed."* No exclamation points, no flavor the GM didn't write.
 - Empty states in-world: *"No buildings yet. The wilderness is waiting."*
