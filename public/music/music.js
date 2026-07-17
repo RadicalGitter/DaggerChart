@@ -1430,6 +1430,24 @@ $("#play-toggle").onclick = () => {
   else if (audio.paused) audio.play();
   else audio.pause();
 };
+$("#next-track").onclick = () => {
+  const next = state.queue[0];
+  if (next) playSong(next); // playSong strikes it from the queue itself
+  else toast("Nothing waits in the queue.");
+};
+$("#prev-track").onclick = () => {
+  const audio = $("#audio");
+  // Once restarts the song; pressed again at the top, it reaches for the
+  // previous one in the popped history.
+  if (audio.src && audio.currentTime > 3) {
+    audio.currentTime = 0;
+    return;
+  }
+  const idx = state.history.findIndex((entry) => entry.songId === state.playingId);
+  const previous = idx >= 0 ? state.history[idx + 1] : state.history[0];
+  if (previous && songById(previous.songId)?.audioUrl) playSong(previous.songId);
+  else if (audio.src) audio.currentTime = 0;
+};
 $("#loop-toggle").onclick = () => { $("#audio").loop = !$("#audio").loop; updateTransport(); };
 $("#volume").oninput = (event) => { $("#audio").volume = Number(event.target.value); };
 $("#seek").oninput = (event) => {

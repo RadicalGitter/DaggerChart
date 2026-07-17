@@ -360,13 +360,16 @@ button, input, textarea, select { letter-spacing: 0; }
   color: #f3ecdd; background: var(--music-deep); border-top: 1px solid #43554e;
 }
 .transport { width: 38px; height: 38px; padding: 0; border-radius: 50%; background: transparent; border-color: #708078; }
-.playing-copy { flex: 0 1 240px; min-width: 140px; display: flex; flex-direction: column; }
+.transport.small { width: 31px; height: 31px; font-size: 0.72rem; }
+/* Title breathes left, volume breathes right; the instruments gather mid-bar. */
+.playing-copy { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
 .playing-copy strong, .playing-copy span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .playing-copy span { color: #aebcb7; font-size: 0.75rem; }
+.transport-cluster { flex: 0 0 auto; display: flex; align-items: center; gap: 0.55rem; }
 .now-playing input[type="range"] { width: 100%; accent-color: var(--music-gold); }
-.now-playing #seek { flex: 1 1 220px; min-width: 120px; }
+.transport-cluster #seek { width: 180px; flex: none; }
 .now-playing #time-label { white-space: nowrap; color: #aebcb7; font-size: 0.78rem; font-variant-numeric: tabular-nums; }
-.volume-control { flex: 0 0 170px; display: grid; grid-template-columns: auto 1fr; gap: 0.5rem; align-items: center; color: #aebcb7; font-size: 0.72rem; }
+.volume-control { flex: 1 1 0; display: grid; grid-template-columns: auto minmax(90px, 140px); justify-content: end; gap: 0.5rem; align-items: center; color: #aebcb7; font-size: 0.72rem; }
 .now-playing .quiet { color: #e8ddc8; border-color: #708078; }
 
 .context-menu {
@@ -419,7 +422,9 @@ dialog::backdrop { background: rgba(30,40,37,0.52); }
   .bubble-column { min-height: 520px; padding: 1rem; }
   .forge-column { padding: 1rem; }
   .now-playing { position: fixed; inset: auto 0 0; flex-wrap: wrap; gap: 0.5rem 0.8rem; height: 108px; padding: 0.6rem 1rem; }
-  .now-playing #seek { flex-basis: 100%; order: 10; }
+  .playing-copy { flex: 1 1 100%; order: -1; }
+  .transport-cluster { margin: 0 auto; }
+  .transport-cluster #seek { width: 130px; }
   .now-playing #time-label, .volume-control, .now-playing #fade-out { display: none; }
   .identity-editor { grid-template-columns: 1fr; }
   .suno-mirror-controls > label { grid-template-columns: 1fr; }

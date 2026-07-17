@@ -143,16 +143,20 @@
   </aside>
 
   <footer class="now-playing" id="now-playing">
-    <button class="transport" id="play-toggle" aria-label="Play or pause">▶</button>
     <div class="playing-copy">
       <strong id="playing-title">Nothing playing</strong>
       <span id="playing-detail">Pop a song to hear it.</span>
     </div>
-    <input id="seek" type="range" min="0" max="1000" value="0" aria-label="Seek">
-    <span id="time-label">0:00</span>
+    <div class="transport-cluster">
+      <button class="transport small" id="prev-track" aria-label="Restart, then previous" title="Restart the song; press again for the previous one">⏮</button>
+      <button class="transport" id="play-toggle" aria-label="Play or pause">▶</button>
+      <button class="transport small" id="next-track" aria-label="Next in the queue" title="Play the next queued song">⏭</button>
+      <input id="seek" type="range" min="0" max="1000" value="0" aria-label="Seek">
+      <span id="time-label">0:00</span>
+      <button class="transport small" id="loop-toggle" aria-label="Loop">↻</button>
+      <button class="quiet" id="fade-out">Fade out</button>
+    </div>
     <label class="volume-control"><span>Volume</span><input id="volume" type="range" min="0" max="1" step="0.02" value="0.8"></label>
-    <button class="transport" id="loop-toggle" aria-label="Loop">↻</button>
-    <button class="quiet" id="fade-out">Fade out</button>
     <audio id="audio"></audio>
   </footer>
 </div>
