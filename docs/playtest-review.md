@@ -4,6 +4,15 @@ Review these workflows after the first live play session, using tickets and
 the content-free UX map as evidence rather than trying to predict every table
 need in advance.
 
+## Before the next play session
+
+- Move character naming from the creator's opening identity fields to the
+  final step, after the character is otherwise complete. Wait until the
+  current live drafts are finished before changing step order, preserve those
+  drafts during migration, and recheck every name-dependent output: portrait
+  prompts, review copy, covenant signature, automatic theme generation, and
+  the post-completion redirect.
+
 ## Images and world records
 
 - Check whether the Images library makes character portraits and recent scene

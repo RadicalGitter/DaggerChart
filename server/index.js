@@ -15,6 +15,7 @@ import { suggestPortrait } from "./portrait-suggest.js";
 import { artWorkshop } from "./art.js";
 import { resolveDualityRoll } from "./duality-roll.js";
 import { DEFAULT_PLAYER_FEATURES, normalizePlayerFeatures, playerFeaturePatch } from "./player-features.js";
+import { normalizeCharacterName, renameCharacter } from "./party-name.js";
 import {
   SCENE_DIMENSIONS,
   SCENE_ROOT_IDS,
@@ -32,6 +33,7 @@ import {
   generateCharacterTheme,
   publishCharacterTheme,
   setCharacterThemeIdentity,
+  renameCharacterThemeTitles,
   createPlaylist,
   addSongToPlaylist,
   renameSong,
@@ -407,7 +409,7 @@ app.post("/api/party", guard((req, res) => {
   const campaignId = String(req.body?.campaignId || state.campaigns.currentId);
   if (!isActiveCampaign(campaignId)) throw new Error("Choose an active campaign.");
   const pc = { ...req.body, campaignId };
-  if (!pc.name || !pc.name.trim()) throw new Error("A name is required.");
+  pc.name = normalizeCharacterName(pc.name);
   pc.id = `pc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
   pc.createdAt = new Date().toISOString();
   pc.level = pc.level || 1;
@@ -428,6 +430,7 @@ app.put("/api/party/:id", guard((req, res) => {
   const i = state.pcs.findIndex((p) => p.id === req.params.id && isPlayablePc(p));
   if (i === -1) throw new Error("No such character.");
   if (Object.hasOwn(req.body, "conditions")) throw new Error("Use the Conditions control.");
+  if (Object.hasOwn(req.body, "name")) throw new Error("Use the character name control.");
   if (Object.hasOwn(req.body, "campaignId") && !isActiveCampaign(req.body.campaignId)) throw new Error("Choose an active campaign.");
   const prev = state.pcs[i];
   const next = { ...prev, ...req.body, id: prev.id };
@@ -443,6 +446,23 @@ app.put("/api/party/:id", guard((req, res) => {
   persist();
   broadcast();
   res.json(playerCharacterView(next.id));
+}));
+
+app.put("/api/party/:id/name", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  const result = renameCharacter(pc, req.body);
+  if (result.changed) {
+    renameCharacterThemeTitles(pc.id, result.previousName, result.name);
+    addLog({
+      type: "party",
+      campaignId: pc.campaignId,
+      summary: `${result.previousName} is now known as ${result.name}.`
+    });
+    persist();
+    broadcast();
+  }
+  res.json(playerCharacterView(pc.id));
 }));
 
 app.post("/api/party/:id/portrait", guardAsync(async (req, res) => {

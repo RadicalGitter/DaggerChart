@@ -14,6 +14,13 @@
   header .portrait { width: 84px; height: 84px; overflow: hidden; border: 3px solid var(--sheet-primary); box-shadow: 0 0 0 2px var(--sheet-secondary); font-size: 2rem; }
   header .portrait img { width: 100%; height: 100%; object-fit: cover; }
   header h1 { color: color-mix(in srgb, var(--sheet-primary) 48%, #f0e3c7); font-size: 1.5rem; margin-bottom: 0.1rem; }
+  .sheet-name-row { display: flex; align-items: center; gap: .45rem; }
+  .sheet-name-row h1 { margin: 0; overflow-wrap: anywhere; }
+  .name-edit {
+    width: 30px; height: 30px; flex: 0 0 30px; display: grid; place-items: center; padding: 0;
+    color: #b9aa8a; border: 1px solid #514632; border-radius: 50%; background: rgba(212,184,106,.04); font-size: .9rem;
+  }
+  .name-edit:hover, .name-edit:focus-visible { color: #f0e3c7; border-color: var(--sheet-secondary); outline: none; }
   .sheet-nav {
     position: sticky; z-index: 20; top: 0; height: 48px; display: flex; align-items: stretch; gap: 2px;
     margin: 0 -1rem 1rem; padding: 0 1rem; overflow-x: auto; scrollbar-width: none;
@@ -59,6 +66,11 @@
   .paper-editor { padding: 1.2rem; color: #392617; border: 1px solid #9a7848; background: linear-gradient(145deg, #eadab2, #cdb47f); }
   .paper-editor label { display: grid; gap: .3rem; margin: .7rem 0; color: #6f5130; }
   .paper-editor input, .paper-editor textarea { box-sizing: border-box; width: 100%; padding: .55rem; color: #392617; border: 1px solid #9a7848; background: rgba(255,248,226,.62); font: inherit; }
+  .name-editor { width: min(520px, 100%); margin: 0 auto; }
+  .name-editor .rename-intro { margin: .4rem 0 1rem; color: #654a2e; line-height: 1.45; }
+  .name-editor .gm-approval { display: flex; grid-template-columns: none; align-items: flex-start; gap: .55rem; margin: 1rem 0; }
+  .name-editor .gm-approval input { width: 18px; height: 18px; flex: 0 0 18px; margin: .1rem 0 0; }
+  .name-editor .rename-error { min-height: 1.2rem; margin-top: .6rem; color: #7d281e; }
   .cardstack { display: grid; gap: 0.7rem; }
   .hand-sub { font-variant: small-caps; letter-spacing: 0.06em; color: #a89877; margin: 0.9rem 0 0.5rem; }
   .hand-actions { margin-top: 0.6rem; display: flex; gap: 0.5rem; }

@@ -8,6 +8,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { ROOT, loadJson, saveJson } from "./store.js";
 import { musicDescription, sunoGenerationPayload } from "./music-payload.js";
+import { renamedCharacterThemeTitle } from "./party-name.js";
 
 const MUSIC_FILE = "music.json";
 const LIBRARY_ROOT = path.resolve(process.env.MUSIC_LIBRARY_DIR || path.join(ROOT, "Visseren"));
@@ -841,6 +842,19 @@ export function setCharacterThemeIdentity(pcId, identity) {
   theme.updatedAt = now();
   persistMusic();
   return { pcId, identity: theme.identity };
+}
+
+export function renameCharacterThemeTitles(pcId, previousName, name) {
+  let changed = 0;
+  for (const song of music.songs) {
+    if (song.pcId !== pcId) continue;
+    const title = renamedCharacterThemeTitle(song.title, previousName, name);
+    if (title === song.title) continue;
+    song.title = title;
+    changed += 1;
+  }
+  if (changed) persistMusic();
+  return changed;
 }
 
 export function createPlaylist(name) {

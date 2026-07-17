@@ -42,7 +42,7 @@ function render() {
     <header class="sheet-head">
       <div class="portrait">${p.portrait ? `<img src="${esc(p.portrait)}" alt="">` : esc(p.name[0] || "?")}</div>
       <div>
-        <h1>${esc(p.name)}</h1>
+        <div class="sheet-name-row"><h1>${esc(p.name)}</h1><button class="name-edit" id="rename-character" type="button" aria-label="${esc(t("sheet.renameName"))}" title="${esc(t("sheet.renameName"))}">✎</button></div>
         <div class="muted">${esc(p.ancestry.name)} ${esc(p.class.name)} — ${esc(p.subclass.name)} · ${term("level", t("sheet.level"))} ${p.level}</div>
         <div class="muted" style="font-size:0.85rem;">${esc(p.community.name)}${p.pronouns ? ` · ${esc(p.pronouns)}` : ""}${p.player ? ` · ${esc(p.player)}` : ""}</div>
         ${playerFeatureEnabled("journal") ? `<div style="margin-top:0.25rem;"><a href="/journal/?pc=${esc(p.id)}" style="color:#d4b86a; font-size:0.85rem; text-decoration:none; border-bottom:1px dotted #8a7550;">${t("journal.open")} ↗</a></div>` : ""}
@@ -132,6 +132,7 @@ function render() {
   wireTheme();
   wireInventory();
   wireSheetNav();
+  wireIdentity();
 }
 
 function sheetNavHtml(p) {
@@ -170,6 +171,53 @@ function wireSheetNav() {
 
 function closePaperDialog() {
   $("#paper-dialog").hidden = true;
+}
+
+function wireIdentity() {
+  $("#rename-character").onclick = openNameEditor;
+}
+
+function openNameEditor() {
+  $("#paper-dialog-body").innerHTML = `<form class="paper-editor name-editor" id="name-editor">
+    <h2 id="paper-dialog-title">${t("sheet.renameTitle")}</h2>
+    <p class="rename-intro">${t("sheet.renameIntro")}</p>
+    <label>${t("sheet.newName")}<input id="character-name" maxlength="80" value="${esc(PC.name)}" autocomplete="off" required></label>
+    <label class="gm-approval"><input id="name-gm-approved" type="checkbox"><span>${t("sheet.gmApproved")}</span></label>
+    <button type="submit">${t("sheet.saveName")}</button>
+    <div class="rename-error" id="name-error" role="alert"></div>
+  </form>`;
+  $("#paper-dialog").hidden = false;
+  $("#character-name").focus();
+  $("#name-editor").onsubmit = async (event) => {
+    event.preventDefault();
+    const error = $("#name-error");
+    if (!$("#name-gm-approved").checked) {
+      error.textContent = t("sheet.gmApprovalRequired");
+      return;
+    }
+    const submit = event.submitter;
+    submit.disabled = true;
+    try {
+      const response = await fetch(`/api/party/${encodeURIComponent(id)}/name`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: $("#character-name").value, gmApproved: true })
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        error.textContent = body.error || t("sheet.renameError");
+        submit.disabled = false;
+        return;
+      }
+      PC = body;
+      document.title = PC.name;
+      closePaperDialog();
+      render();
+    } catch {
+      error.textContent = t("sheet.renameError");
+      submit.disabled = false;
+    }
+  };
 }
 
 function openPaper(item) {
