@@ -4,13 +4,18 @@
 // board screen: each audience gets its own projection of the same state.
 import { activeCampaigns, isActiveCampaign, state, seasonLabel } from "./state.js";
 import { inventoryView } from "./inventory.js";
+import { normalizePlayerFeatures, PLAYER_FEATURE_DEFINITIONS } from "./player-features.js";
 
 const PLAYER_CONDITIONS = new Set(["hidden", "restrained", "vulnerable"]);
 const conditionView = (p) => [...new Set(p.conditions || [])].filter((id) => PLAYER_CONDITIONS.has(id));
 const isActivePc = (p) => p?.active !== false;
 const activePcs = () => state.pcs.filter((pc) => isActivePc(pc) && isActiveCampaign(pc.campaignId));
 const currentPcs = () => activePcs().filter((pc) => pc.campaignId === state.campaigns.currentId);
-const publicCampaigns = () => activeCampaigns().map((campaign) => ({ id: campaign.id, name: campaign.name }));
+const publicCampaigns = () => activeCampaigns().map((campaign) => ({
+  id: campaign.id,
+  name: campaign.name,
+  playerFeatures: normalizePlayerFeatures(campaign.playerFeatures)
+}));
 const numericView = (value, fallback = 0) => Number.isFinite(value) ? value : fallback;
 
 // Personalization stored on the character (chosen in the creator). Kept behind
@@ -104,6 +109,7 @@ export function playerCharacterView(id) {
   if (!p) return null;
   return {
     ...identityView(p),
+    playerFeatures: normalizePlayerFeatures(state.campaigns.campaigns.find((campaign) => campaign.id === p.campaignId)?.playerFeatures),
     pen: penOf(p),
     pronouns: p.pronouns || "",
     conditions: conditionView(p),
@@ -185,6 +191,7 @@ export function gmView() {
       currentId: state.campaigns.currentId,
       campaigns: state.campaigns.campaigns.map((campaign) => ({ ...campaign }))
     },
+    playerFeatureDefinitions: PLAYER_FEATURE_DEFINITIONS.map((feature) => ({ ...feature })),
     unreadMessages: Object.fromEntries(state.pcs.map((pc) => [pc.id, unreadFor(pc.id, "gm")])),
     sessions: state.sessions
       .filter((session) => session.campaignId === state.campaigns.currentId)
@@ -359,6 +366,7 @@ export function loreView(pcId) {
     (n) => n.scope === "group" || (requestingPcId && n.pcId === requestingPcId)
   );
   const requestingPc = requestingPcId ? activePcs().find((pc) => pc.id === requestingPcId) : null;
+  const featureCampaignId = requestingPc?.campaignId || state.campaigns.currentId;
   const campaignSessions = requestingPc
     ? state.sessions.filter((session) => session.campaignId === requestingPc.campaignId)
     : [];
@@ -397,6 +405,7 @@ export function loreView(pcId) {
   };
   return {
     seasonLabel: seasonLabel(),
+    playerFeatures: normalizePlayerFeatures(state.campaigns.campaigns.find((campaign) => campaign.id === featureCampaignId)?.playerFeatures),
     unreadMessages: requestingPcId ? unreadFor(requestingPcId, "player") : 0,
     campaigns: publicCampaigns(),
     currentCampaignId: state.campaigns.currentId,
@@ -427,8 +436,7 @@ export function tableView() {
     // Only the player-safe description crosses this boundary. GM-only truth
     // about a person lives in `hidden.notes` and must never be sent here.
     description: c.description || "",
-    portrait: c.portrait || null,
-    traits: c.publicTraits ? c.traits : null
+    portrait: c.portrait || null
   }));
   const chronicle = state.log
     .filter((l) => l.published && l.campaignId === state.campaigns.currentId)
@@ -444,6 +452,7 @@ export function tableView() {
       seasonLabel: seasonLabel()
     },
     resources: state.settlement.resources,
+    playerFeatures: normalizePlayerFeatures(state.campaigns.campaigns.find((campaign) => campaign.id === state.campaigns.currentId)?.playerFeatures),
     fear: state.session.showFearToPlayers ? state.session.fear : null,
     campaigns: publicCampaigns(),
     currentCampaignId: state.campaigns.currentId,

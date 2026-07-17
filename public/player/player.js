@@ -1,6 +1,7 @@
 import { t, initI18n, seasonLabel } from "/shared/i18n.js";
 import { SHELLS, DEFAULT_SHELL, shellEntryRoute, validShell } from "/shared/shells.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
+import { playerFeatureEnabled, setPlayerFeatureContext } from "/shared/player-features.js";
 import "/shared/feedback.js";
 import "/shared/player-tools.js";
 
@@ -46,7 +47,7 @@ function renderIdentity() {
     : esc(pc?.name?.slice(0, 1) || "?");
   $("#identity-menu").innerHTML = [
     ...identities().map((entry) => `<button type="button" data-pc="${esc(entry.id)}">${esc(entry.name)}${entry.player ? ` · ${esc(entry.player)}` : ""}</button>`),
-    `<a href="/create/?return=/player">${esc(t("login.create"))}</a>`
+    ...(playerFeatureEnabled("characterCreation") ? [`<a href="/create/?return=/player">${esc(t("login.create"))}</a>`] : [])
   ].join("");
   for (const button of document.querySelectorAll("[data-pc]")) {
     button.onclick = () => {
@@ -77,13 +78,16 @@ function renderEssentials() {
   section.hidden = !pc;
   if (!pc) return;
   const id = encodeURIComponent(pc.id);
-  $("#essential-actions").innerHTML = `
-    <a href="/character/${id}"><span aria-hidden="true">◇</span><strong>${esc(t("table.character"))}</strong></a>
-    <button type="button" data-open-notes><span aria-hidden="true">✎</span><strong>${esc(t("player.notes.open"))}</strong></button>
-    <a href="/journal/?pc=${id}"><span aria-hidden="true">▤</span><strong>${esc(t("journal.title"))}</strong></a>
-    <a href="/tome?open=1&amp;section=inventory"><span aria-hidden="true">▧</span><strong>${esc(t("table.inventory"))}</strong></a>
-    <a href="/rules"><span aria-hidden="true">⌘</span><strong>${esc(t("rules.title"))}</strong></a>`;
-  section.querySelector("[data-open-notes]").onclick = () => window.dispatchEvent(new Event("settlement:open-notes"));
+  const actions = [
+    playerFeatureEnabled("character") ? `<a href="/character/${id}"><span aria-hidden="true">◇</span><strong>${esc(t("table.character"))}</strong></a>` : "",
+    playerFeatureEnabled("notes") ? `<button type="button" data-open-notes><span aria-hidden="true">✎</span><strong>${esc(t("player.notes.open"))}</strong></button>` : "",
+    playerFeatureEnabled("journal") ? `<a href="/journal/?pc=${id}"><span aria-hidden="true">▤</span><strong>${esc(t("journal.title"))}</strong></a>` : "",
+    playerFeatureEnabled("inventory") ? `<a href="/tome?open=1&amp;section=inventory"><span aria-hidden="true">▧</span><strong>${esc(t("table.inventory"))}</strong></a>` : "",
+    playerFeatureEnabled("rules") ? `<a href="/rules"><span aria-hidden="true">⌘</span><strong>${esc(t("rules.title"))}</strong></a>` : ""
+  ].filter(Boolean);
+  $("#essential-actions").innerHTML = actions.join("");
+  section.hidden = actions.length === 0;
+  section.querySelector("[data-open-notes]")?.addEventListener("click", () => window.dispatchEvent(new Event("settlement:open-notes")));
 }
 
 function renderGate() {
@@ -94,6 +98,7 @@ function renderGate() {
   $("#identity-list").innerHTML = identities().map((entry) =>
     `<button type="button" data-gate-pc="${esc(entry.id)}">${esc(entry.name)}${entry.player ? ` · ${esc(entry.player)}` : ""}</button>`
   ).join("");
+  $(".create-character").hidden = !playerFeatureEnabled("characterCreation");
   for (const button of document.querySelectorAll("[data-gate-pc]")) {
     button.onclick = () => {
       setPC(button.dataset.gatePc);
@@ -105,6 +110,7 @@ function renderGate() {
 function render() {
   if (!data) return;
   clearStalePC();
+  data.playerFeatures = setPlayerFeatureContext(data, currentPCId());
   setTelemetryMode(currentPC() ? "views" : "choose-character");
   document.title = `${t("player.hub.root")} — ${data.settlement.name}`;
   $("#settlement-name").textContent = data.settlement.name;

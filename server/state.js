@@ -1,5 +1,7 @@
 // Campaign state: load-on-boot, mutate in memory, persist on every change.
 import { loadJson, saveJson, loadEventTables, snapshot } from "./store.js";
+import { DEFAULT_PLAYER_FEATURES, normalizePlayerFeatures } from "./player-features.js";
+import { normalizeFolkProfile } from "./folk-profile.js";
 
 const SEASONS = ["Spring", "Summer", "Autumn", "Winter"];
 
@@ -38,7 +40,8 @@ function normalizeCampaignState(raw, settlementName) {
       id,
       name: cleanCampaignName(item.name, "Unnamed campaign"),
       status: item.status === "archived" ? "archived" : "active",
-      createdAt: String(item.createdAt || now)
+      createdAt: String(item.createdAt || now),
+      playerFeatures: normalizePlayerFeatures(item.playerFeatures)
     };
     if (JSON.stringify(normalized) !== JSON.stringify(item)) changed = true;
     campaigns.push(normalized);
@@ -49,7 +52,8 @@ function normalizeCampaignState(raw, settlementName) {
       id: makeCampaignId(),
       name: cleanCampaignName(settlementName, "The Settlement"),
       status: "active",
-      createdAt: now
+      createdAt: now,
+      playerFeatures: { ...DEFAULT_PLAYER_FEATURES }
     });
     changed = true;
   }
@@ -172,6 +176,21 @@ for (const [id, t] of Object.entries(state.tables.buildings)) {
     };
   }
 }
+
+let folkProfilesMigrated = false;
+for (const character of state.characters) {
+  if (typeof character.trustedForWork !== "boolean") {
+    character.trustedForWork = Object.values(state.settlement.buildings).some((building) => building.foremanId === character.id);
+    folkProfilesMigrated = true;
+  }
+  const profile = normalizeFolkProfile(character);
+  for (const [key, value] of Object.entries(profile)) {
+    if (JSON.stringify(character[key]) === JSON.stringify(value)) continue;
+    character[key] = value;
+    folkProfilesMigrated = true;
+  }
+}
+if (folkProfilesMigrated) saveJson("characters.json", state.characters);
 
 export function persist() {
   saveJson("settlement.json", state.settlement);

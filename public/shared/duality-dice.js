@@ -1,4 +1,5 @@
 import { t } from "/shared/i18n.js";
+import { playerFeatureEnabled } from "/shared/player-features.js";
 
 const SKINS = {
   cinder: {
@@ -299,10 +300,12 @@ function install() {
     tray.hidden = true;
     trigger.setAttribute("aria-expanded", "false");
     document.body.classList.remove("duality-tray-open");
-    if (restoreFocus) trigger.focus();
+    if (!currentPcId || !playerFeatureEnabled("dice")) root.hidden = true;
+    if (restoreFocus && !trigger.hidden) trigger.focus();
   }
 
   async function openTray() {
+    if (!playerFeatureEnabled("dice")) return;
     window.dispatchEvent(new CustomEvent("settlement:close-notes"));
     tray.hidden = false;
     trigger.setAttribute("aria-expanded", "true");
@@ -323,7 +326,9 @@ function install() {
     const next = selectedPcId();
     if (next !== currentPcId) identity = null;
     currentPcId = next;
-    root.hidden = !currentPcId;
+    const enabled = playerFeatureEnabled("dice");
+    trigger.hidden = !enabled;
+    root.hidden = !currentPcId || (!enabled && tray.hidden);
     if (!currentPcId) closeTray({ restoreFocus: false });
   }
 
@@ -347,6 +352,7 @@ function install() {
     if (["settlement-pc", "settlement-journal-pc"].includes(event.key)) refresh();
   });
   window.addEventListener("settlement:identity", refresh);
+  window.addEventListener("settlement:player-features", refresh);
   window.addEventListener("settlement:close-dice", () => closeTray({ restoreFocus: false }));
   window.addEventListener("resize", () => {
     cancelAnimationFrame(resizeFrame);

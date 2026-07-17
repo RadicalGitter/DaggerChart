@@ -1,6 +1,7 @@
 // GM Console. Renders from /api/state; every mutation round-trips the server.
 import { CONDITIONS, conditionIcon } from "/shared/conditions.js";
 import { prepareRuleNodes, searchRuleNodes } from "/shared/rules-search.js";
+import { folkPortraitGridHtml, wireFolkPortraitCards } from "/shared/folk-cards.js";
 
 let S = null; // last fetched gm state
 let selectedBuilding = null;
@@ -11,6 +12,14 @@ let ART_STATUS = { workflows: { portrait: { ready: false, reason: "missing" }, s
 let ART_LIBRARY = { dimensions: { width: 1536, height: 864, aspect: "16:9" }, taxonomy: { rootIds: [], tags: [] }, characters: [], places: [], scenes: [] };
 let selectedUxRoute = null;
 let imageLibraryView = "characters";
+let selectedFolkId = null;
+
+const FOLK_AGE_BANDS = [
+  ["unknown", "Unknown"], ["child", "Child"], ["young", "Young"], ["adult", "Adult"],
+  ["middle-aged", "Middle-aged"], ["elder", "Elder"], ["ancient", "Ancient"]
+];
+const FOLK_CONNECTION_KINDS = ["family", "partner", "friend", "mentor", "student", "ally", "rival", "obligation", "other"];
+const FOLK_EXPERIENCE_PRESETS = ["Known loss", "Military service", "Long journey", "Practiced craft", "Hardship endured", "Led others", "Life in exile", "Formal study", "Raised a family"];
 
 const artEmbellishKey = (kind) => `settlement-art-embellish-${kind}`;
 const artEmbellishPreference = (kind) => localStorage.getItem(artEmbellishKey(kind)) !== "false";
@@ -320,6 +329,8 @@ function showSection(key) {
     sec.hidden = sec.id !== `sec-${key === "town" ? "town" : key}`;
   }
   document.body.classList.toggle("images-open", key === "images");
+  document.body.classList.toggle("folk-open", key === "folk");
+  document.body.classList.toggle("board-open", key === "board");
   if (key === "ux") requestAnimationFrame(renderUx);
   if (key === "almanac") setAlmanacView(almanacView);
   if (key === "images") requestAnimationFrame(renderImageLibrary);
@@ -915,7 +926,7 @@ function renderBuildings() {
       const options = ['<option value="">— none —</option>']
         .concat(
           S.characters
-            .filter((c) => c.status === "alive")
+            .filter((c) => c.status === "alive" && c.trustedForWork === true)
             .map((c) => `<option value="${c.id}" ${b.foremanId === c.id ? "selected" : ""}>${esc(c.name)}</option>`)
         )
         .join("");
@@ -951,63 +962,107 @@ function renderBuildings() {
 
 // --- folk ---
 const TRAITS = ["Agility", "Strength", "Finesse", "Instinct", "Presence", "Knowledge"];
+const FOLK_PORTRAIT_TAGS = ["masculine", "feminine", "androgynous", "weathered", "elegant", "fierce", "gentle", "uncanny", "practical"];
+const FOLK_PORTRAIT_MODIFIERS = [-1, 0, 1, 2];
+
+function portraitModifier(value) {
+  const numeric = Number(value);
+  return FOLK_PORTRAIT_MODIFIERS.includes(numeric) ? numeric : 0;
+}
+
+function portraitStyle(value) {
+  return ["style1", "style2"].includes(String(value)) ? String(value) : "style2";
+}
+
+function folkPortraitState(c = {}) {
+  const direction = c.portraitDirection || {};
+  const equipment = direction.equipment || {};
+  const workshop = c.portraitWorkshop || {};
+  return {
+    prompt: String(c.portraitPrompt || c.description || ""),
+    suggestion: String(c.portraitSuggestion || ""),
+    negativePrompt: String(c.portraitNegativePrompt || ""),
+    primaryColor: /^#[0-9a-f]{6}$/i.test(direction.primaryColor) ? direction.primaryColor : "#805447",
+    secondaryColor: /^#[0-9a-f]{6}$/i.test(direction.secondaryColor) ? direction.secondaryColor : "#6d806f",
+    tags: Array.isArray(direction.tags) ? direction.tags.filter((tag) => FOLK_PORTRAIT_TAGS.includes(tag)) : [],
+    equipment: Object.fromEntries(["armor", "mainHand", "offHand"].map((key) => [key, {
+      enabled: equipment[key]?.enabled !== false,
+      text: String(equipment[key]?.text || "")
+    }])),
+    stepsModifier: portraitModifier(workshop.stepsModifier),
+    cfgModifier: portraitModifier(workshop.cfgModifier),
+    style: portraitStyle(workshop.style),
+    embellishPrompt: workshop.embellishPrompt !== false,
+    fixSeed: workshop.fixSeed === true,
+    lastSeed: Number.isSafeInteger(Number(workshop.lastSeed)) ? Number(workshop.lastSeed) : null,
+    attempts: Array.isArray(workshop.attempts) ? workshop.attempts : []
+  };
+}
+
+function folkPortraitHistoryHtml(c, portrait) {
+  if (!portrait.attempts.length) return "";
+  return `<div class="smallcaps" style="margin-top:.9rem;">Portrait history</div>
+    <div class="folk-portrait-history">${portrait.attempts.slice().reverse().map((attempt, reverseIndex) => {
+      const number = portrait.attempts.length - reverseIndex;
+      const request = attempt.request || {};
+      return `<article class="folk-portrait-attempt ${attempt.url === c.portrait ? "selected" : ""}">
+        <img src="${esc(attempt.url)}" alt="Portrait attempt ${number}" loading="lazy">
+        <small>Attempt ${number} · ${portraitStyle(request.style) === "style1" ? "Style 1" : "Style 2"} · steps ${portraitModifier(request.stepsModifier) >= 0 ? "+" : ""}${portraitModifier(request.stepsModifier)} · CFG ${portraitModifier(request.cfgModifier) >= 0 ? "+" : ""}${portraitModifier(request.cfgModifier)}</small>
+        <div><button type="button" class="quiet" data-folk-portrait-use="${esc(attempt.id)}">Use</button><button type="button" class="quiet" data-folk-portrait-retry="${esc(attempt.id)}">Go again</button></div>
+      </article>`;
+    }).join("")}</div>`;
+}
+
+function folkPortraitStudioHtml(c) {
+  const portrait = folkPortraitState(c);
+  const ready = ART_STATUS.workflows?.portrait?.ready === true;
+  const adviserReady = ART_STATUS.suggestions?.ready === true;
+  const preview = c.portrait
+    ? `<img src="${esc(c.portrait)}" alt="">`
+    : esc((c.name || "?").slice(0, 1).toUpperCase());
+  const equipmentLabel = { armor: "Armour", mainHand: "Main hand", offHand: "Off hand" };
+  return `<hr class="folk-private-rule"><div class="smallcaps">Portrait workshop</div>
+    <div class="folk-portrait-studio">
+      <div class="folk-portrait-preview">${preview}</div>
+      <label>Describe the portrait<textarea id="folk-portrait-prompt" rows="5" maxlength="6000">${esc(portrait.prompt)}</textarea></label>
+      <p class="muted" style="margin:0;font-size:.72rem;">Balance atmosphere and concrete physical details. The portrait is rendered at 1104 × 1472.</p>
+      <div class="folk-portrait-tools"><button type="button" class="quiet" id="folk-portrait-suggest" ${adviserReady ? "" : "disabled"}>Ask for suggestion</button><span class="muted" style="font-size:.68rem;">${adviserReady ? "The portrait adviser is ready." : "The portrait adviser is awaiting its key."}</span></div>
+      ${portrait.suggestion ? `<aside class="folk-portrait-suggestion"><p>${esc(portrait.suggestion)}</p><button type="button" class="quiet" id="folk-portrait-use-suggestion">Use suggestion</button></aside>` : ""}
+      <div class="folk-pigments">
+        <label><input type="color" id="folk-portrait-primary" value="${portrait.primaryColor}"><span>Primary detail<br><small>${portrait.primaryColor}</small></span></label>
+        <label><input type="color" id="folk-portrait-secondary" value="${portrait.secondaryColor}"><span>Secondary detail<br><small>${portrait.secondaryColor}</small></span></label>
+      </div>
+      <fieldset><legend>Visual tags</legend><div class="folk-portrait-tags">${FOLK_PORTRAIT_TAGS.map((tag) => `<button type="button" class="${portrait.tags.includes(tag) ? "selected" : ""}" aria-pressed="${portrait.tags.includes(tag)}" data-folk-portrait-tag="${tag}">${tag}</button>`).join("")}</div></fieldset>
+      <fieldset><legend>Visible equipment</legend><div class="folk-portrait-equipment">${Object.entries(equipmentLabel).map(([key, label]) => `<label><input type="checkbox" data-folk-equipment-enabled="${key}" ${portrait.equipment[key].enabled ? "checked" : ""}><span>${label}</span><input type="text" data-folk-equipment-text="${key}" value="${esc(portrait.equipment[key].text)}" maxlength="300" placeholder="Optional"></label>`).join("")}</div></fieldset>
+      <fieldset><legend>Generation details</legend><div class="folk-portrait-tuning">
+        <div><span class="muted" style="font-size:.68rem;">Style</span><div class="folk-portrait-choice">${["style1", "style2"].map((style, index) => `<button type="button" data-folk-portrait-style="${style}" class="${portrait.style === style ? "selected" : ""}" aria-pressed="${portrait.style === style}">Style ${index + 1}</button>`).join("")}</div></div>
+        ${[["steps", portrait.stepsModifier], ["cfg", portrait.cfgModifier]].map(([kind, current]) => `<div><span class="muted" style="font-size:.68rem;">${kind === "steps" ? "Steps" : "CFG"}</span><div class="folk-portrait-choice modifiers">${FOLK_PORTRAIT_MODIFIERS.map((value) => `<button type="button" data-folk-portrait-modifier="${kind}" data-value="${value}" class="${current === value ? "selected" : ""}" aria-pressed="${current === value}">${value >= 0 ? "+" : ""}${value}${value === 0 ? "<small>recommended</small>" : ""}</button>`).join("")}</div></div>`).join("")}
+      </div></fieldset>
+      <div class="folk-portrait-toggles">
+        <label><input type="checkbox" id="folk-portrait-embellish" ${portrait.embellishPrompt ? "checked" : ""}><span><strong>Automatically embellish prompt</strong><br><small class="muted">Let the workflow's LLM expand the art direction.</small></span></label>
+        <label><input type="checkbox" id="folk-portrait-fix-seed" ${portrait.fixSeed ? "checked" : ""}><span><strong>Fix seed</strong><br><small class="muted">Reuse the most recent composition seed.</small></span></label>
+      </div>
+      <details><summary>Negative prompt</summary><textarea id="folk-portrait-negative" rows="3" maxlength="4000">${esc(portrait.negativePrompt)}</textarea></details>
+      <label>Portrait URL<input type="text" id="ed-portrait" value="${esc(c.portrait || "")}" placeholder="/generated/art/portrait/…"></label>
+      <div class="folk-portrait-actions"><button type="button" id="folk-portrait-generate" ${ready ? "" : "disabled"}>Make portrait</button>${c.portrait ? `<button type="button" class="quiet" id="folk-portrait-clear">Clear portrait</button>` : ""}<span class="muted" style="font-size:.68rem;">${esc(artHint("portrait"))}</span></div>
+      ${folkPortraitHistoryHtml(c, portrait)}
+    </div>`;
+}
 
 function renderFolk() {
-  $("#folk-grid").innerHTML = S.characters
-    .map((c) => {
-      const traits = TRAITS.map(
-        (t) => `<span class="pill">${t.slice(0, 3)} ${c.traits?.[t] >= 0 ? "+" : ""}${c.traits?.[t] ?? 0}</span>`
-      ).join("");
-      const apts = Object.entries(c.aptitudes || {})
-        .map(([bid, v]) => {
-          const b = S.buildings.find((x) => x.id === bid);
-          return `${esc(b ? b.name : bid)} ${v >= 0 ? "+" : ""}${v}`;
-        })
-        .join(", ");
-      const dead = c.status !== "alive";
-      return `<div class="card" style="${dead ? "opacity:0.6;" : ""}">
-        <div class="folk-head">
-          <div class="portrait">${c.portrait ? `<img src="${esc(c.portrait)}" alt="">` : esc(c.name[0] || "?")}</div>
-          <div>
-            <strong>${esc(c.name)}</strong> ${dead ? `<span class="pill grave">${esc(c.status)}</span>` : ""}
-            <div class="muted" style="font-size:0.85rem;">${esc(c.role || "")}</div>
-          </div>
-        </div>
-        <p style="font-size:0.9rem;">${esc(c.description || "")}</p>
-        <div class="traits">${traits}</div>
-        <div class="muted" style="font-size:0.82rem; margin-top:0.4rem;">Aptitude: ${apts || "—"}</div>
-        <details class="gm-only">
-          <summary>gm only</summary>
-          <div class="inner">
-            <div class="formrow"><label>Inspiration</label>
-              <input type="number" class="num" min="-1" max="2" value="${c.hidden?.inspiration ?? 0}" data-insp="${c.id}">
-            </div>
-            <div class="formrow"><label>Hidden penalty</label>
-              <input type="number" class="num" value="${c.hidden?.penalty ?? 0}" data-pen="${c.id}">
-            </div>
-            ${c.hidden?.notes ? `<div class="muted" style="font-size:0.82rem; white-space:pre-wrap;">${esc(c.hidden.notes)}</div>` : ""}
-          </div>
-        </details>
-        <div style="margin-top:0.6rem;"><button class="quiet" data-edit="${c.id}">Edit</button> <button class="quiet" data-show-folk="${c.id}">Show at the table</button></div>
-      </div>`;
-    })
-    .join("");
-  for (const el of document.querySelectorAll("[data-show-folk]")) {
-    el.onclick = () => project({ type: "folk", refId: el.dataset.showFolk });
-  }
-  for (const el of document.querySelectorAll("[data-insp]")) {
-    el.onchange = () =>
-      api(`/api/characters/${el.dataset.insp}`, { method: "PUT", body: { hidden: { inspiration: clampNum(el, -1, 2) } } })
-        .then(refresh).catch((e) => toast(e.message, true));
-  }
-  for (const el of document.querySelectorAll("[data-pen]")) {
-    el.onchange = () =>
-      api(`/api/characters/${el.dataset.pen}`, { method: "PUT", body: { hidden: { penalty: parseInt(el.value, 10) || 0 } } })
-        .then(refresh).catch((e) => toast(e.message, true));
-  }
-  for (const el of document.querySelectorAll("[data-edit]")) {
-    el.onclick = () => renderFolkEditor(S.characters.find((c) => c.id === el.dataset.edit));
-  }
+  const folk = S.characters || [];
+  if (selectedFolkId !== "__new__" && !folk.some((person) => person.id === selectedFolkId)) selectedFolkId = folk[0]?.id || null;
+  const grid = $("#folk-grid");
+  grid.innerHTML = folk.length
+    ? folkPortraitGridHtml(folk, { mode: "select", selectedId: selectedFolkId })
+    : `<p class="muted">No folk have been entered yet.</p>`;
+  wireFolkPortraitCards(grid, { onSelect: (id) => {
+    selectedFolkId = id;
+    renderFolk();
+  } });
+  const selected = selectedFolkId === "__new__" ? null : folk.find((person) => person.id === selectedFolkId);
+  if (selected || selectedFolkId === "__new__") renderFolkEditor(selected);
+  else $("#folk-editor").hidden = true;
 }
 
 function clampNum(el, min, max) {
@@ -1017,77 +1072,319 @@ function clampNum(el, min, max) {
   return v;
 }
 
-$("#folk-new").addEventListener("click", () => renderFolkEditor(null));
+function collectFolkPortraitSettings(c) {
+  const tags = [...document.querySelectorAll("[data-folk-portrait-tag].selected")].map((button) => button.dataset.folkPortraitTag);
+  const equipment = Object.fromEntries(["armor", "mainHand", "offHand"].map((key) => [key, {
+    enabled: $(`[data-folk-equipment-enabled="${key}"]`)?.checked !== false,
+    text: $(`[data-folk-equipment-text="${key}"]`)?.value.trim() || ""
+  }]));
+  const stepsModifier = portraitModifier($("[data-folk-portrait-modifier=steps].selected")?.dataset.value);
+  const cfgModifier = portraitModifier($("[data-folk-portrait-modifier=cfg].selected")?.dataset.value);
+  const style = portraitStyle($("[data-folk-portrait-style].selected")?.dataset.folkPortraitStyle);
+  const prompt = $("#folk-portrait-prompt")?.value.trim() || "";
+  const primaryColor = $("#folk-portrait-primary")?.value || "#805447";
+  const secondaryColor = $("#folk-portrait-secondary")?.value || "#6d806f";
+  const visibleEquipment = Object.entries(equipment).filter(([, item]) => item.enabled && item.text).map(([key, item]) => `${key}: ${item.text}`);
+  const compiledPrompt = [
+    "A character portrait balancing atmosphere and concrete physical specifics equally.",
+    prompt,
+    tags.length ? `Visual identity: ${tags.join(", ")}.` : "",
+    `Use ${primaryColor} as the primary detail color and ${secondaryColor} as the secondary accent.`,
+    visibleEquipment.length ? `Visible equipment: ${visibleEquipment.join("; ")}.` : "Do not feature equipment."
+  ].filter(Boolean).join(" ");
+  return {
+    sourcePrompt: prompt,
+    prompt: compiledPrompt,
+    negativePrompt: $("#folk-portrait-negative")?.value.trim() || "",
+    primaryColor,
+    secondaryColor,
+    tags,
+    equipment,
+    armor: equipment.armor.enabled ? equipment.armor.text : "",
+    mainHand: equipment.mainHand.enabled ? equipment.mainHand.text : "",
+    offHand: equipment.offHand.enabled ? equipment.offHand.text : "",
+    stepsModifier,
+    cfgModifier,
+    style,
+    embellishPrompt: $("#folk-portrait-embellish")?.checked !== false,
+    fixSeed: $("#folk-portrait-fix-seed")?.checked === true,
+    lastSeed: folkPortraitState(c).lastSeed
+  };
+}
+
+function collectFolkBody(c) {
+  const portrait = c ? collectFolkPortraitSettings(c) : null;
+  const readList = (id) => {
+    try {
+      const value = JSON.parse($(id)?.value || "[]");
+      return Array.isArray(value) ? value : [];
+    } catch {
+      return [];
+    }
+  };
+  return {
+    name: $("#ed-name").value,
+    role: $("#ed-role").value,
+    status: $("#ed-status").value,
+    age: {
+      band: $("#ed-age-band").value,
+      years: $("#ed-age-years").value === "" ? null : parseInt($("#ed-age-years").value, 10)
+    },
+    connections: readList("#ed-connections"),
+    experiences: readList("#ed-experiences"),
+    description: $("#ed-description").value,
+    hidden: {
+      notes: $("#ed-gmnotes").value,
+      inspiration: parseInt($("#ed-inspiration").value, 10) || 0,
+      penalty: parseInt($("#ed-penalty").value, 10) || 0
+    },
+    portrait: $("#ed-portrait")?.value || c?.portrait || null,
+    trustedForWork: $("#ed-trusted").checked,
+    traits: Object.fromEntries(TRAITS.map((trait) => [trait, parseInt($(`#ed-tr-${trait}`).value, 10) || 0])),
+    aptitudes: Object.fromEntries(S.buildings.map((building) => [building.id, parseInt($(`#ed-apt-${building.id}`).value, 10) || 0]).filter(([, value]) => value !== 0)),
+    ...(portrait ? {
+      portraitPrompt: portrait.sourcePrompt,
+      portraitNegativePrompt: portrait.negativePrompt,
+      portraitDirection: { tags: portrait.tags, primaryColor: portrait.primaryColor, secondaryColor: portrait.secondaryColor, equipment: portrait.equipment },
+      portraitWorkshop: {
+        stepsModifier: portrait.stepsModifier,
+        cfgModifier: portrait.cfgModifier,
+        style: portrait.style,
+        embellishPrompt: portrait.embellishPrompt,
+        fixSeed: portrait.fixSeed,
+        lastSeed: portrait.lastSeed
+      }
+    } : {})
+  };
+}
+
+async function saveFolk(c, { announce = true, refreshAfter = true } = {}) {
+  const isNew = !c;
+  const saved = await api(isNew ? "/api/characters" : `/api/characters/${c.id}`, { method: isNew ? "POST" : "PUT", body: collectFolkBody(c) });
+  selectedFolkId = saved.id;
+  if (announce) toast(isNew ? `${saved.name} entered the ledger.` : `${saved.name}'s card was updated.`);
+  if (refreshAfter) await refresh();
+  return saved;
+}
+
+$("#folk-new").addEventListener("click", () => {
+  selectedFolkId = "__new__";
+  renderFolk();
+});
+
+function wireFolkEditor(c) {
+  $("#ed-cancel").onclick = () => {
+    selectedFolkId = S.characters[0]?.id || null;
+    renderFolk();
+  };
+  $("#ed-save").onclick = () => saveFolk(c).catch((error) => toast(error.message, true));
+  const projectButton = $("#ed-project");
+  if (projectButton) projectButton.onclick = () => project({ type: "folk", refId: c.id });
+  wireFolkBiographyEditor();
+  if (!c) return;
+
+  for (const button of document.querySelectorAll("[data-folk-portrait-tag]")) button.onclick = () => {
+    button.classList.toggle("selected");
+    button.setAttribute("aria-pressed", String(button.classList.contains("selected")));
+  };
+  for (const button of document.querySelectorAll("[data-folk-portrait-style]")) button.onclick = () => {
+    for (const choice of document.querySelectorAll("[data-folk-portrait-style]")) {
+      const selected = choice === button;
+      choice.classList.toggle("selected", selected);
+      choice.setAttribute("aria-pressed", String(selected));
+    }
+  };
+  for (const button of document.querySelectorAll("[data-folk-portrait-modifier]")) button.onclick = () => {
+    for (const choice of document.querySelectorAll(`[data-folk-portrait-modifier="${button.dataset.folkPortraitModifier}"]`)) {
+      const selected = choice === button;
+      choice.classList.toggle("selected", selected);
+      choice.setAttribute("aria-pressed", String(selected));
+    }
+  };
+  const useSuggestion = $("#folk-portrait-use-suggestion");
+  if (useSuggestion) useSuggestion.onclick = () => { $("#folk-portrait-prompt").value = c.portraitSuggestion || ""; };
+  $("#folk-portrait-suggest").onclick = async () => {
+    const button = $("#folk-portrait-suggest");
+    button.disabled = true;
+    try {
+      const current = await saveFolk(c, { announce: false, refreshAfter: false });
+      const result = await api(`/api/characters/${c.id}/portrait/suggest`, { method: "POST", body: { context: {
+        name: $("#ed-name").value,
+        role: $("#ed-role").value,
+        description: $("#folk-portrait-prompt").value,
+        notes: $("#ed-gmnotes").value
+      } } });
+      await api(`/api/characters/${c.id}`, { method: "PUT", body: { portraitSuggestion: result.suggestion } });
+      toast("A portrait direction is ready.");
+      await refresh();
+      return current;
+    } catch (error) {
+      toast(error.message, true);
+      button.disabled = false;
+    }
+  };
+  $("#folk-portrait-generate").onclick = async () => {
+    const button = $("#folk-portrait-generate");
+    const settings = collectFolkPortraitSettings(c);
+    if (!settings.sourcePrompt) { toast("Describe the portrait first.", true); return; }
+    button.disabled = true;
+    button.textContent = "Painting…";
+    try {
+      await saveFolk(c, { announce: false, refreshAfter: false });
+      const body = { ...settings };
+      if (settings.fixSeed && Number.isSafeInteger(settings.lastSeed)) body.seed = settings.lastSeed;
+      const result = await api(`/api/characters/${c.id}/portrait`, { method: "POST", body });
+      toast(result.message);
+      await refresh();
+    } catch (error) {
+      toast(error.message, true);
+      button.disabled = false;
+      button.textContent = "Make portrait";
+    }
+  };
+  const clear = $("#folk-portrait-clear");
+  if (clear) clear.onclick = async () => {
+    try {
+      await api(`/api/characters/${c.id}`, { method: "PUT", body: { portrait: null } });
+      await refresh();
+    } catch (error) { toast(error.message, true); }
+  };
+  for (const button of document.querySelectorAll("[data-folk-portrait-use]")) button.onclick = async () => {
+    const attempt = folkPortraitState(c).attempts.find((candidate) => candidate.id === button.dataset.folkPortraitUse);
+    if (!attempt) return;
+    try {
+      await api(`/api/characters/${c.id}`, { method: "PUT", body: { portrait: attempt.url, portraitWorkshop: { lastSeed: attempt.seed } } });
+      await refresh();
+    } catch (error) { toast(error.message, true); }
+  };
+  for (const button of document.querySelectorAll("[data-folk-portrait-retry]")) button.onclick = async () => {
+    const attempt = folkPortraitState(c).attempts.find((candidate) => candidate.id === button.dataset.folkPortraitRetry);
+    if (!attempt) return;
+    button.disabled = true;
+    try {
+      const result = await api(`/api/characters/${c.id}/portrait`, { method: "POST", body: { ...attempt.request, sourcePrompt: c.portraitPrompt || attempt.request.prompt, seed: attempt.seed } });
+      toast(result.message);
+      await refresh();
+    } catch (error) { toast(error.message, true); button.disabled = false; }
+  };
+}
+
+function folkConnectionTokens(connections) {
+  if (!connections.length) return `<span class="muted" style="font-size:.7rem;">No connections recorded.</span>`;
+  return connections.map((connection) => {
+    const person = S.characters.find((candidate) => candidate.id === connection.folkId);
+    return `<span class="folk-token"><span><strong>${esc(person?.name || "Unknown folk")}</strong> · ${esc(connection.kind)}</span><button type="button" data-folk-connection-remove="${esc(connection.folkId)}" aria-label="Remove connection">×</button></span>`;
+  }).join("");
+}
+
+function folkExperienceTokens(experiences) {
+  if (!experiences.length) return `<span class="muted" style="font-size:.7rem;">No formative experiences recorded.</span>`;
+  return experiences.map((experience) => `<span class="folk-token"><span>${esc(experience.name)}</span><button type="button" data-folk-experience-remove="${esc(experience.id)}" aria-label="Remove experience">×</button></span>`).join("");
+}
+
+function wireFolkBiographyEditor() {
+  const connectionField = $("#ed-connections");
+  const experienceField = $("#ed-experiences");
+  let connections = JSON.parse(connectionField.value || "[]");
+  let experiences = JSON.parse(experienceField.value || "[]");
+
+  const drawConnections = () => {
+    connectionField.value = JSON.stringify(connections);
+    $("#folk-connection-list").innerHTML = folkConnectionTokens(connections);
+    for (const button of document.querySelectorAll("[data-folk-connection-remove]")) button.onclick = () => {
+      connections = connections.filter((connection) => connection.folkId !== button.dataset.folkConnectionRemove);
+      drawConnections();
+    };
+  };
+  const drawExperiences = () => {
+    experienceField.value = JSON.stringify(experiences);
+    $("#folk-experience-list").innerHTML = folkExperienceTokens(experiences);
+    const selected = new Set(experiences.map((experience) => experience.name.toLocaleLowerCase()));
+    for (const button of document.querySelectorAll("[data-folk-experience-preset]")) {
+      const active = selected.has(button.dataset.folkExperiencePreset.toLocaleLowerCase());
+      button.classList.toggle("selected", active);
+      button.setAttribute("aria-pressed", String(active));
+      button.onclick = () => {
+        const name = button.dataset.folkExperiencePreset;
+        const key = name.toLocaleLowerCase();
+        experiences = selected.has(key)
+          ? experiences.filter((experience) => experience.name.toLocaleLowerCase() !== key)
+          : [...experiences, { id: `exp_${Date.now().toString(36)}`, name }];
+        drawExperiences();
+      };
+    }
+    for (const button of document.querySelectorAll("[data-folk-experience-remove]")) button.onclick = () => {
+      experiences = experiences.filter((experience) => experience.id !== button.dataset.folkExperienceRemove);
+      drawExperiences();
+    };
+  };
+
+  for (const button of document.querySelectorAll("[data-folk-age]")) button.onclick = () => {
+    $("#ed-age-band").value = button.dataset.folkAge;
+    for (const choice of document.querySelectorAll("[data-folk-age]")) {
+      const active = choice === button;
+      choice.classList.toggle("selected", active);
+      choice.setAttribute("aria-pressed", String(active));
+    }
+  };
+  $("#folk-connection-add").onclick = () => {
+    const folkId = $("#folk-connection-person").value;
+    if (!folkId) return;
+    const kind = $("#folk-connection-kind").value;
+    const existing = connections.find((connection) => connection.folkId === folkId);
+    if (existing) existing.kind = kind;
+    else connections.push({ folkId, kind });
+    drawConnections();
+  };
+  const addCustomExperience = () => {
+    const input = $("#folk-experience-custom");
+    const name = input.value.trim();
+    if (!name || experiences.some((experience) => experience.name.toLocaleLowerCase() === name.toLocaleLowerCase())) return;
+    experiences.push({ id: `exp_${Date.now().toString(36)}`, name });
+    input.value = "";
+    drawExperiences();
+  };
+  $("#folk-experience-add").onclick = addCustomExperience;
+  $("#folk-experience-custom").onkeydown = (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    addCustomExperience();
+  };
+  drawConnections();
+  drawExperiences();
+}
 
 function renderFolkEditor(c) {
   const isNew = !c;
-  c = c || { name: "", role: "", status: "alive", description: "", traits: {}, aptitudes: {}, publicTraits: true, hidden: {} };
-  const traitRows = TRAITS.map(
-    (t) => `<div class="formrow"><label>${t}</label><input type="number" class="num" id="ed-tr-${t}" value="${c.traits?.[t] ?? 0}"></div>`
-  ).join("");
-  const aptRows = S.buildings
-    .map(
-      (b) =>
-        `<div class="formrow"><label>${esc(b.name)}</label><input type="number" class="num" id="ed-apt-${b.id}" value="${c.aptitudes?.[b.id] ?? 0}"></div>`
-    )
-    .join("");
-  $("#folk-editor").innerHTML = `<div class="card" style="max-width:560px; margin-top:1rem;">
-    <h3>${isNew ? "Add folk" : `Edit ${esc(c.name)}`}</h3>
-    <div class="formrow"><label>Name</label><input type="text" id="ed-name" value="${esc(c.name)}" style="flex:1"></div>
-    <div class="formrow"><label>Role</label><input type="text" id="ed-role" value="${esc(c.role || "")}" style="flex:1"></div>
-    <div class="formrow"><label>Status</label>
-      <select id="ed-status">
-        ${["alive", "dead", "missing"].map((s) => `<option ${c.status === s ? "selected" : ""}>${s}</option>`).join("")}
-      </select>
-    </div>
-    <div class="formrow" style="align-items:flex-start;"><label>Description</label>
-      <div style="flex:1">
-        <textarea id="ed-description" rows="3" style="width:100%">${esc(c.description || "")}</textarea>
-        <div class="muted" style="font-size:0.8rem;">Public — shown on the table view, word for word. Keep what players shouldn't know out of it.</div>
-      </div>
-    </div>
-    <div class="formrow" style="align-items:flex-start;"><label>GM notes</label>
-      <div style="flex:1">
-        <textarea id="ed-gmnotes" rows="3" style="width:100%">${esc(c.hidden?.notes || "")}</textarea>
-        <div class="muted" style="font-size:0.8rem;">Private — never leaves this console.</div>
-      </div>
-    </div>
-    <div class="formrow"><label>Portrait URL</label><input type="text" id="ed-portrait" value="${esc(c.portrait || "")}" style="flex:1" placeholder="/portraits/… (optional)"></div>
-    <div class="formrow"><label>Public traits</label><input type="checkbox" id="ed-public" ${c.publicTraits ? "checked" : ""}> <span class="muted" style="font-size:0.85rem;">show trait numbers on the table view</span></div>
-    <hr class="rule"><div class="smallcaps">Traits</div>${traitRows}
-    <hr class="rule"><div class="smallcaps">Aptitude by building</div>${aptRows}
-    <hr class="rule">
-    <div class="formrow">
-      <button id="ed-save">${isNew ? "Add folk" : "Save"}</button>
-      <button class="quiet" id="ed-cancel">Cancel</button>
-    </div>
-  </div>`;
-  $("#ed-cancel").onclick = () => ($("#folk-editor").innerHTML = "");
-  $("#ed-save").onclick = async () => {
-    const body = {
-      name: $("#ed-name").value,
-      role: $("#ed-role").value,
-      status: $("#ed-status").value,
-      description: $("#ed-description").value,
-      hidden: { notes: $("#ed-gmnotes").value },
-      portrait: $("#ed-portrait").value || null,
-      publicTraits: $("#ed-public").checked,
-      traits: Object.fromEntries(TRAITS.map((t) => [t, parseInt($(`#ed-tr-${t}`).value, 10) || 0])),
-      aptitudes: Object.fromEntries(
-        S.buildings
-          .map((b) => [b.id, parseInt($(`#ed-apt-${b.id}`).value, 10) || 0])
-          .filter(([, v]) => v !== 0)
-      )
-    };
-    try {
-      if (isNew) await api("/api/characters", { method: "POST", body });
-      else await api(`/api/characters/${c.id}`, { method: "PUT", body });
-      $("#folk-editor").innerHTML = "";
-      await refresh();
-    } catch (e) {
-      toast(e.message, true);
-    }
-  };
+  const person = c || { name: "", role: "", status: "alive", description: "", age: { band: "unknown", years: null }, connections: [], experiences: [], traits: {}, aptitudes: {}, trustedForWork: false, hidden: {} };
+  const age = { band: "unknown", years: null, ...(person.age || {}) };
+  const connections = Array.isArray(person.connections) ? person.connections : [];
+  const experiences = Array.isArray(person.experiences) ? person.experiences : [];
+  const connectionOptions = S.characters.filter((candidate) => candidate.id !== person.id).map((candidate) => `<option value="${esc(candidate.id)}">${esc(candidate.name)}</option>`).join("");
+  const traitRows = TRAITS.map((trait) => `<div class="formrow"><label>${trait}</label><input type="number" class="num" id="ed-tr-${trait}" value="${person.traits?.[trait] ?? 0}"></div>`).join("");
+  const aptRows = S.buildings.map((building) => `<div class="formrow"><label>${esc(building.name)}</label><input type="number" class="num" id="ed-apt-${building.id}" value="${person.aptitudes?.[building.id] ?? 0}"></div>`).join("");
+  const editor = $("#folk-editor");
+  editor.hidden = false;
+  editor.innerHTML = `<div class="folk-card-back-head"><h3>${isNew ? "New folk card" : esc(person.name)}</h3>${isNew ? "" : `<button type="button" class="quiet" id="ed-project">Show at the table</button>`}</div>
+    <div class="folk-editor-fields">
+      <div class="formrow"><label>Name</label><input type="text" id="ed-name" value="${esc(person.name)}"></div>
+      <div class="formrow"><label>Role</label><input type="text" id="ed-role" value="${esc(person.role || "")}"></div>
+      <div class="formrow"><label>Status</label><select id="ed-status">${["alive", "dead", "missing"].map((status) => `<option ${person.status === status ? "selected" : ""}>${status}</option>`).join("")}</select></div>
+      <fieldset class="folk-biography"><legend>Life at a glance</legend>
+        <div class="folk-biography-block"><div class="folk-biography-head"><strong>Age</strong></div><div class="folk-age-line"><input type="hidden" id="ed-age-band" value="${esc(age.band)}"><div class="folk-age-palette">${FOLK_AGE_BANDS.map(([value, label]) => `<button type="button" data-folk-age="${value}" class="${age.band === value ? "selected" : ""}" aria-pressed="${age.band === value}">${label}</button>`).join("")}</div><label class="folk-age-years">exact <input type="number" id="ed-age-years" min="0" max="999" value="${age.years ?? ""}" placeholder="—"></label></div></div>
+        <div class="folk-biography-block"><div class="folk-biography-head"><strong>Connections</strong><span class="muted" style="font-size:.68rem;">named bonds, not prose</span></div><input type="hidden" id="ed-connections" value="${esc(JSON.stringify(connections))}"><div class="folk-token-list" id="folk-connection-list">${folkConnectionTokens(connections)}</div><div class="folk-connection-add"><select id="folk-connection-person" aria-label="Connected folk"><option value="">Choose folk</option>${connectionOptions}</select><select id="folk-connection-kind" aria-label="Connection type">${FOLK_CONNECTION_KINDS.map((kind) => `<option value="${kind}">${kind}</option>`).join("")}</select><button type="button" class="quiet" id="folk-connection-add" ${connectionOptions ? "" : "disabled"}>Add</button></div></div>
+        <div class="folk-biography-block"><div class="folk-biography-head"><strong>Experiences</strong><span class="muted" style="font-size:.68rem;">quick beats for later detail</span></div><input type="hidden" id="ed-experiences" value="${esc(JSON.stringify(experiences))}"><div class="folk-experience-palette">${FOLK_EXPERIENCE_PRESETS.map((name) => `<button type="button" data-folk-experience-preset="${esc(name)}">${esc(name)}</button>`).join("")}</div><div class="folk-token-list" id="folk-experience-list">${folkExperienceTokens(experiences)}</div><div class="folk-experience-add"><input type="text" id="folk-experience-custom" maxlength="120" placeholder="Another short experience"><button type="button" class="quiet" id="folk-experience-add">Add</button></div></div>
+      </fieldset>
+      <div class="formrow"><label>Description</label><div style="flex:1"><textarea id="ed-description" rows="4">${esc(person.description || "")}</textarea><small class="muted">Public. Players see this word for word when they turn the card.</small></div></div>
+      <div class="formrow"><label>GM notes</label><div style="flex:1"><textarea id="ed-gmnotes" rows="5">${esc(person.hidden?.notes || "")}</textarea><small class="muted">Private. This never leaves the GM console.</small></div></div>
+      <div class="formrow"><label>Work trust</label><input type="checkbox" id="ed-trusted" ${person.trustedForWork ? "checked" : ""}><span class="muted" style="font-size:.72rem;">eligible to lead settlement work</span></div>
+      <hr class="folk-private-rule"><div class="smallcaps">Private measures</div>
+      <div class="folk-stats-grid">${traitRows}<div class="formrow"><label>Inspiration</label><input type="number" id="ed-inspiration" min="-1" max="2" value="${person.hidden?.inspiration ?? 0}"></div><div class="formrow"><label>Penalty</label><input type="number" id="ed-penalty" value="${person.hidden?.penalty ?? 0}"></div></div>
+      <hr class="folk-private-rule"><div class="smallcaps">Aptitude by building</div><div class="folk-stats-grid">${aptRows || `<span class="muted">No buildings are available.</span>`}</div>
+      ${isNew ? `<p class="muted">Save the card before opening its portrait workshop.</p>` : folkPortraitStudioHtml(person)}
+      <div class="folk-editor-actions"><button type="button" id="ed-save">${isNew ? "Add folk" : "Save card"}</button><button type="button" class="quiet" id="ed-cancel">Cancel</button></div>
+    </div>`;
+  wireFolkEditor(c);
 }
 
 // --- people (the wider world's characters) & places ---
@@ -1824,6 +2121,7 @@ function renderCampaigns() {
   const ledger = S.campaigns || { currentId: null, campaigns: [] };
   const current = ledger.campaigns.find((campaign) => campaign.id === ledger.currentId);
   $("#campaign-current-name").textContent = current ? `Current table: ${current.name}` : "No current campaign";
+  const featureDefinitions = S.playerFeatureDefinitions || [];
   $("#campaign-list").innerHTML = ledger.campaigns.map((campaign) => {
     const isCurrent = campaign.id === ledger.currentId;
     const archived = campaign.status === "archived";
@@ -1841,6 +2139,13 @@ function renderCampaigns() {
           ? `<button type="button" class="quiet" data-campaign-status="${esc(campaign.id)}" data-status="active">Restore</button>`
           : `<button type="button" class="quiet" data-campaign-status="${esc(campaign.id)}" data-status="archived" ${isCurrent ? "disabled title=\"Choose another current campaign first\"" : ""}>Archive</button>`}
       </div>
+      <details class="campaign-feature-gate" ${isCurrent ? "open" : ""}>
+        <summary>Player access · changes appear immediately</summary>
+        <div class="campaign-feature-grid">${featureDefinitions.map((feature) => `<label class="campaign-feature-toggle">
+          <input type="checkbox" data-campaign-feature="${esc(campaign.id)}" data-feature-key="${esc(feature.key)}" ${campaign.playerFeatures?.[feature.key] !== false ? "checked" : ""} ${archived ? "disabled" : ""}>
+          <strong>${esc(feature.label)}</strong><span>${esc(feature.description)}</span>
+        </label>`).join("")}</div>
+      </details>
     </div>`;
   }).join("");
 
@@ -1869,6 +2174,21 @@ function renderCampaigns() {
       toast(status === "archived" ? "Campaign archived." : "Campaign restored.");
       await refresh();
     } catch (error) { toast(error.message, true); }
+  };
+  for (const input of document.querySelectorAll("[data-campaign-feature]")) input.onchange = async () => {
+    input.disabled = true;
+    try {
+      await api(`/api/campaigns/${encodeURIComponent(input.dataset.campaignFeature)}`, {
+        method: "PUT",
+        body: { playerFeatures: { [input.dataset.featureKey]: input.checked } }
+      });
+      toast(`${input.checked ? "Opened" : "Closed"} ${featureDefinitions.find((feature) => feature.key === input.dataset.featureKey)?.label || "player feature"}.`);
+      await refresh();
+    } catch (error) {
+      input.checked = !input.checked;
+      input.disabled = false;
+      toast(error.message, true);
+    }
   };
 }
 

@@ -1,4 +1,5 @@
 import { t } from "/shared/i18n.js";
+import { playerFeatureEnabled } from "/shared/player-features.js";
 
 if (new URLSearchParams(location.search).get("embed") !== "1") {
   const style = document.createElement("link");
@@ -44,6 +45,10 @@ function initFeedback() {
   let base = null;
   let current = null;
 
+  const refreshFeature = () => {
+    if (overlay.hidden) trigger.hidden = !playerFeatureEnabled("feedback");
+  };
+
   function redraw() {
     if (!base) return;
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -85,7 +90,7 @@ function initFeedback() {
 
   function close() {
     overlay.hidden = true;
-    trigger.hidden = false;
+    trigger.hidden = !playerFeatureEnabled("feedback");
     strokes.length = 0;
     overlay.querySelector("textarea").value = "";
     overlay.querySelector(".feedback-status").textContent = "";
@@ -94,6 +99,7 @@ function initFeedback() {
   overlay.addEventListener("click", (event) => { if (event.target === overlay) close(); });
 
   trigger.onclick = async () => {
+    if (!playerFeatureEnabled("feedback")) return;
     trigger.hidden = true;
     const status = overlay.querySelector(".feedback-status");
     try {
@@ -161,4 +167,6 @@ function initFeedback() {
       submit.disabled = false;
     }
   };
+  window.addEventListener("settlement:player-features", refreshFeature);
+  refreshFeature();
 }

@@ -7,6 +7,7 @@ import { covenantArticlesHtml } from "/shared/paper.js";
 import { traitAccent, traitGraphic } from "/shared/traits.js";
 import { classColor, DEFAULT_FAVORITE_COLOR, validDetailColor } from "/shared/class-colors.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
+import { setPlayerFeatureContext } from "/shared/player-features.js";
 import "/shared/feedback.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -144,8 +145,6 @@ function normalizePortraitAttempts(value) {
 
 const featHtml = (f) => `<div class="featline"><strong>${esc(f.name)}</strong> ${termify(esc(f.text))}</div>`;
 const campaignChoiceVisible = () => CAMPAIGNS.length > 1;
-const campaignParty = () => PARTY.filter((pc) => pc.campaignId === draft.campaignId);
-
 function traitValue(value) {
   return value === null ? "—" : `${value >= 0 ? "+" : ""}${value}`;
 }
@@ -389,12 +388,12 @@ const steps = [
     render() {
       return `<div class="options">${REF.classes
         .map(
-          (c) => `<div class="card pick class-pick ${draft.classId === c.id ? "selected" : ""}" data-pick="${c.id}" style="--class-pigment:${classColor(c.id)}">
+          (c) => `<button type="button" class="card pick class-pick ${draft.classId === c.id ? "selected" : ""}" data-pick="${c.id}" style="--class-pigment:${classColor(c.id)}">
             <h3>${esc(c.name)}</h3>
             <div class="smallcaps">${c.domains.map(esc).join(" · ")}</div>
             <div class="desc">${esc(c.description.split(". ")[0])}.</div>
             <div class="muted" style="font-size:0.82rem; margin-top:0.4rem;">${term("evasion", "Evasion")} ${c.startingEvasion} · ${term("hp", "Hit Points")} ${c.startingHitPoints}</div>
-          </div>`
+          </button>`
         )
         .join("")}</div>`;
     },
@@ -421,16 +420,16 @@ const steps = [
       if (currentPart === 1) {
         return `<div class="smallcaps" style="text-align:center; margin-bottom:0.6rem;">${t("subclass.item")}</div>
           <div class="options">${c.classItems
-             .map((it) => `<div class="card pick ${draft.classItem === it ? "selected" : ""}" data-item="${esc(it)}">${esc(it)}</div>`)
+             .map((it) => `<button type="button" class="card pick ${draft.classItem === it ? "selected" : ""}" data-item="${esc(it)}">${esc(it)}</button>`)
              .join("")}</div>`;
       }
       return `<div class="options wide">${c.subclasses
         .map(
-          (s) => `<div class="card pick ${draft.subclassId === s.id ? "selected" : ""}" data-pick="${s.id}">
+          (s) => `<button type="button" class="card pick ${draft.subclassId === s.id ? "selected" : ""}" data-pick="${s.id}">
             <h3>${esc(s.name)}</h3>
             ${s.spellcastTrait ? `<div class="smallcaps">${term("spellcast", "Spellcast")}: ${esc(s.spellcastTrait)}</div>` : ""}
             ${s.foundation.map(featHtml).join("")}
-          </div>`
+          </button>`
         )
         .join("")}</div>`;
     },
@@ -448,19 +447,19 @@ const steps = [
       if (currentPart === 0) return `<div class="smallcaps" style="text-align:center; margin-bottom:0.6rem;">${t("heritage.ancestry")}</div>
         <div class="options">${REF.ancestries
           .map(
-            (a) => `<div class="card pick ${draft.ancestryId === a.id ? "selected" : ""}" data-anc="${a.id}">
+            (a) => `<button type="button" class="card pick ${draft.ancestryId === a.id ? "selected" : ""}" data-anc="${a.id}">
               <h3>${esc(a.name)}</h3>
               ${draft.ancestryId === a.id ? a.features.map(featHtml).join("") : `<div class="desc">${esc(a.description.split(". ")[0])}.</div>`}
-            </div>`
+            </button>`
           )
           .join("")}</div>`;
       return `<div class="smallcaps" style="text-align:center; margin-bottom:0.6rem;">${t("heritage.community")}</div>
         <div class="options">${REF.communities
           .map(
-            (c) => `<div class="card pick ${draft.communityId === c.id ? "selected" : ""}" data-com="${c.id}">
+            (c) => `<button type="button" class="card pick ${draft.communityId === c.id ? "selected" : ""}" data-com="${c.id}">
               <h3>${esc(c.name)}</h3>
               ${draft.communityId === c.id ? c.features.map(featHtml).join("") : `<div class="desc">${esc(c.description.split(". ")[0])}.</div>`}
-            </div>`
+            </button>`
           )
           .join("")}</div>`;
     },
@@ -518,7 +517,7 @@ const steps = [
     render(currentPart) {
       const equipmentPart = currentPart > 0 && wpn(draft.primaryId)?.burden !== "One Handed" ? currentPart + 1 : currentPart;
       const c = cls();
-      const wcard = (w, key) => `<div class="card pick ${draft[key] === w.id ? "selected" : ""}" data-${key === "primaryId" ? "pri" : "sec"}="${w.id}">
+      const wcard = (w, key) => `<button type="button" class="card pick ${draft[key] === w.id ? "selected" : ""}" data-${key === "primaryId" ? "pri" : "sec"}="${w.id}">
         <h3>${esc(w.name)}</h3>
         <div class="muted" style="font-size:0.84rem;">${term("trait-" + w.trait.toLowerCase(), esc(w.trait))} · ${term("range", esc(w.range))} · ${term("damage", esc(w.damage))} · ${term("burden", esc(w.burden))}</div>
         ${w.feature ? `<div class="featline">${termify(esc(w.feature))}</div>` : ""}
@@ -538,16 +537,16 @@ const steps = [
       if (equipmentPart === 2) return `<div class="smallcaps" style="text-align:center; margin-bottom:0.6rem;">${t("arms.armor")}</div>
         <div class="options">${REF.armors
           .map(
-            (a) => `<div class="card pick ${draft.armorId === a.id ? "selected" : ""}" data-arm="${a.id}">
+            (a) => `<button type="button" class="card pick ${draft.armorId === a.id ? "selected" : ""}" data-arm="${a.id}">
               <h3>${esc(a.name)}</h3>
               <div class="muted" style="font-size:0.84rem;">${term("armor-score", "Score")} ${a.baseScore} · ${term("thresholds", t("arms.thresholds"))} ${a.baseMajorThreshold}/${a.baseSevereThreshold} (+${t("sheet.level").toLowerCase()})</div>
               ${a.feature ? `<div class="featline">${termify(esc(a.feature))}</div>` : ""}
-            </div>`
+            </button>`
           )
           .join("")}</div>`;
       return `<div class="smallcaps" style="text-align:center; margin-bottom:0.6rem;">${t("arms.potion")}</div>
         <div class="options">${REF.potionChoice
-          .map((p) => `<div class="card pick ${draft.potion === p ? "selected" : ""}" data-pot="${esc(p)}">${esc(p)}</div>`)
+          .map((p) => `<button type="button" class="card pick ${draft.potion === p ? "selected" : ""}" data-pot="${esc(p)}">${esc(p)}</button>`)
           .join("")}</div>
         <div class="count-note">${t("arms.alsocarry")} ${REF.startingInventory.map(esc).join(", ").toLowerCase()}.</div>`;
     },
@@ -570,60 +569,17 @@ const steps = [
     }
   },
   {
-    title: () => t("step.exp.title"),
-    sub: () => t("step.exp.sub"),
-    render() {
-      return `<div class="card">
-        ${[0, 1]
-          .map(
-            (i) => `<div class="formrow"><label>${term("experience", t("label.exp"))} ${i + 1}</label>
-              <input type="text" id="f-exp-${i}" value="${esc(draft.experiences[i])}" placeholder="${t("exp.placeholder")}"></div>`
-          )
-          .join("")}
-      </div>`;
-    },
-    collect() {
-      draft.experiences = [0, 1].map((i) => $(`#f-exp-${i}`).value.trim());
-      if (draft.experiences.some((e) => !e)) return t("warn.exp");
-    }
-  },
-  {
-    title: () => t("step.bg.title"),
-    sub: () => t("step.bg.sub"),
-    parts: () => cls()?.backgroundQuestions.length || 1,
-    render(currentPart) {
-      const q = cls().backgroundQuestions[currentPart];
-      return `<div class="qa card">
-        <div class="q">${esc(q)}</div>
-        <textarea rows="4" data-bg="${currentPart}">${esc(draft.background[q] || "")}</textarea>
-      </div>`;
-    },
-    wire(root) {
-      for (const el of root.querySelectorAll("[data-bg]")) {
-        el.onchange = () => {
-          const q = cls().backgroundQuestions[parseInt(el.dataset.bg, 10)];
-          draft.background[q] = el.value.trim();
-        };
-      }
-    },
-    collect(currentPart) {
-      const q = cls().backgroundQuestions[currentPart];
-      const field = $(`[data-bg="${currentPart}"]`);
-      if (field) draft.background[q] = field.value.trim();
-    }
-  },
-  {
     title: () => t("step.cards.title"),
     sub() { return t("step.cards.sub", { domains: cls().domains.map((d) => title(d)).join(" & ") }); },
     render() {
       const cards = REF.domainCards.filter((d) => d.level === 1 && cls().domains.includes(d.domain));
       return `<div class="options wide">${cards
         .map(
-          (d) => `<div class="card pick ${draft.domainCardIds.includes(d.id) ? "selected" : ""}" data-pick="${d.id}">
+          (d) => `<button type="button" class="card pick ${draft.domainCardIds.includes(d.id) ? "selected" : ""}" data-pick="${d.id}">
             <h3>${esc(d.name)}</h3>
             <div class="smallcaps">${term("domain", esc(title(d.domain)))} · ${esc(d.type)} · ${term("recall", "Recall")} ${d.recallCost}</div>
             <div class="featline">${termify(esc(d.text))}</div>
-          </div>`
+          </button>`
         )
         .join("")}</div>
         <div class="count-note">${t("cards.count", { n: draft.domainCardIds.length })}</div>`;
@@ -640,32 +596,6 @@ const steps = [
     }
   },
   {
-    title: () => t("step.conn.title"),
-    sub: () => t("step.conn.sub"),
-    parts: () => cls()?.connectionQuestions.length || 1,
-    render(currentPart) {
-      const q = cls().connectionQuestions[currentPart];
-      const peers = campaignParty();
-      const party = peers.length
-        ? `<div class="count-note">${t("conn.party", { names: peers.map((p) => esc(p.name)).join(", ") })}</div>`
-        : "";
-      return `<div class="qa card">
-        <div class="q">${esc(q)}</div>
-        <textarea rows="4" data-cn="${esc(q)}">${esc(draft.connections[q] || "")}</textarea>
-      </div>${party}`;
-    },
-    wire(root) {
-      for (const el of root.querySelectorAll("[data-cn]")) {
-        el.onchange = () => { draft.connections[el.dataset.cn] = el.value.trim(); };
-      }
-    },
-    collect(currentPart) {
-      const q = cls().connectionQuestions[currentPart];
-      const field = $("[data-cn]");
-      if (field) draft.connections[q] = field.value.trim();
-    }
-  },
-  {
     title: (currentPart) => t(currentPart === 0 ? "step.pen.title" : "step.portrait.title"),
     sub: (currentPart) => t(currentPart === 0 ? "step.pen.sub" : "step.portrait.sub"),
     parts: 2,
@@ -673,10 +603,10 @@ const steps = [
       if (currentPart === 1) return portraitStudioHtml();
       return `<div class="options shell-options pen-options">${PENS
         .map(
-          (p) => `<div class="card pick shell-pick ${draft.pen === p.id ? "selected" : ""}" data-pen="${esc(p.id)}">
+          (p) => `<button type="button" class="card pick shell-pick ${draft.pen === p.id ? "selected" : ""}" data-pen="${esc(p.id)}">
             <div class="pick-thumb">${p.thumb}</div>
             <h3>${esc(t(p.name))}</h3>
-          </div>`
+          </button>`
         )
         .join("")}</div>`;
     },
@@ -801,8 +731,7 @@ const steps = [
         <p>${REF.traits.map((tr) => `${tr} ${draft.traits[tr] >= 0 ? "+" : ""}${draft.traits[tr]}`).join(" · ")}</p>
         <h3>${t("review.arms")}</h3>
         <p>${esc(p.name)}${sc ? ` & ${esc(sc.name)}` : ""}, ${esc(ar.name)}</p>
-        <h3>${t("review.exp")}</h3>
-        <p>${draft.experiences.map((e) => `${esc(e)} +2`).join(" · ")}</p>
+        ${draft.experiences.some(Boolean) ? `<h3>${t("review.exp")}</h3><p>${draft.experiences.filter(Boolean).map((e) => `${esc(e)} +2`).join(" · ")}</p>` : ""}
         <h3>${t("review.cards")}</h3>
         <p>${draft.domainCardIds.map((id) => esc(REF.domainCards.find((d) => d.id === id).name)).join(" · ")}</p>
         ${draft.classItem ? `<h3>${t("review.carried")}</h3><p>${esc(draft.classItem)}</p>` : ""}
@@ -904,7 +833,7 @@ function buildCharacter() {
         quantity: 1
       }
     ],
-    experiences: draft.experiences.map((name) => ({ name, bonus: 2 })),
+    experiences: draft.experiences.filter(Boolean).map((name) => ({ name, bonus: 2 })),
     background: Object.entries(draft.background)
       .filter(([, v]) => v)
       .map(([q, aText]) => ({ q, a: aText })),
@@ -1119,7 +1048,7 @@ function signCovenant(event) {
 function stashDraft() {
   if (!REF || draftComplete) return;
   try { steps[step].collect?.(part); } catch { /* half-filled steps still stash */ }
-  const saved = { id: draftId, version: 2, savedAt: new Date().toISOString(), step, part, draft };
+  const saved = { id: draftId, version: 3, savedAt: new Date().toISOString(), step, part, draft };
   localStorage.setItem(DRAFT_KEY, JSON.stringify(saved));
   fetch(`/api/character-drafts/${encodeURIComponent(draftId)}`, {
     method: "PUT",
@@ -1140,7 +1069,7 @@ function restoreDraft(serverSaved = null) {
   try {
     const localSaved = JSON.parse(localStorage.getItem(DRAFT_KEY));
     const saved = serverSaved || (localSaved?.id === draftId ? localSaved : null);
-    if (!saved || saved.version !== 2 || typeof saved.step !== "number") return;
+    if (!saved || ![2, 3].includes(saved.version) || typeof saved.step !== "number") return;
     Object.assign(draft, saved.draft);
     draft.portraitTags = Array.isArray(draft.portraitTags)
       ? draft.portraitTags.filter((id) => PORTRAIT_TAGS.some((tag) => tag.id === id))
@@ -1160,7 +1089,10 @@ function restoreDraft(serverSaved = null) {
       ? Number(draft.portraitSeed)
       : null;
     draft.favoriteColor = validDetailColor(draft.favoriteColor);
-    step = Math.max(0, Math.min(steps.length - 1, saved.step));
+    const migratedStep = saved.version === 2
+      ? (saved.step <= 5 ? saved.step : saved.step <= 9 ? 6 : saved.step - 3)
+      : saved.step;
+    step = Math.max(0, Math.min(steps.length - 1, migratedStep));
     part = Math.max(0, Math.min(partTotal(steps[step]) - 1, Number(saved.part) || 0));
   } catch { /* a bad stash never blocks creation */ }
 }
@@ -1197,5 +1129,6 @@ Promise.all([
     $("#subprogress").hidden = true;
     return;
   }
+  setPlayerFeatureContext({ playerFeatures: CAMPAIGNS.find((campaign) => campaign.id === draft.campaignId)?.playerFeatures });
   rerender();
 });

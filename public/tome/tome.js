@@ -12,6 +12,8 @@ import { paperArtifactHtml } from "/shared/paper.js";
 import { sessionPoolsHtml } from "/shared/session-pools.js";
 import { mountPlayerChat } from "/shared/player-chat.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
+import { playerFeatureEnabled, setPlayerFeatureContext } from "/shared/player-features.js";
+import { folkPortraitCardHtml, wireFolkPortraitCards } from "/shared/folk-cards.js";
 import "/shared/feedback.js";
 import "/shared/player-tools.js";
 
@@ -148,6 +150,7 @@ let characterOverride = null; // "picker" | "create" | null
 let turnFallback = null;
 let editingItem = null;
 let openOnArrival = tomeParams.get("open") === "1" || requestedSectionIndex >= 0;
+let featuresInitialized = false;
 
 const getPC = () =>
   localStorage.getItem("settlement-pc") || localStorage.getItem("settlement-journal-pc");
@@ -159,6 +162,14 @@ const playerChat = mountPlayerChat({ slot: "#player-chat-slot", getPcId: getPC }
 const myIdentity = () => {
   const id = getPC();
   return (id && (data?.identities || data?.party || []).find((pc) => pc.id === id)) || null;
+};
+const SECTION_FEATURES = { journal: "journal", character: "character", inventory: "inventory", rules: "rules" };
+const sectionEnabled = (index) => playerFeatureEnabled(SECTION_FEATURES[SECTION_ORDER[index]?.key]);
+const enabledSectionIndex = (start, direction) => {
+  for (let index = start; index >= 0 && index < SECTION_ORDER.length; index += direction) {
+    if (sectionEnabled(index)) return index;
+  }
+  return -1;
 };
 const chunks = (items, size) => Array.from({ length: Math.max(1, Math.ceil(items.length / size)) }, (_, i) => items.slice(i * size, i * size + size));
 
@@ -187,22 +198,15 @@ function townSpreads() {
 }
 
 function folkCard(person) {
-  const gone = person.status !== "alive";
-  const traits = person.traits ? `<div class="tome-traits">${TRAITS.map((trait) =>
-    `<span class="tome-pill term" data-term="trait-${trait.toLowerCase()}">${trait.slice(0, 3)} ${person.traits[trait] >= 0 ? "+" : ""}${person.traits[trait] ?? 0}</span>`
-  ).join("")}</div>` : "";
-  return `<article class="tome-card"${gone ? ` style="opacity:.58"` : ""}>
-    <div class="folk-row"><div class="tome-portrait">${person.portrait ? `<img src="${esc(person.portrait)}" alt="">` : esc(person.name[0] || "?")}</div>
-    <div><strong>${esc(person.name)}</strong>${gone ? ` <span class="tome-pill">${esc(person.status)}</span>` : ""}<div class="tome-muted">${esc(person.role || "")}</div></div></div>
-    <p>${esc(person.description || "")}</p>${traits}</article>`;
+  return folkPortraitCardHtml(person);
 }
 
 function folkSpreads() {
   if (!data.characters.length) return [{ key: "folk-empty", left: { html: pageHeading(t("table.folk")), volatile: true }, right: { html: `<p class="tome-empty">${t("table.nofolk")}</p>`, volatile: true } }];
-  return chunks(data.characters, 6).map((group, i) => ({
+  return chunks(data.characters, 4).map((group, i) => ({
     key: `folk:${i}`,
-    left: { html: `${i === 0 ? pageHeading(t("table.folk")) : `<h2 class="page-heading">${t("table.folk")}</h2>`}<div class="tome-grid">${group.slice(0, 3).map(folkCard).join("")}</div>`, volatile: true },
-    right: { html: `<div class="tome-grid page-continuation">${group.slice(3).map(folkCard).join("")}</div>`, volatile: true }
+    left: { html: `${i === 0 ? pageHeading(t("table.folk")) : `<h2 class="page-heading">${t("table.folk")}</h2>`}<div class="folk-portrait-grid">${group.slice(0, 2).map(folkCard).join("")}</div>`, volatile: true },
+    right: { html: `<div class="folk-portrait-grid page-continuation">${group.slice(2).map(folkCard).join("")}</div>`, volatile: true }
   }));
 }
 
@@ -223,7 +227,7 @@ function pickerHtml() {
   const people = (data.identities || data.party || []).map((pc) =>
     `<button type="button" data-pick="${esc(pc.id)}">${esc(pc.name)}${pc.player ? ` <span class="tome-muted">· ${esc(pc.player)}</span>` : ""}</button>`
   ).join("");
-  return `<div class="character-picker"><div class="chapter-kicker">${t("table.whoareyou")}</div>${people}<button type="button" data-create>${t("create.title")} →</button></div>`;
+  return `<div class="character-picker"><div class="chapter-kicker">${t("table.whoareyou")}</div>${people}${playerFeatureEnabled("characterCreation") ? `<button type="button" data-create>${t("create.title")} →</button>` : ""}</div>`;
 }
 
 function featureHtml(feature) {
@@ -415,6 +419,7 @@ function renderKeepsakes() {
   if (!data) return;
   const nav = $("#keepsakes");
   nav.innerHTML = SECTION_ORDER.map((section, index) => {
+    if (!sectionEnabled(index)) return "";
     const style = KEEPSAKES[section.keepsake] || KEEPSAKES.ribbon;
     const active = bookOpen && index === selectedIndex;
     return `<button type="button" class="keepsake ks-${section.keepsake}${active ? " active" : ""}" data-index="${index}" style="--tab:${section.tab}; --sway:${section.sway}" ${active ? `aria-current="page"` : ""} aria-label="${esc(t(section.title))}"><span class="keepsake-emblem" aria-hidden="true">${style.art}</span><span class="keepsake-label">${esc(t(section.title))}</span></button>`;
@@ -602,6 +607,7 @@ async function useInventoryItem() {
 }
 
 function wirePageActions() {
+  wireFolkPortraitCards(document);
   for (const button of document.querySelectorAll("[data-pick]")) {
     button.onclick = async () => {
       setPC(button.dataset.pick);
@@ -637,7 +643,7 @@ function wirePageActions() {
 }
 
 function chooseSection(nextIndex) {
-  if (turning || nextIndex < 0 || nextIndex >= SECTION_ORDER.length) return;
+  if (turning || nextIndex < 0 || nextIndex >= SECTION_ORDER.length || !sectionEnabled(nextIndex)) return;
   characterOverride = null;
   if (!bookOpen) {
     selectedIndex = nextIndex;
@@ -768,6 +774,13 @@ async function refresh() {
   const response = await fetch("/api/table");
   if (!response.ok) throw new Error(t("error.table"));
   data = await response.json();
+  data.playerFeatures = setPlayerFeatureContext(data, getPC());
+  if (!featuresInitialized) {
+    const firstEnabled = sectionEnabled(selectedIndex) ? selectedIndex : enabledSectionIndex(0, 1);
+    if (firstEnabled >= 0) selectedIndex = firstEnabled;
+    else openOnArrival = false;
+    featuresInitialized = true;
+  }
   await loadCharacter();
   await playerChat.refresh();
   renderPlayerDock();
@@ -779,10 +792,15 @@ async function refresh() {
     renderSpread(true);
     openBook();
   } else if (bookOpen) renderSpread();
+  if (!SECTION_ORDER.some((_, index) => sectionEnabled(index))) $("#tome-instruction").textContent = t("features.none");
 }
 
 $("#front-cover").onclick = () => {
   if (!data) return;
+  if (!SECTION_ORDER.some((_, index) => sectionEnabled(index))) {
+    $("#tome-instruction").textContent = t("features.none");
+    return;
+  }
   renderSpread(true);
   openBook();
 };
@@ -803,11 +821,17 @@ window.addEventListener("keydown", (event) => {
   if (event.key === "Escape") closeBook();
   if (event.key === "ArrowRight") {
     if (spreadIndex < spreadsFor().length - 1) chooseSpread(spreadIndex + 1);
-    else if (selectedIndex < SECTION_ORDER.length - 1) chooseSection(selectedIndex + 1);
+    else {
+      const next = enabledSectionIndex(selectedIndex + 1, 1);
+      if (next >= 0) chooseSection(next);
+    }
   }
   if (event.key === "ArrowLeft") {
     if (spreadIndex > 0) chooseSpread(spreadIndex - 1);
-    else if (selectedIndex > 0) chooseSection(selectedIndex - 1);
+    else {
+      const previous = enabledSectionIndex(selectedIndex - 1, -1);
+      if (previous >= 0) chooseSection(previous);
+    }
   }
 });
 

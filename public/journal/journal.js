@@ -2,6 +2,7 @@
 // Reads /api/lore (whitelisted server-side); writes /api/notes as the chosen PC.
 import { t, lang, initI18n, seasonLabel } from "/shared/i18n.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
+import { playerFeatureEnabled, setPlayerFeatureContext } from "/shared/player-features.js";
 import "/shared/feedback.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -59,6 +60,8 @@ async function api(path, opts = {}) {
 
 const fetchLore = async () => {
   LORE = await api(`/api/lore${PCID ? `?pc=${encodeURIComponent(PCID)}` : ""}`);
+  LORE.playerFeatures = setPlayerFeatureContext(LORE, PCID);
+  if (TAB === "chronicle" && !playerFeatureEnabled("chronicle")) TAB = "journal";
   rebuildLinker();
 };
 
@@ -334,6 +337,7 @@ function renderTab() {
 
 function renderAll() {
   const my = me();
+  document.querySelector('[data-tab="chronicle"]').hidden = !playerFeatureEnabled("chronicle");
   $("#j-pc").textContent = my ? my.name : "";
   $("#j-season").textContent = seasonLabel(LORE.seasonLabel);
   renderTab();

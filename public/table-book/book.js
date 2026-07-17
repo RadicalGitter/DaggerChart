@@ -3,6 +3,8 @@
 import { t, term, initI18n, seasonLabel, TERMS } from "/shared/i18n.js";
 import { sessionPoolsHtml } from "/shared/session-pools.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
+import { playerFeatureEnabled, setPlayerFeatureContext } from "/shared/player-features.js";
+import { folkPortraitGridHtml, wireFolkPortraitCards } from "/shared/folk-cards.js";
 import "/shared/feedback.js";
 import "/shared/player-tools.js";
 
@@ -11,7 +13,6 @@ const esc = (value) =>
   String(value ?? "").replace(/[&<>"']/g, (char) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
 
-const TRAITS = ["Agility", "Strength", "Finesse", "Instinct", "Presence", "Knowledge"];
 const SECTION_ORDER = [
   { key: "town", title: "table.town" },
   { key: "folk", title: "table.folk" },
@@ -26,6 +27,7 @@ let contentKey = null;
 let characterOverride = null; // "picker" | "create" | null
 let turnFallback = null;
 let openOnArrival = new URLSearchParams(location.search).get("open") === "1";
+let featuresInitialized = false;
 
 const getPC = () =>
   localStorage.getItem("settlement-pc") || localStorage.getItem("settlement-journal-pc");
@@ -36,6 +38,14 @@ const setPC = (id) => {
 const myPC = () => {
   const id = getPC();
   return (id && (data?.identities || data?.party || []).find((pc) => pc.id === id)) || null;
+};
+const SECTION_FEATURES = { town: "settlement", folk: "folk", chronicle: "chronicle" };
+const sectionEnabled = (index) => playerFeatureEnabled(SECTION_FEATURES[SECTION_ORDER[index]?.key]);
+const enabledSectionIndex = (start, direction) => {
+  for (let index = start; index >= 0 && index < SECTION_ORDER.length; index += direction) {
+    if (sectionEnabled(index)) return index;
+  }
+  return -1;
 };
 
 function sectionCount(key) {
@@ -80,24 +90,7 @@ function townHtml() {
 
 function folkHtml() {
   return data.characters.length
-    ? `<h2 class="page-heading">${t("table.folk")}</h2><div class="book-grid">${data.characters
-        .map((person) => {
-          const gone = person.status !== "alive";
-          const traits = person.traits
-            ? `<div class="book-traits">${TRAITS.map((trait) =>
-                `<span class="book-pill term" data-term="trait-${trait.toLowerCase()}">${trait.slice(0, 3)} ${person.traits[trait] >= 0 ? "+" : ""}${person.traits[trait] ?? 0}</span>`
-              ).join("")}</div>`
-            : "";
-          return `<article class="book-card"${gone ? ` style="opacity:.58"` : ""}>
-            <div class="folk-row">
-              <div class="book-portrait">${person.portrait ? `<img src="${esc(person.portrait)}" alt="">` : esc(person.name[0] || "?")}</div>
-              <div><strong>${esc(person.name)}</strong>${gone ? ` <span class="book-pill">${esc(person.status)}</span>` : ""}
-              <div class="book-muted">${esc(person.role || "")}</div></div>
-            </div>
-            <p>${esc(person.description || "")}</p>${traits}
-          </article>`;
-        })
-        .join("")}</div>`
+    ? `<h2 class="page-heading">${t("table.folk")}</h2>${folkPortraitGridHtml(data.characters)}`
     : `<p class="book-empty">${t("table.nofolk")}</p>`;
 }
 
@@ -116,7 +109,7 @@ function pickerHtml() {
   return `<div class="character-picker">
     <div class="chapter-kicker" style="text-align:center">${t("table.whoareyou")}</div>
     ${people}
-    <button type="button" class="quiet" data-create>${t("create.title")} →</button>
+    ${playerFeatureEnabled("characterCreation") ? `<button type="button" class="quiet" data-create>${t("create.title")} →</button>` : ""}
   </div>`;
 }
 
@@ -147,6 +140,7 @@ function rightPage(section) {
 }
 
 function wirePageActions() {
+  wireFolkPortraitCards(document);
   for (const button of $("#right-content").querySelectorAll("[data-pick]")) {
     button.onclick = () => {
       setPC(button.dataset.pick);
@@ -199,6 +193,7 @@ function renderCover() {
   $("#folio-stores").innerHTML = Object.entries(data.resources)
     .map(([name, value]) => `<span class="folio-store"><strong>${value}</strong>${esc(name)}</span>`)
     .join("");
+  $("#folio-stores").hidden = !playerFeatureEnabled("settlement");
   $("#session-pools").innerHTML = sessionPoolsHtml(data);
 }
 
@@ -206,6 +201,7 @@ function renderBookmarks() {
   if (!data) return;
   const nav = $("#bookmarks");
   nav.innerHTML = SECTION_ORDER.map((section, index) => {
+    if (!sectionEnabled(index)) return "";
     const isLeft = bookOpen && index < selectedIndex;
     const slot = bookOpen ? (isLeft ? index : index - selectedIndex) : index;
     const active = bookOpen && index === selectedIndex;
@@ -220,7 +216,7 @@ function renderBookmarks() {
 }
 
 function chooseSection(nextIndex) {
-  if (turning || nextIndex < 0 || nextIndex >= SECTION_ORDER.length) return;
+  if (turning || nextIndex < 0 || nextIndex >= SECTION_ORDER.length || !sectionEnabled(nextIndex)) return;
   characterOverride = null;
   if (!bookOpen) {
     selectedIndex = nextIndex;
@@ -313,6 +309,13 @@ async function refresh() {
   const response = await fetch("/api/table");
   if (!response.ok) throw new Error(t("error.table"));
   data = await response.json();
+  data.playerFeatures = setPlayerFeatureContext(data, getPC());
+  if (!featuresInitialized) {
+    const firstEnabled = sectionEnabled(selectedIndex) ? selectedIndex : enabledSectionIndex(0, 1);
+    if (firstEnabled >= 0) selectedIndex = firstEnabled;
+    else openOnArrival = false;
+    featuresInitialized = true;
+  }
   renderCover();
   renderBookmarks();
   if (openOnArrival && !bookOpen) {
@@ -333,8 +336,14 @@ $("#close-book").onclick = closeBook;
 window.addEventListener("keydown", (event) => {
   if (!bookOpen || turning || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) return;
   if (event.key === "Escape") closeBook();
-  if (event.key === "ArrowRight" && selectedIndex < SECTION_ORDER.length - 1) chooseSection(selectedIndex + 1);
-  if (event.key === "ArrowLeft" && selectedIndex > 0) chooseSection(selectedIndex - 1);
+  if (event.key === "ArrowRight") {
+    const next = enabledSectionIndex(selectedIndex + 1, 1);
+    if (next >= 0) chooseSection(next);
+  }
+  if (event.key === "ArrowLeft") {
+    const previous = enabledSectionIndex(selectedIndex - 1, -1);
+    if (previous >= 0) chooseSection(previous);
+  }
 });
 
 window.addEventListener("storage", (event) => {

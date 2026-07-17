@@ -1,5 +1,6 @@
 import { t, initI18n, seasonLabel } from "/shared/i18n.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
+import { playerFeatureEnabled, setPlayerFeatureContext } from "/shared/player-features.js";
 import "/shared/feedback.js";
 
 const $ = (selector) => document.querySelector(selector);
@@ -194,9 +195,11 @@ function renderPalette() {
 
 function render() {
   if (!data) return;
+  data.playerFeatures = setPlayerFeatureContext(data, null);
   document.title = `${t("login.subtitle")} — ${data.settlement.name}`;
   $("#settlement-name").textContent = data.settlement.name;
   $("#settlement-season").textContent = seasonLabel(data.settlement.seasonLabel);
+  $(".create-character-command").hidden = !playerFeatureEnabled("characterCreation");
 
   $("#finished-characters").innerHTML = campaignGroupsHtml(identities, "pc");
   $("#unfinished-characters").innerHTML = campaignGroupsHtml(drafts, "draft");

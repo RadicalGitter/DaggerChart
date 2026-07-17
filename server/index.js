@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import "./env.js";
 import { campaignById, createCampaignId, isActiveCampaign, state, persist, addLog, advanceSeason, resolveDowntime, modifierBreakdown, seasonLabel } from "./state.js";
 import { gmView, tableView, loreView, screenView, partyListView, playerCharacterView, gmMessagesView, playerMessagesView } from "./views.js";
+import { normalizeFolkProfile } from "./folk-profile.js";
 import { loadJson, saveJson } from "./store.js";
 import almanac from "./almanac.js";
 import { addInventoryItem, consumables, grantConsumable, inventoryEntry, updateInventoryItem, useInventoryItem } from "./inventory.js";
@@ -13,6 +14,7 @@ import { retellSession } from "./retell.js";
 import { suggestPortrait } from "./portrait-suggest.js";
 import { artWorkshop } from "./art.js";
 import { resolveDualityRoll } from "./duality-roll.js";
+import { DEFAULT_PLAYER_FEATURES, normalizePlayerFeatures, playerFeaturePatch } from "./player-features.js";
 import {
   SCENE_DIMENSIONS,
   SCENE_ROOT_IDS,
@@ -584,7 +586,13 @@ app.post("/api/campaigns", guard((req, res) => {
   if (name.length > 80) throw new Error("Campaign names must be at most 80 characters.");
   if (state.campaigns.campaigns.length >= 50) throw new Error("The campaign ledger is full.");
   if (state.campaigns.campaigns.some((campaign) => campaign.name.toLocaleLowerCase() === name.toLocaleLowerCase())) throw new Error("That campaign name is already in the ledger.");
-  const campaign = { id: createCampaignId(), name, status: "active", createdAt: new Date().toISOString() };
+  const campaign = {
+    id: createCampaignId(),
+    name,
+    status: "active",
+    createdAt: new Date().toISOString(),
+    playerFeatures: { ...DEFAULT_PLAYER_FEATURES }
+  };
   state.campaigns.campaigns.push(campaign);
   persist(); broadcast();
   res.status(201).json(campaign);
@@ -603,6 +611,7 @@ app.put("/api/campaigns/:id", guard((req, res) => {
   if (!campaign) throw new Error("No such campaign.");
   let nextName = campaign.name;
   let nextStatus = campaign.status;
+  let nextPlayerFeatures = normalizePlayerFeatures(campaign.playerFeatures);
   if (req.body.name !== undefined) {
     const name = String(req.body.name || "").trim();
     if (!name) throw new Error("A campaign name is required.");
@@ -615,8 +624,12 @@ app.put("/api/campaigns/:id", guard((req, res) => {
     if (req.body.status === "archived" && campaign.id === state.campaigns.currentId) throw new Error("Make another campaign current before archiving this one.");
     nextStatus = req.body.status;
   }
+  if (req.body.playerFeatures !== undefined) {
+    nextPlayerFeatures = { ...nextPlayerFeatures, ...playerFeaturePatch(req.body.playerFeatures) };
+  }
   campaign.name = nextName;
   campaign.status = nextStatus;
+  campaign.playerFeatures = nextPlayerFeatures;
   persist(); broadcast();
   res.json(campaign);
 }));
@@ -938,7 +951,13 @@ app.put("/api/buildings/:id", guard((req, res) => {
     if (!Number.isInteger(level) || level < 1) throw new Error("Level must be 1 or higher.");
     b.level = level;
   }
-  if (foremanId !== undefined) b.foremanId = foremanId || null;
+  if (foremanId !== undefined) {
+    const foreman = foremanId ? state.characters.find((character) => character.id === foremanId) : null;
+    if (foremanId && (!foreman || foreman.status !== "alive" || foreman.trustedForWork !== true)) {
+      throw new Error("A foreman must be living folk whose trust has been earned.");
+    }
+    b.foremanId = foreman?.id || null;
+  }
   persist();
   broadcast();
   res.json({ ok: true });
@@ -954,6 +973,13 @@ app.post("/api/characters", guard((req, res) => {
     status: c.status || "alive",
     description: c.description || "",
     portrait: c.portrait || null,
+    portraitPrompt: c.portraitPrompt || "",
+    portraitSuggestion: c.portraitSuggestion || "",
+    portraitNegativePrompt: c.portraitNegativePrompt || "",
+    portraitDirection: c.portraitDirection || {},
+    portraitWorkshop: c.portraitWorkshop || {},
+    trustedForWork: c.trustedForWork === true,
+    ...normalizeFolkProfile(c),
     publicTraits: !!c.publicTraits,
     traits: c.traits || {},
     aptitudes: c.aptitudes || {},
@@ -969,10 +995,155 @@ app.put("/api/characters/:id", guard((req, res) => {
   const i = state.characters.findIndex((c) => c.id === req.params.id);
   if (i === -1) throw new Error("Unknown character.");
   const prev = state.characters[i];
-  state.characters[i] = { ...prev, ...req.body, id: prev.id, hidden: { ...prev.hidden, ...(req.body.hidden || {}) } };
+  state.characters[i] = {
+    ...prev,
+    ...req.body,
+    id: prev.id,
+    hidden: { ...prev.hidden, ...(req.body.hidden || {}) },
+    portraitDirection: {
+      ...(prev.portraitDirection || {}),
+      ...(req.body.portraitDirection || {}),
+      equipment: {
+        ...(prev.portraitDirection?.equipment || {}),
+        ...(req.body.portraitDirection?.equipment || {})
+      }
+    },
+    portraitWorkshop: { ...(prev.portraitWorkshop || {}), ...(req.body.portraitWorkshop || {}) }
+  };
+  Object.assign(state.characters[i], normalizeFolkProfile(state.characters[i]));
+  state.characters[i].connections = state.characters[i].connections.filter((connection) => (
+    connection.folkId !== prev.id && state.characters.some((character) => character.id === connection.folkId)
+  ));
+  state.characters[i].trustedForWork = state.characters[i].trustedForWork === true;
+  if (!state.characters[i].trustedForWork) {
+    for (const building of Object.values(state.settlement.buildings)) {
+      if (building.foremanId === prev.id) building.foremanId = null;
+    }
+  }
   persist();
   broadcast();
   res.json(state.characters[i]);
+}));
+
+const folkPortraitModifier = (value) => [-1, 0, 1, 2].includes(Number(value)) ? Number(value) : 0;
+const folkPortraitStyle = (value) => ["style1", "style2"].includes(String(value)) ? String(value) : "style2";
+const folkPortraitText = (value, max) => String(value || "").trim().slice(0, max);
+
+function folkPortraitRequest(body = {}) {
+  const equipment = body.equipment && typeof body.equipment === "object" ? body.equipment : {};
+  return {
+    sourcePrompt: folkPortraitText(body.sourcePrompt || body.prompt, 6_000),
+    prompt: folkPortraitText(body.prompt, 8_000),
+    negativePrompt: folkPortraitText(body.negativePrompt, 4_000),
+    primaryColor: folkPortraitText(body.primaryColor, 32),
+    secondaryColor: folkPortraitText(body.secondaryColor, 32),
+    tags: Array.isArray(body.tags) ? body.tags.slice(0, 20).map((tag) => folkPortraitText(tag, 80)) : [],
+    equipment: Object.fromEntries(["armor", "mainHand", "offHand"].map((key) => [key, {
+      enabled: equipment[key]?.enabled !== false,
+      text: folkPortraitText(equipment[key]?.text || body[key], 300)
+    }])),
+    armor: folkPortraitText(body.armor, 300),
+    mainHand: folkPortraitText(body.mainHand, 300),
+    offHand: folkPortraitText(body.offHand, 300),
+    stepsModifier: folkPortraitModifier(body.stepsModifier),
+    cfgModifier: folkPortraitModifier(body.cfgModifier),
+    style: folkPortraitStyle(body.style),
+    embellishPrompt: body.embellishPrompt !== false,
+    fixSeed: body.fixSeed === true
+  };
+}
+
+app.post("/api/characters/:id/portrait/suggest", guardAsync(async (req, res) => {
+  const character = state.characters.find((candidate) => candidate.id === req.params.id);
+  if (!character) throw new Error("Unknown character.");
+  const result = await suggestPortrait({
+    name: character.name,
+    role: character.role,
+    ...req.body.context
+  });
+  res.json(result);
+}));
+
+app.post("/api/characters/:id/portrait", guardAsync(async (req, res) => {
+  const character = state.characters.find((candidate) => candidate.id === req.params.id);
+  if (!character) throw new Error("Unknown character.");
+  const request = folkPortraitRequest(req.body);
+  if (!request.sourcePrompt) throw new Error("Describe the portrait first.");
+
+  character.portraitPrompt = request.sourcePrompt;
+  character.portraitNegativePrompt = request.negativePrompt;
+  character.portraitDirection = {
+    tags: request.tags,
+    primaryColor: request.primaryColor,
+    secondaryColor: request.secondaryColor,
+    equipment: request.equipment
+  };
+  character.portraitWorkshop = {
+    ...(character.portraitWorkshop || {}),
+    fixSeed: request.fixSeed,
+    stepsModifier: request.stepsModifier,
+    cfgModifier: request.cfgModifier,
+    style: request.style,
+    embellishPrompt: request.embellishPrompt
+  };
+  persist();
+
+  const result = await artWorkshop.request({
+    kind: "portrait",
+    entityId: character.id,
+    prompt: request.prompt || request.sourcePrompt,
+    negativePrompt: request.negativePrompt,
+    seed: req.body.seed,
+    stepsModifier: request.stepsModifier,
+    cfgModifier: request.cfgModifier,
+    style: request.style,
+    primaryColor: request.primaryColor,
+    secondaryColor: request.secondaryColor,
+    tags: request.tags,
+    armor: request.armor,
+    mainHand: request.mainHand,
+    offHand: request.offHand,
+    embellishPrompt: request.embellishPrompt
+  });
+  if (!state.characters.includes(character)) throw new Error("That folk card is no longer available.");
+  const seed = Number(result.seed);
+  const urls = (Array.isArray(result.urls) && result.urls.length ? result.urls : [result.url])
+    .map((url) => String(url || ""))
+    .filter((url) => url.startsWith("/generated/art/portrait/"));
+  if (!urls.length || !Number.isSafeInteger(seed)) throw new Error("The portrait workshop returned an invalid result.");
+  const createdAt = new Date().toISOString();
+  const requestRecord = {
+    prompt: request.prompt || request.sourcePrompt,
+    negativePrompt: request.negativePrompt,
+    primaryColor: request.primaryColor,
+    secondaryColor: request.secondaryColor,
+    tags: request.tags,
+    equipment: request.equipment,
+    armor: request.armor,
+    mainHand: request.mainHand,
+    offHand: request.offHand,
+    stepsModifier: request.stepsModifier,
+    cfgModifier: request.cfgModifier,
+    style: request.style,
+    embellishPrompt: request.embellishPrompt,
+    fixSeed: request.fixSeed
+  };
+  const attempts = urls.map((url) => ({
+    id: `portrait_attempt_${randomUUID()}`,
+    url,
+    seed,
+    createdAt,
+    request: requestRecord
+  }));
+  character.portrait = String(result.url || urls[0]);
+  character.portraitWorkshop = {
+    ...character.portraitWorkshop,
+    lastSeed: seed,
+    attempts: [...(character.portraitWorkshop.attempts || []), ...attempts].slice(-30)
+  };
+  persist();
+  broadcast();
+  res.json({ ...result, message: `${character.name}'s portrait is ready.` });
 }));
 
 // --- people & places (the wider world; player journal reads via /api/lore) ---

@@ -1,4 +1,5 @@
 import { t } from "/shared/i18n.js";
+import { playerFeatureEnabled } from "/shared/player-features.js";
 
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
@@ -55,7 +56,7 @@ export function mountPlayerChat({ slot, getPcId }) {
 
   function renderTrigger() {
     const unread = unreadCount();
-    host.hidden = !thread?.pc;
+    host.hidden = !thread?.pc || !playerFeatureEnabled("messages");
     badge.hidden = unread === 0;
     badge.textContent = unread > 9 ? "9+" : String(unread);
     const label = unread
@@ -123,6 +124,7 @@ export function mountPlayerChat({ slot, getPcId }) {
   }
 
   async function openPanel() {
+    if (!playerFeatureEnabled("messages")) return;
     lastFocus = document.activeElement;
     open = true;
     backdrop.hidden = false;
@@ -172,6 +174,7 @@ export function mountPlayerChat({ slot, getPcId }) {
     if (event.key === "Enter" && event.ctrlKey) { event.preventDefault(); void send(); }
   });
   document.addEventListener("keydown", (event) => { if (event.key === "Escape" && open) closePanel(); });
+  window.addEventListener("settlement:player-features", renderTrigger);
 
   renderTrigger();
   return { refresh };

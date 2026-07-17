@@ -4,6 +4,7 @@ import { t, term, termify, initI18n } from "/shared/i18n.js";
 import { paperArtifactHtml } from "/shared/paper.js";
 import { traitAccent, traitGraphic } from "/shared/traits.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
+import { playerFeatureEnabled, setPlayerFeatureContext } from "/shared/player-features.js";
 import "/shared/feedback.js";
 import "/shared/player-tools.js";
 
@@ -44,7 +45,7 @@ function render() {
         <h1>${esc(p.name)}</h1>
         <div class="muted">${esc(p.ancestry.name)} ${esc(p.class.name)} — ${esc(p.subclass.name)} · ${term("level", t("sheet.level"))} ${p.level}</div>
         <div class="muted" style="font-size:0.85rem;">${esc(p.community.name)}${p.pronouns ? ` · ${esc(p.pronouns)}` : ""}${p.player ? ` · ${esc(p.player)}` : ""}</div>
-        <div style="margin-top:0.25rem;"><a href="/journal/?pc=${esc(p.id)}" style="color:#d4b86a; font-size:0.85rem; text-decoration:none; border-bottom:1px dotted #8a7550;">${t("journal.open")} ↗</a></div>
+        ${playerFeatureEnabled("journal") ? `<div style="margin-top:0.25rem;"><a href="/journal/?pc=${esc(p.id)}" style="color:#d4b86a; font-size:0.85rem; text-decoration:none; border-bottom:1px dotted #8a7550;">${t("journal.open")} ↗</a></div>` : ""}
       </div>
     </header>
 
@@ -102,14 +103,14 @@ function render() {
       </div>
     </div>
 
-    <div class="sheet-section sheet-anchor" id="sheet-inventory">
+    ${playerFeatureEnabled("inventory") ? `<div class="sheet-section sheet-anchor" id="sheet-inventory">
       <span class="smallcaps">${t("sheet.carried")}</span>
       <div class="card"><ul class="inventory-list">${p.inventory.map((i) => i.kind === "paper"
         ? `<li><button class="inventory-paper" type="button" data-paper-open="${esc(i.id)}"><strong>${esc(i.name)}</strong><span>${esc(i.paperType === "covenant" ? t("contract.decree") : (i.body || "").slice(0, 110))}</span></button></li>`
         : `<li><strong>${esc(i.name)}</strong>${i.quantity > 1 ? ` ×${i.quantity}` : ""}${i.description ? `<div class="muted">${termify(esc(i.description))}</div>` : ""}</li>`).join("")}</ul>
         <div class="inventory-tools"><button class="quiet" id="paper-new" type="button">${t("inventory.write")}</button></div>
       </div>
-    </div>
+    </div>` : ""}
 
     ${(p.background.length || p.connections.length) ? `<section class="sheet-anchor" id="sheet-story">
       ${p.background.length
@@ -124,7 +125,7 @@ function render() {
         : ""}
     </section>` : ""}
 
-    ${themeHtml(p)}
+    ${playerFeatureEnabled("music") ? themeHtml(p) : ""}
   `;
   wirePips();
   wireHand();
@@ -139,9 +140,9 @@ function sheetNavHtml(p) {
     ["sheet-arms", "sheet.arms"],
     ["sheet-cards", "sheet.cards"],
     ["sheet-features", "sheet.features"],
-    ["sheet-inventory", "table.inventory"],
+    ...(playerFeatureEnabled("inventory") ? [["sheet-inventory", "table.inventory"]] : []),
     ...((p.background?.length || p.connections?.length) ? [["sheet-story", "sheet.story"]] : []),
-    ["sheet-theme", "theme.title"]
+    ...(playerFeatureEnabled("music") ? [["sheet-theme", "theme.title"]] : [])
   ];
   return `<nav class="sheet-nav" aria-label="${esc(t("sheet.sections"))}">${sections.map(([target, label], index) =>
     `<a href="#${target}" data-sheet-target="${target}" ${index === 0 ? 'aria-current="true"' : ""}>${esc(t(label))}</a>`
@@ -502,6 +503,7 @@ async function load() {
     return;
   }
   PC = data;
+  PC.playerFeatures = setPlayerFeatureContext(PC, PC.id);
   THEMES = themeRes.ok ? themeData : { songs: [], published: null, provider: {} };
   document.title = `${PC.name} — The Settlement`;
   render();

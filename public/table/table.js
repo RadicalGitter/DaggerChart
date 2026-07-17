@@ -7,6 +7,8 @@
 import { t, term, initI18n, seasonLabel, TERMS } from "/shared/i18n.js";
 import { sessionPoolsHtml } from "/shared/session-pools.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
+import { playerFeatureEnabled, setPlayerFeatureContext } from "/shared/player-features.js";
+import { folkPortraitGridHtml, wireFolkPortraitCards } from "/shared/folk-cards.js";
 import "/shared/feedback.js";
 import "/shared/player-tools.js";
 
@@ -14,8 +16,6 @@ const $ = (sel) => document.querySelector(sel);
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-
-const TRAITS = ["Agility", "Strength", "Finesse", "Instinct", "Presence", "Knowledge"];
 
 let data = null;
 let selected = null; // key of the open card, or null for the horizontal row
@@ -54,27 +54,7 @@ const SECTIONS = {
     count: (d) => d.characters.length,
     render: (d) =>
       d.characters.length
-        ? `<div class="grid">${d.characters
-            .map((c) => {
-              const traits = c.traits
-                ? `<div class="traits">${TRAITS.map(
-                    (tr) => `<span class="pill term" data-term="trait-${tr.toLowerCase()}">${tr.slice(0, 3)} ${c.traits[tr] >= 0 ? "+" : ""}${c.traits[tr] ?? 0}</span>`
-                  ).join("")}</div>`
-                : "";
-              const gone = c.status !== "alive";
-              return `<div class="card" style="${gone ? "opacity:0.55;" : ""}">
-                <div class="folk-head">
-                  <div class="portrait">${c.portrait ? `<img src="${esc(c.portrait)}" alt="">` : esc(c.name[0] || "?")}</div>
-                  <div>
-                    <strong>${esc(c.name)}</strong>${gone ? ` <span class="pill">${esc(c.status)}</span>` : ""}
-                    <div class="muted" style="font-size:0.85rem;">${esc(c.role || "")}</div>
-                  </div>
-                </div>
-                <p style="font-size:0.92rem;">${esc(c.description || "")}</p>
-                ${traits}
-              </div>`;
-            })
-            .join("")}</div>`
+        ? folkPortraitGridHtml(d.characters)
         : `<p class="empty">${t("table.nofolk")}</p>`
   },
   chronicle: {
@@ -94,6 +74,15 @@ const SECTIONS = {
   }
 };
 
+const SECTION_FEATURES = {
+  town: "settlement",
+  folk: "folk",
+  chronicle: "chronicle",
+  journal: "journal",
+  character: "character",
+  rules: "rules"
+};
+
 // --- the embedded panels (journal, character) ---
 
 function pickerHtml() {
@@ -104,7 +93,7 @@ function pickerHtml() {
         (p) => `<button data-pick="${p.id}">${esc(p.name)}${p.player ? ` <span style="opacity:0.7; font-size:0.85rem;">· ${esc(p.player)}</span>` : ""}</button>`
       )
       .join("")}
-    <button class="quiet cross" data-create>${t("create.title")} →</button>
+    ${playerFeatureEnabled("characterCreation") ? `<button class="quiet cross" data-create>${t("create.title")} →</button>` : ""}
   </div>`;
 }
 
@@ -151,6 +140,7 @@ function updatePanel() {
   if (!want.volatile && want.key === panelKey) return;
   body.innerHTML = want.html;
   panelKey = want.key;
+  wireFolkPortraitCards(body);
   for (const b of body.querySelectorAll("[data-pick]")) {
     b.onclick = () => { setPC(b.dataset.pick); panelOverride = null; renderFaces(); updatePanel(); };
   }
@@ -179,13 +169,19 @@ window.addEventListener("storage", (e) => {
 function layoutDeck() {
   const area = $("#deck-area");
   const deck = $("#deck");
-  const cards = [...deck.querySelectorAll(".big-card")];
+  const cards = [...deck.querySelectorAll(".big-card:not([hidden])")];
   const n = cards.length;
   const docked = selected !== null;
   const narrow = window.innerWidth < 640; // players' phones
   area.classList.toggle("docked", docked);
   area.classList.toggle("stacked", docked && narrow);
   deck.classList.toggle("banners", !docked && narrow);
+
+  if (n === 0) {
+    deck.style.width = "0";
+    deck.style.height = "0";
+    return;
+  }
 
   if (!docked) {
     deck.style.width = "100%";
@@ -278,11 +274,13 @@ window.addEventListener("resize", () => {
 
 async function render() {
   data = await (await fetch("/api/table")).json();
+  data.playerFeatures = setPlayerFeatureContext(data, getPC());
   setTelemetryMode(selected || "deck");
 
   $("#t-name").textContent = data.settlement.name;
   $("#t-season").innerHTML = `<span class="term" data-term="season">${esc(seasonLabel(data.settlement.seasonLabel))}</span> · ${t("table.folkcount", { n: data.settlement.population })}`;
 
+  $("#t-stats").hidden = !playerFeatureEnabled("settlement");
   $("#t-stats").innerHTML = Object.entries(data.resources)
     .map(([name, v]) => {
       const key = `res-${name.toLowerCase()}`;
@@ -291,6 +289,10 @@ async function render() {
     })
     .join("");
   $("#session-pools").innerHTML = sessionPoolsHtml(data);
+
+  for (const card of document.querySelectorAll(".big-card[data-card]")) {
+    card.hidden = !playerFeatureEnabled(SECTION_FEATURES[card.dataset.card]);
+  }
 
   renderFaces();
   updatePanel();

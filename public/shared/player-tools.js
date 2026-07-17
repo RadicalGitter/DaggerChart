@@ -1,4 +1,5 @@
 import { t } from "/shared/i18n.js";
+import { playerFeatureEnabled } from "/shared/player-features.js";
 import "/shared/duality-dice.js";
 
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) =>
@@ -46,10 +47,10 @@ function install() {
         <div class="player-note-recent-list"><p>${esc(t("player.notes.loading"))}</p></div>
       </section>
       <nav class="player-tools-links" aria-label="${esc(t("player.notes.atHand"))}">
-        <a data-player-tool="character">${esc(t("table.character"))}</a>
-        <a data-player-tool="journal">${esc(t("journal.title"))}</a>
-        <a data-player-tool="inventory">${esc(t("table.inventory"))}</a>
-        <a href="/rules">${esc(t("rules.title"))}</a>
+        <a data-player-tool="character" data-player-feature="character">${esc(t("table.character"))}</a>
+        <a data-player-tool="journal" data-player-feature="journal">${esc(t("journal.title"))}</a>
+        <a data-player-tool="inventory" data-player-feature="inventory">${esc(t("table.inventory"))}</a>
+        <a href="/rules" data-player-feature="rules">${esc(t("rules.title"))}</a>
       </nav>
     </aside>`;
   document.body.append(root);
@@ -78,6 +79,9 @@ function install() {
     root.querySelector('[data-player-tool="character"]').href = `/character/${encodeURIComponent(currentPcId)}`;
     root.querySelector('[data-player-tool="journal"]').href = `/journal/?pc=${encodeURIComponent(currentPcId)}`;
     root.querySelector('[data-player-tool="inventory"]').href = "/tome?open=1&section=inventory";
+    for (const link of root.querySelectorAll("[data-player-feature]")) {
+      link.hidden = !playerFeatureEnabled(link.dataset.playerFeature);
+    }
   }
 
   function renderRecent(notes) {
@@ -108,10 +112,12 @@ function install() {
     drawer.hidden = true;
     trigger.setAttribute("aria-expanded", "false");
     document.body.classList.remove("player-notes-open");
-    if (restoreFocus) trigger.focus();
+    if (!currentPcId || !playerFeatureEnabled("notes")) root.hidden = true;
+    if (restoreFocus && !trigger.hidden) trigger.focus();
   }
 
   function openDrawer() {
+    if (!playerFeatureEnabled("notes")) return;
     window.dispatchEvent(new CustomEvent("settlement:close-dice"));
     refresh();
     if (!currentPcId) return;
@@ -127,7 +133,9 @@ function install() {
     const next = selectedPcId();
     const changed = next !== currentPcId;
     currentPcId = next;
-    root.hidden = !currentPcId;
+    const enabled = playerFeatureEnabled("notes");
+    trigger.hidden = !enabled;
+    root.hidden = !currentPcId || (!enabled && drawer.hidden);
     if (!currentPcId) closeDrawer({ restoreFocus: false });
     else renderLinks();
     if (changed && !drawer.hidden) loadRecent();
@@ -177,6 +185,7 @@ function install() {
     if (["settlement-pc", "settlement-journal-pc"].includes(event.key)) refresh();
   });
   window.addEventListener("settlement:identity", refresh);
+  window.addEventListener("settlement:player-features", refresh);
   window.addEventListener("settlement:open-notes", openDrawer);
   window.addEventListener("settlement:close-notes", () => closeDrawer({ restoreFocus: false }));
   renderScope();

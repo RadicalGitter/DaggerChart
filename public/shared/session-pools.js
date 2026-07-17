@@ -12,6 +12,7 @@ const pips = (count, max, className) => Array.from({ length: max }, (_, index) =
 ).join("");
 
 export function sessionPoolsHtml(data, { pcId = null } = {}) {
+  if (data?.playerFeatures?.sessionPools === false) return "";
   const fear = Number.isInteger(data?.fear) ? bounded(data.fear, 0, 12, 0) : null;
   const party = Array.isArray(data?.party) ? data.party : [];
   const members = pcId ? party.filter((pc) => pc.id === pcId) : party;

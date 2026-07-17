@@ -19,6 +19,20 @@ each other. Rules of the road:
 
 ## Lanes
 
+**2026-07-17 — Codex** · status: DONE
+Lane: player-session release pass. Added campaign-scoped feature rollout
+controls, player navigation gates, duality dice and GM critical feedback,
+world-theme music references, an embedded GM drafting board, shared floating
+Folk portrait cards, the two-pane Folk/portrait workshop, structured age/bond/
+experience fields, and desktop scroll containment. Shortened initial character
+creation to its finished-character essentials, preserved drafts across the
+step migration, corrected language/scroll/two-handed flows, and replaced
+clickable choice divs with buttons. Verified 21 tests, syntax, complete mobile
+creation, EN/SV retention, portrait workflow readiness, Folk public whitelists,
+desktop/mobile layouts, and no horizontal overflow. Existing campaign data,
+event text, generated media, the resource-economy audit, missing-Folk research,
+and the parked background studio remain outside this commit.
+
 **2026-07-17 — Claude + Codex** · status: DONE
 Lane: integrate Claude commit `31288bd` (GM Almanac). Retained beta's newer
 34-page public rules corpus and shared ranking module, then grafted Claude's
