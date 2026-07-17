@@ -10,20 +10,23 @@ must not fork campaign state or widen what reaches the browser.
 
 The login chooser sends a completed PC here. It is a quiet utility hub, not
 another campaign view: Character, Notes, Journal, Inventory, and Rules are at
-hand before the player chooses among three physical shells. The player can
+hand before the player chooses among the currently available physical shells. The player can
 switch the device's `settlement-pc` identity here. The preferred shell is stored
 only in `settlement-shell`; it does not fork character or campaign state. Every
-shell keeps a small Views control back to this root.
+shell keeps a small Views control back to this root. The settlement folio is
+absent until the GM opens the campaign's **Settlement folio** player feature;
+opening that one switch reveals the whole settlement mode together.
 
 ### Card deck — `/table`
 
-The general-purpose arcana deck. Six large tarot-flavored cards open Town,
-Folk of Note, Chronicle, Journal, Character, and Rules. On narrow screens the
-cards become banner rows. It is the broadest view, not the root route.
+The general-purpose arcana deck. Three large tarot-flavored cards open Journal,
+Character, and Rules. On narrow screens the cards become banner rows. It stays
+settlement-neutral so revealing the folio remains a deliberate moment.
 
 ### Physical tome — `/table-book`
 
-The settlement folio: Town, Folk of Note, and Chronicle only. It begins closed
+The settlement folio: Town, Folk of Note, and Chronicle only. All three chapters
+share the campaign's single **Settlement folio** feature gate. It begins closed
 and front-facing; choosing a bookmark opens a two-page spread, and movement
 between chapters turns a leaf in the appropriate direction. Earlier bookmarks
 move to the left edge. On narrow screens the spread becomes one readable page

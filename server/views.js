@@ -191,7 +191,9 @@ export function gmView() {
       currentId: state.campaigns.currentId,
       campaigns: state.campaigns.campaigns.map((campaign) => ({ ...campaign }))
     },
-    playerFeatureDefinitions: PLAYER_FEATURE_DEFINITIONS.map((feature) => ({ ...feature })),
+    playerFeatureDefinitions: PLAYER_FEATURE_DEFINITIONS
+      .filter((feature) => feature.gmVisible !== false)
+      .map(({ gmVisible: _gmVisible, ...feature }) => ({ ...feature })),
     unreadMessages: Object.fromEntries(state.pcs.map((pc) => [pc.id, unreadFor(pc.id, "gm")])),
     sessions: state.sessions
       .filter((session) => session.campaignId === state.campaigns.currentId)

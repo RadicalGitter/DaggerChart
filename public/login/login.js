@@ -1,4 +1,4 @@
-import { t, initI18n, seasonLabel } from "/shared/i18n.js";
+import { t, initI18n } from "/shared/i18n.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import { playerFeatureEnabled, setPlayerFeatureContext } from "/shared/player-features.js";
 import "/shared/feedback.js";
@@ -72,7 +72,7 @@ function campaignGroupsHtml(items, kind) {
     const members = items.filter((item) => item.campaignId === campaign.id);
     const current = campaign.id === data.currentCampaignId;
     return `<section class="login-campaign-group ${current ? "is-current" : ""}">
-      <div class="campaign-group-heading"><span>${esc(campaign.name)}</span>${current ? `<small>${t("campaign.current")}</small>` : ""}<i aria-hidden="true"></i></div>
+      <div class="campaign-group-heading"><span>${esc(t("login.campaignNumber", { n: campaignIndex + 1 }))}</span>${current ? `<small>${t("campaign.current")}</small>` : ""}<i aria-hidden="true"></i></div>
       <div class="character-card-stage ${kind === "draft" ? "unfinished-stage" : ""}" data-stage-kind="${kind}" data-campaign-id="${esc(campaign.id)}">
         ${members.length
           ? members.map((item, index) => cardHtml(item, kind, campaignIndex * 20 + index)).join("")
@@ -196,9 +196,7 @@ function renderPalette() {
 function render() {
   if (!data) return;
   data.playerFeatures = setPlayerFeatureContext(data, null);
-  document.title = `${t("login.subtitle")} — ${data.settlement.name}`;
-  $("#settlement-name").textContent = data.settlement.name;
-  $("#settlement-season").textContent = seasonLabel(data.settlement.seasonLabel);
+  document.title = t("login.title");
   $(".create-character-command").hidden = !playerFeatureEnabled("characterCreation");
 
   $("#finished-characters").innerHTML = campaignGroupsHtml(identities, "pc");

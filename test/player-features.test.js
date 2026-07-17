@@ -6,8 +6,10 @@ import {
   playerFeaturePatch
 } from "../server/player-features.js";
 
-test("legacy campaigns default every player feature to enabled", () => {
+test("legacy campaigns keep the unrevealed settlement folio closed", () => {
   assert.deepEqual(normalizePlayerFeatures(null), DEFAULT_PLAYER_FEATURES);
+  assert.equal(DEFAULT_PLAYER_FEATURES.settlement, false);
+  assert.equal(DEFAULT_PLAYER_FEATURES.journal, true);
 });
 
 test("campaign player features preserve explicit disabled values", () => {

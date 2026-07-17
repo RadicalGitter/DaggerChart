@@ -1,7 +1,7 @@
 export const PLAYER_FEATURE_DEFINITIONS = Object.freeze([
-  { key: "settlement", label: "Settlement and stores", description: "Resource totals, buildings, and the town overview." },
-  { key: "folk", label: "Folk of note", description: "The player-facing settlement folk directory." },
-  { key: "chronicle", label: "Chronicle", description: "Published settlement and session history." },
+  { key: "settlement", label: "Settlement folio", description: "Reveals the complete folio: town, stores, buildings, folk, and the settlement chronicle." },
+  { key: "folk", label: "Folk of note", description: "Legacy detail gate retained for existing campaigns.", gmVisible: false },
+  { key: "chronicle", label: "Session Chronicle", description: "Player perspectives and published session history in the Journal." },
   { key: "journal", label: "Journal", description: "Shared and personal journal pages." },
   { key: "character", label: "Character sheet", description: "The live character sheet and its navigation." },
   { key: "inventory", label: "Inventory", description: "Equipment, papers, and carried items." },
@@ -18,12 +18,15 @@ export const PLAYER_FEATURE_DEFINITIONS = Object.freeze([
 const PLAYER_FEATURE_KEYS = new Set(PLAYER_FEATURE_DEFINITIONS.map((feature) => feature.key));
 
 export const DEFAULT_PLAYER_FEATURES = Object.freeze(Object.fromEntries(
-  PLAYER_FEATURE_DEFINITIONS.map((feature) => [feature.key, true])
+  PLAYER_FEATURE_DEFINITIONS.map((feature) => [feature.key, feature.key !== "settlement"])
 ));
 
 export function normalizePlayerFeatures(value) {
   const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
-  return Object.fromEntries(PLAYER_FEATURE_DEFINITIONS.map(({ key }) => [key, source[key] !== false]));
+  return Object.fromEntries(PLAYER_FEATURE_DEFINITIONS.map(({ key }) => [
+    key,
+    Object.hasOwn(source, key) ? source[key] !== false : DEFAULT_PLAYER_FEATURES[key]
+  ]));
 }
 
 export function playerFeaturePatch(value) {

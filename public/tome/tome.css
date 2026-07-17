@@ -313,61 +313,12 @@ body::after {
 .chapter-count { margin-top: 0.4rem; font-size: 0.95rem; }
 .chapter-count strong { color: var(--ink); font-size: 1.2rem; margin-right: 0.3em; }
 
-.mini-stores {
-  margin: 1.6rem auto 0; width: fit-content; max-width: 85%;
-  font-family: var(--hand); font-size: 0.98rem; color: var(--ink-faded);
-  transform: rotate(-1.2deg);
-}
-.mini-store { padding: 0.1rem 0; border-bottom: 1px dotted rgba(107, 81, 54, 0.35); }
-.mini-store strong { float: right; margin-left: 1.4rem; color: var(--ink); }
-
-/* Town owns the settlement ledger. These figures appear nowhere else in the
-   tome chrome or other chapters. */
-.town-page .chapter-kicker { margin-top: 1.2rem; }
-.town-at-glance {
-  display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 0.65rem;
-  margin: 1.2rem 0 1.5rem; text-align: center;
-}
-.town-at-glance > div {
-  padding: 0.8rem 0.45rem; border: 1px solid rgba(107,81,54,0.35);
-  background: rgba(255,248,226,0.22);
-}
-.town-at-glance strong { display: block; color: var(--ink); font-size: 1.25rem; font-weight: 500; }
-.town-at-glance span { display: block; color: var(--ink-faded); font-variant: small-caps; font-size: 0.76rem; letter-spacing: 0.08em; }
-.town-stores { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.4rem 0.7rem; }
-.town-store { display: flex; align-items: baseline; gap: 0.45rem; padding: 0.35rem 0; border-bottom: 1px dotted rgba(107,81,54,0.38); }
-.town-store strong { min-width: 2ch; color: var(--rubric); font-size: 1.2rem; }
-.town-store span { color: var(--ink-faded); font-variant: small-caps; }
-
 /* ---------- right page: content in ink ---------- */
 .page-heading {
   font-size: 1.25rem; font-weight: 600; margin: 0.4rem 0 0.8rem;
   color: var(--ink); letter-spacing: 0.02em;
 }
-.tome-grid { display: grid; grid-template-columns: 1fr; gap: 0.55rem; }
-.tome-card {
-  padding: 0.55rem 0.2rem 0.7rem;
-  border-bottom: 1px solid transparent;
-  border-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 6"><path d="M2 3 C 40 1, 80 5, 120 3 S 180 2, 198 3.5" fill="none" stroke="%236b5136" stroke-width="0.8" opacity="0.5"/></svg>') 0 0 100% 0 / 0 0 6px 0 stretch;
-}
-.tome-card strong { font-size: 1.02rem; }
 .tome-muted { color: var(--ink-faded); font-size: 0.85rem; }
-.folk-row { display: flex; gap: 0.7rem; align-items: center; margin-bottom: 0.25rem; }
-.tome-portrait {
-  width: 46px; height: 46px; border-radius: 50%; flex: none; overflow: hidden;
-  display: inline-flex; align-items: center; justify-content: center;
-  border: 1px solid rgba(107, 81, 54, 0.5); color: var(--ink-faded);
-  background: rgba(255, 248, 226, 0.3); font-size: 1.2rem;
-}
-.tome-portrait img { width: 100%; height: 100%; object-fit: cover; filter: sepia(0.55) contrast(0.92); }
-.tome-pill {
-  display: inline-block; border: 1px solid rgba(107, 81, 54, 0.5); border-radius: 999px;
-  color: var(--ink-faded); font-size: 0.72rem; padding: 0.05em 0.6em;
-  font-variant: small-caps; letter-spacing: 0.06em;
-}
-.tome-traits { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.35rem; }
-.tome-entry { padding: 0.5rem 0; }
-.tome-entry .season { color: var(--rubric); font-variant: small-caps; font-size: 0.82rem; }
 .tome-empty { color: var(--ink-faded); font-style: italic; text-align: center; margin-top: 3rem; }
 .page-continuation { padding-top: 1.9rem; }
 

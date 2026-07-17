@@ -1,4 +1,4 @@
-import { t, initI18n, seasonLabel } from "/shared/i18n.js";
+import { t, initI18n } from "/shared/i18n.js";
 import { SHELLS, DEFAULT_SHELL, shellEntryRoute, validShell } from "/shared/shells.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import { playerFeatureEnabled, setPlayerFeatureContext } from "/shared/player-features.js";
@@ -60,8 +60,10 @@ function renderIdentity() {
 
 function renderViews() {
   const pc = currentPC();
-  const preferred = preferredShell(pc);
-  $("#view-shelf").innerHTML = SHELLS.map((shell) => `
+  const availableShells = SHELLS.filter((shell) => !shell.feature || playerFeatureEnabled(shell.feature));
+  const requested = preferredShell(pc);
+  const preferred = availableShells.some((shell) => shell.id === requested) ? requested : DEFAULT_SHELL;
+  $("#view-shelf").innerHTML = availableShells.map((shell) => `
     <a class="view-artifact" href="${esc(shellEntryRoute(shell.id))}" data-shell="${esc(shell.id)}">
       ${shell.id === preferred ? `<span class="preferred-mark">${esc(t("player.hub.preferred"))}</span>` : ""}
       <span class="artifact-stage">${artifactHtml(shell.id)}</span>
@@ -112,9 +114,7 @@ function render() {
   clearStalePC();
   data.playerFeatures = setPlayerFeatureContext(data, currentPCId());
   setTelemetryMode(currentPC() ? "views" : "choose-character");
-  document.title = `${t("player.hub.root")} — ${data.settlement.name}`;
-  $("#settlement-name").textContent = data.settlement.name;
-  $("#season-label").textContent = seasonLabel(data.settlement.seasonLabel);
+  document.title = t("player.hub.root");
   renderIdentity();
   renderEssentials();
   renderViews();

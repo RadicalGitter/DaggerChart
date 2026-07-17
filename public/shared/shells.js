@@ -27,6 +27,7 @@ export const SHELLS = [
   },
   {
     id: "book",
+    feature: "settlement",
     route: "/table-book",
     entryRoute: "/table-book/?open=1",
     name: "shell.book.name",

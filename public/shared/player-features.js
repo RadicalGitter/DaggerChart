@@ -3,12 +3,15 @@ const FEATURE_KEYS = [
   "notes", "dice", "messages", "feedback", "characterCreation", "music", "sessionPools"
 ];
 
-const DEFAULTS = Object.freeze(Object.fromEntries(FEATURE_KEYS.map((key) => [key, true])));
+const DEFAULTS = Object.freeze(Object.fromEntries(FEATURE_KEYS.map((key) => [key, key !== "settlement"])));
 let activeFeatures = { ...DEFAULTS };
 
 export function normalizePlayerFeatures(value) {
   const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
-  return Object.fromEntries(FEATURE_KEYS.map((key) => [key, source[key] !== false]));
+  return Object.fromEntries(FEATURE_KEYS.map((key) => [
+    key,
+    Object.hasOwn(source, key) ? source[key] !== false : DEFAULTS[key]
+  ]));
 }
 
 function selectedPcId() {

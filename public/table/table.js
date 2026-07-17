@@ -4,11 +4,10 @@
 // fills the width (a new card compresses the others). Opening one slides the
 // whole deck into a stack at the left — selection on top — and the card's
 // contents take the rest of the row. Pressing the stack puts the deck back.
-import { t, term, initI18n, seasonLabel, TERMS } from "/shared/i18n.js";
+import { t, initI18n } from "/shared/i18n.js";
 import { sessionPoolsHtml } from "/shared/session-pools.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import { playerFeatureEnabled, setPlayerFeatureContext } from "/shared/player-features.js";
-import { folkPortraitGridHtml, wireFolkPortraitCards } from "/shared/folk-cards.js";
 import "/shared/feedback.js";
 import "/shared/player-tools.js";
 
@@ -35,39 +34,6 @@ const myPC = () => {
 };
 
 const SECTIONS = {
-  town: {
-    count: (d) => d.buildings.length,
-    render: (d) =>
-      d.buildings.length
-        ? `<div class="grid">${d.buildings
-            .map(
-              (b) => `<div class="card">
-                <strong>${esc(b.name)}</strong>
-                <div class="muted" style="font-size:0.9rem;">${esc(b.resource)} · ${term("building-level", t("table.level"))} ${b.level}</div>
-                <div style="font-size:0.95rem;">${b.foreman ? term("foreman", esc(b.foreman)) : `<span class="muted">${t("table.noforeman")}</span>`}</div>
-              </div>`
-            )
-            .join("")}</div>`
-        : `<p class="empty">${t("table.nobuildings")}</p>`
-  },
-  folk: {
-    count: (d) => d.characters.length,
-    render: (d) =>
-      d.characters.length
-        ? folkPortraitGridHtml(d.characters)
-        : `<p class="empty">${t("table.nofolk")}</p>`
-  },
-  chronicle: {
-    count: (d) => d.chronicle.length,
-    render: (d) =>
-      d.chronicle.length
-        ? `<div class="chronicle">${d.chronicle
-            .map(
-              (e) => `<div class="entry"><div class="season">${esc(seasonLabel(e.season))}</div><div>${esc(e.text)}</div></div>`
-            )
-            .join("")}</div>`
-        : `<p class="empty">${t("table.nochronicle")}</p>`
-  },
   rules: {
     count: () => "§",
     render: () => ""
@@ -75,9 +41,6 @@ const SECTIONS = {
 };
 
 const SECTION_FEATURES = {
-  town: "settlement",
-  folk: "folk",
-  chronicle: "chronicle",
   journal: "journal",
   character: "character",
   rules: "rules"
@@ -140,7 +103,6 @@ function updatePanel() {
   if (!want.volatile && want.key === panelKey) return;
   body.innerHTML = want.html;
   panelKey = want.key;
-  wireFolkPortraitCards(body);
   for (const b of body.querySelectorAll("[data-pick]")) {
     b.onclick = () => { setPC(b.dataset.pick); panelOverride = null; renderFaces(); updatePanel(); };
   }
@@ -257,7 +219,7 @@ for (const el of document.querySelectorAll(".big-card")) {
   });
 }
 
-// The masthead is the banner home: pressing the town's name always returns
+// The masthead is the banner home: pressing its title always returns
 // to the card row, no matter which card is open.
 $("#t-name").addEventListener("click", () => { if (selected !== null) closePanel(); });
 $("#t-name").addEventListener("keydown", (e) => {
@@ -277,17 +239,8 @@ async function render() {
   data.playerFeatures = setPlayerFeatureContext(data, getPC());
   setTelemetryMode(selected || "deck");
 
-  $("#t-name").textContent = data.settlement.name;
-  $("#t-season").innerHTML = `<span class="term" data-term="season">${esc(seasonLabel(data.settlement.seasonLabel))}</span> · ${t("table.folkcount", { n: data.settlement.population })}`;
-
-  $("#t-stats").hidden = !playerFeatureEnabled("settlement");
-  $("#t-stats").innerHTML = Object.entries(data.resources)
-    .map(([name, v]) => {
-      const key = `res-${name.toLowerCase()}`;
-      const label = TERMS[key] ? term(key, esc(name)) : esc(name);
-      return `<div class="stat"><div class="value">${v}</div><div class="smallcaps">${label}</div></div>`;
-    })
-    .join("");
+  $("#t-name").textContent = t("shell.table.name");
+  $("#t-season").textContent = t("shell.table.scope");
   $("#session-pools").innerHTML = sessionPoolsHtml(data);
 
   for (const card of document.querySelectorAll(".big-card[data-card]")) {

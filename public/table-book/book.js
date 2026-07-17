@@ -39,8 +39,7 @@ const myPC = () => {
   const id = getPC();
   return (id && (data?.identities || data?.party || []).find((pc) => pc.id === id)) || null;
 };
-const SECTION_FEATURES = { town: "settlement", folk: "folk", chronicle: "chronicle" };
-const sectionEnabled = (index) => playerFeatureEnabled(SECTION_FEATURES[SECTION_ORDER[index]?.key]);
+const sectionEnabled = (index) => Boolean(SECTION_ORDER[index]) && playerFeatureEnabled("settlement");
 const enabledSectionIndex = (start, direction) => {
   for (let index = start; index >= 0 && index < SECTION_ORDER.length; index += direction) {
     if (sectionEnabled(index)) return index;

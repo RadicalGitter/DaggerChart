@@ -337,7 +337,8 @@ const STRINGS = {
     "condition.vulnerable.description": "All rolls targeting you have advantage.",
     // identity chooser
     "login.title": "Choose your place at the table",
-    "login.subtitle": "Game Master, projector, or player character",
+    "login.subtitle": "Choose a finished character or return to a draft",
+    "login.campaignNumber": "Campaign {n}",
     "login.gm": "Game Master",
     "login.gm.sub": "Manage the settlement",
     "login.projector": "Projector Screen",
@@ -370,6 +371,7 @@ const STRINGS = {
     "login.trust": "No passwords. This only remembers the character on this device.",
     // player root
     "player.hub.root": "Player root",
+    "player.hub.atTable": "At the table",
     "player.hub.choosepc": "Choose your character",
     "player.hub.chooseview": "Choose a view",
     "player.hub.changeseat": "Change seat",
@@ -824,7 +826,8 @@ const STRINGS = {
     "condition.vulnerable.description": "Alla slag som riktas mot dig har advantage.",
     // identity chooser
     "login.title": "Välj din plats vid bordet",
-    "login.subtitle": "Game Master, projektorduk eller rollperson",
+    "login.subtitle": "Välj en färdig rollperson eller återvänd till ett utkast",
+    "login.campaignNumber": "Kampanj {n}",
     "login.gm": "Game Master",
     "login.gm.sub": "Hantera bosättningen",
     "login.projector": "Projektorduk",
@@ -856,6 +859,7 @@ const STRINGS = {
     "login.create.sub": "Skapa någon ny",
     "login.trust": "Inga lösenord. Detta minns bara karaktären på den här enheten.",
     "player.hub.root": "Spelarrot",
+    "player.hub.atTable": "Vid bordet",
     "player.hub.choosepc": "Välj din rollperson",
     "player.hub.chooseview": "Välj en vy",
     "player.hub.changeseat": "Byt plats",
@@ -1248,7 +1252,7 @@ function wireToggle() {
   el.innerHTML = LANGS.map(
     (l) => `<button data-lang="${l}" class="${l === lang ? "on" : ""}">${l.toUpperCase()}</button>`
   ).join("<span>·</span>");
-  document.body.appendChild(el);
+  (document.querySelector("#lang-toggle-slot") || document.body).appendChild(el);
   for (const b of el.querySelectorAll("[data-lang]")) {
     b.onclick = () => setLang(b.dataset.lang);
   }

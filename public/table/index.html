@@ -3,11 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Settlement</title>
+<title>The Arcana Deck</title>
 <link rel="stylesheet" href="/shared/ledger.css">
 <link rel="stylesheet" href="/shared/lamplight.css">
 <link rel="stylesheet" href="/shared/session-pools.css">
-<link rel="stylesheet" href="/shared/folk-cards.css">
 <style>
   /* The table view: lamplight over dark wood. Projection-friendly. */
   body {
@@ -25,7 +24,7 @@
   .wrap { box-sizing: border-box; width: 100%; max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem; }
   header { text-align: center; margin-bottom: 2rem; }
   header h1 { font-size: 2.2rem; letter-spacing: 0.02em; }
-  /* The masthead is the way home: press the town's name anywhere to return
+  /* The masthead is the way home: press its title anywhere to return
      to the card row (same idea as a site banner). */
   #t-name { cursor: pointer; transition: color 0.2s; }
   #t-name:hover { color: #d4b86a; }
@@ -34,10 +33,6 @@
     border: 0; height: 1px; margin: 2rem auto; width: 60%;
     background: linear-gradient(90deg, transparent, #6b5c42, transparent);
   }
-  .stat-strip { display: flex; justify-content: center; gap: 2.5rem; flex-wrap: wrap; }
-  .stat { text-align: center; }
-  .stat .value { font-size: 2.2rem; font-weight: 600; color: #f0e6ce; }
-  .stat .smallcaps { color: #a89877; }
   .session-pools-host {
     margin: 1rem auto 0;
     --session-text: #dfd2b4;
@@ -71,9 +66,6 @@
     color: rgba(224,205,157,0.12); font-size: 5rem; line-height: 1; pointer-events: none;
   }
   .big-card > * { position: relative; z-index: 1; }
-  .big-card[data-card="town"] { background: #29372e; border-color: #586d5b; }
-  .big-card[data-card="folk"] { background: #382a2d; border-color: #74545a; }
-  .big-card[data-card="chronicle"] { background: #28333b; border-color: #536d7b; }
   .big-card[data-card="journal"] { background: #332c3a; border-color: #6d5c79; }
   .big-card[data-card="character"] { background: #3a3226; border-color: #756448; }
   .big-card[data-card="rules"] { background: #24383a; border-color: #4f7378; }
@@ -116,26 +108,6 @@
     to { opacity: 1; transform: none; }
   }
 
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1rem; }
-  .card {
-    background: #2b2318; border: 1px solid #453824; box-shadow: none; color: inherit;
-  }
-  .card .muted { color: #a89877; }
-  .pill { border-color: #6b5c42; color: #c9ba97; }
-  .portrait {
-    width: 64px; height: 64px; border-radius: 50%;
-    background: #3a2f1e; border: 1px solid #6b5c42;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 1.5rem; color: #c9ba97; flex: none; overflow: hidden;
-  }
-  .portrait img { width: 100%; height: 100%; object-fit: cover; }
-  .folk-head { display: flex; gap: 0.9rem; align-items: center; }
-  .traits { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
-  .chronicle { max-width: 720px; margin: 0 auto; }
-  .chronicle .entry { padding: 0.8rem 0; border-bottom: 1px solid #3a2f1e; }
-  .chronicle .season { color: #a89877; font-variant: small-caps; font-size: 0.9rem; }
-  .empty { text-align: center; color: #a89877; font-style: italic; }
-
   /* The steward's door back to the console. Deliberately quiet — this screen
      is projected for the table. */
   .steward-door {
@@ -155,32 +127,16 @@
 <a class="view-root" href="/player"><span aria-hidden="true">⌂</span><span class="view-root-label" data-i18n="player.hub.views">Views</span></a>
 <div class="wrap">
   <header>
-    <h1 id="t-name" role="button" tabindex="0" title="">The Settlement</h1>
-    <div class="smallcaps" id="t-season">—</div>
+    <h1 id="t-name" role="button" tabindex="0" title="" data-i18n="shell.table.name">The Arcana Deck</h1>
+    <div class="smallcaps" id="t-season" data-i18n="shell.table.scope">Quick session navigation</div>
   </header>
 
-  <div class="stat-strip" id="t-stats"></div>
   <div class="session-pools-host" id="session-pools"></div>
 
   <hr class="divider">
 
   <div class="deck-area" id="deck-area">
     <div class="deck no-anim" id="deck">
-      <button class="big-card" data-card="town" data-sigil="⌂">
-        <div class="bc-title smallcaps" data-i18n="table.town">The Town</div>
-        <div class="bc-rule"></div>
-        <div class="bc-count" id="count-town">—</div>
-      </button>
-      <button class="big-card" data-card="folk" data-sigil="✦">
-        <div class="bc-title smallcaps" data-i18n="table.folk">Folk of Note</div>
-        <div class="bc-rule"></div>
-        <div class="bc-count" id="count-folk">—</div>
-      </button>
-      <button class="big-card" data-card="chronicle" data-sigil="❧">
-        <div class="bc-title smallcaps" data-i18n="table.chronicle">The Chronicle</div>
-        <div class="bc-rule"></div>
-        <div class="bc-count" id="count-chronicle">—</div>
-      </button>
       <button class="big-card" data-card="journal" data-sigil="✎">
         <div class="bc-title smallcaps" data-i18n="journal.title">The Journal</div>
         <div class="bc-rule"></div>

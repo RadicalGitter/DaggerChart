@@ -6,14 +6,13 @@
 // little label sits. When players one day choose their own bookmark at
 // character creation, that choice should resolve to a key in this registry
 // (or a player-supplied variant of one); nothing else needs to change.
-import { t, term, termify, initI18n, seasonLabel, lang } from "/shared/i18n.js";
+import { t, term, termify, initI18n, lang } from "/shared/i18n.js";
 import { CONDITIONS, conditionIcon } from "/shared/conditions.js";
 import { paperArtifactHtml } from "/shared/paper.js";
 import { sessionPoolsHtml } from "/shared/session-pools.js";
 import { mountPlayerChat } from "/shared/player-chat.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import { playerFeatureEnabled, setPlayerFeatureContext } from "/shared/player-features.js";
-import { folkPortraitCardHtml, wireFolkPortraitCards } from "/shared/folk-cards.js";
 import "/shared/feedback.js";
 import "/shared/player-tools.js";
 
@@ -177,52 +176,6 @@ function pageHeading(title, kicker = "") {
   return `<div class="chapter-kicker">${esc(kicker)}</div><h1 class="chapter-title">${esc(title)}</h1><div class="chapter-rule"></div>`;
 }
 
-function townSpreads() {
-  const stores = Object.entries(data.resources).map(([name, value]) =>
-    `<div class="town-store"><strong>${value}</strong><span>${esc(name)}</span></div>`
-  ).join("");
-  const left = `<div class="town-page">${pageHeading(data.settlement.name, t("table.town"))}
-    <div class="town-at-glance">
-      <div><strong>${data.settlement.population}</strong><span>${t("table.population")}</span></div>
-      <div><strong>${esc(seasonLabel(data.settlement.seasonLabel))}</strong><span>${t("table.season")}</span></div>
-    </div>
-    <h2 class="page-heading">${t("table.stores")}</h2><div class="town-stores">${stores}</div></div>`;
-  const right = data.buildings.length
-    ? `<h2 class="page-heading">${t("table.buildings")}</h2><div class="tome-grid">${data.buildings.map((building) => `<article class="tome-card">
-        <strong>${esc(building.name)}</strong>
-        <div class="tome-muted">${esc(building.resource)} · ${term("building-level", t("table.level"))} ${building.level}</div>
-        <div>${building.foreman ? term("foreman", esc(building.foreman)) : `<span class="tome-muted">${t("table.noforeman")}</span>`}</div>
-      </article>`).join("")}</div>`
-    : `<h2 class="page-heading">${t("table.buildings")}</h2><p class="tome-empty">${t("table.nobuildings")}</p>`;
-  return [{ key: "town", left: { html: left, volatile: true }, right: { html: right, volatile: true } }];
-}
-
-function folkCard(person) {
-  return folkPortraitCardHtml(person);
-}
-
-function folkSpreads() {
-  if (!data.characters.length) return [{ key: "folk-empty", left: { html: pageHeading(t("table.folk")), volatile: true }, right: { html: `<p class="tome-empty">${t("table.nofolk")}</p>`, volatile: true } }];
-  return chunks(data.characters, 4).map((group, i) => ({
-    key: `folk:${i}`,
-    left: { html: `${i === 0 ? pageHeading(t("table.folk")) : `<h2 class="page-heading">${t("table.folk")}</h2>`}<div class="folk-portrait-grid">${group.slice(0, 2).map(folkCard).join("")}</div>`, volatile: true },
-    right: { html: `<div class="folk-portrait-grid page-continuation">${group.slice(2).map(folkCard).join("")}</div>`, volatile: true }
-  }));
-}
-
-function chronicleEntry(entry) {
-  return `<article class="tome-entry"><div class="season">${esc(seasonLabel(entry.season))}</div><div>${esc(entry.text)}</div></article>`;
-}
-
-function chronicleSpreads() {
-  if (!data.chronicle.length) return [{ key: "chronicle-empty", left: { html: pageHeading(t("table.chronicle")), volatile: true }, right: { html: `<p class="tome-empty">${t("table.nochronicle")}</p>`, volatile: true } }];
-  return chunks(data.chronicle, 8).map((group, i) => ({
-    key: `chronicle:${i}`,
-    left: { html: `${i === 0 ? pageHeading(t("table.chronicle")) : `<h2 class="page-heading">${t("table.chronicle")}</h2>`}${group.slice(0, 4).map(chronicleEntry).join("")}`, volatile: true },
-    right: { html: `<div class="page-continuation">${group.slice(4).map(chronicleEntry).join("")}</div>`, volatile: true }
-  }));
-}
-
 function pickerHtml() {
   const people = (data.identities || data.party || []).map((pc) =>
     `<button type="button" data-pick="${esc(pc.id)}">${esc(pc.name)}${pc.player ? ` <span class="tome-muted">· ${esc(pc.player)}</span>` : ""}</button>`
@@ -350,9 +303,6 @@ function rulesSpreads() {
 }
 
 function spreadsFor(section = SECTION_ORDER[selectedIndex]) {
-  if (section.key === "town") return townSpreads();
-  if (section.key === "folk") return folkSpreads();
-  if (section.key === "chronicle") return chronicleSpreads();
   if (section.key === "journal") return journalSpreads();
   if (section.key === "character") return characterSpreads();
   if (section.key === "inventory") return inventorySpreads();
@@ -411,7 +361,7 @@ function fitCharacterPages() {
 function renderCover() {
   if (!data) return;
   if (!bookOpen) setTelemetryMode("closed");
-  $("#cover-title").textContent = data.settlement.name;
+  $("#cover-title").textContent = characterData?.name || t("shell.tome.name");
   $("#front-cover").setAttribute("aria-label", t("table.book.open"));
 }
 
@@ -607,7 +557,6 @@ async function useInventoryItem() {
 }
 
 function wirePageActions() {
-  wireFolkPortraitCards(document);
   for (const button of document.querySelectorAll("[data-pick]")) {
     button.onclick = async () => {
       setPC(button.dataset.pick);

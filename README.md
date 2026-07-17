@@ -38,10 +38,10 @@ whitelisted server-side regardless).
 |---|---|---|
 | `/gm` | GM (private) | Console: campaign controls, reviewed session chronicler, rules/private-lore Almanac, reveal-one-result chance tables, correspondence, playtest tickets, local UX map, settlement ledger, and quick tools |
 | `/board` | GM (private) | Named Main/HUD drafting boards with infinite pan/zoom, live stat plates, counters, notes, and pinned camera views |
-| `/login` | everyone | Trusted-table chooser: campaign-grouped movable portrait cards, a separate resumable-drafts view, GM, and projector. Bare `/` lands here. |
+| `/login` | players | Trusted-table character chooser: campaign-grouped movable portrait cards and a separate resumable-drafts view. Bare `/` lands here. |
 | `/player` | players | Player root: switch the device's character and choose a focused physical view. |
-| `/table` | players | General arcana-card deck over Town, Folk, Chronicle, Journal, Character, and Rules. |
-| `/table-book` | players | Settlement folio for Town, Folk of Note, and Chronicle, with directional page turns. |
+| `/table` | players | Settlement-neutral arcana-card deck for Journal, Character, and Rules. |
+| `/table-book` | players | GM-revealable settlement folio for Town, Folk of Note, and Chronicle, with directional page turns. |
 | `/tome` | players | Personal keepsake tome for Journal, Character, Inventory, Rules, and private Keeper correspondence. |
 | `/screen` | everyone (projector) | The table screen: shows the one thing the GM projects — mood images, NPC portraits, cards, stores, free text |
 | `/create` | players | Guided Daggerheart character creation with an active-campaign choice when needed (all SRD data local) |
