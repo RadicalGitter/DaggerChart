@@ -1,6 +1,6 @@
 import { t } from "/shared/i18n.js";
 import { playerFeatureEnabled } from "/shared/player-features.js";
-import "/shared/duality-dice.js";
+// Re-enable the duality-dice import after the physical roller passes live UX review.
 
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));

@@ -21,7 +21,8 @@ each other. Rules of the road:
 
 **2026-07-17 — Codex** · status: DONE
 Lane: player-session release pass. Added campaign-scoped feature rollout
-controls, player navigation gates, duality dice and GM critical feedback,
+controls, player navigation gates, duality dice and GM critical feedback (with
+the unfinished player roller mount held back for review),
 world-theme music references, an embedded GM drafting board, shared floating
 Folk portrait cards, the two-pane Folk/portrait workshop, structured age/bond/
 experience fields, and desktop scroll containment. Shortened initial character
