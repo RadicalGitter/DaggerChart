@@ -13,7 +13,14 @@
     color: #e8dfcc;
     font-size: 18px;
   }
-  .wrap { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem; }
+  .view-root {
+    position: fixed; top: 0.55rem; left: 0.7rem; z-index: 98;
+    display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.45rem;
+    color: #bcae91; border: 1px solid #514632; border-radius: 3px;
+    background: rgba(27,22,17,0.86); font-size: 0.72rem; text-decoration: none;
+  }
+  .view-root:hover, .view-root:focus-visible { color: #ead9b8; border-color: #8a7550; }
+  .wrap { box-sizing: border-box; width: 100%; max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem; }
   header { text-align: center; margin-bottom: 2rem; }
   header h1 { font-size: 2.2rem; letter-spacing: 0.02em; }
   /* The masthead is the way home: press the town's name anywhere to return
@@ -39,19 +46,29 @@
     position: absolute; left: 0; top: 0;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 0.7rem; padding: 1rem;
-    background: #2b2318; border: 1px solid #453824; border-radius: 12px;
+    background: #2b3028; border: 1px solid #59604e; border-radius: 6px;
     color: inherit; font: inherit; cursor: pointer;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35), inset 0 0 0 5px rgba(16,14,11,0.32), inset 0 0 0 6px rgba(206,181,121,0.16);
     transition: transform 0.45s cubic-bezier(0.22, 0.9, 0.3, 1),
                 width 0.45s cubic-bezier(0.22, 0.9, 0.3, 1),
                 height 0.45s cubic-bezier(0.22, 0.9, 0.3, 1),
                 border-color 0.2s;
     overflow: hidden;
   }
+  .big-card::before {
+    content: attr(data-sigil); position: absolute; inset: 0; display: grid; place-items: center;
+    color: rgba(224,205,157,0.12); font-size: 5rem; line-height: 1; pointer-events: none;
+  }
+  .big-card > * { position: relative; z-index: 1; }
+  .big-card[data-card="town"] { background: #29372e; border-color: #586d5b; }
+  .big-card[data-card="folk"] { background: #382a2d; border-color: #74545a; }
+  .big-card[data-card="chronicle"] { background: #28333b; border-color: #536d7b; }
+  .big-card[data-card="journal"] { background: #332c3a; border-color: #6d5c79; }
+  .big-card[data-card="character"] { background: #3a3226; border-color: #756448; }
   .deck.no-anim .big-card { transition: none; }
-  .big-card:hover { border-color: #8a7550; background: #2b2318; }
+  .big-card:hover { border-color: #b79d66; filter: brightness(1.08); }
   .big-card.on-top { border-color: #d4b86a; }
-  .bc-title { font-size: 1.05rem; color: #c9ba97; letter-spacing: 0.06em; }
+  .bc-title { font-size: 1.05rem; color: #dfd2b4; letter-spacing: 0; }
   .bc-count { font-size: 3.2rem; font-weight: 600; color: #f0e6ce; line-height: 1; transition: opacity 0.25s; }
   .bc-rule { width: 42px; height: 1px; background: linear-gradient(90deg, transparent, #6b5c42, transparent); transition: opacity 0.25s; }
   .docked .bc-count, .docked .bc-rule { opacity: 0; }
@@ -63,7 +80,7 @@
   /* Journal / sheet / creator live inside the panel, same origin, no chrome. */
   .panel iframe {
     width: 100%; height: calc(100vh - 150px); min-height: 420px;
-    border: 0; border-radius: 12px; background: transparent;
+    border: 0; border-radius: 6px; background: transparent;
   }
 
   /* the character picker */
@@ -78,6 +95,7 @@
   /* Narrow screens (players' phones): the row becomes a column of banners,
      the docked stack sits above the panel instead of beside it. */
   .deck.banners .big-card { flex-direction: row; justify-content: flex-start; gap: 0.9rem; padding: 0 1.1rem; }
+  .deck.banners .big-card::before { place-items: center end; padding-right: 1rem; font-size: 2.5rem; }
   .deck.banners .bc-rule { display: none; }
   .deck.banners .bc-count { font-size: 1.6rem; }
   .deck-area.stacked { flex-direction: column; }
@@ -114,9 +132,15 @@
     text-decoration: none; transition: opacity 0.2s;
   }
   .steward-door:hover { opacity: 0.85; }
+  @media (max-width: 640px) {
+    .view-root { width: 30px; height: 30px; justify-content: center; padding: 0; }
+    .view-root-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .wrap { padding: 2.9rem 0.8rem 1.5rem; }
+  }
 </style>
 </head>
 <body>
+<a class="view-root" href="/player"><span aria-hidden="true">⌂</span><span class="view-root-label" data-i18n="player.hub.views">Views</span></a>
 <div class="wrap">
   <header>
     <h1 id="t-name" role="button" tabindex="0" title="">The Settlement</h1>
@@ -129,27 +153,27 @@
 
   <div class="deck-area" id="deck-area">
     <div class="deck no-anim" id="deck">
-      <button class="big-card" data-card="town">
+      <button class="big-card" data-card="town" data-sigil="⌂">
         <div class="bc-title smallcaps" data-i18n="table.town">The Town</div>
         <div class="bc-rule"></div>
         <div class="bc-count" id="count-town">—</div>
       </button>
-      <button class="big-card" data-card="folk">
+      <button class="big-card" data-card="folk" data-sigil="✦">
         <div class="bc-title smallcaps" data-i18n="table.folk">Folk of Note</div>
         <div class="bc-rule"></div>
         <div class="bc-count" id="count-folk">—</div>
       </button>
-      <button class="big-card" data-card="chronicle">
+      <button class="big-card" data-card="chronicle" data-sigil="❧">
         <div class="bc-title smallcaps" data-i18n="table.chronicle">The Chronicle</div>
         <div class="bc-rule"></div>
         <div class="bc-count" id="count-chronicle">—</div>
       </button>
-      <button class="big-card" data-card="journal">
+      <button class="big-card" data-card="journal" data-sigil="✎">
         <div class="bc-title smallcaps" data-i18n="journal.title">The Journal</div>
         <div class="bc-rule"></div>
         <div class="bc-count" id="count-journal">✎</div>
       </button>
-      <button class="big-card" data-card="character">
+      <button class="big-card" data-card="character" data-sigil="◇">
         <div class="bc-title smallcaps" data-i18n="table.character">Your Character</div>
         <div class="bc-rule"></div>
         <div class="bc-count" id="count-character">?</div>

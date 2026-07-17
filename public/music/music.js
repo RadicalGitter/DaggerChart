@@ -1,10 +1,12 @@
 import { TAGS, ROOT_IDS, findTag, childIds, descendantIds } from "./taxonomy.js";
+import "/shared/feedback.js";
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
 
-const edgePalette = ["#6fb7bd", "#d68aa2", "#d7b25b", "#83b593", "#9e8bc2", "#df9679", "#789bc1"];
+const PROMPT_ENVELOPE = "tag-board-v1";
+const edgePalette = ["#8ecfd0", "#e7b8c5", "#ead18c", "#a9d2b6", "#c5b6e1", "#efc2ad", "#acc6df"];
 const state = {
   data: { provider: {}, songs: [], playlists: [], characterTags: [] },
   playlistId: "library",
@@ -131,13 +133,21 @@ function songSeed(value) {
 
 function bubbleVisual(song, index = 0) {
   const seed = songSeed(song.id || song.title) + index;
+  const shapes = [
+    ["53% 47% 55% 45% / 48% 54% 46% 52%", "48% 52% 46% 54% / 55% 47% 53% 45%"],
+    ["47% 53% 49% 51% / 54% 46% 55% 45%", "54% 46% 53% 47% / 47% 55% 45% 53%"],
+    ["51% 49% 46% 54% / 45% 53% 47% 55%", "46% 54% 52% 48% / 53% 45% 55% 47%"]
+  ];
+  const [shapeA, shapeB] = shapes[seed % shapes.length];
   return {
     a: edgePalette[seed % edgePalette.length],
     b: edgePalette[(seed + 2) % edgePalette.length],
     c: edgePalette[(seed + 5) % edgePalette.length],
     size: 124 + (seed % 3) * 10,
     drift: 7 + (seed % 4),
-    turn: seed % 360
+    turn: seed % 360,
+    shapeA,
+    shapeB
   };
 }
 
@@ -519,7 +529,7 @@ function renderBubbles() {
       ? [song.mode === "cover" ? "theme variation" : song.source, song.duration ? formatTime(song.duration) : ""].filter(Boolean).join(" · ")
       : song.status;
     return `<button class="song-bubble ${song.status !== "ready" ? "rendering" : ""} ${missesTags ? "tag-miss" : ""} ${state.colors[song.id] ? "painted" : ""}"
-      style="--edge-a:${visual.a};--edge-b:${visual.b};--edge-c:${visual.c};--paint-color:${paintColor};--bubble-size:${visual.size}px;--drift:${visual.drift}s;--bubble-turn:${visual.turn}deg"
+      style="--edge-a:${visual.a};--edge-b:${visual.b};--edge-c:${visual.c};--paint-color:${paintColor};--bubble-size:${visual.size}px;--drift:${visual.drift}s;--bubble-turn:${visual.turn}deg;--bubble-shape-a:${visual.shapeA};--bubble-shape-b:${visual.shapeB}"
       data-song="${esc(song.id)}" aria-label="Play ${esc(song.title)}">
       <strong>${esc(song.title)}</strong><span>${esc(detail)}</span>
     </button>`;
@@ -617,7 +627,26 @@ function showBubbleInfo(song, x, y) {
     song.mode === "cover" ? "character-theme variation" : song.source,
     song.settings?.model || ""
   ].filter(Boolean).join(" · ");
-  info.innerHTML = `<strong>${esc(song.title)}</strong><div class="bubble-info-meta">${esc(detail)}</div>${song.prompt ? `<p>${esc(song.prompt)}</p>` : ""}`;
+  const hasTagEnvelope = song.promptEnvelope?.start === PROMPT_ENVELOPE
+    && song.promptEnvelope?.end === PROMPT_ENVELOPE;
+  const selected = new Set(song.selectedTagIds || []);
+  const seen = new Set();
+  const promptTags = hasTagEnvelope ? (song.tagIds || []).map((id) => {
+    const tag = tagById(id);
+    if (!tag || seen.has(tag.label.toLowerCase())) return "";
+    seen.add(tag.label.toLowerCase());
+    let tier = 0;
+    let current = TAGS[id];
+    while (current?.parentId) {
+      tier += 1;
+      current = TAGS[current.parentId];
+    }
+    return `<span class="prompt-tag tier-${Math.min(tier, 2)} ${selected.has(id) ? "selected" : ""}">${esc(tag.label)}</span>`;
+  }).filter(Boolean).join("") : "";
+  const promptPreview = promptTags
+    ? `<div class="bubble-info-tags">${promptTags}</div>`
+    : song.prompt ? `<p>${esc(song.prompt)}</p>` : "";
+  info.innerHTML = `<strong>${esc(song.title)}</strong><div class="bubble-info-meta">${esc(detail)}</div>${promptPreview}`;
   info.hidden = false;
   positionBubbleInfo(x, y);
 }
@@ -831,10 +860,15 @@ function toggleTag(id) {
 
 function dive(id, source) {
   if (!tagById(id) || state.tagTransitioning) return;
+  transitionTags(() => state.route.push(id), source, "forward");
+}
+
+function transitionTags(updateRoute, source, direction) {
+  if (state.tagTransitioning) return;
   const board = $("#tag-board");
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (reduced || !source) {
-    state.route.push(id);
+    updateRoute();
     renderTags();
     return;
   }
@@ -843,18 +877,20 @@ function dive(id, source) {
   board.style.setProperty("--dive-x", `${sourceRect.left + sourceRect.width / 2 - boardRect.left}px`);
   board.style.setProperty("--dive-y", `${sourceRect.top + sourceRect.height / 2 - boardRect.top}px`);
   state.tagTransitioning = true;
-  board.classList.remove("dive-in");
-  board.classList.add("dive-out");
+  const outClass = direction === "back" ? "dive-back-out" : "dive-out";
+  const inClass = direction === "back" ? "dive-back-in" : "dive-in";
+  board.classList.remove("dive-in", "dive-back-in");
+  board.classList.add(outClass);
   setTimeout(() => {
-    state.route.push(id);
+    updateRoute();
     renderTags();
-    board.classList.remove("dive-out");
-    board.classList.add("dive-in");
+    board.classList.remove(outClass);
+    board.classList.add(inClass);
     setTimeout(() => {
-      board.classList.remove("dive-in");
+      board.classList.remove(inClass);
       state.tagTransitioning = false;
-    }, 340);
-  }, 180);
+    }, 280);
+  }, 145);
 }
 
 function tagButton(id, extra = "") {
@@ -902,8 +938,8 @@ function renderTags() {
 }
 
 function goBack() {
-  state.route.pop();
-  renderTags();
+  if (!state.route.length || state.tagTransitioning) return;
+  transitionTags(() => state.route.pop(), $("#current-tag") || $("#tag-back"), "back");
 }
 
 function renderPins() {
@@ -935,6 +971,10 @@ function effectiveTagIds() {
     }
   }
   return [...active];
+}
+
+function selectedTagIds() {
+  return [...state.explicit].filter((id) => !excludedByBranch(id));
 }
 
 function compilePrompt() {
@@ -1087,6 +1127,7 @@ $("#generation-form").onsubmit = async (event) => {
   button.disabled = true;
   $("#generation-note").textContent = "The drafts have gone to the writing room.";
   try {
+    const tagIds = effectiveTagIds();
     await api("/api/music/generate", {
       method: "POST",
       body: JSON.stringify({
@@ -1094,7 +1135,11 @@ $("#generation-form").onsubmit = async (event) => {
         prompt: $("#song-prompt").value,
         mode: selected ? "cover" : "create",
         sourceSongId: selected?.theme?.id || null,
-        tagIds: effectiveTagIds(),
+        tagIds,
+        selectedTagIds: selectedTagIds(),
+        promptEnvelope: tagIds.length
+          ? { start: PROMPT_ENVELOPE, end: PROMPT_ENVELOPE }
+          : null,
         settings: {
           model: $("#song-model").value,
           style: $("#song-style").value,

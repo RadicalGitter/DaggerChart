@@ -6,10 +6,14 @@
 <title>Create your character — The Settlement</title>
 <link rel="stylesheet" href="/shared/ledger.css">
 <link rel="stylesheet" href="/shared/lamplight.css">
+<link rel="stylesheet" href="/shared/paper.css">
 <style>
   .wrap { max-width: 760px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
   header { text-align: center; margin-bottom: 1rem; }
   header h1 { font-size: 1.6rem; }
+  .draft-tools { display: flex; justify-content: center; align-items: center; gap: .7rem; min-height: 1.8rem; margin-top: .5rem; }
+  .draft-tools span { color: #8f8063; font-size: .76rem; }
+  .draft-tools button { padding: .2rem .5rem; font-size: .76rem; }
   .progress { display: flex; justify-content: center; gap: 0.45rem; margin: 0.8rem 0 1.4rem; flex-wrap: wrap; }
   .dot {
     width: 10px; height: 10px; border-radius: 50%;
@@ -85,14 +89,107 @@
   .count-note { text-align: center; color: #a89877; font-size: 0.9rem; margin-top: 0.6rem; }
   .review h3 { color: #d4b86a; font-size: 1rem; margin-top: 1.1rem; }
   .review p { margin: 0.2rem 0; font-size: 0.95rem; }
+  .contract-dialog {
+    width: min(900px, calc(100vw - 1.2rem)); max-height: calc(100vh - 1.2rem); padding: 0;
+    border: 2px solid #8d6b35; border-radius: 4px; color: #352718; background: #d7c18e;
+    box-shadow: 0 26px 70px rgba(0,0,0,0.72), inset 0 0 0 8px rgba(74,43,18,0.18);
+  }
+  .contract-dialog::backdrop { background: rgba(8,6,4,0.86); backdrop-filter: blur(5px); }
+  .contract-sheet {
+    position: relative; min-height: min(760px, calc(100vh - 1.2rem)); padding: clamp(1.3rem, 4vw, 3.4rem);
+    background:
+      radial-gradient(circle at 82% 12%, rgba(114,64,26,0.14), transparent 19%),
+      radial-gradient(circle at 13% 80%, rgba(114,64,26,0.11), transparent 24%),
+      repeating-linear-gradient(0deg, rgba(74,43,18,0.025) 0 1px, transparent 1px 4px),
+      linear-gradient(145deg, #ead8a9, #d8bf87 66%, #c8a96f);
+  }
+  .contract-sheet::before {
+    content: ""; position: absolute; inset: 15px; pointer-events: none;
+    border: 1px solid rgba(82,49,23,0.42); box-shadow: inset 0 0 0 4px rgba(255,247,215,0.15);
+  }
+  .contract-kicker { color: #785127; font-size: 0.72rem; font-variant: small-caps; text-align: center; }
+  .contract-dialog h2 {
+    max-width: 680px; margin: 0.45rem auto 0.8rem; color: #3d2515;
+    font-size: clamp(2rem, 5vw, 3.6rem); line-height: 1; text-align: center; font-weight: 500;
+  }
+  .contract-decree { max-width: 680px; margin: 0 auto 1.2rem; color: #5a4027; text-align: center; line-height: 1.45; }
+  .contract-terms {
+    position: relative; max-width: 720px; margin: 1.25rem auto; border-top: 1px solid rgba(78,49,24,0.38);
+    border-bottom: 1px solid rgba(78,49,24,0.38);
+  }
+  .contract-terms summary { padding: 0.8rem 0; color: #6c3b21; cursor: pointer; font-weight: 700; text-align: center; }
+  .contract-copy { max-height: min(42vh, 370px); padding: 0 0.4rem 1rem; overflow-y: auto; }
+  .contract-terms:not([open]) .contract-copy { display: none; }
+  .contract-copy h3 { margin: 0.4rem 0 0.8rem; color: #4b2f1c; font-size: 1rem; text-align: center; font-variant: small-caps; }
+  .contract-copy p { margin: 0.72rem 0; color: #4f3a25; font-size: 0.86rem; line-height: 1.5; }
+  .contract-warning {
+    max-width: 680px; margin: 1rem auto; padding: 0.75rem 0.9rem;
+    border: 1px solid #8b3e2a; background: rgba(139,62,42,0.09); color: #5c281b; text-align: center;
+  }
+  .contract-warning[hidden] { display: none; }
+  .contract-warning strong { display: block; margin-bottom: 0.25rem; font-variant: small-caps; }
+  .contract-actions { position: relative; display: grid; place-items: center; gap: 0.65rem; margin-top: 1.15rem; }
+  .contract-sign {
+    min-width: min(360px, 100%); padding: 0.85rem 1.2rem; border: 2px solid #4d2118; border-radius: 3px;
+    color: #f1d8a2; background: #6d3023; font: 700 1.05rem Georgia, serif;
+    box-shadow: inset 0 0 0 3px rgba(247,211,143,0.16), 0 6px 14px rgba(64,34,15,0.25);
+  }
+  .contract-sign:hover, .contract-sign:focus-visible { background: #843f2d; }
+  .contract-seal { color: #785127; font-size: 0.7rem; font-variant: small-caps; }
+  .contract-foot { max-width: 620px; margin: 1.4rem auto 0; color: #7b6345; font-size: 0.7rem; text-align: center; font-style: italic; }
+  .covenant-step { margin: 0 auto 1rem; }
+  .covenant-step .paper-sheet { min-height: 760px; padding-bottom: 9rem; }
+  .covenant-step .contract-terms { max-width: 660px; }
+  .covenant-step .contract-copy { max-height: none; overflow: visible; }
+  .signature-field {
+    position: absolute; z-index: 4; left: 20%; right: 20%; bottom: 4.5rem; height: 5.7rem;
+    border: 0; border-bottom: 2px solid rgba(70, 38, 18, 0.72); border-radius: 0;
+    color: #6c3b21; background: transparent; box-shadow: none; cursor: pointer;
+  }
+  .signature-field:hover, .signature-field:focus-visible { color: #4d2118; background: rgba(255, 247, 215, 0.1); }
+  .signature-prompt { position: absolute; left: 0; right: 0; bottom: -1.5rem; font: 700 0.72rem Georgia, serif; font-variant: small-caps; }
+  .signature-name {
+    position: absolute; left: 0; right: 0; bottom: 0.25rem; overflow: hidden;
+    color: #8a1717; font: 600 clamp(1.7rem, 6vw, 3.4rem)/1.1 "Segoe Script", "Bradley Hand", cursive;
+    clip-path: inset(0 100% 0 0); opacity: 0;
+  }
+  .signing-pen {
+    position: absolute; z-index: 5; left: -4%; bottom: 0.65rem; width: 110px;
+    transform: translateX(-35%) rotate(-17deg); opacity: 0; pointer-events: none;
+  }
+  .signing-pen svg { display: block; width: 100%; height: auto; filter: drop-shadow(2px 4px 3px rgba(54, 28, 12, 0.32)); }
+  .signature-field.is-hesitating .signing-pen { animation: pen-hesitate 700ms ease-in-out both; }
+  .signature-field.is-signing .signing-pen { animation: pen-sign 1250ms cubic-bezier(.2,.72,.3,1) both; }
+  .signature-field.is-signing .signature-name { animation: ink-name 1050ms 120ms linear both; }
+  .signature-field.is-signing .signature-prompt { opacity: 0; }
+  @keyframes pen-hesitate {
+    0% { opacity: 0; transform: translateX(-35%) rotate(-17deg); }
+    25% { opacity: 1; transform: translateX(-5%) rotate(-13deg); }
+    55% { opacity: 1; transform: translateX(2%) rotate(-19deg); }
+    82% { opacity: 1; transform: translateX(-2%) rotate(-14deg); }
+    100% { opacity: 0; transform: translateX(-12%) rotate(-17deg); }
+  }
+  @keyframes pen-sign {
+    0% { opacity: 1; transform: translateX(-30%) rotate(-16deg); }
+    88% { opacity: 1; transform: translateX(calc(60vw - 75px)) rotate(-11deg); }
+    100% { opacity: 0; transform: translateX(calc(60vw - 60px)) rotate(-8deg); }
+  }
+  @keyframes ink-name { from { opacity: 1; } to { clip-path: inset(0 0 0 0); opacity: 1; } }
   @media (max-width: 520px) {
     .navbtns .inner { grid-template-columns: 82px 1fr 82px; gap: 0.45rem; }
     .navbtns button { padding: 0.55rem 0.65rem; }
     .subprogress-count { display: none; }
     .subprogress-track { width: 100%; }
+    .contract-sheet { min-height: calc(100vh - 1.2rem); padding: 1.6rem 1.2rem 2rem; }
+    .contract-dialog h2 { font-size: 2.2rem; }
+    .contract-copy { max-height: 36vh; }
+    .covenant-step .paper-sheet { min-height: 820px; padding-bottom: 8.5rem; }
+    .signature-field { left: 14%; right: 14%; }
   }
   @media (prefers-reduced-motion: reduce) {
     .step-panel { animation: none !important; }
+    .signature-field.is-signing .signature-name { animation-duration: 1ms; animation-delay: 0ms; }
+    .signature-field.is-signing .signing-pen { display: none; }
   }
 </style>
 </head>
@@ -101,6 +198,7 @@
   <header>
     <h1 data-i18n="create.title">Create your character</h1>
     <div class="smallcaps" data-i18n="create.subtitle">The Settlement — find your place at the table</div>
+    <div class="draft-tools"><span id="draft-status"></span><button class="quiet" id="draft-reset" type="button" data-i18n="create.startOver">Start over</button></div>
   </header>
   <div class="progress" id="progress"></div>
   <div id="step"></div>

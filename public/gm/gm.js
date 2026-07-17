@@ -4,6 +4,7 @@ import { CONDITIONS, conditionIcon } from "/shared/conditions.js";
 let S = null; // last fetched gm state
 let selectedBuilding = null;
 let CONSUMABLES = [];
+let FEEDBACK = [];
 
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) =>
@@ -31,9 +32,10 @@ async function api(path, opts = {}) {
 }
 
 async function refresh() {
-  const [nextState, items] = await Promise.all([api("/api/state"), api("/api/items/consumables")]);
+  const [nextState, items, feedback] = await Promise.all([api("/api/state"), api("/api/items/consumables"), api("/api/feedback")]);
   S = nextState;
   CONSUMABLES = items;
+  FEEDBACK = feedback;
   renderNav();
   renderDowntimePicker();
   renderStores();
@@ -45,6 +47,33 @@ async function refresh() {
   renderLedger();
   renderTown();
   renderScreen();
+  renderFeedback();
+}
+
+function renderFeedback() {
+  const grid = $("#feedback-grid");
+  if (!grid) return;
+  grid.innerHTML = FEEDBACK.length ? FEEDBACK.map((ticket) => `<article class="card feedback-ticket">
+    <img src="${ticket.screenshot}" alt="Annotated screenshot for ${esc(ticket.id)}">
+    <div class="feedback-meta">${esc(ticket.reporter?.name || "Unseated player")} · ${esc(ticket.sourceUrl)} · ${ticket.viewport?.width || 0}×${ticket.viewport?.height || 0} · ${esc(new Date(ticket.createdAt).toLocaleString())}</div>
+    <p>${esc(ticket.text)}</p>
+    <div class="formrow"><label>Status</label><select data-feedback-status="${esc(ticket.id)}"><option value="open" ${ticket.status === "open" ? "selected" : ""}>Open</option><option value="triaged" ${ticket.status === "triaged" ? "selected" : ""}>Triaged</option><option value="resolved" ${ticket.status === "resolved" ? "selected" : ""}>Resolved</option><option value="wont-fix" ${ticket.status === "wont-fix" ? "selected" : ""}>Won't fix</option></select></div>
+    <div class="formrow"><label>Cluster</label><input data-feedback-cluster="${esc(ticket.id)}" value="${esc(ticket.cluster || "")}" placeholder="shared issue or theme"></div>
+    <label class="muted">Agent notes<textarea data-feedback-notes="${esc(ticket.id)}" rows="4">${esc(ticket.agentNotes || "")}</textarea></label>
+    <button class="quiet" type="button" data-feedback-save="${esc(ticket.id)}">Save triage</button>
+  </article>`).join("") : `<p class="muted">No playtest tickets yet.</p>`;
+  for (const button of document.querySelectorAll("[data-feedback-save]")) button.onclick = async () => {
+    const id = button.dataset.feedbackSave;
+    try {
+      await api(`/api/feedback/${encodeURIComponent(id)}`, { method: "PUT", body: {
+        status: document.querySelector(`[data-feedback-status="${CSS.escape(id)}"]`).value,
+        cluster: document.querySelector(`[data-feedback-cluster="${CSS.escape(id)}"]`).value,
+        agentNotes: document.querySelector(`[data-feedback-notes="${CSS.escape(id)}"]`).value
+      } });
+      toast("Ticket triage saved.");
+      await refresh();
+    } catch (error) { toast(error.message, true); }
+  };
 }
 
 // --- the table screen ---
@@ -63,6 +92,7 @@ function describeScreen(cur) {
   switch (cur.type) {
     case "image": return `an image${cur.caption ? ` — “${cur.caption}”` : ""}`;
     case "text": return `words${cur.title ? ` — “${cur.title}”` : ""}`;
+    case "paper": return "a carried paper";
     case "stores": return "the stores";
     case "buildings": return "the buildings";
     case "folk": return `${S.characters.find((c) => c.id === cur.refId)?.name ?? "someone"} (folk)`;
@@ -832,6 +862,20 @@ function renderParty() {
     };
   }
   renderConsumableGrant();
+  renderPaperDelivery();
+}
+
+function renderPaperDelivery() {
+  const target = $("#paper-target");
+  const selected = target.value;
+  target.innerHTML = `<option value="group">Whole party — shared copies</option>${(S.party || []).map((pc) => `<option value="${pc.id}">${esc(pc.name)} — private</option>`).join("")}`;
+  if ([...target.options].some((option) => option.value === selected)) target.value = selected;
+  const papers = (S.party || []).flatMap((pc) => (pc.papers || []).map((paper) => ({ pc, paper })));
+  $("#paper-ledger").innerHTML = papers.length ? papers.map(({ pc, paper }) => `<div class="paper-ledger-row">
+    <div><strong>${esc(paper.name)}</strong><div class="muted">${esc(pc.name)}${paper.author ? ` · ${esc(paper.author)}` : ""}</div></div>
+    <button class="quiet" type="button" data-project-paper="${esc(paper.id)}">Show on projector</button>
+  </div>`).join("") : `<div class="muted">No physical papers are carried yet.</div>`;
+  for (const button of document.querySelectorAll("[data-project-paper]")) button.onclick = () => project({ type: "paper", refId: button.dataset.projectPaper });
 }
 
 function selectedConsumable() {
@@ -868,6 +912,23 @@ $("#grant-give").addEventListener("click", async () => {
   } catch (e) {
     toast(e.message, true);
   }
+});
+
+$("#paper-deliver").addEventListener("click", async () => {
+  const target = $("#paper-target").value;
+  const name = $("#paper-title").value.trim();
+  const body = $("#paper-body").value.trim();
+  if (!name || !body) return toast("Give the paper a title and text.", true);
+  try {
+    const result = await api("/api/party/inventory/paper", { method: "POST", body: { target, name, body } });
+    $("#paper-title").value = "";
+    $("#paper-body").value = "";
+    if ($("#paper-project").checked) await project({ type: "paper", refId: result.delivered[0].itemId });
+    else {
+      toast(target === "group" ? "Paper delivered to the party." : "Paper delivered privately.");
+      await refresh();
+    }
+  } catch (error) { toast(error.message, true); }
 });
 
 // --- ledger ---

@@ -6,6 +6,7 @@
 <title>Character — The Settlement</title>
 <link rel="stylesheet" href="/shared/ledger.css">
 <link rel="stylesheet" href="/shared/lamplight.css">
+<link rel="stylesheet" href="/shared/paper.css">
 <style>
   .wrap { width: 100%; max-width: 680px; margin: 0 auto; padding: 1.4rem 1rem 3rem; box-sizing: border-box; overflow-x: clip; }
   header { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; }
@@ -29,6 +30,18 @@
   .qa .q { color: #a89877; font-size: 0.88rem; }
   ul { padding-left: 1.2rem; margin: 0.3rem 0; }
   li { font-size: 0.92rem; }
+  .inventory-list { display: grid; gap: 0.45rem; margin: 0; padding: 0; list-style: none; }
+  .inventory-paper { display: block; width: 100%; padding: 0.55rem 0.65rem; color: inherit; border: 1px solid #4d422f; border-radius: 4px; background: rgba(212,184,106,0.05); text-align: left; font: inherit; cursor: pointer; }
+  .inventory-paper span { display: block; margin-top: 0.2rem; color: #a89877; font-size: 0.8rem; }
+  .inventory-tools { margin-top: 0.65rem; text-align: right; }
+  .paper-dialog { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 1rem; background: rgba(8,6,4,.86); backdrop-filter: blur(4px); }
+  .paper-dialog[hidden] { display: none; }
+  .paper-dialog-frame { position: relative; width: min(790px, 100%); max-height: calc(100vh - 2rem); overflow: auto; }
+  .paper-dialog-close { position: fixed; z-index: 3; top: 1.2rem; right: 1.2rem; width: 40px; height: 40px; padding: 0; border-radius: 50%; color: #ead8a9; border: 1px solid rgba(234,216,169,.52); background: rgba(42,24,12,.88); font-size: 1.4rem; }
+  .paper-dialog-actions { position: absolute; z-index: 5; right: 3rem; bottom: 3rem; display: flex; gap: .5rem; }
+  .paper-editor { padding: 1.2rem; color: #392617; border: 1px solid #9a7848; background: linear-gradient(145deg, #eadab2, #cdb47f); }
+  .paper-editor label { display: grid; gap: .3rem; margin: .7rem 0; color: #6f5130; }
+  .paper-editor input, .paper-editor textarea { box-sizing: border-box; width: 100%; padding: .55rem; color: #392617; border: 1px solid #9a7848; background: rgba(255,248,226,.62); font: inherit; }
   .cardstack { display: grid; gap: 0.7rem; }
   .hand-sub { font-variant: small-caps; letter-spacing: 0.06em; color: #a89877; margin: 0.9rem 0 0.5rem; }
   .hand-actions { margin-top: 0.6rem; display: flex; gap: 0.5rem; }
@@ -69,6 +82,12 @@
 </head>
 <body>
 <div class="wrap" id="sheet"><p class="smallcaps" style="text-align:center;" data-i18n="sheet.loading">Loading your character…</p></div>
+<div class="paper-dialog" id="paper-dialog" hidden>
+  <div class="paper-dialog-frame" role="dialog" aria-modal="true" aria-labelledby="paper-dialog-title">
+    <button class="paper-dialog-close" id="paper-dialog-close" type="button" aria-label="Close">×</button>
+    <div id="paper-dialog-body"></div>
+  </div>
+</div>
 <script type="module" src="/character/sheet.js"></script>
 </body>
 </html>

@@ -13,6 +13,7 @@
 }
 
 * { box-sizing: border-box; }
+html { scrollbar-color: #6b5c42 #17120c; }
 
 html, body { min-height: 100%; }
 
@@ -38,6 +39,13 @@ body {
   padding: 0.75rem 4rem 0; color: #a99979;
   font-variant: small-caps; letter-spacing: 0.09em;
 }
+.view-root {
+  position: fixed; top: 0.45rem; left: 0.7rem; z-index: 90;
+  display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.45rem;
+  color: #bda77e; border: 1px solid rgba(189,167,126,0.3); border-radius: 3px;
+  background: rgba(28,18,11,0.72); font-size: 0.72rem; text-decoration: none;
+}
+.view-root:hover, .view-root:focus-visible { color: #ead6a7; border-color: rgba(234,214,167,0.58); }
 .folio-season { white-space: nowrap; }
 .folio-stores { display: flex; gap: 1.2rem; flex-wrap: wrap; justify-content: center; }
 .folio-store strong { color: #d8c89f; font-size: 1.05rem; font-weight: 500; margin-right: 0.25rem; }
@@ -164,6 +172,7 @@ body {
   transform: rotateY(-179.7deg); visibility: hidden; pointer-events: none;
   transition: transform 1050ms cubic-bezier(0.19, 0.7, 0.18, 1), filter 250ms, visibility 0s 1050ms;
 }
+.hub-entry .tome.open .front-cover { display: none; }
 
 .cover-face {
   position: absolute; inset: 0; display: block; overflow: hidden;
@@ -352,12 +361,41 @@ body.book-open .book-instruction { opacity: 0; }
 
 @media (max-width: 760px) {
   body { overflow: auto; }
-  .folio-head { min-height: 62px; padding: 0.65rem 2.5rem 0; gap: 0.7rem; flex-direction: column; font-size: 0.78rem; }
+  .folio-head { min-height: 62px; padding: 0.65rem 2.8rem 0; gap: 0.7rem; flex-direction: column; font-size: 0.78rem; }
   .folio-stores { display: none; }
   .book-viewport { height: calc(100vh - 76px); overflow: auto; justify-content: flex-start; padding-left: 12px; }
   .book-scale { transform-origin: top left; }
-  .tome.open .bookmark.side-left { left: 80px; }
-  .tome.open .bookmark:not(.side-left) { left: calc(var(--tome-w) - var(--mark-w) - 80px); }
+  .view-root { width: 30px; height: 30px; justify-content: center; padding: 0; }
+  .view-root-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  body.book-open .book-viewport { height: calc(100vh - 62px); overflow-x: hidden; overflow-y: auto; padding: 54px 0 76px; }
+  body.book-open .book-scale { width: 100%; height: auto; }
+  body.book-open .tome {
+    position: relative; left: auto; top: auto; width: 100%; height: auto;
+    perspective: none; transform: none; transition: none;
+  }
+  body.book-open .book-shadow,
+  body.book-open .back-board,
+  body.book-open .page-block,
+  body.book-open .front-cover,
+  body.book-open .turn-sheet,
+  body.book-open .paper-left { display: none; }
+  body.book-open .paper-right {
+    position: relative; top: auto; left: auto; width: calc(100vw - 16px);
+    height: calc(100vh - 132px); min-height: 560px; margin: 0 auto;
+    opacity: 1; pointer-events: auto; transition: none;
+  }
+  body.book-open .bookmarks {
+    position: fixed; top: 60px; left: 8px; right: 8px; bottom: auto; height: 38px;
+    display: flex; gap: 4px; z-index: 80; overflow-x: auto; pointer-events: auto;
+  }
+  body.book-open .bookmark,
+  body.book-open .bookmark.side-left,
+  body.book-open .bookmark:not(.side-left) {
+    position: relative; top: auto; left: auto; width: auto; min-width: 0; height: 34px;
+    flex: 1 1 0; gap: 4px; padding: 0 6px; clip-path: none; transform: none;
+    font-size: 0.68rem; letter-spacing: 0;
+  }
+  body.book-open .bookmark-count { width: 18px; min-width: 18px; height: 18px; }
   .book-instruction { display: none; }
 }
 

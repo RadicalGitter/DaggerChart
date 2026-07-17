@@ -23,16 +23,19 @@ import {
 } from "./music.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PUBLIC = path.join(__dirname, "..", "public");
+const ROOT = path.join(__dirname, "..");
+const PUBLIC = path.join(ROOT, "public");
 const PORT = process.env.PORT || 4626;
 const STANDARD_CONDITIONS = new Set(["hidden", "restrained", "vulnerable"]);
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "8mb" }));
 app.use("/shared", express.static(path.join(PUBLIC, "shared")));
+app.use("/vendor/html2canvas", express.static(path.join(ROOT, "node_modules", "html2canvas", "dist")));
 app.use("/gm", express.static(path.join(PUBLIC, "gm")));
 app.use("/board", express.static(path.join(PUBLIC, "board")));
 app.use("/login", express.static(path.join(PUBLIC, "login")));
+app.use("/player", express.static(path.join(PUBLIC, "player")));
 app.use("/table", express.static(path.join(PUBLIC, "table")));
 app.use("/table-book", express.static(path.join(PUBLIC, "table-book")));
 app.use("/tome", express.static(path.join(PUBLIC, "tome")));
@@ -98,6 +101,46 @@ app.get("/api/reference", guard((_req, res) => {
 }));
 
 app.get("/api/party", (_req, res) => res.json(partyListView()));
+
+app.get("/api/character-drafts", (_req, res) => res.json(state.characterDrafts.map((entry) => ({
+  id: entry.id,
+  name: entry.draft?.name || "",
+  player: entry.draft?.player || "",
+  step: entry.step || 0,
+  savedAt: entry.savedAt || null
+}))));
+
+app.get("/api/character-drafts/:id", guard((req, res) => {
+  const entry = state.characterDrafts.find((candidate) => candidate.id === req.params.id);
+  if (!entry) return res.status(404).json({ error: "No such character draft." });
+  res.json(entry);
+}));
+
+app.put("/api/character-drafts/:id", guard((req, res) => {
+  if (!/^draft_[a-zA-Z0-9_-]{6,80}$/.test(req.params.id)) throw new Error("Invalid draft identifier.");
+  if (!req.body.draft || typeof req.body.draft !== "object") throw new Error("A character draft is required.");
+  if (JSON.stringify(req.body.draft).length > 200_000) throw new Error("That character draft is too large.");
+  const incoming = {
+    id: req.params.id,
+    version: 2,
+    step: Math.max(0, Number.parseInt(req.body.step, 10) || 0),
+    part: Math.max(0, Number.parseInt(req.body.part, 10) || 0),
+    savedAt: String(req.body.savedAt || new Date().toISOString()),
+    draft: req.body.draft
+  };
+  const index = state.characterDrafts.findIndex((candidate) => candidate.id === req.params.id);
+  if (index === -1) state.characterDrafts.push(incoming);
+  else if (Date.parse(incoming.savedAt) >= Date.parse(state.characterDrafts[index].savedAt || 0)) state.characterDrafts[index] = incoming;
+  persist(); broadcast();
+  res.json(incoming);
+}));
+
+app.delete("/api/character-drafts/:id", guard((req, res) => {
+  const index = state.characterDrafts.findIndex((candidate) => candidate.id === req.params.id);
+  if (index !== -1) state.characterDrafts.splice(index, 1);
+  persist(); broadcast();
+  res.json({ ok: true });
+}));
 
 app.get("/api/party/:id", guard((req, res) => {
   const pc = playerCharacterView(req.params.id);
@@ -165,9 +208,29 @@ function pcForInventory(id) {
 
 app.post("/api/party/:id/inventory", guard((req, res) => {
   const pc = pcForInventory(req.params.id);
-  addInventoryItem(pc, req.body, state.reference);
+  addInventoryItem(pc, req.body.kind === "paper" ? { ...req.body, author: pc.name } : req.body, state.reference);
   persist(); broadcast();
   res.json(playerCharacterView(pc.id));
+}));
+
+app.post("/api/party/inventory/paper", guard((req, res) => {
+  const target = String(req.body.target || "");
+  const recipients = target === "group"
+    ? state.pcs
+    : state.pcs.filter((pc) => pc.id === target);
+  if (!recipients.length) throw new Error("Choose at least one character.");
+  const delivered = recipients.map((pc) => {
+    const item = addInventoryItem(pc, {
+      kind: "paper",
+      paperType: "note",
+      name: req.body.name,
+      body: req.body.body,
+      author: "The Keeper"
+    }, state.reference);
+    return { id: pc.id, name: pc.name, itemId: item.id };
+  });
+  persist(); broadcast();
+  res.json({ delivered });
 }));
 
 app.post("/api/party/:id/inventory/grant", guard((req, res) => {
@@ -186,7 +249,8 @@ app.put("/api/party/:id/inventory/:itemId", guard((req, res) => {
 
 app.delete("/api/party/:id/inventory/:itemId", guard((req, res) => {
   const pc = pcForInventory(req.params.id);
-  const { index } = inventoryEntry(pc, req.params.itemId, state.reference);
+  const { index, item } = inventoryEntry(pc, req.params.itemId, state.reference);
+  if (item.kind === "paper" && item.paperType === "covenant") throw new Error("The signed covenant remains in the inventory.");
   pc.inventory.splice(index, 1);
   persist(); broadcast();
   res.json(playerCharacterView(pc.id));
@@ -211,6 +275,54 @@ app.delete("/api/party/:id", guard((req, res) => {
 
 // --- GM API ---
 app.get("/api/state", (_req, res) => res.json(gmView()));
+
+// --- first-party playtest tickets ---
+
+const FEEDBACK_STATUSES = new Set(["open", "triaged", "resolved", "wont-fix"]);
+
+app.get("/api/feedback", (_req, res) => res.json(state.feedback));
+
+app.post("/api/feedback", guard((req, res) => {
+  const text = String(req.body.text || "").trim();
+  const screenshot = String(req.body.screenshot || "");
+  if (!text) throw new Error("Describe what should be different.");
+  if (text.length > 4000) throw new Error("Feedback must be at most 4000 characters.");
+  if (!/^data:image\/(?:jpeg|png);base64,/.test(screenshot) || screenshot.length > 7_000_000) throw new Error("The annotated screenshot is invalid or too large.");
+  const pc = state.pcs.find((candidate) => candidate.id === req.body.pcId);
+  const ticket = {
+    id: `feedback_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    status: "open",
+    cluster: "",
+    text,
+    screenshot,
+    sourceUrl: String(req.body.sourceUrl || "").slice(0, 500),
+    viewport: {
+      width: Math.max(0, Math.min(10000, Number.parseInt(req.body.viewport?.width, 10) || 0)),
+      height: Math.max(0, Math.min(10000, Number.parseInt(req.body.viewport?.height, 10) || 0))
+    },
+    reporter: pc ? { pcId: pc.id, name: pc.name } : { pcId: null, name: "Unseated player" },
+    createdAt: new Date().toISOString(),
+    updatedAt: null,
+    agentNotes: ""
+  };
+  state.feedback.unshift(ticket);
+  persist(); broadcast();
+  res.json(ticket);
+}));
+
+app.put("/api/feedback/:id", guard((req, res) => {
+  const ticket = state.feedback.find((candidate) => candidate.id === req.params.id);
+  if (!ticket) throw new Error("No such feedback ticket.");
+  if (req.body.status !== undefined) {
+    if (!FEEDBACK_STATUSES.has(req.body.status)) throw new Error("Unknown ticket status.");
+    ticket.status = req.body.status;
+  }
+  if (req.body.cluster !== undefined) ticket.cluster = String(req.body.cluster || "").trim().slice(0, 120);
+  if (req.body.agentNotes !== undefined) ticket.agentNotes = String(req.body.agentNotes || "").trim().slice(0, 8000);
+  ticket.updatedAt = new Date().toISOString();
+  persist(); broadcast();
+  res.json(ticket);
+}));
 
 // --- music desk & character themes ---
 app.get("/api/music", (_req, res) => res.json(musicView(state.pcs)));
@@ -518,7 +630,7 @@ app.delete("/api/places/:id", guard((req, res) => {
 
 app.get("/api/screen", (_req, res) => res.json(screenView()));
 
-const SCREEN_TYPES = new Set(["image", "text", "stores", "buildings", "folk", "person", "place"]);
+const SCREEN_TYPES = new Set(["image", "text", "paper", "stores", "buildings", "folk", "person", "place"]);
 
 app.put("/api/screen", guard((req, res) => {
   const { type, refId, url, caption, title, body } = req.body;
@@ -528,6 +640,7 @@ app.put("/api/screen", guard((req, res) => {
     if (!SCREEN_TYPES.has(type)) throw new Error("Unsupported screen type.");
     if (type === "image" && (!url || !url.trim())) throw new Error("An image needs a URL.");
     if (type === "text" && !(title || "").trim() && !(body || "").trim()) throw new Error("Write something first.");
+    if (type === "paper" && !state.pcs.some((pc) => (pc.inventory || []).some((item) => typeof item === "object" && item.id === refId && item.kind === "paper"))) throw new Error("Unknown paper.");
     if (type === "folk" && !state.characters.find((c) => c.id === refId)) throw new Error("Unknown folk.");
     if (type === "person" && !state.people.find((p) => p.id === refId)) throw new Error("Unknown person.");
     if (type === "place" && !state.places.find((p) => p.id === refId)) throw new Error("Unknown place.");
@@ -660,5 +773,6 @@ app.listen(PORT, () => {
   console.log(`The Settlement is open.`);
   console.log(`  GM console:      http://localhost:${PORT}/gm`);
   console.log(`  Player table:    http://localhost:${PORT}/table`);
+  console.log(`  Player root:     http://localhost:${PORT}/player`);
   console.log(`  Music desk:      http://localhost:${PORT}/music`);
 });

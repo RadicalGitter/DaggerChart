@@ -1,6 +1,8 @@
 // The character sheet. Renders one PC; HP/Stress/Hope/Armor pips are tappable
 // and persist. Live-updates when the GM (or another device) changes the character.
 import { t, term, termify, initI18n } from "/shared/i18n.js";
+import { paperArtifactHtml } from "/shared/paper.js";
+import "/shared/feedback.js";
 
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) =>
@@ -93,7 +95,11 @@ function render() {
 
     <div class="sheet-section">
       <span class="smallcaps">${t("sheet.carried")}</span>
-      <div class="card"><ul>${p.inventory.map((i) => `<li><strong>${esc(i.name)}</strong>${i.quantity > 1 ? ` ×${i.quantity}` : ""}${i.description ? `<div class="muted">${termify(esc(i.description))}</div>` : ""}</li>`).join("")}</ul></div>
+      <div class="card"><ul class="inventory-list">${p.inventory.map((i) => i.kind === "paper"
+        ? `<li><button class="inventory-paper" type="button" data-paper-open="${esc(i.id)}"><strong>${esc(i.name)}</strong><span>${esc(i.paperType === "covenant" ? t("contract.decree") : (i.body || "").slice(0, 110))}</span></button></li>`
+        : `<li><strong>${esc(i.name)}</strong>${i.quantity > 1 ? ` ×${i.quantity}` : ""}${i.description ? `<div class="muted">${termify(esc(i.description))}</div>` : ""}</li>`).join("")}</ul>
+        <div class="inventory-tools"><button class="quiet" id="paper-new" type="button">${t("inventory.write")}</button></div>
+      </div>
     </div>
 
     ${p.background.length
@@ -111,6 +117,60 @@ function render() {
   wirePips();
   wireHand();
   wireTheme();
+  wireInventory();
+}
+
+function closePaperDialog() {
+  $("#paper-dialog").hidden = true;
+}
+
+function openPaper(item) {
+  const mayEdit = item.paperType !== "covenant" && item.author === PC.name;
+  $("#paper-dialog-body").innerHTML = `${paperArtifactHtml(item, { id: "paper-dialog-title" })}
+    ${item.paperType !== "covenant" ? `<div class="paper-dialog-actions">${mayEdit ? `<button type="button" data-paper-edit="${esc(item.id)}">${t("inventory.editPaper")}</button>` : ""}<button class="quiet grave" type="button" data-paper-remove="${esc(item.id)}">${t("inventory.remove")}</button></div>` : ""}`;
+  $("#paper-dialog").hidden = false;
+  if ($("[data-paper-edit]")) $("[data-paper-edit]").onclick = () => openPaperEditor(item);
+  if ($("[data-paper-remove]")) $("[data-paper-remove]").onclick = () => removePaper(item);
+}
+
+function openPaperEditor(item = null) {
+  $("#paper-dialog-body").innerHTML = `<form class="paper-editor" id="paper-editor">
+    <h2 id="paper-dialog-title">${item ? esc(item.name) : t("inventory.write")}</h2>
+    <label>${t("inventory.name")}<input id="paper-name" maxlength="120" value="${esc(item?.name || "")}" required></label>
+    <label>${t("inventory.paperBody")}<textarea id="paper-body" rows="12" maxlength="12000" required>${esc(item?.body || "")}</textarea></label>
+    <button type="submit">${t("inventory.save")}</button>
+    <div class="muted" id="paper-error"></div>
+  </form>`;
+  $("#paper-dialog").hidden = false;
+  $("#paper-editor").onsubmit = async (event) => {
+    event.preventDefault();
+    const response = await fetch(`/api/party/${encodeURIComponent(id)}/inventory${item ? `/${encodeURIComponent(item.id)}` : ""}`, {
+      method: item ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind: "paper", name: $("#paper-name").value, body: $("#paper-body").value })
+    });
+    const body = await response.json();
+    if (!response.ok) { $("#paper-error").textContent = body.error || t("inventory.error"); return; }
+    PC = body;
+    closePaperDialog();
+    render();
+  };
+}
+
+async function removePaper(item) {
+  if (!confirm(t("inventory.removeConfirm", { name: item.name }))) return;
+  const response = await fetch(`/api/party/${encodeURIComponent(id)}/inventory/${encodeURIComponent(item.id)}`, { method: "DELETE" });
+  const body = await response.json();
+  if (!response.ok) return alert(body.error || t("inventory.error"));
+  PC = body;
+  closePaperDialog();
+  render();
+}
+
+function wireInventory() {
+  for (const button of document.querySelectorAll("[data-paper-open]")) button.onclick = () => openPaper(PC.inventory.find((item) => item.id === button.dataset.paperOpen));
+  const create = $("#paper-new");
+  if (create) create.onclick = () => openPaperEditor();
 }
 
 function themeHtml(p) {
@@ -401,6 +461,8 @@ async function load() {
 }
 
 initI18n();
+$("#paper-dialog-close").onclick = closePaperDialog;
+$("#paper-dialog").onclick = (event) => { if (event.target === $("#paper-dialog")) closePaperDialog(); };
 
 // Live updates — but don't clobber a tap in flight; simple debounce via reload.
 const stream = new EventSource("/api/stream");

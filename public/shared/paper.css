@@ -1,0 +1,59 @@
+.paper-sheet {
+  position: relative;
+  box-sizing: border-box;
+  width: min(760px, 100%);
+  min-height: min(680px, calc(100vh - 3rem));
+  margin: 0 auto;
+  padding: clamp(2.3rem, 6vw, 4.5rem) clamp(1.4rem, 6vw, 4.7rem);
+  overflow: hidden;
+  color: #3f2d1d;
+  border: 1px solid #9c7b46;
+  border-radius: 3px;
+  background:
+    radial-gradient(circle at 82% 12%, rgba(114, 64, 26, 0.14), transparent 19%),
+    radial-gradient(circle at 13% 80%, rgba(114, 64, 26, 0.11), transparent 24%),
+    repeating-linear-gradient(0deg, rgba(74, 43, 18, 0.025) 0 1px, transparent 1px 4px),
+    linear-gradient(145deg, #ead8a9, #d8bf87 66%, #c8a96f);
+  box-shadow: 0 24px 65px rgba(0, 0, 0, 0.46), inset 0 0 0 8px rgba(74, 43, 18, 0.12);
+}
+
+.paper-sheet::before,
+.paper-sheet::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  left: -2%;
+  width: 104%;
+  height: 28px;
+  pointer-events: none;
+  border: 1px solid rgba(81, 50, 24, 0.42);
+  background: linear-gradient(#c7a66b, #ead7a3 48%, #ad8950);
+  box-shadow: 0 5px 12px rgba(67, 39, 18, 0.28);
+}
+
+.paper-sheet::before { top: 0; border-radius: 50% 50% 35% 35%; }
+.paper-sheet::after { bottom: 0; border-radius: 35% 35% 50% 50%; box-shadow: 0 -5px 12px rgba(67, 39, 18, 0.24); }
+
+.paper-kicker,
+.paper-decree,
+.paper-author,
+.paper-foot { text-align: center; }
+
+.paper-kicker { color: #785127; font-size: 0.72rem; font-variant: small-caps; }
+.paper-sheet h2 { max-width: 640px; margin: 0.5rem auto 0.8rem; color: #3d2515; font: 500 clamp(1.8rem, 5vw, 3.2rem)/1.05 Georgia, serif; text-align: center; }
+.paper-decree { max-width: 630px; margin: 0 auto 1.2rem; color: #5a4027; line-height: 1.45; }
+.paper-copy { position: relative; max-width: 660px; margin: 1.35rem auto; color: #4f3a25; line-height: 1.55; }
+.paper-copy h3 { margin: 0.4rem 0 0.9rem; color: #4b2f1c; font-size: 1rem; text-align: center; font-variant: small-caps; }
+.paper-copy p { margin: 0.8rem 0; font-size: 0.9rem; }
+.paper-body { min-height: 14rem; white-space: pre-wrap; overflow-wrap: anywhere; font-size: clamp(1rem, 2vw, 1.15rem); }
+.paper-author { margin-top: 1.5rem; color: #755b3d; font-size: 0.78rem; font-style: italic; }
+.paper-signed { width: 60%; margin: 2.5rem auto 0; padding-top: 0.4rem; border-top: 1px solid rgba(74, 43, 18, 0.65); text-align: center; }
+.paper-signed span, .paper-signed small { display: block; color: #785127; font-size: 0.7rem; font-variant: small-caps; }
+.paper-signed strong { display: block; margin: 0.15rem 0; color: #8a1717; font: 600 clamp(1.7rem, 5vw, 3.2rem)/1.15 "Segoe Script", "Bradley Hand", cursive; }
+.paper-foot { max-width: 620px; margin: 1.6rem auto 0; color: #7b6345; font-size: 0.7rem; font-style: italic; }
+
+@media (max-width: 520px) {
+  .paper-sheet { min-height: calc(100vh - 2rem); padding: 3rem 1.35rem 3.2rem; }
+  .paper-copy p { font-size: 0.84rem; }
+  .paper-signed { width: 70%; }
+}

@@ -189,6 +189,8 @@ function songView(song, { includePrompt = true } = {}) {
     mode: song.mode,
     pcId: song.pcId,
     tagIds: song.tagIds || [],
+    selectedTagIds: song.selectedTagIds || [],
+    promptEnvelope: song.promptEnvelope || null,
     settings: song.settings || {},
     provider: song.provider || null,
     createdAt: song.createdAt,
@@ -432,7 +434,17 @@ export async function refreshPendingMusic() {
   return changed;
 }
 
-export async function generateSong({ title, prompt, pcId = null, mode = "create", sourceSongId = null, tagIds = [], settings = {} }) {
+export async function generateSong({
+  title,
+  prompt,
+  pcId = null,
+  mode = "create",
+  sourceSongId = null,
+  tagIds = [],
+  selectedTagIds = [],
+  promptEnvelope = null,
+  settings = {}
+}) {
   const provider = providerStatus();
   const sourceSong = sourceSongId ? music.songs.find((song) => song.id === sourceSongId) : null;
   if (mode === "cover" && !sourceSong) throw new Error("Choose a published character theme first.");
@@ -452,6 +464,10 @@ export async function generateSong({ title, prompt, pcId = null, mode = "create"
     mode: mode === "cover" ? "cover" : "create",
     pcId,
     tagIds: Array.isArray(tagIds) ? tagIds.slice(0, 80) : [],
+    selectedTagIds: Array.isArray(selectedTagIds) ? selectedTagIds.slice(0, 24) : [],
+    promptEnvelope: promptEnvelope?.start === "tag-board-v1" && promptEnvelope?.end === "tag-board-v1"
+      ? { start: "tag-board-v1", end: "tag-board-v1" }
+      : null,
     settings: {
       instrumental: settings.instrumental !== false,
       style: cleanText(settings.style, 1000),

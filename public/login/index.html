@@ -40,11 +40,28 @@
         </a>
       </div>
 
-      <div class="players-heading">
-        <span data-i18n="login.players">Player characters</span>
-        <span class="heading-rule" aria-hidden="true"></span>
+      <div class="character-view-window" id="character-views" data-view="finished">
+        <section class="character-view finished-view">
+          <div class="players-heading">
+            <span data-i18n="login.finished">Finished characters</span>
+            <span class="heading-rule" aria-hidden="true"></span>
+          </div>
+          <div class="character-bubble-stage" id="finished-characters"></div>
+        </section>
+        <section class="character-view drafts-view" id="unfinished-section" inert>
+          <div class="players-heading">
+            <span data-i18n="login.unfinished">Unfinished characters</span>
+            <span class="heading-rule" aria-hidden="true"></span>
+          </div>
+          <div class="character-bubble-stage unfinished-stage" id="unfinished-characters"></div>
+        </section>
       </div>
-      <div class="player-grid" id="player-grid"></div>
+      <div class="character-tools">
+        <a class="create-character-command" href="/create/?new=1" data-i18n="login.create">Create a character</a>
+        <button class="draft-view-toggle" id="draft-view-toggle" type="button" aria-pressed="false"><span aria-hidden="true">✎</span><span id="draft-view-label" data-i18n="login.showDrafts">Drafts</span></button>
+        <button class="paint-bucket" id="character-paint" type="button" aria-expanded="false" aria-label="Paint character bubbles"><span aria-hidden="true">🪣</span></button>
+        <div class="character-palette" id="character-palette" hidden></div>
+      </div>
     </section>
 
     <p class="trust-note" data-i18n="login.trust">No passwords. This only remembers the character on this device.</p>

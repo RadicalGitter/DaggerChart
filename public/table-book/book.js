@@ -1,6 +1,7 @@
 // Standalone physical-book experiment for the player table.
 // It consumes only the same server-whitelisted /api/table payload as /table.
 import { t, term, initI18n, seasonLabel, TERMS } from "/shared/i18n.js";
+import "/shared/feedback.js";
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) =>
@@ -11,9 +12,7 @@ const TRAITS = ["Agility", "Strength", "Finesse", "Instinct", "Presence", "Knowl
 const SECTION_ORDER = [
   { key: "town", title: "table.town" },
   { key: "folk", title: "table.folk" },
-  { key: "chronicle", title: "table.chronicle" },
-  { key: "journal", title: "journal.title" },
-  { key: "character", title: "table.character" }
+  { key: "chronicle", title: "table.chronicle" }
 ];
 
 let data = null;
@@ -23,6 +22,7 @@ let turning = false;
 let contentKey = null;
 let characterOverride = null; // "picker" | "create" | null
 let turnFallback = null;
+let openOnArrival = new URLSearchParams(location.search).get("open") === "1";
 
 const getPC = () =>
   localStorage.getItem("settlement-pc") || localStorage.getItem("settlement-journal-pc");
@@ -231,7 +231,7 @@ function openBook() {
   $("#tome").dataset.state = "open";
   document.body.classList.add("book-open");
   renderBookmarks();
-  centerBookSoon();
+  layoutBook();
 }
 
 function closeBook() {
@@ -241,7 +241,7 @@ function closeBook() {
   $("#tome").dataset.state = "closed";
   document.body.classList.remove("book-open");
   renderBookmarks();
-  centerBookSoon();
+  layoutBook();
 }
 
 function finishTurn() {
@@ -279,6 +279,11 @@ function layoutBook() {
   const heightScale = (window.innerHeight - (compact ? 86 : 112)) / 650;
   const closedObjectScale = (window.innerWidth - 8) / 630;
   const scale = compact ? Math.min(0.64, heightScale, closedObjectScale) : Math.min(1, widthScale, heightScale);
+  if (compact && bookOpen) {
+    $("#book-scale").style.transform = "none";
+    $("#book-scale").dataset.scale = "1";
+    return;
+  }
   $("#book-scale").style.transform = `scale(${scale})`;
   $("#book-scale").dataset.scale = String(scale);
   centerBookSoon();
@@ -286,7 +291,7 @@ function layoutBook() {
 
 function centerBookSoon() {
   requestAnimationFrame(() => {
-    if (window.innerWidth > 760) return;
+    if (window.innerWidth > 760 || bookOpen) return;
     const viewport = $("#book-viewport");
     const scale = Number($("#book-scale").dataset.scale || 0.7);
     // Closed: cover centre. Open: spine centre, leaving either page one swipe away.
@@ -301,7 +306,12 @@ async function refresh() {
   data = await response.json();
   renderCover();
   renderBookmarks();
-  if (bookOpen) renderSpread();
+  if (openOnArrival && !bookOpen) {
+    openOnArrival = false;
+    document.body.classList.add("hub-entry");
+    renderSpread(true);
+    openBook();
+  } else if (bookOpen) renderSpread();
 }
 
 $("#front-cover").onclick = () => {

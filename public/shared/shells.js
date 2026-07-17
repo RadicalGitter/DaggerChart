@@ -1,8 +1,8 @@
 // The player shells, collected in one list so the creator's book-picker and the
 // login chooser agree on what exists and where each one lives. A shell is a
-// whole visual treatment of the same spoiler-safe player payload (see
-// docs/player-shell-visuals.md); the choice is stored on the character and
-// routes that device into the chosen shell at login and after creation.
+// focused tool over the same spoiler-safe player payload (see
+// docs/player-shell-visuals.md). A character stores an initial preference;
+// the current device can change views freely from /player.
 //
 // `thumb` is a small self-contained SVG for the picker. `name`/`blurb` are i18n
 // keys resolved by the consumer with t(). Order matters: the first entry is the
@@ -12,8 +12,10 @@ export const SHELLS = [
   {
     id: "tome",
     route: "/tome",
+    entryRoute: "/tome/?open=1",
     name: "shell.tome.name",
     blurb: "shell.tome.blurb",
+    scope: "shell.tome.scope",
     thumb: `<svg viewBox="0 0 120 90" aria-hidden="true">
       <rect x="26" y="14" width="68" height="68" rx="5" fill="#43281a" stroke="#22130b" stroke-width="2"/>
       <rect x="32" y="20" width="56" height="56" rx="3" fill="none" stroke="#7c5327" stroke-width="1.4" opacity="0.8"/>
@@ -26,8 +28,10 @@ export const SHELLS = [
   {
     id: "book",
     route: "/table-book",
+    entryRoute: "/table-book/?open=1",
     name: "shell.book.name",
     blurb: "shell.book.blurb",
+    scope: "shell.book.scope",
     thumb: `<svg viewBox="0 0 120 90" aria-hidden="true">
       <path d="M60 20 C 48 15, 30 15, 22 19 L22 71 C 30 67, 48 67, 60 72 Z" fill="#efe4c6" stroke="#8a7346" stroke-width="1.6"/>
       <path d="M60 20 C 72 15, 90 15, 98 19 L98 71 C 90 67, 72 67, 60 72 Z" fill="#efe4c6" stroke="#8a7346" stroke-width="1.6"/>
@@ -42,8 +46,10 @@ export const SHELLS = [
   {
     id: "table",
     route: "/table",
+    entryRoute: "/table",
     name: "shell.table.name",
     blurb: "shell.table.blurb",
+    scope: "shell.table.scope",
     thumb: `<svg viewBox="0 0 120 90" aria-hidden="true">
       <rect x="20" y="26" width="26" height="42" rx="4" fill="#352a1c" stroke="#8a7346" stroke-width="1.4"/>
       <rect x="48" y="22" width="26" height="46" rx="4" fill="#3d3020" stroke="#a88a52" stroke-width="1.4"/>
@@ -55,9 +61,11 @@ export const SHELLS = [
   }
 ];
 
-export const DEFAULT_SHELL = "table"; // the documented canonical login destination
+export const DEFAULT_SHELL = "table"; // fallback when neither device nor PC has chosen
 
 const byId = (id) => SHELLS.find((s) => s.id === id) || null;
 
 export const shellRoute = (id) => (byId(id) || byId(DEFAULT_SHELL)).route;
+export const shellEntryRoute = (id) => (byId(id) || byId(DEFAULT_SHELL)).entryRoute;
 export const shellName = (id) => (byId(id) || byId(DEFAULT_SHELL)).name;
+export const validShell = (id) => Boolean(byId(id));

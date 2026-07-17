@@ -27,11 +27,13 @@ export const state = {
   settlement: loadJson("settlement.json", DEFAULT_SETTLEMENT),
   characters: loadJson("characters.json", []),
   pcs: loadJson("pcs.json", []),
+  characterDrafts: loadJson("character-drafts.json", []),
   log: loadJson("log.json", []),
   people: loadJson("people.json", []),
   places: loadJson("places.json", [DEFAULT_VILLAGE]),
   notes: loadJson("notes.json", []),
   journalDoodles: loadJson("journal-doodles.json", {}),
+  feedback: loadJson("feedback.json", []),
   screen: loadJson("screen.json", { current: null }),
   tables: loadEventTables(),
   reference: loadJson("daggerheart/reference.json", null)
@@ -61,11 +63,13 @@ export function persist() {
   saveJson("settlement.json", state.settlement);
   saveJson("characters.json", state.characters);
   saveJson("pcs.json", state.pcs);
+  saveJson("character-drafts.json", state.characterDrafts);
   saveJson("log.json", state.log);
   saveJson("people.json", state.people);
   saveJson("places.json", state.places);
   saveJson("notes.json", state.notes);
   saveJson("journal-doodles.json", state.journalDoodles);
+  saveJson("feedback.json", state.feedback);
   saveJson("screen.json", state.screen);
 }
 

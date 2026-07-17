@@ -19,6 +19,24 @@ function normalizedItem(item, index, reference) {
       ? { id: uid(), kind: "consumable", catalogId: catalog.id, quantity: 1, notes: legacy.description }
       : { id: uid(), kind: "mundane", name: legacy.name, description: legacy.description, quantity: 1 };
   }
+  if (item?.kind === "paper") {
+    const paperType = item.paperType === "covenant" ? "covenant" : "note";
+    return {
+      id: item.id || uid(),
+      kind: "paper",
+      paperType,
+      name: String(item.name || (paperType === "covenant" ? "Signed covenant" : "Untitled note")),
+      body: String(item.body || ""),
+      author: String(item.author || ""),
+      createdAt: String(item.createdAt || ""),
+      ...(paperType === "covenant" ? {
+        signedName: String(item.signedName || ""),
+        signedAt: String(item.signedAt || ""),
+        covenantVersion: Math.max(1, Number.parseInt(item.covenantVersion, 10) || 1)
+      } : {}),
+      quantity: 1
+    };
+  }
   return {
     id: item?.id || uid(),
     kind: item?.kind === "consumable" ? "consumable" : "mundane",
@@ -42,6 +60,22 @@ export function inventoryItemView(item, index, reference) {
     return catalog
       ? { id: `legacy_${index}`, kind: "consumable", catalogId: catalog.id, name: catalog.name, description: catalog.description, descriptionSv: catalog.descriptionSv || "", icon: catalog.icon, reaction: catalog.reaction, notes: legacy.description, quantity: 1 }
       : { id: `legacy_${index}`, kind: "mundane", name: legacy.name, description: legacy.description, notes: "", quantity: 1 };
+  }
+  if (item.kind === "paper") {
+    const paperType = item.paperType === "covenant" ? "covenant" : "note";
+    return {
+      id: item.id || `legacy_${index}`,
+      kind: "paper",
+      paperType,
+      name: item.name || (paperType === "covenant" ? "Signed covenant" : "Untitled note"),
+      body: item.body || "",
+      author: item.author || "",
+      createdAt: item.createdAt || "",
+      signedName: paperType === "covenant" ? (item.signedName || "") : "",
+      signedAt: paperType === "covenant" ? (item.signedAt || "") : "",
+      covenantVersion: paperType === "covenant" ? Math.max(1, Number.parseInt(item.covenantVersion, 10) || 1) : null,
+      quantity: 1
+    };
   }
   const catalog = item.catalogId ? consumableById(reference, item.catalogId) : null;
   return {
@@ -72,9 +106,31 @@ export function inventoryEntry(pc, requestedId, reference) {
 
 export function addInventoryItem(pc, body, reference) {
   normalizeInventory(pc, reference);
-  const kind = body.kind === "consumable" ? "consumable" : "mundane";
+  const kind = body.kind === "paper" ? "paper" : (body.kind === "consumable" ? "consumable" : "mundane");
   const name = String(body.name || "").trim();
   if (!name) throw new Error("An item name is required.");
+  if (kind === "paper") {
+    const paperType = body.paperType === "covenant" ? "covenant" : "note";
+    const text = String(body.body || "").trim();
+    if (paperType === "note" && !text) throw new Error("Write something on the paper first.");
+    const item = {
+      id: uid(),
+      kind: "paper",
+      paperType,
+      name,
+      body: text,
+      author: String(body.author || pc.name || "").trim(),
+      createdAt: String(body.createdAt || new Date().toISOString()),
+      ...(paperType === "covenant" ? {
+        signedName: String(body.signedName || pc.name || "").trim(),
+        signedAt: String(body.signedAt || new Date().toISOString()),
+        covenantVersion: Math.max(1, Number.parseInt(body.covenantVersion, 10) || 1)
+      } : {}),
+      quantity: 1
+    };
+    pc.inventory.push(item);
+    return item;
+  }
   const max = kind === "consumable" ? 5 : 99;
   const quantity = Number.parseInt(body.quantity, 10) || 1;
   if (quantity < 1 || quantity > max) throw new Error(`Quantity must be between 1 and ${max}.`);
@@ -85,6 +141,17 @@ export function addInventoryItem(pc, body, reference) {
 
 export function updateInventoryItem(pc, requestedId, body, reference) {
   const { item } = inventoryEntry(pc, requestedId, reference);
+  if (item.kind === "paper") {
+    if (item.paperType === "covenant") throw new Error("The signed covenant cannot be altered.");
+    const name = String(body.name || "").trim();
+    const text = String(body.body || "").trim();
+    if (!name) throw new Error("A title is required.");
+    if (!text) throw new Error("Write something on the paper first.");
+    item.name = name;
+    item.body = text;
+    item.quantity = 1;
+    return item;
+  }
   const catalog = item.catalogId ? consumableById(reference, item.catalogId) : null;
   const max = (catalog || item.kind === "consumable") ? 5 : 99;
   const quantity = Number.parseInt(body.quantity, 10) || 1;

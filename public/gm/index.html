@@ -104,6 +104,14 @@
   .grant-consumable { margin-top: 1rem; max-width: 760px; }
   .grant-consumable h3 { margin-bottom: 0.25rem; }
   .grant-consumable .rules { min-height: 2.6em; margin: 0.5rem 0; color: var(--ink-soft); font-size: 0.88rem; }
+  .paper-delivery { margin-top: 1rem; max-width: 760px; }
+  .paper-delivery textarea { width: 100%; box-sizing: border-box; }
+  .paper-ledger { display: grid; gap: .45rem; margin-top: .9rem; }
+  .paper-ledger-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .7rem; align-items: center; padding-top: .45rem; border-top: 1px dotted var(--rule-strong); }
+  .feedback-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 1rem; }
+  .feedback-ticket img { display: block; width: 100%; max-height: 360px; object-fit: contain; border: 1px solid var(--rule-strong); background: #17120c; }
+  .feedback-meta { margin: .55rem 0; color: var(--ink-soft); font-size: .78rem; }
+  .feedback-ticket textarea, .feedback-ticket input { box-sizing: border-box; width: 100%; }
   #toast {
     position: fixed; bottom: 1.2rem; right: 1.2rem;
     background: var(--ink); color: var(--paper); padding: 0.6rem 1rem; border-radius: 4px;
@@ -126,6 +134,7 @@
     <a href="#people" data-nav="people">People</a>
     <a href="#places" data-nav="places">Places</a>
     <a href="#party" data-nav="party">Party</a>
+    <a href="#feedback" data-nav="feedback">Feedback</a>
     <a href="#ledger" data-nav="ledger">Ledger</a>
     <a href="#screen" data-nav="screen">Screen</a>
     <a href="#town" data-nav="town">Settlement</a>
@@ -243,6 +252,15 @@
         <div class="rules" id="grant-rules"></div>
         <div class="formrow"><label></label><button id="grant-give" class="quiet">Give to character</button><span class="muted" id="grant-roll"></span></div>
       </div>
+      <div class="card paper-delivery">
+        <h3>Deliver a paper</h3>
+        <p class="muted">A private delivery exists only in one character's inventory. A group delivery makes a separate copy for everyone.</p>
+        <div class="formrow"><label for="paper-target">Recipient</label><select id="paper-target"></select></div>
+        <div class="formrow"><label for="paper-title">Title</label><input id="paper-title" style="flex:1" maxlength="120"></div>
+        <div class="formrow"><label for="paper-body" style="align-self:flex-start;">Text</label><textarea id="paper-body" rows="7" maxlength="12000"></textarea></div>
+        <div class="formrow"><label></label><button id="paper-deliver" class="quiet">Deliver the paper</button><label style="min-width:auto;"><input id="paper-project" type="checkbox"> show it on the projector</label></div>
+        <div class="paper-ledger" id="paper-ledger"></div>
+      </div>
     </section>
 
     <section id="sec-ledger" hidden>
@@ -259,6 +277,12 @@
         </div>
       </div>
       <table class="ledger" id="log-table"></table>
+    </section>
+
+    <section id="sec-feedback" hidden>
+      <h2>Playtest tickets</h2>
+      <p class="muted">Reports include the player's annotated screen. Agent handoff instructions live in <code>docs/feedback-triage-agent.md</code>.</p>
+      <div class="feedback-grid" id="feedback-grid"></div>
     </section>
 
     <section id="sec-screen" hidden>

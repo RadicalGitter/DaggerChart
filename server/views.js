@@ -132,7 +132,8 @@ export function gmView() {
       subclass: p.subclass?.name,
       ancestry: p.ancestry?.name,
       community: p.community?.name,
-      conditions: conditionView(p)
+      conditions: conditionView(p),
+      papers: inventoryView(p, state.reference).filter((item) => item.kind === "paper")
     })),
     people: state.people,
     places: state.places,
@@ -157,6 +158,12 @@ export function screenView() {
       return { type: "image", url: cur.url, caption: cur.caption || "" };
     case "text":
       return { type: "text", title: cur.title || "", body: cur.body || "" };
+    case "paper": {
+      const item = state.pcs
+        .flatMap((pc) => inventoryView(pc, state.reference))
+        .find((candidate) => candidate.kind === "paper" && candidate.id === cur.refId);
+      return item ? { type: "paper", ...item } : idle();
+    }
     case "stores":
       return {
         type: "stores",

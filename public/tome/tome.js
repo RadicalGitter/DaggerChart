@@ -8,6 +8,8 @@
 // (or a player-supplied variant of one); nothing else needs to change.
 import { t, term, termify, initI18n, seasonLabel, lang } from "/shared/i18n.js";
 import { CONDITIONS, conditionIcon } from "/shared/conditions.js";
+import { paperArtifactHtml } from "/shared/paper.js";
+import "/shared/feedback.js";
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) =>
@@ -110,9 +112,6 @@ const KEEPSAKES = {
 // never change sides, so the eye can always find a chapter where it left it.
 // `tab` is the section's signature colour; `sway` still animates the emblem.
 const SECTION_ORDER = [
-  { key: "town", title: "table.town", keepsake: "ribbon", tab: "#a8402f", sway: "5.6s" },
-  { key: "folk", title: "table.folk", keepsake: "feather", tab: "#4a5270", sway: "7.3s" },
-  { key: "chronicle", title: "table.chronicle", keepsake: "scrap", tab: "#b8975a", sway: "6.4s" },
   { key: "journal", title: "journal.title", keepsake: "flower", tab: "#9d7fae", sway: "8.1s" },
   { key: "character", title: "table.character", keepsake: "charm", tab: "#c3ad7e", sway: "5.2s" },
   { key: "inventory", title: "table.inventory", keepsake: "keyring", tab: "#b5893c", sway: "6.1s" }
@@ -128,6 +127,7 @@ let sideKeys = { left: null, right: null };
 let characterOverride = null; // "picker" | "create" | null
 let turnFallback = null;
 let editingItem = null;
+let openOnArrival = new URLSearchParams(location.search).get("open") === "1";
 
 const getPC = () =>
   localStorage.getItem("settlement-pc") || localStorage.getItem("settlement-journal-pc");
@@ -252,6 +252,13 @@ function weaponHtml(label, weapon) {
 }
 
 function carriedItemHtml(item) {
+  if (item.kind === "paper") {
+    const preview = item.paperType === "covenant" ? t("contract.decree") : item.body;
+    return `<button class="inventory-card inventory-entry paper-entry" type="button" data-paper-open="${esc(item.id)}" aria-label="${esc(t("paper.open", { name: item.name }))}">
+      <div class="inventory-facts">${t("inventory.paper")}</div>
+      <h3>${esc(item.name)}</h3>${preview ? `<p>${esc(preview.slice(0, 150))}${preview.length > 150 ? "…" : ""}</p>` : ""}
+    </button>`;
+  }
   const description = lang === "sv" && item.descriptionSv ? item.descriptionSv : item.description;
   const kind = item.kind === "consumable" ? t("inventory.consumable") : t("inventory.item");
   return `<button class="inventory-card inventory-entry" type="button" data-inventory-edit="${esc(item.id)}" aria-label="${esc(t("inventory.editName", { name: item.name }))}">
@@ -460,36 +467,55 @@ function effectHtml(effect) {
   return `${effect.roll ? `<div class="use-roll">${effect.roll}</div>` : ""}<p>${lines.map(esc).join("<br>")}</p><p class="tome-muted">${t("inventory.remaining", { n: effect.remaining })}</p>`;
 }
 
-function openInventoryDialog(item = null) {
+function openInventoryDialog(item = null, editPaper = false) {
   editingItem = item;
+  const dialog = document.querySelector(".inventory-dialog");
+  dialog.classList.toggle("is-paper", item?.kind === "paper" && !editPaper);
+  if (item?.kind === "paper" && !editPaper) {
+    const mayEdit = item.paperType !== "covenant" && item.author === characterData.name;
+    $("#inventory-dialog-body").innerHTML = `${paperArtifactHtml(item, { id: "inventory-dialog-title" })}
+      ${item.paperType !== "covenant" ? `<div class="inventory-dialog-actions paper-actions">${mayEdit ? `<button type="button" id="paper-edit">${t("inventory.editPaper")}</button>` : ""}<button type="button" class="quiet grave" id="inventory-remove">${t("inventory.remove")}</button></div>` : ""}`;
+    $("#inventory-dialog").hidden = false;
+    if ($("#paper-edit")) $("#paper-edit").onclick = () => openInventoryDialog(item, true);
+    if ($("#inventory-remove")) $("#inventory-remove").onclick = removeInventoryItem;
+    return;
+  }
   const catalog = !!item?.catalogId;
   const description = item ? localizedItemDescription(item) : "";
   const kind = item?.kind || "mundane";
   $("#inventory-dialog-body").innerHTML = `<div class="inventory-dialog-grid">
     <div class="inventory-art ${kind === "consumable" ? "is-consumable" : ""}" id="inventory-art">${inventoryArt(item?.icon)}</div>
     <div>
-      <div class="inventory-facts">${item ? (kind === "consumable" ? t("inventory.consumable") : t("inventory.item")) : t("inventory.new")}</div>
+      <div class="inventory-facts">${item ? (kind === "consumable" ? t("inventory.consumable") : kind === "paper" ? t("inventory.paper") : t("inventory.item")) : t("inventory.new")}</div>
       <h2 id="inventory-dialog-title">${esc(item?.name || t("inventory.new"))}</h2>
       ${catalog ? `<p class="inventory-rules">${termify(esc(description))}</p>` : ""}
     </div>
   </div>
   <div class="inventory-form">
-    ${catalog ? `<label>${t("inventory.notes")}<textarea id="inventory-notes" rows="2">${esc(item.notes || "")}</textarea></label>` : `<label>${t("inventory.kind")}<select id="inventory-kind"><option value="mundane" ${kind === "mundane" ? "selected" : ""}>${t("inventory.item")}</option><option value="consumable" ${kind === "consumable" ? "selected" : ""}>${t("inventory.consumable")}</option></select></label><label>${t("inventory.name")}<input id="inventory-name" value="${esc(item?.name || "")}"></label><label>${t("inventory.description")}<textarea id="inventory-description" rows="3">${esc(item?.description || "")}</textarea></label>`}
-    <label>${t("inventory.quantity")}<input id="inventory-quantity" type="number" min="1" max="${kind === "consumable" ? 5 : 99}" value="${item?.quantity || 1}"></label>
+    ${catalog ? `<label>${t("inventory.notes")}<textarea id="inventory-notes" rows="2">${esc(item.notes || "")}</textarea></label>` : `<label>${t("inventory.kind")}<select id="inventory-kind"><option value="mundane" ${kind === "mundane" ? "selected" : ""}>${t("inventory.item")}</option><option value="consumable" ${kind === "consumable" ? "selected" : ""}>${t("inventory.consumable")}</option><option value="paper" ${kind === "paper" ? "selected" : ""}>${t("inventory.paper")}</option></select></label><label>${t("inventory.name")}<input id="inventory-name" value="${esc(item?.name || "")}"></label><label id="inventory-copy-label">${kind === "paper" ? t("inventory.paperBody") : t("inventory.description")}<textarea id="inventory-description" rows="5">${esc(kind === "paper" ? (item?.body || "") : (item?.description || ""))}</textarea></label>`}
+    <label id="inventory-quantity-label" ${kind === "paper" ? "hidden" : ""}>${t("inventory.quantity")}<input id="inventory-quantity" type="number" min="1" max="${kind === "consumable" ? 5 : 99}" value="${item?.quantity || 1}"></label>
   </div>
   <div class="inventory-use-panel" id="inventory-use-panel" hidden></div>
   <div class="inventory-result" id="inventory-result" hidden></div>
   <div class="inventory-dialog-actions" id="inventory-dialog-actions"><button type="button" id="inventory-save">${t("inventory.save")}</button>${item?.kind === "consumable" ? `<button type="button" class="consume" id="inventory-consume">${t("inventory.consume")}</button>` : ""}${item ? `<button type="button" class="quiet grave" id="inventory-remove">${t("inventory.remove")}</button>` : ""}</div>`;
   $("#inventory-dialog").hidden = false;
+  if ($("#inventory-kind")) $("#inventory-kind").onchange = syncInventoryKind;
   $("#inventory-save").onclick = saveInventoryItem;
   if ($("#inventory-remove")) $("#inventory-remove").onclick = removeInventoryItem;
   if ($("#inventory-consume")) $("#inventory-consume").onclick = prepareInventoryUse;
 }
 
+function syncInventoryKind() {
+  const paper = $("#inventory-kind").value === "paper";
+  $("#inventory-copy-label").firstChild.textContent = paper ? t("inventory.paperBody") : t("inventory.description");
+  $("#inventory-quantity-label").hidden = paper;
+}
+
 async function saveInventoryItem() {
+  const kind = $("#inventory-kind")?.value;
   const body = editingItem?.catalogId
     ? { notes: $("#inventory-notes").value, quantity: Number($("#inventory-quantity").value) }
-    : { kind: $("#inventory-kind").value, name: $("#inventory-name").value, description: $("#inventory-description").value, quantity: Number($("#inventory-quantity").value) };
+    : { kind, name: $("#inventory-name").value, ...(kind === "paper" ? { body: $("#inventory-description").value } : { description: $("#inventory-description").value }), quantity: Number($("#inventory-quantity")?.value || 1) };
   try {
     characterData = await inventoryRequest(`/api/party/${encodeURIComponent(characterData.id)}/inventory${editingItem ? `/${encodeURIComponent(editingItem.id)}` : ""}`, { method: editingItem ? "PUT" : "POST", body });
     renderSpread(true);
@@ -564,6 +590,7 @@ function wirePageActions() {
     await fetch(`/api/party/${encodeURIComponent(characterData.id)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [kind]: next }) });
   };
   for (const button of document.querySelectorAll("[data-inventory-edit]")) button.onclick = () => openInventoryDialog(characterData.inventory.find((item) => item.id === button.dataset.inventoryEdit));
+  for (const button of document.querySelectorAll("[data-paper-open]")) button.onclick = () => openInventoryDialog(characterData.inventory.find((item) => item.id === button.dataset.paperOpen));
   for (const button of document.querySelectorAll("[data-inventory-add]")) button.onclick = () => openInventoryDialog();
 }
 
@@ -593,8 +620,9 @@ function openBook() {
   bookOpen = true;
   $("#tome").classList.add("open");
   $("#tome").dataset.state = "open";
+  document.body.classList.add("tome-open");
   renderKeepsakes();
-  centerBookSoon();
+  layoutBook();
 }
 
 function closeBook() {
@@ -602,8 +630,9 @@ function closeBook() {
   bookOpen = false;
   $("#tome").classList.remove("open");
   $("#tome").dataset.state = "closed";
+  document.body.classList.remove("tome-open");
   renderKeepsakes();
-  centerBookSoon();
+  layoutBook();
 }
 
 function finishTurn() {
@@ -654,6 +683,14 @@ function layoutBook() {
   const closedObjectScale = (window.innerWidth - 8) / 780;
   const scale = compact ? Math.min(0.66, heightScale, closedObjectScale) : Math.min(1, widthScale, heightScale);
   const scaler = $("#tome-scale");
+  if (compact && bookOpen) {
+    scaler.style.zoom = "";
+    scaler.style.transform = "none";
+    scaler.style.position = "";
+    scaler.style.left = "";
+    scaler.dataset.scale = "1";
+    return;
+  }
   // On narrow screens zoom participates in layout; a transform would leave
   // the 1240px unscaled box centred far off-screen and make panning mostly
   // empty room. Desktop keeps the smoother transform animation.
@@ -667,7 +704,7 @@ function layoutBook() {
 
 function centerBookSoon() {
   requestAnimationFrame(() => {
-    if (window.innerWidth > 760) return;
+    if (window.innerWidth > 760 || bookOpen) return;
     const viewport = $("#tome-viewport");
     const scale = Number($("#tome-scale").dataset.scale || 0.7);
     // Closed: centre of the cover. Open: the spine, either page one swipe away.
@@ -686,7 +723,12 @@ async function refresh() {
   renderPlayerDock();
   renderCover();
   renderKeepsakes();
-  if (bookOpen) renderSpread();
+  if (openOnArrival && !bookOpen) {
+    openOnArrival = false;
+    document.body.classList.add("hub-entry");
+    renderSpread(true);
+    openBook();
+  } else if (bookOpen) renderSpread();
 }
 
 $("#front-cover").onclick = () => {

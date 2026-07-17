@@ -1,6 +1,7 @@
 // The players' journal: shared and personal notes on people, places, and days.
 // Reads /api/lore (whitelisted server-side); writes /api/notes as the chosen PC.
 import { t, lang, initI18n, seasonLabel } from "/shared/i18n.js";
+import "/shared/feedback.js";
 
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) =>

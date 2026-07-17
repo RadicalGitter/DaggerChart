@@ -3,6 +3,7 @@
 // No initI18n(): a projected surface gets no toggle, no popovers — the
 // language follows whatever was last chosen on this device.
 import { t, seasonLabel } from "/shared/i18n.js";
+import { paperArtifactHtml } from "/shared/paper.js";
 
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) =>
@@ -43,6 +44,8 @@ function html(v) {
       return `
         ${v.title ? `<div class="text-title">${esc(v.title)}</div><hr class="divider">` : ""}
         ${v.body ? `<p class="text-body">${esc(v.body)}</p>` : ""}`;
+    case "paper":
+      return paperArtifactHtml(v, { id: "projected-paper-title" });
     default: // idle
       return `
         <div class="idle-name">${esc(v.name)}</div>

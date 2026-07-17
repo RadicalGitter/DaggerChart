@@ -112,17 +112,18 @@ button, input, textarea, select { letter-spacing: 0; }
 .song-bubble {
   --bubble-size: 138px;
   position: absolute; left: 0; top: 0; width: var(--bubble-size); height: var(--bubble-size);
-  isolation: isolate; overflow: hidden; container-type: size; padding: 1rem; border: 0; border-radius: 50%; color: #24322d;
+  isolation: isolate; overflow: hidden; container-type: size; padding: 1rem; border: 0;
+  border-radius: var(--bubble-shape-a, 50%); color: #24322d;
   background:
     radial-gradient(circle at 50% 52%, color-mix(in srgb, var(--paint-color, transparent) 28%, transparent) 0 52%, transparent 76%),
     radial-gradient(ellipse at 48% 48%, rgba(255,255,255,0.08) 0 43%, rgba(255,255,255,0.18) 61%, transparent 72%),
     radial-gradient(circle at 27% 20%, rgba(255,255,255,0.96) 0 3%, rgba(255,255,255,0.38) 8%, transparent 19%),
-    radial-gradient(circle at 73% 77%, color-mix(in srgb, var(--edge-c) 13%, transparent) 0 9%, transparent 36%),
+    radial-gradient(circle at 73% 77%, color-mix(in srgb, var(--edge-c) 6%, transparent) 0 7%, transparent 34%),
     rgba(255,255,255,0.075);
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,0.76),
     inset 8px 7px 18px rgba(255,255,255,0.3),
-    inset -13px -17px 26px color-mix(in srgb, var(--edge-a) 12%, transparent),
+    inset -13px -17px 26px color-mix(in srgb, var(--edge-a) 6%, transparent),
     0 2px 2px rgba(50,45,35,0.07), 0 12px 22px rgba(50,45,35,0.1);
   backdrop-filter: blur(0.8px) saturate(1.24) contrast(1.025);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -151,8 +152,30 @@ button, input, textarea, select { letter-spacing: 0; }
   transform: translateY(-4px) scale(1.035);
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,0.9), inset 9px 8px 20px rgba(255,255,255,0.38),
-    inset -14px -18px 28px color-mix(in srgb, var(--edge-a) 17%, transparent),
+    inset -14px -18px 28px rgba(255,255,255,0.08),
     0 3px 3px rgba(50,45,35,0.08), 0 16px 26px rgba(46,40,32,0.15);
+}
+.song-bubble:not(.painted):hover, .song-bubble:not(.painted):focus-visible {
+  background:
+    radial-gradient(ellipse at 48% 48%, rgba(255,255,255,0.025) 0 48%, rgba(255,255,255,0.12) 64%, transparent 74%),
+    radial-gradient(circle at 27% 20%, rgba(255,255,255,0.96) 0 3%, rgba(255,255,255,0.28) 8%, transparent 19%),
+    rgba(255,255,255,0.025);
+}
+.song-bubble.painted,
+.song-bubble.painted:hover,
+.song-bubble.painted:focus-visible {
+  background:
+    radial-gradient(circle at 48% 48%, transparent 0 39%, color-mix(in srgb, var(--paint-color) 10%, transparent) 55%, color-mix(in srgb, var(--paint-color) 34%, transparent) 73%, color-mix(in srgb, var(--paint-color) 58%, transparent) 88%, transparent 100%),
+    radial-gradient(ellipse at 48% 48%, rgba(255,255,255,0.06) 0 43%, rgba(255,255,255,0.2) 61%, transparent 73%),
+    radial-gradient(circle at 27% 20%, rgba(255,255,255,0.96) 0 3%, rgba(255,255,255,0.4) 8%, transparent 19%),
+    color-mix(in srgb, var(--paint-color) 6%, rgba(255,255,255,0.055));
+}
+.song-bubble.painted::before {
+  background: conic-gradient(from var(--bubble-turn, 0deg),
+    rgba(255,255,255,0.76) 0 7%, color-mix(in srgb, var(--paint-color) 72%, var(--edge-a)) 13%, transparent 23% 34%,
+    color-mix(in srgb, var(--paint-color) 78%, var(--edge-b)) 44%, rgba(255,255,255,0.7) 50%, transparent 60% 70%,
+    color-mix(in srgb, var(--paint-color) 74%, var(--edge-c)) 80%, transparent 90%, rgba(255,255,255,0.76));
+  opacity: 0.94;
 }
 .song-bubble.dragging {
   z-index: 8; cursor: grabbing; animation: none;
@@ -169,8 +192,10 @@ button, input, textarea, select { letter-spacing: 0; }
 .song-bubble strong {
   position: relative; z-index: 2; max-width: 92%; font-size: clamp(0.7rem, 7cqi, 0.98rem); line-height: 1.15;
   overflow-wrap: anywhere; transform: scale(1.035, 1.07); transform-origin: center;
+  transition: transform 0.18s ease;
   text-shadow: 0 1px 0 rgba(255,255,255,0.95), 0 0 7px rgba(255,255,255,0.88), 0 1px 2px color-mix(in srgb, var(--edge-a) 20%, transparent);
 }
+.song-bubble:hover strong, .song-bubble:focus-visible strong { transform: scale(1.085, 1.13); }
 .song-bubble span { position: relative; z-index: 2; margin-top: 0.45rem; color: #52635d; font-size: clamp(0.52rem, 4.8cqi, 0.65rem); text-transform: uppercase; }
 .song-bubble.rendering { opacity: 0.7; }
 .song-bubble.rendering::before { filter: saturate(0.35); }
@@ -183,13 +208,16 @@ button, input, textarea, select { letter-spacing: 0; }
   position: absolute; inset: 0; display: grid; place-items: center; margin: auto; padding: 1rem;
   color: var(--ink-faint); text-align: center;
 }
-@keyframes bubble-drift { 0%,100% { translate: 0 0; } 50% { translate: 0 -5px; } }
+@keyframes bubble-drift {
+  0%, 100% { translate: 0 0; border-radius: var(--bubble-shape-a, 50%); }
+  50% { translate: 0 -5px; border-radius: var(--bubble-shape-b, 50%); }
+}
 @keyframes bubble-pop { 0% { scale: 1; opacity: 1; } 55% { scale: 1.14; opacity: 0.72; filter: saturate(1.4); } 100% { scale: 1.36; opacity: 0; } }
 @keyframes bubble-regrow { 0% { scale: 0.12; opacity: 0; } 72% { scale: 1.08; opacity: 0.88; } 100% { scale: 1; opacity: 1; } }
 @keyframes paint-splash { 0%, 100% { scale: 1; } 48% { scale: 1.055; filter: saturate(1.28) brightness(1.04); } }
 
 .bubble-info {
-  position: fixed; z-index: 90; width: min(310px, calc(100vw - 24px)); padding: 0.7rem 0.8rem;
+  position: fixed; z-index: 90; width: min(420px, calc(100vw - 24px)); padding: 0.7rem 0.8rem;
   border: 1px solid var(--rule-strong); background: color-mix(in srgb, var(--paper-raised) 94%, transparent);
   color: var(--ink); box-shadow: 0 10px 26px rgba(46,40,32,0.2); backdrop-filter: blur(8px);
   pointer-events: none;
@@ -200,6 +228,20 @@ button, input, textarea, select { letter-spacing: 0; }
 .bubble-info p {
   margin: 0.5rem 0 0; color: var(--ink-soft); font-size: 0.76rem; line-height: 1.35;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden;
+}
+.bubble-info-tags {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.26rem 0.36rem;
+  max-height: min(58vh, 320px); margin-top: 0.55rem; overflow: hidden;
+}
+.prompt-tag {
+  color: var(--ink-soft); line-height: 1.05; white-space: nowrap;
+}
+.prompt-tag.tier-0 { font-size: 1rem; font-weight: 700; color: var(--music-deep); }
+.prompt-tag.tier-1 { font-size: 0.8rem; font-weight: 600; }
+.prompt-tag.tier-2 { font-size: 0.67rem; color: var(--ink-faint); }
+.prompt-tag.selected {
+  padding: 0.14rem 0.34rem; border: 1px solid color-mix(in srgb, var(--music-mint) 60%, var(--rule));
+  border-radius: 999px; background: color-mix(in srgb, var(--music-mint) 12%, transparent);
 }
 
 .forge-column {
@@ -227,9 +269,12 @@ button, input, textarea, select { letter-spacing: 0; }
   mask: radial-gradient(circle, transparent 55%, #000 58% 65%, transparent 68%);
   transform: translate(-50%, -50%) scale(0.28) rotate(-28deg);
 }
-.tag-board.dive-out::after { animation: tag-swoosh 0.48s ease-out; }
-.tag-board.dive-out > * { animation: tag-dive-away 0.18s ease-in both; }
-.tag-board.dive-in > * { animation: tag-dive-arrive 0.32s cubic-bezier(0.2, 0.78, 0.25, 1) both; }
+.tag-board.dive-out::after { animation: tag-swoosh-forward 0.4s ease-out; }
+.tag-board.dive-out > * { animation: tag-dive-away 0.145s ease-in both; }
+.tag-board.dive-in > * { animation: tag-dive-arrive 0.26s cubic-bezier(0.2, 0.78, 0.25, 1) both; }
+.tag-board.dive-back-out::after { animation: tag-swoosh-back 0.4s ease-out; }
+.tag-board.dive-back-out > * { animation: tag-back-away 0.145s ease-in both; }
+.tag-board.dive-back-in > * { animation: tag-back-arrive 0.26s cubic-bezier(0.2, 0.78, 0.25, 1) both; }
 .tag-group-label {
   display: grid; grid-template-columns: minmax(24px, 1fr) auto minmax(24px, 1fr); gap: 0.65rem; align-items: center;
   text-align: center; color: var(--ink-faint); font-variant: small-caps; font-size: 0.72rem; letter-spacing: 0.08em;
@@ -286,13 +331,20 @@ button, input, textarea, select { letter-spacing: 0; }
 .generate-button { width: 100%; }
 .form-note { min-height: 1.2rem; color: var(--ink-faint); font-size: 0.78rem; }
 
-@keyframes tag-swoosh {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.28) rotate(-28deg); }
-  24% { opacity: 0.9; }
+@keyframes tag-swoosh-forward {
+  0% { opacity: 0.38; transform: translate(-50%, -50%) scale(0.38) rotate(-18deg); }
+  18% { opacity: 0.9; }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(2.15) rotate(128deg); }
+}
+@keyframes tag-swoosh-back {
+  0% { opacity: 0.38; transform: translate(-50%, -50%) scale(2.15) rotate(128deg); }
+  18% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.38) rotate(-18deg); }
 }
 @keyframes tag-dive-away { to { opacity: 0; scale: 1.08; filter: blur(1.5px); } }
 @keyframes tag-dive-arrive { from { opacity: 0; scale: 0.9; filter: blur(1.5px); } to { opacity: 1; scale: 1; filter: blur(0); } }
+@keyframes tag-back-away { to { opacity: 0; scale: 0.92; filter: blur(1.5px); } }
+@keyframes tag-back-arrive { from { opacity: 0; scale: 1.08; filter: blur(1.5px); } to { opacity: 1; scale: 1; filter: blur(0); } }
 @keyframes current-tag-breathe { 0%, 100% { scale: 1; } 50% { scale: 1.035; } }
 
 .now-playing {
@@ -357,5 +409,5 @@ dialog::backdrop { background: rgba(30,40,37,0.52); }
   .song-bubble.pop { animation-duration: 0.01ms; }
   .song-bubble.regrow { animation-duration: 0.01ms; }
   .song-bubble.paint-splash { animation-duration: 0.01ms; }
-  .tag-board.dive-out::after, .tag-board.dive-out > *, .tag-board.dive-in > *, .current-tag { animation: none; }
+  .tag-board.dive-out::after, .tag-board.dive-out > *, .tag-board.dive-in > *, .tag-board.dive-back-out::after, .tag-board.dive-back-out > *, .tag-board.dive-back-in > *, .current-tag { animation: none; }
 }
