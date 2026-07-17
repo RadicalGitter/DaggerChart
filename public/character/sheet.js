@@ -10,7 +10,6 @@ const esc = (s) =>
 const id = location.pathname.split("/").filter(Boolean).pop();
 let PC = null;
 let THEMES = { songs: [], published: null, provider: {} };
-const themePopped = new Set();
 const themeAudio = new Audio();
 
 const featHtml = (f) => `<div class="featline"><strong>${esc(f.name)}</strong> ${termify(esc(f.text))}</div>`;
@@ -115,19 +114,18 @@ function render() {
 }
 
 function themeHtml(p) {
-  const visible = (THEMES.songs || []).filter((song) => !themePopped.has(song.id));
   const prompt = THEMES.songs?.[0]?.prompt || "";
-  const bubbles = visible.length
-    ? visible.map((song) => `<button class="theme-bubble ${song.status !== "ready" ? "rendering" : ""}" data-theme-play="${esc(song.id)}" aria-label="${t("theme.play")}: ${esc(song.title)}">
+  const bubbles = THEMES.songs?.length
+    ? THEMES.songs.map((song) => `<button class="theme-bubble ${song.status !== "ready" ? "rendering" : ""}" data-theme-play="${esc(song.id)}" aria-label="${t("theme.play")}: ${esc(song.title)}">
         <strong>${esc(song.title)}</strong>
         <span>${song.publishedAt ? t("theme.published") : song.status === "ready" ? t("theme.ready") : t("theme.rendering")}</span>
       </button>`).join("")
-    : `<p class="muted" style="text-align:center;align-self:center;">${themePopped.size ? "" : t("theme.waiting")}</p>`;
+    : `<p class="muted" style="text-align:center;align-self:center;">${t("theme.waiting")}</p>`;
   const publish = (THEMES.songs || []).filter((song) => song.status === "ready").map((song) =>
     `<button class="quiet" data-theme-publish="${esc(song.id)}" ${song.publishedAt ? "disabled" : ""}>${song.publishedAt ? t("theme.published") : `${t("theme.publish")}: ${esc(song.title)}`}</button>`
   ).join("");
   return `<section class="sheet-section card theme-panel">
-    <div class="theme-head"><span class="smallcaps">${t("theme.title")}</span>${themePopped.size ? `<button class="quiet" id="theme-resurface">${t("theme.resurface")}</button>` : ""}</div>
+    <div class="theme-head"><span class="smallcaps">${t("theme.title")}</span></div>
     <div class="theme-bubbles">${bubbles}</div>
     <div class="theme-publish">${publish}</div>
     <details class="theme-settings">
@@ -135,7 +133,7 @@ function themeHtml(p) {
       <form class="theme-form" id="theme-form">
         <label><span>${t("theme.songtitle")}</span><input id="theme-title" maxlength="100" value="${esc(`${p.name}'s Overture`)}"></label>
         <label><span>${t("theme.direction")}</span><textarea id="theme-prompt" rows="5" maxlength="6000">${esc(prompt)}</textarea></label>
-        <label><span>${t("theme.model")}</span><select id="theme-model"><option>V5</option><option>V5_5</option><option>V4_5PLUS</option><option>V4_5ALL</option><option>V4_5</option><option>V4</option></select></label>
+        <label><span>${t("theme.model")}</span><select id="theme-model"><option>V5_5</option><option>V5</option><option>V4_5PLUS</option><option>V4_5ALL</option><option>V4_5</option><option>V4</option></select></label>
         <label><span>${t("theme.style")}</span><input id="theme-style" maxlength="1000"></label>
         <label><span>${t("theme.exclude")}</span><input id="theme-negative" maxlength="200"></label>
         <button type="submit">${t("theme.generate")}</button>
@@ -170,13 +168,14 @@ function wireTheme() {
       const song = THEMES.songs.find((candidate) => candidate.id === button.dataset.themePlay);
       if (!song) return;
       themePopSound();
-      button.classList.add("pop");
-      themePopped.add(song.id);
+      button.classList.remove("preview-pulse");
+      void button.offsetWidth;
+      button.classList.add("preview-pulse");
       if (song.audioUrl) {
         themeAudio.src = song.audioUrl;
         themeAudio.play().catch(() => {});
       }
-      setTimeout(render, 350);
+      setTimeout(() => button.classList.remove("preview-pulse"), 420);
     };
   }
   for (const button of document.querySelectorAll("[data-theme-publish]")) {
@@ -197,8 +196,6 @@ function wireTheme() {
       if (note) note.textContent = t("theme.saved");
     };
   }
-  const resurface = $("#theme-resurface");
-  if (resurface) resurface.onclick = () => { themePopped.clear(); render(); };
   const form = $("#theme-form");
   if (form) form.onsubmit = async (event) => {
     event.preventDefault();
@@ -225,7 +222,6 @@ function wireTheme() {
       submit.disabled = false;
       return;
     }
-    themePopped.clear();
     await load();
     const nextNote = $("#theme-note");
     if (nextNote) nextNote.textContent = t("theme.sent");

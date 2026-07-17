@@ -8,16 +8,30 @@ const edgePalette = ["#6fb7bd", "#d68aa2", "#d7b25b", "#83b593", "#9e8bc2", "#df
 const state = {
   data: { provider: {}, songs: [], playlists: [], characterTags: [] },
   playlistId: "library",
-  popped: new Set(),
   route: [],
   explicit: new Set(),
   excluded: new Set(),
   pins: loadPins(),
   history: loadHistory(),
+  layouts: loadBubbleLayouts(),
+  colors: loadBubbleColors(),
+  popStates: new Map(),
+  paintColor: null,
   selectedCharacter: null,
   playingId: null,
   queue: [],
-  clickTimer: null
+  clickTimer: null,
+  tagTransitioning: false
+};
+
+const bubblePhysics = {
+  items: new Map(),
+  frame: 0,
+  lastTime: 0,
+  drag: null,
+  stageWidth: 0,
+  stageHeight: 0,
+  layoutMode: null
 };
 
 function loadPins() {
@@ -46,6 +60,32 @@ function loadHistory() {
 
 function saveHistory() {
   localStorage.setItem("settlement-music-history", JSON.stringify(state.history));
+}
+
+function loadBubbleLayouts() {
+  try {
+    const value = JSON.parse(localStorage.getItem("settlement-music-layouts") || "{}");
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveBubbleLayouts() {
+  localStorage.setItem("settlement-music-layouts", JSON.stringify(state.layouts));
+}
+
+function loadBubbleColors() {
+  try {
+    const value = JSON.parse(localStorage.getItem("settlement-music-colors") || "{}");
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveBubbleColors() {
+  localStorage.setItem("settlement-music-colors", JSON.stringify(state.colors));
 }
 
 async function api(url, options = {}) {
@@ -101,6 +141,282 @@ function bubbleVisual(song, index = 0) {
   };
 }
 
+function bubbleLayoutMode() {
+  return window.matchMedia("(max-width: 680px)").matches ? "compact" : "wide";
+}
+
+function bubbleLayoutKey(songId, mode = bubbleLayoutMode()) {
+  return `${mode}:${state.playlistId}:${songId}`;
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function drawBubbleItems() {
+  for (const item of bubblePhysics.items.values()) {
+    item.element.style.left = `${item.x}px`;
+    item.element.style.top = `${item.y}px`;
+  }
+}
+
+function keepBubbleInStage(item, bounce = true) {
+  const maxX = Math.max(0, bubblePhysics.stageWidth - item.size);
+  const maxY = Math.max(0, bubblePhysics.stageHeight - item.size);
+  if (item.x < 0) {
+    item.x = 0;
+    if (bounce && item.vx < 0) item.vx *= -0.52;
+  } else if (item.x > maxX) {
+    item.x = maxX;
+    if (bounce && item.vx > 0) item.vx *= -0.52;
+  }
+  if (item.y < 0) {
+    item.y = 0;
+    if (bounce && item.vy < 0) item.vy *= -0.52;
+  } else if (item.y > maxY) {
+    item.y = maxY;
+    if (bounce && item.vy > 0) item.vy *= -0.52;
+  }
+}
+
+function resolveBubbleCollisions() {
+  const items = [...bubblePhysics.items.values()];
+  for (let index = 0; index < items.length; index += 1) {
+    for (let otherIndex = index + 1; otherIndex < items.length; otherIndex += 1) {
+      const a = items[index];
+      const b = items[otherIndex];
+      const dx = (b.x + b.size / 2) - (a.x + a.size / 2);
+      const dy = (b.y + b.size / 2) - (a.y + a.size / 2);
+      const minimum = (a.size + b.size) / 2 + 5;
+      const distance = Math.hypot(dx, dy) || 0.001;
+      if (distance >= minimum) continue;
+
+      const nx = dx / distance;
+      const ny = dy / distance;
+      const inverseA = a.dragging || a.locked ? 0 : 1;
+      const inverseB = b.dragging || b.locked ? 0 : 1;
+      const inverseTotal = inverseA + inverseB;
+      if (!inverseTotal) continue;
+
+      const overlap = minimum - distance;
+      a.x -= nx * overlap * inverseA / inverseTotal;
+      a.y -= ny * overlap * inverseA / inverseTotal;
+      b.x += nx * overlap * inverseB / inverseTotal;
+      b.y += ny * overlap * inverseB / inverseTotal;
+
+      const relativeSpeed = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+      if (relativeSpeed < 0) {
+        const impulse = -(1 + 0.48) * relativeSpeed / inverseTotal;
+        a.vx -= impulse * nx * inverseA;
+        a.vy -= impulse * ny * inverseA;
+        b.vx += impulse * nx * inverseB;
+        b.vy += impulse * ny * inverseB;
+      }
+      keepBubbleInStage(a);
+      keepBubbleInStage(b);
+    }
+  }
+}
+
+function persistBubblePositions() {
+  if (!bubblePhysics.stageWidth || !bubblePhysics.stageHeight) return;
+  for (const item of bubblePhysics.items.values()) {
+    state.layouts[bubbleLayoutKey(item.id, bubblePhysics.layoutMode || bubbleLayoutMode())] = {
+      x: clamp((item.x + item.size / 2) / bubblePhysics.stageWidth, 0, 1),
+      y: clamp((item.y + item.size / 2) / bubblePhysics.stageHeight, 0, 1),
+      size: Math.round(item.size)
+    };
+  }
+  saveBubbleLayouts();
+}
+
+function bubblePhysicsStep(timestamp) {
+  bubblePhysics.frame = 0;
+  const delta = Math.min(0.032, Math.max(0.001, (timestamp - bubblePhysics.lastTime) / 1000));
+  bubblePhysics.lastTime = timestamp;
+  const damping = Math.exp(-4.8 * delta);
+
+  for (const item of bubblePhysics.items.values()) {
+    if (item.dragging || item.locked) continue;
+    item.x += item.vx * delta;
+    item.y += item.vy * delta;
+    item.vx *= damping;
+    item.vy *= damping;
+    if (Math.abs(item.vx) < 2) item.vx = 0;
+    if (Math.abs(item.vy) < 2) item.vy = 0;
+    keepBubbleInStage(item);
+  }
+  resolveBubbleCollisions();
+  drawBubbleItems();
+
+  const moving = bubblePhysics.drag || [...bubblePhysics.items.values()].some((item) => Math.abs(item.vx) > 2 || Math.abs(item.vy) > 2);
+  if (moving) {
+    bubblePhysics.frame = requestAnimationFrame(bubblePhysicsStep);
+  } else {
+    persistBubblePositions();
+  }
+}
+
+function wakeBubblePhysics() {
+  if (bubblePhysics.frame) return;
+  bubblePhysics.lastTime = performance.now();
+  bubblePhysics.frame = requestAnimationFrame(bubblePhysicsStep);
+}
+
+function beginBubbleDrag(event, bubble) {
+  if (event.button !== 0) return;
+  const item = bubblePhysics.items.get(bubble.dataset.song);
+  if (!item || item.locked) return;
+  const stageRect = $("#bubble-stage").getBoundingClientRect();
+  const pointerX = event.clientX - stageRect.left;
+  const pointerY = event.clientY - stageRect.top;
+  const centerX = item.x + item.size / 2;
+  const centerY = item.y + item.size / 2;
+  const distance = Math.hypot(pointerX - centerX, pointerY - centerY);
+  const mode = distance >= item.size * 0.36 ? "resize" : "move";
+  item.dragging = true;
+  item.vx = 0;
+  item.vy = 0;
+  bubblePhysics.drag = {
+    item,
+    mode,
+    pointerId: event.pointerId,
+    offsetX: pointerX - item.x,
+    offsetY: pointerY - item.y,
+    centerX,
+    centerY,
+    startDistance: distance,
+    startSize: item.size,
+    startX: event.clientX,
+    startY: event.clientY,
+    lastX: item.x,
+    lastY: item.y,
+    lastAt: performance.now(),
+    moved: false
+  };
+  bubble.setPointerCapture(event.pointerId);
+  hideBubbleInfo();
+  wakeBubblePhysics();
+}
+
+function moveBubbleDrag(event, bubble) {
+  const drag = bubblePhysics.drag;
+  if (!drag || drag.pointerId !== event.pointerId || drag.item.element !== bubble) return;
+  const stageRect = $("#bubble-stage").getBoundingClientRect();
+  const now = performance.now();
+  const elapsed = Math.max(8, now - drag.lastAt);
+  if (drag.mode === "resize") {
+    const pointerX = event.clientX - stageRect.left;
+    const pointerY = event.clientY - stageRect.top;
+    const distance = Math.hypot(pointerX - drag.centerX, pointerY - drag.centerY);
+    const maximumSize = Math.max(96, Math.min(230, bubblePhysics.stageWidth - 4, bubblePhysics.stageHeight - 4));
+    const size = clamp(drag.startSize + (distance - drag.startDistance) * 2, 96, maximumSize);
+    drag.item.size = size;
+    drag.item.x = drag.centerX - size / 2;
+    drag.item.y = drag.centerY - size / 2;
+    drag.item.vx = 0;
+    drag.item.vy = 0;
+    bubble.style.setProperty("--bubble-size", `${size}px`);
+  } else {
+    drag.item.x = event.clientX - stageRect.left - drag.offsetX;
+    drag.item.y = event.clientY - stageRect.top - drag.offsetY;
+    drag.item.vx = (drag.item.x - drag.lastX) / elapsed * 1000;
+    drag.item.vy = (drag.item.y - drag.lastY) / elapsed * 1000;
+  }
+  keepBubbleInStage(drag.item, false);
+  drag.lastX = drag.item.x;
+  drag.lastY = drag.item.y;
+  drag.lastAt = now;
+  drag.moved ||= Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 5;
+  if (drag.moved) bubble.classList.add(drag.mode === "resize" ? "resizing" : "dragging");
+  hideBubbleInfo();
+  resolveBubbleCollisions();
+  drawBubbleItems();
+  event.preventDefault();
+}
+
+function endBubbleDrag(event, bubble) {
+  const drag = bubblePhysics.drag;
+  if (!drag || drag.pointerId !== event.pointerId || drag.item.element !== bubble) return;
+  drag.item.dragging = false;
+  bubble.classList.remove("dragging", "resizing", "edge-ready");
+  if (drag.moved) {
+    bubble.dataset.suppressClick = "true";
+    setTimeout(() => delete bubble.dataset.suppressClick, 0);
+  }
+  bubblePhysics.drag = null;
+  persistBubblePositions();
+  wakeBubblePhysics();
+}
+
+function updateBubbleEdgeHint(event, bubble) {
+  if (bubblePhysics.drag) return;
+  const rect = bubble.getBoundingClientRect();
+  const distance = Math.hypot(event.clientX - (rect.left + rect.width / 2), event.clientY - (rect.top + rect.height / 2));
+  bubble.classList.toggle("edge-ready", distance >= rect.width * 0.36);
+}
+
+function mountBubblePhysics() {
+  if (bubblePhysics.frame) cancelAnimationFrame(bubblePhysics.frame);
+  bubblePhysics.frame = 0;
+  bubblePhysics.drag = null;
+  bubblePhysics.items.clear();
+  const stage = $("#bubble-stage");
+  const bubbles = [...stage.querySelectorAll("[data-song]")];
+  bubblePhysics.stageWidth = stage.clientWidth;
+  bubblePhysics.stageHeight = stage.clientHeight;
+  bubblePhysics.layoutMode = bubbleLayoutMode();
+  if (!bubbles.length || !bubblePhysics.stageWidth || !bubblePhysics.stageHeight) return;
+
+  const columns = Math.max(1, Math.floor(bubblePhysics.stageWidth / 160));
+  const rows = Math.max(1, Math.ceil(bubbles.length / columns));
+  bubbles.forEach((bubble, index) => {
+    const saved = state.layouts[bubbleLayoutKey(bubble.dataset.song)];
+    const naturalSize = bubble.offsetWidth;
+    const maximumSize = Math.max(96, Math.min(230, bubblePhysics.stageWidth - 4, bubblePhysics.stageHeight - 4));
+    const size = clamp(Number.isFinite(saved?.size) ? saved.size : naturalSize, 96, maximumSize);
+    bubble.style.setProperty("--bubble-size", `${size}px`);
+    const fallbackX = ((index % columns) + 0.5) / columns;
+    const fallbackY = (Math.floor(index / columns) + 0.5) / rows;
+    const item = {
+      id: bubble.dataset.song,
+      element: bubble,
+      size,
+      x: (Number.isFinite(saved?.x) ? saved.x : fallbackX) * bubblePhysics.stageWidth - size / 2,
+      y: (Number.isFinite(saved?.y) ? saved.y : fallbackY) * bubblePhysics.stageHeight - size / 2,
+      vx: 0,
+      vy: 0,
+      dragging: false,
+      locked: false
+    };
+    keepBubbleInStage(item, false);
+    bubblePhysics.items.set(item.id, item);
+  });
+  for (let pass = 0; pass < 8; pass += 1) resolveBubbleCollisions();
+  drawBubbleItems();
+  persistBubblePositions();
+}
+
+function resizeBubbleField() {
+  const stage = $("#bubble-stage");
+  const nextWidth = stage.clientWidth;
+  const nextHeight = stage.clientHeight;
+  if (!bubblePhysics.items.size || !nextWidth || !nextHeight || bubblePhysics.drag) return;
+  const previousWidth = bubblePhysics.stageWidth || nextWidth;
+  const previousHeight = bubblePhysics.stageHeight || nextHeight;
+  for (const item of bubblePhysics.items.values()) {
+    const centerX = (item.x + item.size / 2) / previousWidth;
+    const centerY = (item.y + item.size / 2) / previousHeight;
+    item.x = centerX * nextWidth - item.size / 2;
+    item.y = centerY * nextHeight - item.size / 2;
+  }
+  bubblePhysics.stageWidth = nextWidth;
+  bubblePhysics.stageHeight = nextHeight;
+  for (let pass = 0; pass < 5; pass += 1) resolveBubbleCollisions();
+  drawBubbleItems();
+  persistBubblePositions();
+}
+
 function historyAge(timestamp) {
   const seconds = Math.max(0, Math.floor((Date.now() - Number(timestamp || 0)) / 1000));
   if (seconds < 60) return "just now";
@@ -146,8 +462,7 @@ function activeSongs() {
   const query = $("#song-search").value.trim().toLowerCase();
   return state.data.songs.filter((song) =>
     (!ids || ids.has(song.id)) &&
-    (!query || `${song.title} ${song.prompt}`.toLowerCase().includes(query)) &&
-    !state.popped.has(song.id));
+    (!query || `${song.title} ${song.prompt}`.toLowerCase().includes(query)));
 }
 
 function renderPlaylists() {
@@ -159,10 +474,20 @@ function renderPlaylists() {
   for (const button of document.querySelectorAll("[data-playlist]")) {
     button.onclick = () => {
       state.playlistId = button.dataset.playlist;
-      state.popped.clear();
       renderPlaylists();
       renderBubbles();
     };
+  }
+}
+
+function sizeBubbleStage(songCount) {
+  const stage = $("#bubble-stage");
+  if (window.matchMedia("(max-width: 680px)").matches) {
+    const columns = Math.max(1, Math.floor((stage.clientWidth || 340) / 156));
+    const height = `${Math.max(420, Math.ceil(songCount / columns) * 156 + 28)}px`;
+    if (stage.style.minHeight !== height) stage.style.minHeight = height;
+  } else if (stage.style.minHeight) {
+    stage.style.removeProperty("min-height");
   }
 }
 
@@ -171,24 +496,62 @@ function renderBubbles() {
   const playlist = playlistById(state.playlistId);
   $("#collection-title").textContent = playlist?.name || "Library";
   const songs = activeSongs();
-  $("#bubble-stage").innerHTML = songs.length ? songs.map((song, index) => {
+  // Library filtering follows the tags the user actually selected. Descendant
+  // expansion is generation metadata and must not make a broad tag too strict.
+  const filterIds = [...state.explicit];
+  const matchingCount = songs.filter((song) => {
+    const songTags = new Set(song.tagIds || []);
+    return filterIds.every((id) => songTags.has(id));
+  }).length;
+  const summary = $("#filter-summary");
+  summary.hidden = !filterIds.length;
+  summary.textContent = filterIds.length
+    ? `${matchingCount} of ${songs.length} match ${filterIds.length} included ${filterIds.length === 1 ? "tag" : "tags"}`
+    : "";
+  const stage = $("#bubble-stage");
+  sizeBubbleStage(songs.length);
+  stage.innerHTML = songs.length ? songs.map((song, index) => {
     const visual = bubbleVisual(song, index);
+    const paintColor = state.colors[song.id] || "transparent";
+    const songTags = new Set(song.tagIds || []);
+    const missesTags = filterIds.length && !filterIds.every((id) => songTags.has(id));
     const detail = song.status === "ready"
       ? [song.mode === "cover" ? "theme variation" : song.source, song.duration ? formatTime(song.duration) : ""].filter(Boolean).join(" · ")
       : song.status;
-    return `<button class="song-bubble ${song.status !== "ready" ? "rendering" : ""}"
-      style="--edge-a:${visual.a};--edge-b:${visual.b};--edge-c:${visual.c};--bubble-size:${visual.size}px;--drift:${visual.drift}s;--bubble-turn:${visual.turn}deg"
+    return `<button class="song-bubble ${song.status !== "ready" ? "rendering" : ""} ${missesTags ? "tag-miss" : ""} ${state.colors[song.id] ? "painted" : ""}"
+      style="--edge-a:${visual.a};--edge-b:${visual.b};--edge-c:${visual.c};--paint-color:${paintColor};--bubble-size:${visual.size}px;--drift:${visual.drift}s;--bubble-turn:${visual.turn}deg"
       data-song="${esc(song.id)}" aria-label="Play ${esc(song.title)}">
       <strong>${esc(song.title)}</strong><span>${esc(detail)}</span>
     </button>`;
-  }).join("") : `<div class="bubble-empty">${state.popped.size ? "The surface is quiet. Resurface the collection to bring the bubbles back." : "No songs are in this collection yet."}</div>`;
+  }).join("") : `<div class="bubble-empty">No songs are in this collection yet.</div>`;
 
+  mountBubblePhysics();
   for (const bubble of document.querySelectorAll("[data-song]")) {
     const song = songById(bubble.dataset.song);
-    bubble.onclick = () => popAndPlay(bubble.dataset.song, bubble);
+    bubble.onclick = () => {
+      if (bubble.dataset.suppressClick) return;
+      if (state.paintColor) {
+        paintBubble(bubble.dataset.song, bubble);
+        return;
+      }
+      popAndPlay(bubble.dataset.song);
+    };
+    bubble.onpointerdown = (event) => beginBubbleDrag(event, bubble);
+    bubble.onpointermove = (event) => {
+      if (bubblePhysics.drag) moveBubbleDrag(event, bubble);
+      else updateBubbleEdgeHint(event, bubble);
+    };
+    bubble.onpointerup = (event) => endBubbleDrag(event, bubble);
+    bubble.onpointercancel = (event) => endBubbleDrag(event, bubble);
     bubble.onmouseenter = (event) => showBubbleInfo(song, event.clientX, event.clientY);
-    bubble.onmousemove = (event) => positionBubbleInfo(event.clientX, event.clientY);
-    bubble.onmouseleave = hideBubbleInfo;
+    bubble.onmousemove = (event) => {
+      if (bubblePhysics.drag) hideBubbleInfo();
+      else positionBubbleInfo(event.clientX, event.clientY);
+    };
+    bubble.onmouseleave = () => {
+      bubble.classList.remove("edge-ready");
+      hideBubbleInfo();
+    };
     bubble.onfocus = () => {
       const rect = bubble.getBoundingClientRect();
       showBubbleInfo(song, rect.right, rect.top + rect.height / 2);
@@ -199,6 +562,40 @@ function renderBubbles() {
       showContextMenu(bubble.dataset.song, event.clientX, event.clientY);
     };
   }
+  for (const songId of state.popStates.keys()) applyBubblePopState(songId);
+  renderPaintTool();
+}
+
+function paintBubble(songId, bubble) {
+  if (state.paintColor === "clear") delete state.colors[songId];
+  else state.colors[songId] = state.paintColor;
+  saveBubbleColors();
+  bubble.style.setProperty("--paint-color", state.colors[songId] || "transparent");
+  bubble.classList.toggle("painted", Boolean(state.colors[songId]));
+  bubble.classList.remove("paint-splash");
+  void bubble.offsetWidth;
+  bubble.classList.add("paint-splash");
+  setTimeout(() => bubble.classList.remove("paint-splash"), 380);
+}
+
+function renderPaintTool() {
+  const active = Boolean(state.paintColor);
+  $("#bubble-stage").classList.toggle("painting", active);
+  $("#paint-toggle").setAttribute("aria-pressed", String(active));
+  $("#paint-pot").style.setProperty("--pot-color", state.paintColor && state.paintColor !== "clear" ? state.paintColor : "transparent");
+  for (const swatch of document.querySelectorAll("[data-paint]")) {
+    swatch.classList.toggle("selected", swatch.dataset.paint === state.paintColor);
+  }
+  for (const bubble of document.querySelectorAll("[data-song]")) {
+    const song = songById(bubble.dataset.song);
+    const action = state.paintColor === "clear" ? "Clear color from" : active ? "Paint" : "Play";
+    bubble.setAttribute("aria-label", `${action} ${song?.title || "song"}`);
+  }
+}
+
+function closePaintPalette() {
+  $("#paint-palette").hidden = true;
+  $("#paint-toggle").setAttribute("aria-expanded", "false");
 }
 
 function positionBubbleInfo(x, y) {
@@ -249,15 +646,55 @@ function popSound() {
   }
 }
 
-function popAndPlay(songId, bubble) {
+function setBubbleLocked(songId, locked) {
+  const item = bubblePhysics.items.get(songId);
+  if (item) {
+    item.locked = locked;
+    if (locked) {
+      item.vx = 0;
+      item.vy = 0;
+    }
+  }
+}
+
+function applyBubblePopState(songId) {
+  const timing = state.popStates.get(songId);
+  const bubble = document.querySelector(`[data-song="${CSS.escape(songId)}"]`);
+  if (!timing || !bubble) return;
+  const now = Date.now();
+  if (now >= timing.endAt) {
+    bubble.classList.remove("pop", "regrow");
+    setBubbleLocked(songId, false);
+    state.popStates.delete(songId);
+  } else if (now >= timing.regrowAt) {
+    bubble.classList.remove("pop");
+    bubble.classList.add("regrow");
+    setBubbleLocked(songId, true);
+  } else {
+    bubble.classList.remove("regrow");
+    bubble.classList.add("pop");
+    setBubbleLocked(songId, true);
+  }
+}
+
+function finishBubblePop(songId) {
+  const bubble = document.querySelector(`[data-song="${CSS.escape(songId)}"]`);
+  if (bubble) bubble.classList.remove("pop", "regrow");
+  setBubbleLocked(songId, false);
+  state.popStates.delete(songId);
+}
+
+function popAndPlay(songId) {
   const song = songById(songId);
-  if (!song) return;
+  if (!song || state.popStates.has(songId)) return;
+  const startedAt = Date.now();
+  state.popStates.set(songId, { regrowAt: startedAt + 1500, endAt: startedAt + 2050 });
   popSound();
-  bubble.classList.add("pop");
-  state.popped.add(songId);
+  applyBubblePopState(songId);
   hideBubbleInfo();
   rememberPop(songId);
-  setTimeout(renderBubbles, 350);
+  setTimeout(() => applyBubblePopState(songId), 1500);
+  setTimeout(() => finishBubblePop(songId), 2050);
   if (song.audioUrl) playSong(songId);
   else toast(song.error || "This draft is still being written.");
 }
@@ -389,12 +826,35 @@ function toggleTag(id) {
   }
   renderTags();
   compilePrompt();
+  renderBubbles();
 }
 
-function dive(id) {
-  if (!tagById(id)) return;
-  state.route.push(id);
-  renderTags();
+function dive(id, source) {
+  if (!tagById(id) || state.tagTransitioning) return;
+  const board = $("#tag-board");
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced || !source) {
+    state.route.push(id);
+    renderTags();
+    return;
+  }
+  const boardRect = board.getBoundingClientRect();
+  const sourceRect = source.getBoundingClientRect();
+  board.style.setProperty("--dive-x", `${sourceRect.left + sourceRect.width / 2 - boardRect.left}px`);
+  board.style.setProperty("--dive-y", `${sourceRect.top + sourceRect.height / 2 - boardRect.top}px`);
+  state.tagTransitioning = true;
+  board.classList.remove("dive-in");
+  board.classList.add("dive-out");
+  setTimeout(() => {
+    state.route.push(id);
+    renderTags();
+    board.classList.remove("dive-out");
+    board.classList.add("dive-in");
+    setTimeout(() => {
+      board.classList.remove("dive-in");
+      state.tagTransitioning = false;
+    }, 340);
+  }, 180);
 }
 
 function tagButton(id, extra = "") {
@@ -411,7 +871,7 @@ function wireTagButtons(container = document) {
     button.ondblclick = (event) => {
       event.preventDefault();
       clearTimeout(state.clickTimer);
-      dive(button.dataset.tag);
+      dive(button.dataset.tag, button);
     };
   }
 }
@@ -437,6 +897,7 @@ function renderTags() {
   wireTagButtons($("#tag-board"));
   const center = $("#current-tag");
   if (center) center.onclick = goBack;
+  $("#clear-tags").disabled = state.explicit.size === 0 && state.excluded.size === 0;
   renderPins();
 }
 
@@ -457,7 +918,7 @@ function renderPins() {
     button.ondblclick = (event) => {
       event.preventDefault();
       clearTimeout(state.clickTimer);
-      dive(button.dataset.pin);
+      dive(button.dataset.pin, button);
     };
   }
 }
@@ -566,7 +1027,31 @@ async function load() {
 }
 
 $("#song-search").oninput = renderBubbles;
-$("#resurface").onclick = () => { state.popped.clear(); renderBubbles(); };
+$("#paint-toggle").onclick = () => {
+  const palette = $("#paint-palette");
+  palette.hidden = !palette.hidden;
+  $("#paint-toggle").setAttribute("aria-expanded", String(!palette.hidden));
+};
+for (const swatch of document.querySelectorAll("[data-paint]")) {
+  swatch.onclick = () => {
+    state.paintColor = swatch.dataset.paint;
+    renderPaintTool();
+    closePaintPalette();
+  };
+}
+$("#stop-paint").onclick = () => {
+  state.paintColor = null;
+  renderPaintTool();
+  closePaintPalette();
+};
+$("#arrange-bubbles").onclick = () => {
+  const prefix = `${bubbleLayoutMode()}:${state.playlistId}:`;
+  for (const key of Object.keys(state.layouts)) {
+    if (key.startsWith(prefix)) delete state.layouts[key];
+  }
+  saveBubbleLayouts();
+  renderBubbles();
+};
 $("#clear-history").onclick = () => {
   state.history = [];
   saveHistory();
@@ -574,6 +1059,13 @@ $("#clear-history").onclick = () => {
 };
 $("#tag-back").onclick = goBack;
 $("#tag-start").onclick = () => { state.route = []; renderTags(); };
+$("#clear-tags").onclick = () => {
+  state.explicit.clear();
+  state.excluded.clear();
+  renderTags();
+  compilePrompt();
+  renderBubbles();
+};
 $("#pin-form").onsubmit = (event) => {
   event.preventDefault();
   const label = $("#pin-input").value.trim();
@@ -615,7 +1107,6 @@ $("#generation-form").onsubmit = async (event) => {
       })
     });
     state.playlistId = "library";
-    state.popped.clear();
     await load();
     $("#generation-note").textContent = state.data.provider.mode === "mock"
       ? "Two-song provider behavior is simulated with local masters in rehearsal mode."
@@ -695,13 +1186,30 @@ audio.onended = () => {
 
 document.addEventListener("pointerdown", (event) => {
   if (!event.target.closest("#context-menu")) hideContextMenu();
+  if (!event.target.closest(".paint-wrap")) closePaintPalette();
 });
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") hideContextMenu();
+  if (event.key === "Escape") {
+    hideContextMenu();
+    state.paintColor = null;
+    renderPaintTool();
+    closePaintPalette();
+  }
 });
+
+let bubbleResizeTimer = null;
+new ResizeObserver(() => {
+  clearTimeout(bubbleResizeTimer);
+  bubbleResizeTimer = setTimeout(() => {
+    sizeBubbleStage(activeSongs().length);
+    if (bubblePhysics.layoutMode && bubblePhysics.layoutMode !== bubbleLayoutMode()) renderBubbles();
+    else resizeBubbleField();
+  }, 100);
+}).observe($("#bubble-stage"));
 
 renderTags();
 compilePrompt();
+renderPaintTool();
 load();
 
 const stream = new EventSource("/api/stream");

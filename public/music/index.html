@@ -41,9 +41,34 @@
       <div>
         <div class="smallcaps">Songs on the surface</div>
         <h2 id="collection-title">Library</h2>
+        <div class="filter-summary" id="filter-summary" hidden></div>
       </div>
       <div class="stage-actions">
-        <button class="quiet" id="resurface">Resurface</button>
+        <div class="paint-wrap">
+          <button class="quiet paint-toggle" id="paint-toggle" type="button" aria-expanded="false" aria-pressed="false">
+            <span class="paint-pot" id="paint-pot" aria-hidden="true"></span><span>Paint</span>
+          </button>
+          <div class="paint-palette" id="paint-palette" hidden>
+            <div class="paint-group"><span>Pastel</span><div>
+              <button class="color-swatch" type="button" data-paint="#e7a9b8" style="--swatch:#e7a9b8" title="Blush" aria-label="Blush"></button>
+              <button class="color-swatch" type="button" data-paint="#9fcdb7" style="--swatch:#9fcdb7" title="Mint" aria-label="Mint"></button>
+              <button class="color-swatch" type="button" data-paint="#a9c9df" style="--swatch:#a9c9df" title="Cloud" aria-label="Cloud"></button>
+            </div></div>
+            <div class="paint-group"><span>Primal</span><div>
+              <button class="color-swatch" type="button" data-paint="#c9543f" style="--swatch:#c9543f" title="Ember" aria-label="Ember"></button>
+              <button class="color-swatch" type="button" data-paint="#e2b238" style="--swatch:#e2b238" title="Sun" aria-label="Sun"></button>
+              <button class="color-swatch" type="button" data-paint="#3f875c" style="--swatch:#3f875c" title="Grove" aria-label="Grove"></button>
+            </div></div>
+            <div class="paint-group"><span>Magical</span><div>
+              <button class="color-swatch" type="button" data-paint="#8067c7" style="--swatch:#8067c7" title="Aether" aria-label="Aether"></button>
+              <button class="color-swatch" type="button" data-paint="#3bb8b0" style="--swatch:#3bb8b0" title="Witchlight" aria-label="Witchlight"></button>
+              <button class="color-swatch" type="button" data-paint="#c67ac8" style="--swatch:#c67ac8" title="Moonveil" aria-label="Moonveil"></button>
+            </div></div>
+            <button class="paint-clear" type="button" data-paint="clear">Return to clear water</button>
+            <button class="paint-stop" id="stop-paint" type="button">Put bucket down</button>
+          </div>
+        </div>
+        <button class="quiet" id="arrange-bubbles" title="Return bubbles to an even arrangement">Arrange</button>
         <button class="quiet" id="open-settings">Settings</button>
       </div>
     </header>
@@ -59,6 +84,7 @@
       <div class="route-actions">
         <button class="quiet" id="tag-back" aria-label="Go back">Back</button>
         <button class="quiet" id="tag-start">Start</button>
+        <button class="quiet" id="clear-tags" type="button">Clear tags</button>
       </div>
     </header>
 
@@ -89,7 +115,7 @@
         <summary>Advanced settings</summary>
         <div class="advanced-grid">
           <label><span>Model</span><select id="song-model">
-            <option>V5</option><option>V5_5</option><option>V4_5PLUS</option>
+            <option>V5_5</option><option>V5</option><option>V4_5PLUS</option>
             <option>V4_5ALL</option><option>V4_5</option><option>V4</option>
           </select></label>
           <label><span>Extra style</span><input id="song-style" maxlength="1000"></label>

@@ -277,7 +277,7 @@ function callbackUrl() {
 
 function modelName(settings) {
   const allowed = new Set(["V4", "V4_5", "V4_5PLUS", "V4_5ALL", "V5", "V5_5"]);
-  return allowed.has(settings.model) ? settings.model : "V5";
+  return allowed.has(settings.model) ? settings.model : "V5_5";
 }
 
 function livePayload(song) {
