@@ -4,6 +4,7 @@ import { t, lang, initI18n, seasonLabel } from "/shared/i18n.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import { playerFeatureEnabled, setPlayerFeatureContext } from "/shared/player-features.js";
 import "/shared/feedback.js";
+import "/shared/player-tools.js";
 
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) =>

@@ -34,7 +34,7 @@
 .player-note-recent article { padding: .5rem 0; border-bottom: 1px solid #382f24; }
 .player-note-recent article > div { display: flex; justify-content: space-between; gap: .8rem; color: #9b8b70; font-size: .64rem; font-variant: small-caps; }
 .player-note-recent article p { display: -webkit-box; margin: .22rem 0 0; overflow: hidden; color: #dfd3bb; font-size: .82rem; line-height: 1.35; white-space: pre-wrap; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
-.player-tools-links { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: .85rem; }
+.player-tools-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(62px, 1fr)); gap: 4px; margin-top: .85rem; }
 .player-tools-links a { min-width: 0; padding: .5rem .25rem; overflow-wrap: anywhere; color: #c8b895; border-bottom: 1px solid #55452f; text-align: center; text-decoration: none; font-size: .68rem; }
 .player-tools-links a:hover, .player-tools-links a:focus-visible { color: #fff0ca; border-color: #c5a35f; outline: none; }
 .player-tools-context-tome .player-tools-trigger { bottom: max(5.1rem, calc(env(safe-area-inset-bottom) + 5.1rem)); }

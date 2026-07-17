@@ -139,7 +139,7 @@ export function playerCharacterView(id) {
     },
     inventory: inventoryView(p, state.reference),
     experiences: (p.experiences || []).map((e) => ({ name: e.name || "", bonus: e.bonus || 0 })),
-    background: (p.background || []).map((entry) => ({ q: entry.q || "", a: entry.a || "" })),
+    background: (p.background || []).map((entry, index) => ({ id: entry.id || `legacy-${index + 1}`, q: entry.q || "", a: entry.a || "" })),
     connections: (p.connections || []).map((entry) => ({ q: entry.q || "", note: entry.note || "" })),
     domainCards: (p.domainCards || []).map((card) => ({
       id: card.id,

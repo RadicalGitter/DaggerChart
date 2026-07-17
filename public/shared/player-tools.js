@@ -48,6 +48,7 @@ function install() {
       </section>
       <nav class="player-tools-links" aria-label="${esc(t("player.notes.atHand"))}">
         <a data-player-tool="character" data-player-feature="character">${esc(t("table.character"))}</a>
+        <a data-player-tool="background" data-player-feature="character">${esc(t("background.short"))}</a>
         <a data-player-tool="journal" data-player-feature="journal">${esc(t("journal.title"))}</a>
         <a data-player-tool="inventory" data-player-feature="inventory">${esc(t("table.inventory"))}</a>
         <a href="/rules" data-player-feature="rules">${esc(t("rules.title"))}</a>
@@ -77,6 +78,7 @@ function install() {
   function renderLinks() {
     if (!currentPcId) return;
     root.querySelector('[data-player-tool="character"]').href = `/character/${encodeURIComponent(currentPcId)}`;
+    root.querySelector('[data-player-tool="background"]').href = `/background/${encodeURIComponent(currentPcId)}`;
     root.querySelector('[data-player-tool="journal"]').href = `/journal/?pc=${encodeURIComponent(currentPcId)}`;
     root.querySelector('[data-player-tool="inventory"]').href = "/tome?open=1&section=inventory";
     for (const link of root.querySelectorAll("[data-player-feature]")) {

@@ -25,6 +25,7 @@ public/
   screen/     the projector client (renders whatever the GM casts via /api/screen)
   create/     character creation wizard
   character/  live character sheet + hand manager
+  background/ post-creation memory studio + explicit AI expansion drafts
   music/      GM music desk: bubble library, prompt tag board, generation controls
   rules/      searchable public SRD table reference
   journal/    players' Chronicle accounts and notes on people, places, and days
@@ -151,6 +152,8 @@ docs/         this file, the design spec, ComfyUI workflow
 | `POST /api/gm/tables/travel/roll` | reveal one danger-tier encounter plus one way-of-travel twist |
 | `GET /api/character-drafts`, `GET/PUT/DELETE /api/character-drafts/:id` | resumable unfinished creator state, listed separately from completed PCs |
 | `GET/POST/PUT/DELETE /api/party[/:id]` | active player characters; DELETE retires without destroying the stored record or keyed data |
+| `PUT /api/party/:id/background` | replace the active PC's bounded, filled background memories |
+| `POST /api/party/:id/background/suggest` | return one editable Anthropic expansion without saving it |
 | `POST /api/party/:id/restore` | return a retired character to player choosers and sheets |
 | `PUT /api/party/:id/conditions` | replace a PC's validated standard Conditions; broadcasts to player clients |
 | `GET /api/items/consumables` | the 60-entry standard Consumables catalog |
@@ -266,6 +269,13 @@ Consumable reactions; see [inventory.md](inventory.md).
   character modules before layout editing is introduced. The proposed
   scissor interaction and communal vector-sketch bin are bounded in
   [character-sheet-vision.md](character-sheet-vision.md).
+- **Background studio:** `/background/:id` edits optional, structured memories
+  after character creation. Empty fields never enter the stored character or
+  sheet. Each field may request one bounded expansion from
+  `server/background-suggest.js`; the response remains a separate draft until
+  the player explicitly accepts it. The adviser receives only public character
+  identity, the selected field, existing player-written memories, and the
+  current seed.
 - **i18n** (`shared/i18n.js`): per-device language (localStorage, EN/SV).
   Game terms (Hope, Stress, Evasion, Loadout…) stay English to match the
   physical cards; UI phrasing translates; the long-press glossary explains

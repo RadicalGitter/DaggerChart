@@ -9,7 +9,7 @@ must not fork campaign state or widen what reaches the browser.
 ### Player root — `/player`
 
 The login chooser sends a completed PC here. It is a quiet utility hub, not
-another campaign view: Character, Notes, Journal, Inventory, and Rules are at
+another campaign view: Character, Background, Notes, Journal, Inventory, and Rules are at
 hand before the player chooses among the currently available physical shells. The player can
 switch the device's `settlement-pc` identity here. The preferred shell is stored
 only in `settlement-shell`; it does not fork character or campaign state. Every
@@ -62,8 +62,8 @@ that chosen PC, the correspondence panel marks the player side read when it
 opens, and `Ctrl+Enter` sends without leaving the tome.
 
 Standalone player surfaces mount `public/shared/player-tools.*`, a fixed field
-kit for quick personal/group notes plus links to Character, Journal, Inventory,
-and Rules. It resolves only the current `settlement-pc`, posts through the
+kit for quick personal/group notes plus links to Character, Background, Journal,
+Inventory, and Rules. It resolves only the current `settlement-pc`, posts through the
 existing notes route, and is omitted from embeds to avoid nested controls.
 `/tome?open=1&section=<key>` opens a named keepsake directly.
 

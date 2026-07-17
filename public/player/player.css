@@ -59,7 +59,7 @@ main { width: min(1260px, 100%); margin: 0 auto; padding: clamp(1.4rem, 4vh, 3.5
 .essential-tools[hidden], .view-choice[hidden] { display: none; }
 .essential-tools h2, .view-choice h2 { margin: 0; font-size: 1.04rem; font-weight: 500; }
 .essential-actions {
-  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: .75rem;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); margin-top: .75rem;
   border-top: 1px solid #454c45; border-bottom: 1px solid #454c45;
 }
 .essential-actions a, .essential-actions button {

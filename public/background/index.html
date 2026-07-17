@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Background studio</title>
+<link rel="stylesheet" href="/shared/ledger.css">
+<link rel="stylesheet" href="/shared/lamplight.css">
+<link rel="stylesheet" href="background.css">
+</head>
+<body>
+  <div class="memory-room">
+    <header class="studio-head">
+      <a class="back-link" href="/player"><span aria-hidden="true">←</span><span data-i18n="btn.back">Back</span></a>
+      <div class="studio-title">
+        <span class="smallcaps" data-i18n="background.kicker">Remembered life</span>
+        <h1 data-i18n="background.title">Background studio</h1>
+      </div>
+      <div class="character-mark" id="character-mark" aria-live="polite"></div>
+    </header>
+
+    <main class="studio-layout" id="studio" hidden>
+      <nav class="memory-thread" id="memory-thread" data-i18n-aria="background.nav" aria-label="Background memories"></nav>
+
+      <section class="writing-leaf" aria-labelledby="memory-title">
+        <div class="leaf-rule" aria-hidden="true"></div>
+        <header class="leaf-head">
+          <span class="smallcaps" id="memory-count"></span>
+          <h2 id="memory-title"></h2>
+          <p id="memory-prompt"></p>
+        </header>
+        <textarea id="memory-text" maxlength="6000" rows="15"></textarea>
+        <footer class="leaf-actions">
+          <span class="save-state" id="save-state" role="status"></span>
+          <span class="character-count" id="character-count" aria-hidden="true"></span>
+          <button id="ask-expansion" type="button" data-i18n="background.ask">Expand this memory</button>
+        </footer>
+
+        <aside class="suggestion-leaf" id="suggestion-leaf" hidden aria-labelledby="suggestion-title">
+          <span class="smallcaps" data-i18n="background.suggestion.kicker">A possible telling</span>
+          <h3 id="suggestion-title" data-i18n="background.suggestion.title">Suggested expansion</h3>
+          <div id="suggestion-text"></div>
+          <div class="suggestion-actions">
+            <button type="button" id="use-suggestion" data-i18n="background.suggestion.use">Use this draft</button>
+            <button type="button" class="quiet" id="dismiss-suggestion" data-i18n="background.suggestion.dismiss">Keep mine</button>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <section class="load-error" id="load-error" hidden>
+      <p data-i18n="background.loadError">This character's memories could not be opened.</p>
+      <a href="/player" data-i18n="btn.back">Back</a>
+    </section>
+  </div>
+  <script type="module" src="background.js"></script>
+</body>
+</html>

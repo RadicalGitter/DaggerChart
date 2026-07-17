@@ -12,6 +12,7 @@ import { addInventoryItem, consumables, grantConsumable, inventoryEntry, updateI
 import { clearTelemetry, recordTelemetryBatch, telemetryView } from "./telemetry.js";
 import { retellSession } from "./retell.js";
 import { suggestPortrait } from "./portrait-suggest.js";
+import { BACKGROUND_FIELD_DEFINITIONS, normalizeBackgroundEntries, suggestBackground } from "./background-suggest.js";
 import { artWorkshop } from "./art.js";
 import { resolveDualityRoll } from "./duality-roll.js";
 import { DEFAULT_PLAYER_FEATURES, normalizePlayerFeatures, playerFeaturePatch } from "./player-features.js";
@@ -112,6 +113,7 @@ app.use("/table-book", express.static(path.join(PUBLIC, "table-book")));
 app.use("/tome", express.static(path.join(PUBLIC, "tome")));
 app.use("/create", express.static(path.join(PUBLIC, "create")));
 app.use("/character", express.static(path.join(PUBLIC, "character")));
+app.use("/background", express.static(path.join(PUBLIC, "background")));
 app.use("/journal", express.static(path.join(PUBLIC, "journal")));
 app.use("/screen", express.static(path.join(PUBLIC, "screen")));
 app.use("/music", express.static(path.join(PUBLIC, "music")));
@@ -119,6 +121,7 @@ app.use("/rules", express.static(path.join(PUBLIC, "rules")));
 app.use("/generated", express.static(path.join(PUBLIC, "generated"), { maxAge: "1h" }));
 // /character/<id> serves the sheet shell; the page reads the id from the URL.
 app.get("/character/:id", (_req, res) => res.sendFile(path.join(PUBLIC, "character", "index.html")));
+app.get("/background/:id", (_req, res) => res.sendFile(path.join(PUBLIC, "background", "index.html")));
 // The bare address is the trusted-table identity chooser. No passwords;
 // choosing a PC only sets this device's settlement-pc identity.
 app.get("/", (_req, res) => res.redirect("/login"));
@@ -447,6 +450,36 @@ app.put("/api/party/:id", guard((req, res) => {
   persist();
   broadcast();
   res.json(playerCharacterView(next.id));
+}));
+
+app.put("/api/party/:id/background", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  pc.background = normalizeBackgroundEntries(req.body?.background);
+  persist();
+  broadcast();
+  res.json({ background: playerCharacterView(pc.id).background });
+}));
+
+app.post("/api/party/:id/background/suggest", guardAsync(async (req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  const fieldId = String(req.body?.fieldId || "");
+  const publicPc = playerCharacterView(pc.id);
+  const existing = publicPc.background.find((field) => field.id === fieldId);
+  const definition = BACKGROUND_FIELD_DEFINITIONS.find((field) => field.id === fieldId)
+    || (existing ? { id: existing.id, title: existing.q } : null);
+  if (!definition) throw new Error("Choose a background memory.");
+  const currentText = String(req.body?.currentText || "").trim();
+  if (!currentText) throw new Error("Write a beginning before asking for an expansion.");
+  if (currentText.length > 6000) throw new Error("That memory is too long to expand.");
+  const result = await suggestBackground({
+    pc,
+    field: definition,
+    currentText,
+    locale: req.body?.locale === "sv" ? "sv" : "en"
+  });
+  res.json(result);
 }));
 
 app.put("/api/party/:id/name", guard((req, res) => {
