@@ -18,6 +18,7 @@ import { resolveDualityRoll } from "./duality-roll.js";
 import { DEFAULT_PLAYER_FEATURES, normalizePlayerFeatures, playerFeaturePatch } from "./player-features.js";
 import { normalizeCharacterName, renameCharacter } from "./party-name.js";
 import { normalizeCharacterDraftVersion } from "./character-draft.js";
+import { claimOwedDomainCard, updateOwnedDomainCards } from "./domain-cards.js";
 import {
   SCENE_DIMENSIONS,
   SCENE_ROOT_IDS,
@@ -430,6 +431,15 @@ app.post("/api/party", guard((req, res) => {
   res.json(playerCharacterView(pc.id));
 }));
 
+app.post("/api/party/:id/domain-cards", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  claimOwedDomainCard(pc, state.reference, String(req.body?.cardId || ""));
+  persist();
+  broadcast();
+  res.status(201).json(playerCharacterView(pc.id));
+}));
+
 app.put("/api/party/:id", guard((req, res) => {
   const i = state.pcs.findIndex((p) => p.id === req.params.id && isPlayablePc(p));
   if (i === -1) throw new Error("No such character.");
@@ -438,6 +448,9 @@ app.put("/api/party/:id", guard((req, res) => {
   if (Object.hasOwn(req.body, "campaignId") && !isActiveCampaign(req.body.campaignId)) throw new Error("Choose an active campaign.");
   const prev = state.pcs[i];
   const next = { ...prev, ...req.body, id: prev.id };
+  if (Object.hasOwn(req.body, "domainCards")) {
+    next.domainCards = updateOwnedDomainCards(prev, req.body.domainCards);
+  }
   // Damage thresholds are armor base + level: keep them in step with level changes.
   if (Number.isInteger(req.body.level) && prev.thresholds && req.body.level !== prev.level) {
     const delta = req.body.level - prev.level;

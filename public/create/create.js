@@ -8,6 +8,7 @@ import { traitAccent, traitGraphic } from "/shared/traits.js";
 import { classColor, DEFAULT_FAVORITE_COLOR, validDetailColor } from "/shared/class-colors.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import { setPlayerFeatureContext } from "/shared/player-features.js";
+import { domainCardEntitlement } from "/shared/domain-card-rules.js";
 import "/shared/feedback.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -78,6 +79,12 @@ const anc = () => REF.ancestries.find((a) => a.id === draft.ancestryId) || null;
 const com = () => REF.communities.find((c) => c.id === draft.communityId) || null;
 const wpn = (id) => REF.weapons.find((w) => w.id === id) || null;
 const arm = () => REF.armors.find((a) => a.id === draft.armorId) || null;
+const requiredDomainCardCount = () => domainCardEntitlement({
+  level: 1,
+  class: cls(),
+  subclass: sub(),
+  domainCards: draft.domainCardIds.map((id) => ({ id }))
+}, REF).expected;
 
 const PORTRAIT_TAGS = [
   { id: "masculine", label: "portrait.tag.masculine", prompt: "masculine" },
@@ -579,8 +586,14 @@ const steps = [
   },
   {
     title: () => t("step.cards.title"),
-    sub() { return t("step.cards.sub", { domains: cls().domains.map((d) => title(d)).join(" & ") }); },
+    sub() {
+      return t("step.cards.sub", {
+        count: requiredDomainCardCount(),
+        domains: cls().domains.map((d) => title(d)).join(" & ")
+      });
+    },
     render() {
+      const required = requiredDomainCardCount();
       const cards = REF.domainCards.filter((d) => d.level === 1 && cls().domains.includes(d.domain));
       return `<div class="options wide">${cards
         .map(
@@ -591,17 +604,18 @@ const steps = [
           </button>`
         )
         .join("")}</div>
-        <div class="count-note">${t("cards.count", { n: draft.domainCardIds.length })}</div>`;
+        <div class="count-note">${t("cards.count", { n: draft.domainCardIds.length, count: required })}</div>`;
     },
     onPick(id) {
       if (draft.domainCardIds.includes(id)) {
         draft.domainCardIds = draft.domainCardIds.filter((x) => x !== id);
-      } else if (draft.domainCardIds.length < 2) {
+      } else if (draft.domainCardIds.length < requiredDomainCardCount()) {
         draft.domainCardIds.push(id);
       }
     },
     collect() {
-      if (draft.domainCardIds.length !== 2) return t("warn.cards");
+      const required = requiredDomainCardCount();
+      if (draft.domainCardIds.length !== required) return t("warn.cards", { count: required });
     }
   },
   {

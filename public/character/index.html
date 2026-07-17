@@ -75,6 +75,14 @@
   .hand-sub { font-variant: small-caps; letter-spacing: 0.06em; color: #a89877; margin: 0.9rem 0 0.5rem; }
   .hand-actions { margin-top: 0.6rem; display: flex; gap: 0.5rem; }
   .hand-actions button { font-size: 0.85rem; padding: 0.3rem 0.8rem; }
+  .domain-card-due {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    margin: 0.25rem 0 1rem; padding: 0.8rem 0.9rem; border-left: 3px solid var(--sheet-secondary);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--sheet-secondary) 14%, rgba(212,184,106,.05)), transparent);
+  }
+  .domain-card-due strong { display: block; color: #f0e3c7; }
+  .domain-card-due p { margin: 0.22rem 0 0; color: #b9aa8a; font-size: 0.86rem; line-height: 1.4; }
+  .domain-card-due button { flex: 0 0 auto; }
   button.quiet.grave { color: #c96a4f; border-color: #6b4438; }
   .theme-panel { overflow: hidden; border-color: #56462d; background: radial-gradient(circle at 50% 0, #252c2b, #181611 70%); }
   .theme-head { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; margin-bottom: 0.75rem; }
@@ -111,6 +119,8 @@
     .sheet-head { align-items: flex-start; }
     .sheet-head .portrait { width: 70px; height: 70px; flex: 0 0 70px; }
     .sheet-nav { margin-inline: -.72rem; padding-inline: .72rem; }
+    .domain-card-due { align-items: stretch; flex-direction: column; }
+    .domain-card-due button { align-self: flex-start; }
   }
   @media (prefers-reduced-motion: reduce) { .theme-bubble { animation: none; } .theme-bubble.preview-pulse { animation-duration: 0.01ms; } }
 </style>

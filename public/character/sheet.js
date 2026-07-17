@@ -414,8 +414,29 @@ function handHtml(p) {
   const cards = p.domainCards || [];
   const loadout = cards.filter((c) => loc(c) === "loadout");
   const vault = cards.filter((c) => loc(c) === "vault");
-  const acquirePanel = acquiring && REF ? acquireHtml(p) : "";
+  const entitlement = p.domainCardEntitlement || {
+    expected: cards.length,
+    owned: cards.length,
+    missing: 0,
+    level: p.level,
+    domains: p.class?.domains || []
+  };
+  const due = entitlement.missing > 0;
+  const acquirePanel = due && acquiring && REF ? acquireHtml(p) : "";
   return `
+    ${due ? `<div class="domain-card-due">
+      <div>
+        <strong>${t("hand.owedTitle")}</strong>
+        <p>${t("hand.owedBody", {
+          owned: entitlement.owned,
+          expected: entitlement.expected,
+          missing: entitlement.missing,
+          level: entitlement.level,
+          domains: entitlement.domains.map((domain) => title(domain)).join(" & ")
+        })}</p>
+      </div>
+      <button class="quiet" id="hand-acquire">${acquiring ? t("hand.done") : t("hand.owedChoose")}</button>
+    </div>` : ""}
     <div class="hand-sub">${term("loadout", "Loadout")} <span class="muted">${loadout.length}/${LOADOUT_MAX}</span></div>
     <div class="cardstack">${loadout
       .map((d) => cardHtml(d, `<button class="quiet" data-stow="${d.id}">${t("hand.stow")}</button>`))
@@ -434,9 +455,6 @@ function handHtml(p) {
             .join("")
         : `<div class="muted" style="font-size:0.9rem;">${t("hand.vaultEmpty")}</div>`
     }</div>
-    <div style="margin-top:0.8rem;">
-      <button class="quiet" id="hand-acquire">${acquiring ? t("hand.done") : t("hand.acquire")}</button>
-    </div>
     ${handNote ? `<div class="muted" style="margin-top:0.5rem;font-size:0.88rem;">${esc(handNote)}</div>` : ""}
     ${acquirePanel}`;
 }
@@ -444,8 +462,9 @@ function handHtml(p) {
 function acquireHtml(p) {
   const owned = new Set((p.domainCards || []).map((c) => c.id));
   const available = REF.domainCards
-    .filter((d) => p.class.domains.includes(d.domain) && !owned.has(d.id))
+    .filter((d) => p.class.domains.includes(d.domain) && d.level <= p.level && !owned.has(d.id))
     .sort((a, b) => a.level - b.level || a.domain.localeCompare(b.domain));
+  if (!available.length) return `<div class="muted" style="margin-top:0.8rem;font-size:0.9rem;">${t("hand.owedNone")}</div>`;
   let lastLevel = null;
   let html = `<div class="hand-sub" style="margin-top:1rem;">${t("hand.available")}</div><div class="cardstack">`;
   for (const d of available) {
@@ -453,20 +472,21 @@ function acquireHtml(p) {
       lastLevel = d.level;
       html += `<div class="smallcaps" style="margin-top:0.4rem;">${t("sheet.level")} ${d.level}</div>`;
     }
-    const locked = d.level > p.level;
-    html += locked
-      ? `<div style="opacity:0.45;">${cardHtml(d, `<span class="muted" style="font-size:0.82rem;">${t("hand.aboveLevel")}</span>`)}</div>`
-      : cardHtml(d, `<button data-takec="${d.id}">${t("hand.take")}</button>`);
+    html += cardHtml(d, `<button data-takec="${d.id}">${t("hand.take")}</button>`);
   }
   return html + "</div>";
 }
 
 async function saveCards() {
-  await fetch(`/api/party/${id}`, {
+  const response = await fetch(`/api/party/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ domainCards: PC.domainCards })
   });
+  const body = await response.json();
+  if (!response.ok) throw new Error(body.error || t("hand.saveError"));
+  PC = body;
+  render();
 }
 
 function wireHand() {
@@ -499,20 +519,38 @@ function wireHand() {
   }
   for (const el of document.querySelectorAll("[data-takec]")) {
     el.onclick = async () => {
-      const card = REF.domainCards.find((d) => d.id === el.dataset.takec);
       const full = PC.domainCards.filter((c) => loc(c) === "loadout").length >= LOADOUT_MAX;
-      PC.domainCards.push({ ...card, location: full ? "vault" : "loadout" });
-      render();
-      if (full) note(t("hand.tovault"));
-      await saveCards();
+      try {
+        const response = await fetch(`/api/party/${id}/domain-cards`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cardId: el.dataset.takec })
+        });
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || t("hand.claimError"));
+        PC = body;
+        acquiring = PC.domainCardEntitlement?.missing > 0;
+        if (full) note(t("hand.tovault"));
+        else render();
+      } catch (error) {
+        note(error.message || t("hand.claimError"));
+      }
     };
   }
   const acq = document.querySelector("#hand-acquire");
   if (acq) {
     acq.onclick = async () => {
-      if (!acquiring && !REF) REF = await (await fetch("/api/reference")).json();
-      acquiring = !acquiring;
-      render();
+      try {
+        if (!acquiring && !REF) {
+          const response = await fetch("/api/reference");
+          REF = await response.json();
+          if (!response.ok) throw new Error(REF.error || t("hand.claimError"));
+        }
+        acquiring = !acquiring;
+        render();
+      } catch (error) {
+        note(error.message || t("hand.claimError"));
+      }
     };
   }
 }

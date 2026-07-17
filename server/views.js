@@ -5,6 +5,7 @@
 import { activeCampaigns, isActiveCampaign, state, seasonLabel } from "./state.js";
 import { inventoryView } from "./inventory.js";
 import { normalizePlayerFeatures, PLAYER_FEATURE_DEFINITIONS } from "./player-features.js";
+import { domainCardEntitlement } from "../public/shared/domain-card-rules.js";
 
 const PLAYER_CONDITIONS = new Set(["hidden", "restrained", "vulnerable"]);
 const conditionView = (p) => [...new Set(p.conditions || [])].filter((id) => PLAYER_CONDITIONS.has(id));
@@ -151,6 +152,7 @@ export function playerCharacterView(id) {
       text: card.text || "",
       location: card.location || "loadout"
     })),
+    domainCardEntitlement: domainCardEntitlement(p, state.reference),
     features: {
       hopeFeature: featureView(p.features?.hopeFeature),
       classFeatures: (p.features?.classFeatures || []).map(featureView).filter(Boolean),
