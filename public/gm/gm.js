@@ -595,7 +595,7 @@ function renderCharacterImages() {
     <div class="image-card-copy">
       <h3>${esc(character.name)}</h3>
       <p>${[character.ancestry, character.class, character.subclass, character.player].filter(Boolean).map(esc).join(" · ")}</p>
-      <div class="image-card-actions"><button type="button" class="quiet" data-character-image="${esc(character.id)}">Show at the table</button><a href="/character/${encodeURIComponent(character.id)}" target="_blank">Open sheet ↗</a></div>
+      <div class="image-card-actions"><button type="button" class="quiet" data-character-image="${esc(character.id)}">Show at the table</button><a class="sheet-link" href="/character/${encodeURIComponent(character.id)}">Open sheet</a></div>
     </div>
   </article>`).join("") : `<p class="muted">No active character has chosen a portrait yet.</p>`;
   for (const button of document.querySelectorAll("[data-character-image]")) {
@@ -1747,7 +1747,7 @@ function renderParty() {
           const action = applied ? "Clear" : "Apply";
           return `<button class="condition-toggle${applied ? " active" : ""}" type="button" data-pccondition="${esc(p.id)}" data-condition="${condition.id}" aria-pressed="${applied}" title="${action} ${condition.name}">${conditionIcon(condition.id)}<span>${condition.name}</span></button>`;
         }).join("")}</div></td>
-        <td><a href="/character/${encodeURIComponent(p.id)}" target="_blank">Open the sheet ↗</a></td>
+        <td><a class="sheet-link" href="/character/${encodeURIComponent(p.id)}">Open the sheet</a></td>
         <td><button class="quiet" data-pcart="${esc(p.id)}" ${ART_STATUS.workflows?.portrait?.ready ? "" : "disabled"} title="${esc(artHint("portrait"))}">Portrait</button> <button class="quiet" data-pcretire="${esc(p.id)}">Retire</button></td>
       </tr>`
     )
