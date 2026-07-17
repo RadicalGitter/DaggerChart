@@ -3,6 +3,105 @@
 // This is the seam that later grows into per-character clients and the
 // board screen: each audience gets its own projection of the same state.
 import { state, seasonLabel } from "./state.js";
+import { inventoryView } from "./inventory.js";
+
+const PLAYER_CONDITIONS = new Set(["hidden", "restrained", "vulnerable"]);
+const conditionView = (p) => [...new Set(p.conditions || [])].filter((id) => PLAYER_CONDITIONS.has(id));
+
+// Personalization stored on the character (chosen in the creator). Kept behind
+// a validated default so unknown or legacy-missing values never reach a client
+// as-is: a PC from before this field simply reads as the canonical shell/pen.
+const SHELL_IDS = new Set(["tome", "book", "table"]);
+const PEN_IDS = new Set(["quill", "reed", "brush"]);
+const shellOf = (p) => (SHELL_IDS.has(p.shell) ? p.shell : "table");
+const penOf = (p) => (PEN_IDS.has(p.pen) ? p.pen : "quill");
+
+const featureView = (feature) => feature ? {
+  name: feature.name || "",
+  text: feature.text || ""
+} : null;
+
+const weaponView = (weapon) => weapon ? {
+  id: weapon.id || "",
+  name: weapon.name || "",
+  type: weapon.type || "",
+  trait: weapon.trait || "",
+  range: weapon.range || "",
+  damage: weapon.damage || "",
+  burden: weapon.burden || "",
+  feature: weapon.feature || ""
+} : null;
+
+const identityView = (p) => ({
+  id: p.id,
+  name: p.name,
+  player: p.player || "",
+  portrait: p.portrait || null,
+  shell: shellOf(p)
+});
+
+// A character sheet is player-facing too. Keep it explicit rather than
+// returning the stored PC object: future private character fields must not
+// silently cross this boundary.
+export function playerCharacterView(id) {
+  const p = state.pcs.find((pc) => pc.id === id);
+  if (!p) return null;
+  return {
+    ...identityView(p),
+    pen: penOf(p),
+    pronouns: p.pronouns || "",
+    conditions: conditionView(p),
+    level: p.level,
+    class: { id: p.class?.id || "", name: p.class?.name || "", domains: [...(p.class?.domains || [])] },
+    subclass: {
+      id: p.subclass?.id || "",
+      name: p.subclass?.name || "",
+      spellcastTrait: p.subclass?.spellcastTrait || null
+    },
+    ancestry: { id: p.ancestry?.id || "", name: p.ancestry?.name || "" },
+    community: { id: p.community?.id || "", name: p.community?.name || "" },
+    traits: Object.fromEntries(Object.entries(p.traits || {}).map(([name, value]) => [name, value])),
+    evasion: p.evasion,
+    hpMax: p.hpMax,
+    hp: p.hp,
+    stressMax: p.stressMax,
+    stress: p.stress,
+    hopeMax: p.hopeMax,
+    hope: p.hope,
+    armor: p.armor ? { name: p.armor.name || "", score: p.armor.score || 0, feature: p.armor.feature || "" } : null,
+    armorMarked: p.armorMarked || 0,
+    thresholds: { major: p.thresholds?.major || 0, severe: p.thresholds?.severe || 0 },
+    weapons: {
+      primary: weaponView(p.weapons?.primary),
+      secondary: weaponView(p.weapons?.secondary)
+    },
+    inventory: inventoryView(p, state.reference),
+    experiences: (p.experiences || []).map((e) => ({ name: e.name || "", bonus: e.bonus || 0 })),
+    background: (p.background || []).map((entry) => ({ q: entry.q || "", a: entry.a || "" })),
+    connections: (p.connections || []).map((entry) => ({ q: entry.q || "", note: entry.note || "" })),
+    domainCards: (p.domainCards || []).map((card) => ({
+      id: card.id,
+      name: card.name || "",
+      domain: card.domain || "",
+      type: card.type || "",
+      level: card.level,
+      recallCost: card.recallCost,
+      text: card.text || "",
+      location: card.location || "loadout"
+    })),
+    features: {
+      hopeFeature: featureView(p.features?.hopeFeature),
+      classFeatures: (p.features?.classFeatures || []).map(featureView).filter(Boolean),
+      foundation: (p.features?.foundation || []).map(featureView).filter(Boolean),
+      ancestry: (p.features?.ancestry || []).map(featureView).filter(Boolean),
+      community: (p.features?.community || []).map(featureView).filter(Boolean)
+    }
+  };
+}
+
+export function partyListView() {
+  return state.pcs.map(identityView);
+}
 
 export function gmView() {
   const buildings = Object.values(state.settlement.buildings).map((b) => ({
@@ -32,7 +131,8 @@ export function gmView() {
       class: p.class?.name,
       subclass: p.subclass?.name,
       ancestry: p.ancestry?.name,
-      community: p.community?.name
+      community: p.community?.name,
+      conditions: conditionView(p)
     })),
     people: state.people,
     places: state.places,
@@ -152,7 +252,7 @@ export function loreView(pcId) {
   );
   return {
     seasonLabel: seasonLabel(),
-    party: state.pcs.map((p) => ({ id: p.id, name: p.name, player: p.player || "" })),
+    party: state.pcs.map(identityView),
     people,
     places,
     notes
@@ -198,11 +298,6 @@ export function tableView() {
     characters,
     chronicle,
     // Player-shell/login identity card: public identity fields only.
-    party: state.pcs.map((p) => ({
-      id: p.id,
-      name: p.name,
-      player: p.player || "",
-      portrait: p.portrait || null
-    }))
+    party: state.pcs.map(identityView)
   };
 }

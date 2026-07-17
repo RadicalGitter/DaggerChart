@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cross into the New World — The Settlement</title>
+<title>Create your character — The Settlement</title>
 <link rel="stylesheet" href="/shared/ledger.css">
 <link rel="stylesheet" href="/shared/lamplight.css">
 <style>
@@ -19,10 +19,29 @@
   .dot.now { background: #d4b86a; border-color: #d4b86a; }
   .step-title { text-align: center; }
   .step-sub { text-align: center; color: #a89877; font-size: 0.95rem; margin-bottom: 1.2rem; }
+  .step-panel { will-change: transform, opacity; }
+  .step-panel.leave-left { animation: leave-left 180ms ease-in both; }
+  .step-panel.leave-right { animation: leave-right 180ms ease-in both; }
+  .step-panel.enter-right { animation: enter-right 220ms ease-out both; }
+  .step-panel.enter-left { animation: enter-left 220ms ease-out both; }
+  @keyframes leave-left { to { transform: translateX(-42px); opacity: 0; } }
+  @keyframes leave-right { to { transform: translateX(42px); opacity: 0; } }
+  @keyframes enter-right { from { transform: translateX(42px); opacity: 0; } }
+  @keyframes enter-left { from { transform: translateX(-42px); opacity: 0; } }
   .options { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.7rem; }
   .options.wide { grid-template-columns: 1fr; }
   .pick h3 { font-size: 1.05rem; margin-bottom: 0.2rem; }
   .pick .desc { font-size: 0.85rem; color: #a89877; }
+  .shell-options { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .pen-options { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .shell-pick { text-align: center; }
+  .pick-thumb { margin-bottom: 0.55rem; }
+  .pick-thumb svg {
+    width: 100%; height: auto; max-height: 130px; display: block;
+    border-radius: 6px; background: rgba(0, 0, 0, 0.22);
+    box-shadow: inset 0 0 0 1px rgba(212, 184, 106, 0.08);
+  }
+  .pen-options .pick-thumb svg { max-height: 96px; }
   .featline { font-size: 0.88rem; margin: 0.4rem 0; }
   .featline strong { color: #d4b86a; font-weight: 600; }
   .navbtns {
@@ -30,8 +49,26 @@
     background: linear-gradient(transparent, #211b14 35%);
     padding: 1.2rem 1rem 1rem;
   }
-  .navbtns .inner { max-width: 760px; margin: 0 auto; display: flex; justify-content: space-between; gap: 0.8rem; }
+  .navbtns .inner {
+    max-width: 760px; margin: 0 auto; display: grid;
+    grid-template-columns: minmax(92px, auto) 1fr minmax(92px, auto);
+    align-items: center; gap: 0.8rem;
+  }
   .navbtns button { padding: 0.6rem 1.6rem; font-size: 1rem; }
+  .subprogress {
+    min-width: 0; display: flex; align-items: center; justify-content: center;
+    gap: 0.35rem; color: #8f8063; font-size: 0.72rem; letter-spacing: 0.08em;
+  }
+  .subprogress[hidden] { display: flex; visibility: hidden; }
+  .subprogress-track { display: flex; gap: 0.28rem; width: min(190px, 70%); }
+  .subprogress-mark {
+    height: 3px; flex: 1; min-width: 10px; border-radius: 999px;
+    background: #554833; box-shadow: inset 0 0 0 1px rgba(212,184,106,0.08);
+    transition: background 180ms ease, transform 180ms ease;
+  }
+  .subprogress-mark.done { background: #8f7750; }
+  .subprogress-mark.now { background: #d4b86a; transform: scaleY(1.8); }
+  .subprogress-count { white-space: nowrap; }
   .formrow { display: flex; gap: 0.6rem; align-items: center; margin: 0.7rem 0; flex-wrap: wrap; }
   .formrow label { min-width: 130px; color: #a89877; }
   .formrow input[type=text] { flex: 1; min-width: 200px; }
@@ -48,13 +85,22 @@
   .count-note { text-align: center; color: #a89877; font-size: 0.9rem; margin-top: 0.6rem; }
   .review h3 { color: #d4b86a; font-size: 1rem; margin-top: 1.1rem; }
   .review p { margin: 0.2rem 0; font-size: 0.95rem; }
+  @media (max-width: 520px) {
+    .navbtns .inner { grid-template-columns: 82px 1fr 82px; gap: 0.45rem; }
+    .navbtns button { padding: 0.55rem 0.65rem; }
+    .subprogress-count { display: none; }
+    .subprogress-track { width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .step-panel { animation: none !important; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1 data-i18n="create.title">Cross into the New World</h1>
-    <div class="smallcaps" data-i18n="create.subtitle">The Settlement — character creation</div>
+    <h1 data-i18n="create.title">Create your character</h1>
+    <div class="smallcaps" data-i18n="create.subtitle">The Settlement — find your place at the table</div>
   </header>
   <div class="progress" id="progress"></div>
   <div id="step"></div>
@@ -63,7 +109,8 @@
 <div class="navbtns">
   <div class="inner">
     <button class="quiet" id="btn-back">Back</button>
-    <button id="btn-next">Onward</button>
+    <div class="subprogress" id="subprogress" hidden></div>
+    <button id="btn-next">Next</button>
   </div>
 </div>
 <script type="module" src="create.js"></script>

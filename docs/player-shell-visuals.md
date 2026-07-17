@@ -30,9 +30,32 @@ A weathered variant of the physical book: cracked leather, foxed and frayed
 parchment (SVG displacement filters), candlelight flicker, dust motes, and a
 faint breathing motion. Navigation is by **keepsakes** rather than tabs —
 real objects stuffed between the pages (a frayed ribbon, a raven feather, a
-torn parchment scrap, a pressed flower, a bone charm on a cord), each with a
-small handwritten label. A keepsake keeps its resting height on the fore-edge
-when it migrates to the left edge, like a real bookmark keeps its page.
+torn parchment scrap, a pressed flower, a bone charm on a cord, and a key
+ring), each with a small handwritten label. A keepsake keeps its resting height
+on the fore-edge when it migrates to the left edge, like a real bookmark keeps
+its page.
+
+The Town spread is the sole home of settlement figures: population, season,
+stores, and current buildings. They do not appear in the tome's global chrome
+or as filler on other left pages. Character is one native two-page spread with
+no nested scrolling. Inventory is its adjacent keepsake; its first spread
+holds equipped arms/armor and carried items, while detailed Domain cards turn
+onto further spreads. Larger Folk, Chronicle, and Inventory collections also
+paginate as physical spreads inside their section instead of growing one long
+page.
+
+Carried entries are buttons into a parchment editor. Mundane items expose
+freeform name, description, and quantity. Standard Consumables retain their
+catalog rules, expose notes and quantity, and offer a Consume flow with an
+item illustration, validated die inputs when needed, atomic sheet changes,
+and a restrained result animation. See [inventory.md](inventory.md).
+
+The chosen character's standard Conditions appear in a fixed utility dock at
+the foot of the tome. Each uses an original line symbol from
+`public/shared/conditions.js`; pressing it opens a short EN/SV rules
+explanation. `#player-chat-slot` is reserved in that same dock for the future
+private-message client. Until messaging exists it remains hidden, so the
+interface does not promise an action it cannot yet complete.
 
 Keepsakes are defined in the `KEEPSAKES` registry in `public/tome/tome.js` —
 one entry per object (art, label placement, sway). **Future player
@@ -45,7 +68,12 @@ Every player-shell visual must preserve these boundaries:
 
 - Read settlement content only from `GET /api/table`. Never render a player
   shell from `/api/state` or another GM payload.
+- When a visual renders a chosen character natively, read it from the explicit
+  player whitelist returned by `GET /api/party/:id`; never use the stored PC
+  object or a GM view as a shortcut.
 - Listen to `/api/stream` and refetch after broadcasts.
+- Keep Conditions on the chosen-character whitelist and reuse the shared
+  registry rather than inventing route-specific identifiers or symbols.
 - Use the single device identity key `settlement-pc` (the legacy
   `settlement-journal-pc` key may be read only for migration).
 - Embed the Journal from `/journal/?embed=1&pc=<id>` and character sheets from

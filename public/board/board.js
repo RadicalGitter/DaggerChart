@@ -2,6 +2,8 @@
 // Plates (notes, counters, live stat blocks) live in world coordinates;
 // pins are saved camera positions. Everything persists to data/board.json.
 
+import { TERMS } from "/shared/i18n.js";
+
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) =>
@@ -85,9 +87,18 @@ const DEFAULTS = {
   counter: { w: 210, props: { label: "Counter", value: 0 } },
   character: { w: 320, props: { pcId: null } },
   folk: { w: 300, props: { charId: null } },
-  stores: { w: 260, props: {} }
+  stores: { w: 260, props: {} },
+  card: { w: 300, props: { cardId: null } },
+  term: { w: 280, props: { termKey: null } }
 };
-const HEAD = { note: "note", counter: "counter", character: "character", folk: "folk", stores: "stores" };
+const HEAD = { note: "note", counter: "counter", character: "character", folk: "folk", stores: "stores", card: "domain card", term: "term" };
+
+// Domain cards come from the SRD reference — loaded once, only if needed.
+let CARDS = null;
+async function loadCards() {
+  if (!CARDS) CARDS = (await (await fetch("/api/reference")).json()).domainCards || [];
+  return CARDS;
+}
 
 function addItem(type, x, y) {
   if (x === undefined) {
@@ -137,6 +148,13 @@ function headLabel(item) {
     const c = FOLK.find((f) => f.id === item.props.charId);
     return c ? c.name : "folk";
   }
+  if (item.type === "card" && item.props.cardId && CARDS) {
+    const c = CARDS.find((x) => x.id === item.props.cardId);
+    if (c) return c.name;
+  }
+  if (item.type === "term" && item.props.termKey && TERMS[item.props.termKey]) {
+    return TERMS[item.props.termKey].en[0];
+  }
   return HEAD[item.type];
 }
 
@@ -172,6 +190,53 @@ function renderBody(body, item) {
   if (item.type === "character") return renderCharacter(body, item);
   if (item.type === "folk") return renderFolk(body, item);
   if (item.type === "stores") return renderStores(body, item);
+  if (item.type === "card") return renderCard(body, item);
+  if (item.type === "term") return renderTerm(body, item);
+}
+
+// A domain card pinned to the board — rules reference, not a hand manager.
+async function renderCard(body, item) {
+  const cards = await loadCards();
+  const c = cards.find((x) => x.id === item.props.cardId);
+  if (!c) {
+    body.innerHTML = `
+      <input type="text" list="domain-cards" placeholder="Find a card by name…">
+      <datalist id="domain-cards">
+        ${cards.map((x) => `<option value="${esc(x.name)}">${esc(x.domain)} · level ${x.level}</option>`).join("")}
+      </datalist>`;
+    body.querySelector("input").addEventListener("change", (e) => {
+      const hit = cards.find((x) => x.name.toLowerCase() === e.target.value.trim().toLowerCase());
+      if (!hit) return;
+      item.props.cardId = hit.id;
+      renderItem(item);
+      queueSave();
+    });
+    return;
+  }
+  body.innerHTML = `
+    <div class="muted" style="font-size:0.78rem;">${esc(c.domain)} · level ${c.level} · ${esc(c.type)}${c.recallCost ? ` · recall ${c.recallCost}` : ""}</div>
+    <div style="font-size:0.85rem; margin-top:0.35rem; line-height:1.45;">${esc(c.text)}</div>`;
+}
+
+// A glossary term for table questions — shown in both languages.
+function renderTerm(body, item) {
+  const entry = TERMS[item.props.termKey];
+  if (!entry) {
+    body.innerHTML = `<select>
+      <option value="">— choose a term —</option>
+      ${Object.entries(TERMS).map(([k, v]) => `<option value="${k}">${esc(v.en[0])}</option>`).join("")}
+    </select>`;
+    body.querySelector("select").addEventListener("change", (e) => {
+      if (!e.target.value) return;
+      item.props.termKey = e.target.value;
+      renderItem(item);
+      queueSave();
+    });
+    return;
+  }
+  body.innerHTML = `
+    <div style="font-size:0.85rem; line-height:1.45;">${esc(entry.en[1])}</div>
+    <div class="muted" style="font-size:0.8rem; margin-top:0.4rem; font-style:italic;">${esc(entry.sv[1])}</div>`;
 }
 
 function renderNote(body, item) {

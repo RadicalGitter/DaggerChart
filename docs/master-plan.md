@@ -117,8 +117,10 @@ player-visible; don't project it.
 ## 3. Private messages (GM ↔ each player)
 
 **Goal.** One quiet thread per PC between that player and the GM. Not a group
-chat, not player-to-player. Lives in the hotbar for the GM; for players,
-likely a card/keepsake in the shell or a drawer on the sheet.
+chat, not player-to-player. Lives in the hotbar for the GM; for players, it
+opens from the tome's bottom utility dock beside Conditions (mount at
+`#player-chat-slot`). Other shell visuals may use their Character card or a
+sheet drawer.
 
 **Data.** `data/messages.json` — flat array:
 
@@ -149,9 +151,10 @@ spoiler boundary. The real risk is *lazy payload reuse*: never fold thread
 text into `tableView`/`loreView`; only counts.
 
 **Frontend sketch.** GM hotbar: badge with total unread; opens a panel with
-one column per PC. Player: badge on the shell's Character card and/or the
-journal masthead; a simple thread view (composer + messages, newest at the
-bottom, Ctrl+Enter sends — mirror the journal composer's conventions).
+one column per PC. Player tome: badge and thread panel in the existing bottom
+utility dock. Other shells can badge the Character card. Use a simple thread
+view (composer + messages, newest at the bottom, Ctrl+Enter sends — mirror
+the journal composer's conventions).
 
 ---
 

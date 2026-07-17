@@ -34,6 +34,32 @@
   .building-pick.selected { border-color: var(--oxblood); box-shadow: 0 0 0 1px var(--oxblood); }
   .modline { display: flex; justify-content: space-between; padding: 0.2rem 0; }
   .modline.total { border-top: 1px solid var(--rule); font-weight: 600; margin-top: 0.3rem; padding-top: 0.4rem; }
+
+  /* The dice (optional, Preferences): four bone, one ink; the dark one lands last. */
+  #dice-tray { margin-top: 0.7rem; min-height: 3.2rem; }
+  .dice-row { display: flex; gap: 0.45rem; align-items: center; }
+  .die {
+    font-size: 2.9rem; line-height: 1; color: var(--ink);
+    display: inline-block; user-select: none;
+  }
+  .die.neg { color: var(--oxblood); }
+  .die.tumbling { animation: tumble 0.36s ease-in-out infinite; color: var(--ink-faint); }
+  .die.neg.tumbling { color: var(--oxblood); opacity: 0.45; }
+  .die.settled { animation: settle-die 0.25s ease; }
+  .dice-op { font-size: 1.6rem; color: var(--ink-soft); margin: 0 0.15rem; }
+  .dice-sum { font-size: 1.9rem; font-weight: 600; min-width: 2ch; }
+  @keyframes tumble {
+    0%, 100% { transform: rotate(-7deg) translateY(0); }
+    50% { transform: rotate(7deg) translateY(-3px); }
+  }
+  @keyframes settle-die {
+    0% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .die.tumbling { animation: none; }
+    .die.settled { animation: none; }
+  }
   #resolve-result { margin-top: 1.5rem; }
   .result-number {
     font-size: 3rem;
@@ -66,6 +92,18 @@
   .stat-strip { display: flex; gap: 1.4rem; flex-wrap: wrap; }
   .stat-strip .stat { text-align: center; }
   .stat-strip .stat .value { font-size: 1.7rem; font-weight: 600; }
+  .condition-toggles { display: flex; flex-wrap: wrap; gap: 0.3rem; min-width: 168px; }
+  .condition-toggle {
+    display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.4rem;
+    border: 1px solid var(--rule-strong); border-radius: 3px; background: var(--paper-inset);
+    color: var(--ink-faint); font: inherit; font-size: 0.74rem; cursor: pointer;
+  }
+  .condition-toggle:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .condition-toggle.active { color: var(--oxblood); border-color: var(--oxblood); background: var(--paper); }
+  .condition-toggle .condition-icon { width: 17px; height: 17px; }
+  .grant-consumable { margin-top: 1rem; max-width: 760px; }
+  .grant-consumable h3 { margin-bottom: 0.25rem; }
+  .grant-consumable .rules { min-height: 2.6em; margin: 0.5rem 0; color: var(--ink-soft); font-size: 0.88rem; }
   #toast {
     position: fixed; bottom: 1.2rem; right: 1.2rem;
     background: var(--ink); color: var(--paper); padding: 0.6rem 1rem; border-radius: 4px;
@@ -81,25 +119,27 @@
       <h1 id="nav-name">The Settlement</h1>
       <div class="smallcaps" id="nav-season">—</div>
     </div>
-    <a href="#season" data-nav="season" class="active">The Season</a>
+    <a href="#season" data-nav="season" class="active">Season</a>
     <a href="#stores" data-nav="stores">Stores</a>
     <a href="#buildings" data-nav="buildings">Buildings</a>
     <a href="#folk" data-nav="folk">Folk</a>
     <a href="#people" data-nav="people">People</a>
     <a href="#places" data-nav="places">Places</a>
-    <a href="#party" data-nav="party">The Party</a>
+    <a href="#party" data-nav="party">Party</a>
     <a href="#ledger" data-nav="ledger">Ledger</a>
-    <a href="#screen" data-nav="screen">The Screen</a>
+    <a href="#screen" data-nav="screen">Screen</a>
     <a href="#town" data-nav="town">Settlement</a>
     <hr class="rule" style="margin: 1rem 1.2rem;">
     <a href="/board" target="_blank" style="font-size:0.85rem;">The drafting board ↗</a>
     <a href="/table" target="_blank" style="font-size:0.85rem;">Open the table view ↗</a>
     <a href="/screen" target="_blank" style="font-size:0.85rem;">Open the screen ↗</a>
+    <hr class="rule" style="margin: 1rem 1.2rem;">
+    <a href="#prefs" data-nav="prefs" style="font-size:0.85rem;" class="muted">Preferences</a>
   </nav>
   <main>
     <section id="sec-season">
       <h2>Resolve the season</h2>
-      <p class="muted">Pick a building, enter the raw dice (4d6 − 1d6), and open the ledger.</p>
+      <p class="muted">Choose a building, enter the raw dice (4d6 − 1d6), and review the result.</p>
       <div class="building-grid" id="dt-buildings"></div>
       <div id="dt-panel" hidden>
         <hr class="rule">
@@ -107,7 +147,7 @@
           <h3 id="dt-title"></h3>
           <div id="dt-mods"></div>
           <details class="bookkeeping" id="dt-hidden-details">
-            <summary>bookkeeping</summary>
+            <summary>GM details</summary>
             <div id="dt-hidden"></div>
           </details>
           <hr class="rule">
@@ -118,10 +158,29 @@
           <div class="formrow">
             <label>Raw dice</label>
             <input type="number" class="num" id="dt-raw" min="-2" max="23" placeholder="−2…23">
+            <button class="quiet" id="dt-cast" hidden>Cast the dice</button>
             <button id="dt-resolve">Resolve the season</button>
+          </div>
+          <div id="dice-tray" hidden>
+            <div class="dice-row" id="dice-row"></div>
           </div>
         </div>
         <div id="resolve-result"></div>
+      </div>
+    </section>
+
+    <section id="sec-prefs" hidden>
+      <h2>Preferences</h2>
+      <p class="muted">How this device behaves. Nothing here touches the campaign.</p>
+      <div class="card" style="max-width: 520px;">
+        <div class="formrow" style="align-items:flex-start;">
+          <label style="min-width:150px;">In-app dice roller</label>
+          <div>
+            <input type="checkbox" id="pref-dice">
+            <span class="muted" style="font-size:0.85rem;">show a "Cast the dice" button in the season runner.
+            Off, the ledger expects real bones: roll at the table, type the raw result.</span>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -133,7 +192,7 @@
         <div class="formrow"><label>Resource</label><select id="adj-resource"></select></div>
         <div class="formrow"><label>Change</label><input type="number" class="num" id="adj-delta" placeholder="±"></div>
         <div class="formrow"><label>Reason</label><input type="text" id="adj-reason" style="flex:1" placeholder="everything is auditable"></div>
-        <div class="formrow"><label></label><button id="adj-apply" class="quiet">Enter into the ledger</button></div>
+        <div class="formrow"><label></label><button id="adj-apply" class="quiet">Record adjustment</button></div>
       </div>
     </section>
 
@@ -146,71 +205,82 @@
       <h2>Folk</h2>
       <div class="folk-grid" id="folk-grid"></div>
       <hr class="rule">
-      <button id="folk-new" class="quiet">A stranger arrives…</button>
+      <button id="folk-new" class="quiet">Add folk</button>
       <div id="folk-editor"></div>
     </section>
 
     <section id="sec-people" hidden>
       <h2>People</h2>
-      <p class="muted">The wider world's characters — not villagers. Revealed entries appear in the players' journal, description word for word.</p>
+      <p class="muted">NPCs outside the settlement. Revealed entries appear in the players' journal exactly as written.</p>
       <div class="folk-grid" id="people-grid"></div>
       <hr class="rule">
-      <button id="people-new" class="quiet">Word of someone new…</button>
+      <button id="people-new" class="quiet">Add a person</button>
       <div id="people-editor"></div>
     </section>
 
     <section id="sec-places" hidden>
       <h2>Places</h2>
-      <p class="muted">The map beyond the palisade. Revealed entries appear in the players' journal; people can be moved between places from their card.</p>
+      <p class="muted">Places outside the settlement. Revealed entries appear in the players' journal; move people between places from their cards.</p>
       <div class="folk-grid" id="places-grid"></div>
       <hr class="rule">
-      <button id="places-new" class="quiet">Mark a place on the map…</button>
+      <button id="places-new" class="quiet">Add a place</button>
       <div id="places-editor"></div>
     </section>
 
     <section id="sec-party" hidden>
-      <h2>The Party</h2>
-      <p class="muted">Players create characters at <a href="/create" target="_blank">/create</a> — on their own phones, from your Wi-Fi.</p>
+      <h2>Party</h2>
+      <p class="muted">Players can create characters at <a href="/create" target="_blank">/create</a> on any phone connected to your Wi-Fi.</p>
       <table class="ledger" id="party-table"></table>
+      <div class="card grant-consumable">
+        <h3>Give a consumable</h3>
+        <p class="muted">Search the complete standard loot table. A character can carry up to five of each.</p>
+        <div class="formrow">
+          <label for="grant-pc">Character</label><select id="grant-pc"></select>
+          <label for="grant-quantity" style="min-width:auto;">Quantity</label><input class="num" id="grant-quantity" type="number" min="1" max="5" value="1">
+        </div>
+        <div class="formrow"><label for="grant-consumable">Consumable</label><input id="grant-consumable" list="consumable-options" autocomplete="off" style="flex:1" placeholder="Type to search…"><datalist id="consumable-options"></datalist></div>
+        <div class="rules" id="grant-rules"></div>
+        <div class="formrow"><label></label><button id="grant-give" class="quiet">Give to character</button><span class="muted" id="grant-roll"></span></div>
+      </div>
     </section>
 
     <section id="sec-ledger" hidden>
-      <h2>The Ledger</h2>
+      <h2>Ledger</h2>
       <div class="formrow">
-        <button id="season-advance" class="quiet">The season turns</button>
+        <button id="season-advance" class="quiet">Advance the season</button>
         <span class="muted" id="ledger-season"></span>
       </div>
       <div class="card" style="margin: 1rem 0; max-width: 640px;">
         <div class="formrow">
           <input type="text" id="note-text" style="flex:1" placeholder="Write a chronicle entry…">
-          <label style="min-width:auto;"><input type="checkbox" id="note-publish"> publish</label>
-          <button id="note-add" class="quiet">Enter</button>
+          <label style="min-width:auto;"><input type="checkbox" id="note-publish"> show in Chronicle</label>
+          <button id="note-add" class="quiet">Add entry</button>
         </div>
       </div>
       <table class="ledger" id="log-table"></table>
     </section>
 
     <section id="sec-screen" hidden>
-      <h2>The Screen</h2>
-      <p class="muted">A projector surface at <a href="/screen" target="_blank">/screen</a> — it shows one thing at a time, chosen here. The "show at the table" buttons on folk, people, and places land here too.</p>
+      <h2>Screen</h2>
+      <p class="muted">Choose what appears at <a href="/screen" target="_blank">/screen</a>. “Show at the table” on folk, people, and places uses the same display.</p>
       <div class="card" style="max-width:640px;">
         <div class="formrow"><label>Now showing</label><span id="screen-now" class="muted">—</span></div>
         <div class="formrow"><label></label><button id="screen-clear" class="quiet">Darken the screen</button></div>
       </div>
       <div class="card" style="max-width:640px; margin-top:1rem;">
-        <h3>An image</h3>
+        <h3>Image</h3>
         <div class="formrow"><label>URL</label><input type="text" id="screen-img-url" style="flex:1" placeholder="/portraits/… or https://…"></div>
         <div class="formrow"><label>Caption</label><input type="text" id="screen-img-cap" style="flex:1" placeholder="(optional)"></div>
         <div class="formrow"><label></label><button id="screen-img-show" class="quiet">Show at the table</button></div>
       </div>
       <div class="card" style="max-width:640px; margin-top:1rem;">
-        <h3>Words</h3>
+        <h3>Text</h3>
         <div class="formrow"><label>Title</label><input type="text" id="screen-txt-title" style="flex:1"></div>
         <div class="formrow" style="align-items:flex-start;"><label>Body</label><textarea id="screen-txt-body" rows="3" style="flex:1"></textarea></div>
         <div class="formrow"><label></label><button id="screen-txt-show" class="quiet">Show at the table</button></div>
       </div>
       <div class="card" style="max-width:640px; margin-top:1rem;">
-        <h3>The ledgers</h3>
+        <h3>Settlement data</h3>
         <div class="formrow">
           <button id="screen-stores" class="quiet">Show the stores</button>
           <button id="screen-buildings" class="quiet">Show the buildings</button>
@@ -223,7 +293,7 @@
       <div class="card" style="max-width: 520px;">
         <div class="formrow"><label>Name</label><input type="text" id="town-name" style="flex:1"></div>
         <div class="formrow"><label>Population</label><input type="number" class="num" id="town-pop"></div>
-        <div class="formrow" style="align-items:flex-start;"><label>Chronicle</label><textarea id="town-notes" rows="8" placeholder="The town's free-text chronicle — yours alone."></textarea></div>
+        <div class="formrow" style="align-items:flex-start;"><label>GM notes</label><textarea id="town-notes" rows="8" placeholder="Private settlement notes"></textarea></div>
         <div class="formrow"><label></label><button id="town-save" class="quiet">Save</button></div>
       </div>
     </section>

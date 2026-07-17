@@ -83,6 +83,47 @@ body::after {
 }
 .steward-door:hover { opacity: 0.9; }
 
+/* ---------- player utility dock: Conditions now, private chat later ---------- */
+.player-dock {
+  position: fixed; left: 50%; bottom: 0.65rem; z-index: 12; transform: translateX(-50%);
+  min-height: 42px; max-width: min(82vw, 680px); padding: 0.35rem 0.55rem;
+  display: flex; align-items: center; gap: 0.45rem;
+  color: #d8be86; border: 1px solid rgba(174, 132, 72, 0.5); border-radius: 6px;
+  background: linear-gradient(180deg, rgba(72, 42, 20, 0.96), rgba(35, 19, 9, 0.98));
+  box-shadow: inset 0 1px rgba(244, 213, 155, 0.12), 0 5px 18px rgba(0, 0, 0, 0.55);
+}
+.player-dock[hidden] { display: none; }
+.condition-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; min-width: 0; }
+.condition-bar-label {
+  padding-right: 0.45rem; color: #a88b5b; border-right: 1px solid rgba(174, 132, 72, 0.32);
+  font-size: 0.68rem; font-variant: small-caps; letter-spacing: 0.13em;
+}
+.condition-none { color: #8e7650; font-size: 0.78rem; font-style: italic; }
+.condition-token {
+  display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.24rem 0.45rem;
+  color: #e1c68e; border: 1px solid rgba(194, 151, 84, 0.35); border-radius: 3px;
+  background: rgba(16, 8, 3, 0.35); font: inherit; font-size: 0.76rem; cursor: pointer;
+}
+.condition-token:hover, .condition-token:focus-visible { color: #ffe0a3; border-color: #c69a55; outline: none; }
+.condition-icon { width: 22px; height: 22px; flex: none; }
+.condition-popover {
+  position: fixed; left: 50%; bottom: 4.1rem; z-index: 13; transform: translateX(-50%);
+  width: min(390px, calc(100vw - 2rem)); box-sizing: border-box; padding: 1rem 2.5rem 1rem 1rem;
+  display: grid; grid-template-columns: 44px 1fr; gap: 0.8rem; align-items: start;
+  color: #352313; border: 1px solid #987343; border-radius: 3px;
+  background: var(--noise), linear-gradient(150deg, #ead9ae, #d3bc86);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+}
+.condition-popover[hidden] { display: none; }
+.condition-popover-mark { color: #7f2b24; }
+.condition-popover-mark .condition-icon { width: 42px; height: 42px; }
+.condition-popover h2 { margin: 0 0 0.25rem; color: #63211d; font-size: 1.05rem; }
+.condition-popover p { margin: 0; font-size: 0.88rem; line-height: 1.45; }
+.condition-popover-close { position: absolute; top: 0.25rem; right: 0.4rem; padding: 0.15rem 0.35rem; border: 0; background: none; color: #765c3d; font-size: 1.25rem; cursor: pointer; }
+.player-chat-slot { border-left: 1px solid rgba(174, 132, 72, 0.32); padding-left: 0.45rem; }
+.tome-instruction { bottom: 3.7rem; }
+.steward-door { bottom: 0.85rem; }
+
 /* ---------- viewport & scale ---------- */
 .tome-viewport {
   position: absolute; inset: 0; z-index: 3;
@@ -207,6 +248,16 @@ body::after {
 .paper-left .page-number { left: 44px; }
 .paper-right .page-number { right: 48px; }
 
+.spread-step {
+  position: absolute; z-index: 3; bottom: 7px; width: 32px; height: 28px;
+  padding: 0; border: 0; background: transparent; color: var(--rubric);
+  font-family: var(--serif); font-size: 1.25rem; cursor: pointer;
+}
+.spread-step[hidden] { display: none; }
+.spread-prev { left: 50%; }
+.spread-next { right: 50%; }
+.spread-step:hover { transform: translateY(-1px); color: var(--ink); }
+
 .close-tome {
   position: absolute; top: 12px; left: 40px; z-index: 2;
   background: none; border: none; cursor: pointer;
@@ -251,6 +302,24 @@ body::after {
 .mini-store { padding: 0.1rem 0; border-bottom: 1px dotted rgba(107, 81, 54, 0.35); }
 .mini-store strong { float: right; margin-left: 1.4rem; color: var(--ink); }
 
+/* Town owns the settlement ledger. These figures appear nowhere else in the
+   tome chrome or other chapters. */
+.town-page .chapter-kicker { margin-top: 1.2rem; }
+.town-at-glance {
+  display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 0.65rem;
+  margin: 1.2rem 0 1.5rem; text-align: center;
+}
+.town-at-glance > div {
+  padding: 0.8rem 0.45rem; border: 1px solid rgba(107,81,54,0.35);
+  background: rgba(255,248,226,0.22);
+}
+.town-at-glance strong { display: block; color: var(--ink); font-size: 1.25rem; font-weight: 500; }
+.town-at-glance span { display: block; color: var(--ink-faded); font-variant: small-caps; font-size: 0.76rem; letter-spacing: 0.08em; }
+.town-stores { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.4rem 0.7rem; }
+.town-store { display: flex; align-items: baseline; gap: 0.45rem; padding: 0.35rem 0; border-bottom: 1px dotted rgba(107,81,54,0.38); }
+.town-store strong { min-width: 2ch; color: var(--rubric); font-size: 1.2rem; }
+.town-store span { color: var(--ink-faded); font-variant: small-caps; }
+
 /* ---------- right page: content in ink ---------- */
 .page-heading {
   font-size: 1.25rem; font-weight: 600; margin: 0.4rem 0 0.8rem;
@@ -281,6 +350,94 @@ body::after {
 .tome-entry { padding: 0.5rem 0; }
 .tome-entry .season { color: var(--rubric); font-variant: small-caps; font-size: 0.82rem; }
 .tome-empty { color: var(--ink-faded); font-style: italic; text-align: center; margin-top: 3rem; }
+.page-continuation { padding-top: 1.9rem; }
+
+/* A character occupies one spread exactly: no nested sheet, no scrolling. */
+.paper-scroll.sheet-page-content { overflow: hidden; font-size: 11.5px; line-height: 1.24; }
+.character-sheet-page h1 { margin: 0 0 0.15rem; font-size: 1.85rem; font-weight: 500; }
+.character-sheet-page h2 {
+  margin: 0.42rem 0 0.18rem; color: var(--rubric); font-size: 0.74rem;
+  font-variant: small-caps; letter-spacing: 0.09em;
+}
+.sheet-identity { display: grid; grid-template-columns: 72px 1fr; gap: 0.75rem; align-items: center; margin: 0.3rem 0 0.7rem; }
+.sheet-portrait {
+  width: 68px; height: 76px; display: grid; place-items: center; overflow: hidden;
+  border: 1px solid rgba(107,81,54,0.48); color: var(--rubric); font-size: 2rem;
+  background: rgba(255,248,226,0.22);
+}
+.sheet-portrait img { width: 100%; height: 100%; object-fit: cover; filter: sepia(0.45); }
+.sheet-traits { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.25rem; margin: 0.45rem 0; }
+.sheet-trait { padding: 0.38rem 0.1rem; text-align: center; border: 1px solid rgba(107,81,54,0.3); }
+.sheet-trait strong { display: block; color: var(--ink); font-size: 1rem; }
+.sheet-trait span { color: var(--ink-faded); font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.02em; }
+.sheet-lines { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.35rem; }
+.sheet-line { padding: 0.32rem 0.45rem; border-bottom: 1px dotted rgba(107,81,54,0.36); }
+.sheet-notes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.35rem 0.6rem; }
+.sheet-note strong, .sheet-note span { display: block; }
+.sheet-note strong { color: var(--ink-faded); font-size: 0.7rem; }
+.sheet-note span { font-family: var(--hand); font-size: 0.82rem; }
+.sheet-defenses { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin: 0.75rem 0 0.4rem; text-align: center; }
+.sheet-defenses > div { padding: 0.45rem 0.2rem; border: 1px solid rgba(107,81,54,0.32); }
+.sheet-defenses strong, .sheet-defenses span { display: block; }
+.sheet-defenses strong { color: var(--ink); font-size: 1.15rem; }
+.sheet-defenses span { color: var(--ink-faded); font-size: 0.65rem; font-variant: small-caps; }
+.sheet-vitals { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.28rem 0.6rem; margin-bottom: 0.25rem; }
+.sheet-vitals > div { display: grid; grid-template-columns: 62px 1fr; align-items: center; }
+.sheet-vitals > div > span { color: var(--ink-faded); font-size: 0.68rem; font-variant: small-caps; }
+.sheet-pips { display: flex; gap: 3px; }
+.sheet-pip {
+  width: 13px; height: 13px; padding: 0; border: 1px solid rgba(107,81,54,0.65);
+  border-radius: 50%; background: rgba(255,248,226,0.22); cursor: pointer;
+}
+.sheet-pip.marked { background: var(--rubric); box-shadow: inset 0 0 0 2px rgba(255,248,226,0.35); }
+.sheet-pip.hope.marked { background: #a27825; }
+.sheet-features { columns: 2; column-gap: 0.8rem; }
+.sheet-features h2, .sheet-feature { break-inside: avoid; }
+.sheet-feature { margin: 0 0 0.2rem; }
+.sheet-feature strong { color: var(--ink); }
+.sheet-feature-columns { column-span: all; display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+
+/* Inventory is intentionally its own chapter. Descriptions use the details
+   already stored on weapons, armor, potions and domain cards. */
+.inventory-card { padding: 0.45rem 0 0.65rem; border-bottom: 1px dotted rgba(107,81,54,0.42); }
+.inventory-card h3 { margin: 0.08rem 0 0.2rem; color: var(--ink); font-size: 1rem; }
+.inventory-card p { margin: 0.2rem 0 0; font-size: 0.86rem; }
+.inventory-facts { color: var(--ink-faded); font-size: 0.78rem; font-variant: small-caps; }
+.domain-item { margin-bottom: 0.35rem; }
+.inventory-entry { display: block; width: 100%; color: inherit; text-align: left; font-family: inherit; background: none; border-width: 0 0 1px; cursor: pointer; }
+.inventory-entry:hover, .inventory-entry:focus-visible { background: rgba(122, 82, 35, 0.08); outline: none; }
+.inventory-note { color: var(--rubric); font-family: var(--hand); }
+.inventory-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 0.7rem; }
+.inventory-add { color: var(--rubric); border: 0; border-bottom: 1px dotted currentColor; background: none; font: inherit; font-size: 0.78rem; cursor: pointer; }
+
+.inventory-dialog-backdrop { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 1rem; background: rgba(12, 6, 2, 0.72); backdrop-filter: blur(3px); }
+.inventory-dialog-backdrop[hidden] { display: none; }
+.inventory-dialog { position: relative; width: min(560px, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); overflow: auto; box-sizing: border-box; padding: 1.3rem; color: #392617; border: 1px solid #9a7848; border-radius: 4px; background: var(--noise), linear-gradient(145deg, #eadab2, #cdb47f); box-shadow: 0 18px 60px rgba(0,0,0,0.72); }
+.inventory-dialog-close { position: absolute; top: 0.35rem; right: 0.5rem; z-index: 2; border: 0; background: none; color: #725638; font-size: 1.5rem; cursor: pointer; }
+.inventory-dialog-grid { display: grid; grid-template-columns: 86px 1fr; gap: 1rem; align-items: center; }
+.inventory-dialog h2 { margin: 0.1rem 0 0.4rem; color: #65251f; }
+.inventory-rules { margin: 0; font-size: 0.9rem; line-height: 1.45; }
+.inventory-art { width: 78px; height: 92px; display: grid; place-items: center; color: #6f5130; }
+.inventory-art svg { width: 64px; height: 76px; overflow: visible; }
+.inventory-art.is-consumable { color: #792f2a; filter: drop-shadow(0 4px 5px rgba(60,24,12,.24)); }
+.inventory-art .liquid { fill: rgba(145,42,49,.48); stroke: #792f2a; transform-origin: center bottom; }
+.inventory-art.is-using { animation: potion-tip .45s ease-in-out both; }
+.inventory-art.is-used .liquid { transform: scaleY(0); transition: transform .35s ease; }
+@keyframes potion-tip { 0% { transform: rotate(0); } 55% { transform: rotate(24deg) translateY(-4px); } 100% { transform: rotate(0); } }
+.inventory-form { display: grid; grid-template-columns: 1fr 110px; gap: 0.7rem; margin-top: 1rem; }
+.inventory-form label { display: flex; flex-direction: column; gap: 0.2rem; color: #745b3e; font-size: 0.76rem; font-variant: small-caps; letter-spacing: .06em; }
+.inventory-form label:has(textarea), .inventory-form label:has(#inventory-name), .inventory-form label:has(#inventory-kind) { grid-column: 1 / -1; }
+.inventory-form input, .inventory-form textarea, .inventory-form select, .inventory-use-panel input, .inventory-use-panel select { box-sizing: border-box; width: 100%; padding: .45rem; color: #392617; border: 1px solid rgba(105,76,42,.45); border-radius: 2px; background: rgba(255,248,226,.5); font: inherit; }
+.inventory-dialog-actions { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1rem; }
+.inventory-dialog-actions[hidden] { display: none; }
+.inventory-dialog-actions button, .inventory-use-panel button { padding: .45rem .8rem; border: 1px solid #805d36; border-radius: 3px; color: #f0dcad; background: #674122; font: inherit; cursor: pointer; }
+.inventory-dialog-actions .consume, .inventory-use-panel .consume { background: #772f29; border-color: #5e211d; }
+.inventory-use-panel { margin-top: 1rem; padding: .8rem; border: 1px solid rgba(122,69,37,.38); background: rgba(255,248,226,.27); }
+.inventory-use-panel h3 { margin: 0 0 .55rem; color: #65251f; }
+.inventory-use-panel label { display: block; margin: .5rem 0; }
+.inventory-result { margin-top: 1rem; padding: .8rem; text-align: center; color: #5e211d; border-top: 1px solid rgba(122,69,37,.38); }
+.use-roll { width: 52px; height: 52px; display: grid; place-items: center; margin: 0 auto .5rem; color: #f1dbab; border-radius: 9px; background: #772f29; font-size: 1.5rem; transform: rotate(3deg); animation: result-land .35s ease-out both; }
+@keyframes result-land { from { opacity: 0; transform: translateY(-18px) rotate(-18deg) scale(.7); } to { opacity: 1; transform: translateY(0) rotate(3deg) scale(1); } }
 
 /* embeds: dark pages tipped into the book like plates */
 .paper-scroll.embed { overflow: hidden; inset: 24px 30px 30px 24px; }
@@ -315,7 +472,10 @@ body::after {
   transition: transform 1.05s cubic-bezier(0.35, 0.05, 0.25, 1), z-index 0s linear 1s;
   z-index: 6;
 }
-.tome.open .front-cover { transform: rotateY(-180deg); z-index: 3; }
+/* Once open, the flipped cover still projects a hit-box over the right page;
+   drop its pointer events so clicks reach the pages beneath (the "open the
+   book" affordance only matters while closed). */
+.tome.open .front-cover { transform: rotateY(-180deg); z-index: 3; pointer-events: none; }
 .cover-face {
   position: absolute; inset: 0; border-radius: 6px 14px 14px 6px;
   backface-visibility: hidden; overflow: hidden;
@@ -417,51 +577,50 @@ body::after {
 @keyframes leaf-forward { from { transform: rotateY(0); } to { transform: rotateY(-178deg); } }
 @keyframes leaf-backward { from { transform: rotateY(-178deg); } to { transform: rotateY(0); } }
 
-/* ---------- keepsakes: the bookmarks ---------- */
-.keepsakes { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+/* ---------- keepsakes: bookmarks along the TOP edge ---------- */
+/* A fixed row of labelled tabs tucked over the head of the book. Closed, they
+   sit across the cover; opening the book fans them across the whole spread.
+   The active tab is drawn DOWN and reddens — nothing ever swaps sides, so a
+   chapter stays exactly where the eye last found it. */
+.keepsakes {
+  position: absolute; top: -40px; left: 662px; right: 26px; z-index: 7;
+  display: flex; justify-content: center; align-items: flex-start;
+  gap: clamp(3px, 0.7vw, 12px); pointer-events: none;
+}
+/* Closed, the tabs sit across the cover (right half); open, they span the whole
+   spread. Position snaps rather than transitions — a left/right transition here
+   stalls at its start value in this stacking/transform context. */
+.tome.open .keepsakes { left: 70px; right: 70px; }
 .keepsake {
-  position: absolute; pointer-events: auto; cursor: pointer;
-  background: none; border: none; padding: 0;
-  top: var(--hang); width: 168px; height: 46px;
-  transform: rotate(var(--tilt));
-  transition: transform 0.3s ease, left 0.9s cubic-bezier(0.35, 0.05, 0.25, 1), right 0.9s cubic-bezier(0.35, 0.05, 0.25, 1);
-  filter: drop-shadow(0 3px 3px rgba(10, 5, 1, 0.5));
+  pointer-events: auto; cursor: pointer; background: none; border: none; padding: 0;
+  position: relative; flex: 0 1 132px; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  transition: transform 0.35s cubic-bezier(0.35, 0.05, 0.25, 1);
+  filter: drop-shadow(0 3px 4px rgba(10, 5, 1, 0.45));
 }
-/* closed & right-side: poking out of the fore-edge */
-.keepsake { right: -128px; }
-.keepsake:hover { transform: rotate(var(--tilt)) translateX(9px); }
-.keepsake.active { transform: rotate(var(--tilt)) translateX(15px); }
-/* chapters already passed hang out of the left page */
-.keepsake.side-left { right: auto; left: -128px; }
-.keepsake.side-left:hover { transform: rotate(calc(var(--tilt) * -1)) translateX(-9px); }
-.keepsake.side-left.active { transform: rotate(calc(var(--tilt) * -1)) translateX(-15px); }
-
-.keepsake-art { position: absolute; inset: 0; display: block; }
-.keepsake-art svg { width: 100%; height: 100%; overflow: visible; }
-.keepsake:not(.still) .keepsake-art {
+.keepsake-emblem { width: 60px; height: 20px; flex: none; }
+.keepsake-emblem svg { width: 100%; height: 100%; overflow: visible; }
+.keepsake:not(.still) .keepsake-emblem {
   animation: sway var(--sway, 6s) ease-in-out infinite alternate;
-  transform-origin: left center;
+  transform-origin: center bottom;
 }
-.keepsake.side-left .keepsake-art { transform: scaleX(-1); transform-origin: center; }
-.keepsake.side-left:not(.still) .keepsake-art { animation: sway-left var(--sway, 6s) ease-in-out infinite alternate; }
-@keyframes sway { from { rotate: -0.7deg; } to { rotate: 1.1deg; } }
-@keyframes sway-left { from { rotate: 0.7deg; } to { rotate: -1.1deg; } }
-
+@keyframes sway { from { rotate: -1.4deg; } to { rotate: 1.4deg; } }
 .keepsake-label {
-  position: absolute; top: 50%; right: 2px; transform: translateY(-50%) rotate(var(--label-tilt, -2deg));
-  max-width: 120px; padding: 0.14em 0.55em;
-  font-family: var(--hand); font-size: 0.8rem; line-height: 1.2; color: #4a3018;
-  background:
-    var(--noise),
-    linear-gradient(150deg, #eddfb4, #d9c58f);
-  border: 1px solid rgba(107, 81, 54, 0.45); border-radius: 2px;
+  max-width: 100%; padding: 0.16em 0.6em;
+  font-family: var(--hand); font-size: 0.82rem; line-height: 1.2; color: #4a3018;
+  background: var(--noise), linear-gradient(150deg, #eddfb4, #d9c58f);
+  border: 1px solid rgba(107, 81, 54, 0.45); border-top: 3px solid var(--tab, #a8402f);
+  border-radius: 2px 2px 3px 3px;
   box-shadow: 0 2px 4px rgba(10, 5, 1, 0.35);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: color 0.3s, box-shadow 0.3s;
 }
-.keepsake.side-left .keepsake-label { right: auto; left: 2px; }
-.keepsake.active .keepsake-label { color: var(--rubric); border-color: rgba(138, 47, 38, 0.55); }
-/* the parchment scrap IS its own label */
-.ks-scrap .keepsake-label { background: none; border: none; box-shadow: none; }
+.keepsake:hover { transform: translateY(6px); }
+.keepsake.active { transform: translateY(12px); z-index: 1; }
+.keepsake.active .keepsake-label {
+  color: var(--rubric);
+  box-shadow: 0 3px 8px rgba(10, 5, 1, 0.45), 0 0 0 1px rgba(201, 165, 88, 0.5);
+}
 .keepsake:focus-visible { outline: 2px solid var(--gilt); outline-offset: 3px; border-radius: 4px; }
 
 /* ---------- narrow screens: scaled and pannable ---------- */
@@ -469,11 +628,20 @@ body::after {
   .folio-head { padding-right: 1.1rem; font-size: 0.78rem; }
   .tome-viewport { display: block; overflow: auto; }
   .tome-scale { transform-origin: top left; padding: 66px 0 40px; width: max-content; }
+  .player-dock { bottom: max(0.45rem, env(safe-area-inset-bottom)); max-width: calc(100vw - 1.2rem); }
+  .condition-bar-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .condition-token span { display: none; }
+  .condition-token { padding: 0.3rem; }
+  .tome-instruction { bottom: 3.85rem; }
+  .inventory-dialog { padding: 1rem; }
+  .inventory-dialog-grid { grid-template-columns: 64px 1fr; }
+  .inventory-art { width: 58px; height: 72px; }
+  .inventory-art svg { width: 52px; height: 62px; }
 }
 
 /* ---------- stillness for those who ask for it ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .candle-glow, .tome, .tome-shadow, .keepsake-art { animation: none !important; }
+  .candle-glow, .tome, .tome-shadow, .keepsake-emblem { animation: none !important; }
   .mote { display: none; }
   .front-cover, .back-board, .keepsake { transition-duration: 0.01s; }
   .turn-sheet.forward, .turn-sheet.backward { animation-duration: 0.01s; }

@@ -1,7 +1,9 @@
 // GM Console. Renders from /api/state; every mutation round-trips the server.
+import { CONDITIONS, conditionIcon } from "/shared/conditions.js";
 
 let S = null; // last fetched gm state
 let selectedBuilding = null;
+let CONSUMABLES = [];
 
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) =>
@@ -29,7 +31,9 @@ async function api(path, opts = {}) {
 }
 
 async function refresh() {
-  S = await api("/api/state");
+  const [nextState, items] = await Promise.all([api("/api/state"), api("/api/items/consumables")]);
+  S = nextState;
+  CONSUMABLES = items;
   renderNav();
   renderDowntimePicker();
   renderStores();
@@ -47,7 +51,7 @@ async function refresh() {
 async function project(body) {
   try {
     await api("/api/screen", { method: "PUT", body });
-    toast(body.type === null ? "The screen goes dark." : "On the screen.");
+    toast(body.type === null ? "Screen darkened." : "Shown on screen.");
     await refresh();
   } catch (e) {
     toast(e.message, true);
@@ -55,7 +59,7 @@ async function project(body) {
 }
 
 function describeScreen(cur) {
-  if (!cur) return "nothing — the settlement name idles there";
+  if (!cur) return "settlement title";
   switch (cur.type) {
     case "image": return `an image${cur.caption ? ` — “${cur.caption}”` : ""}`;
     case "text": return `words${cur.title ? ` — “${cur.title}”` : ""}`;
@@ -151,6 +155,81 @@ async function renderPreview() {
 
 $("#dt-effort").addEventListener("change", renderPreview);
 
+// --- preferences (this device only; campaign state never lives here) ---
+const PREFS_KEY = "settlement-gm-prefs";
+const prefs = (() => {
+  try { return { diceRoller: false, ...JSON.parse(localStorage.getItem(PREFS_KEY) || "{}") }; }
+  catch { return { diceRoller: false }; }
+})();
+function savePrefs() {
+  localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+  applyPrefs();
+}
+function applyPrefs() {
+  $("#dt-cast").hidden = !prefs.diceRoller;
+  if (!prefs.diceRoller) $("#dice-tray").hidden = true;
+  $("#pref-dice").checked = prefs.diceRoller;
+}
+$("#pref-dice").addEventListener("change", () => {
+  prefs.diceRoller = $("#pref-dice").checked;
+  savePrefs();
+});
+applyPrefs();
+
+// --- the dice (optional; spec §5: real 4d6 − 1d6, never a flat 0–30) ---
+const DIE_FACES = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+function d6() {
+  // Rejection sampling keeps every face exactly as likely as a real die.
+  const b = new Uint8Array(1);
+  do { crypto.getRandomValues(b); } while (b[0] >= 252);
+  return (b[0] % 6) + 1;
+}
+
+let casting = false;
+$("#dt-cast").addEventListener("click", () => {
+  if (casting) return;
+  casting = true;
+  const dice = [d6(), d6(), d6(), d6(), d6()];
+  const raw = dice[0] + dice[1] + dice[2] + dice[3] - dice[4];
+  $("#dt-raw").value = "";
+  $("#dice-tray").hidden = false;
+  const row = $("#dice-row");
+  row.innerHTML =
+    dice
+      .map(
+        (_, i) =>
+          `${i === 4 ? '<span class="dice-op">−</span>' : ""}<span class="die${i === 4 ? " neg" : ""}">${DIE_FACES[d6() - 1]}</span>`
+      )
+      .join("") + `<span class="dice-op">=</span><span class="dice-sum" id="dice-sum"></span>`;
+  const els = [...row.querySelectorAll(".die")];
+  const finish = () => {
+    $("#dice-sum").textContent = raw;
+    $("#dt-raw").value = raw;
+    casting = false;
+  };
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    els.forEach((el, i) => (el.textContent = DIE_FACES[dice[i] - 1]));
+    finish();
+    return;
+  }
+  els.forEach((el) => el.classList.add("tumbling"));
+  const spin = setInterval(() => {
+    for (const el of els) if (el.classList.contains("tumbling")) el.textContent = DIE_FACES[d6() - 1];
+  }, 90);
+  dice.forEach((v, i) => {
+    // Bone dice land in turn; the dark one waits an extra beat.
+    setTimeout(() => {
+      els[i].classList.remove("tumbling");
+      els[i].textContent = DIE_FACES[v - 1];
+      els[i].classList.add("settled");
+      if (i === 4) {
+        clearInterval(spin);
+        finish();
+      }
+    }, 700 + i * 330 + (i === 4 ? 480 : 0));
+  });
+});
+
 $("#dt-resolve").addEventListener("click", async () => {
   const raw = parseInt($("#dt-raw").value, 10);
   if (Number.isNaN(raw)) return toast("Enter the raw dice first.");
@@ -218,7 +297,7 @@ $("#adj-apply").addEventListener("click", async () => {
     });
     $("#adj-delta").value = "";
     $("#adj-reason").value = "";
-    toast("Entered into the ledger.");
+    toast("Adjustment recorded.");
     await refresh();
   } catch (e) {
     toast(e.message, true);
@@ -349,7 +428,7 @@ function renderFolkEditor(c) {
     )
     .join("");
   $("#folk-editor").innerHTML = `<div class="card" style="max-width:560px; margin-top:1rem;">
-    <h3>${isNew ? "A stranger arrives" : `Edit ${esc(c.name)}`}</h3>
+    <h3>${isNew ? "Add folk" : `Edit ${esc(c.name)}`}</h3>
     <div class="formrow"><label>Name</label><input type="text" id="ed-name" value="${esc(c.name)}" style="flex:1"></div>
     <div class="formrow"><label>Role</label><input type="text" id="ed-role" value="${esc(c.role || "")}" style="flex:1"></div>
     <div class="formrow"><label>Status</label>
@@ -375,7 +454,7 @@ function renderFolkEditor(c) {
     <hr class="rule"><div class="smallcaps">Aptitude by building</div>${aptRows}
     <hr class="rule">
     <div class="formrow">
-      <button id="ed-save">${isNew ? "Welcome them in" : "Save"}</button>
+      <button id="ed-save">${isNew ? "Add folk" : "Save"}</button>
       <button class="quiet" id="ed-cancel">Cancel</button>
     </div>
   </div>`;
@@ -415,7 +494,7 @@ function placeName(placeId) {
 }
 
 function placeOptions(selectedId) {
-  const opts = [`<option value="" ${!selectedId ? "selected" : ""}>whereabouts unknown</option>`];
+  const opts = [`<option value="" ${!selectedId ? "selected" : ""}>no location</option>`];
   for (const p of S.places || []) {
     opts.push(`<option value="${p.id}" ${selectedId === p.id ? "selected" : ""}>${esc(p.name)}</option>`);
   }
@@ -462,7 +541,7 @@ function renderPeople() {
       api(`/api/people/${el.dataset.move}`, { method: "PUT", body: { placeId: el.value || null } })
         .then(() => {
           const dest = el.value ? placeName(el.value) : null;
-          toast(dest ? `They make for ${dest}.` : "Their whereabouts are now unknown.");
+      toast(dest ? `Moved to ${dest}.` : "Location cleared.");
           return refresh();
         })
         .catch((e) => toast(e.message, true));
@@ -484,15 +563,15 @@ function renderPersonEditor(p) {
       .map(
         (it, i) => `<div class="formrow">
           <input type="text" data-item-name="${i}" value="${esc(it.name)}" placeholder="item" style="width:160px;">
-          <input type="text" data-item-note="${i}" value="${esc(it.note)}" placeholder="what it is, what it does" style="flex:1;">
+          <input type="text" data-item-note="${i}" value="${esc(it.note)}" placeholder="description or rules" style="flex:1;">
           <button class="quiet" data-item-drop="${i}" title="remove">✕</button>
         </div>`
       )
       .join("");
     $("#people-editor").innerHTML = `<div class="card" style="max-width:620px; margin-top:1rem;">
-      <h3>${isNew ? "Word of someone new" : `Edit ${esc(p.name)}`}</h3>
+      <h3>${isNew ? "Add a person" : `Edit ${esc(p.name)}`}</h3>
       <div class="formrow"><label>Name</label><input type="text" id="pe-name" value="${esc(p.name)}" style="flex:1"></div>
-      <div class="formrow"><label>Role</label><input type="text" id="pe-role" value="${esc(p.role || "")}" style="flex:1" placeholder="what they are to the world"></div>
+      <div class="formrow"><label>Role</label><input type="text" id="pe-role" value="${esc(p.role || "")}" style="flex:1" placeholder="occupation or role"></div>
       <div class="formrow"><label>Status</label>
         <select id="pe-status">
           ${["alive", "dead", "missing"].map((s) => `<option ${p.status === s ? "selected" : ""}>${s}</option>`).join("")}
@@ -513,7 +592,7 @@ function renderPersonEditor(p) {
         </div>
       </div>
       <hr class="rule"><div class="smallcaps">Carries</div>
-      ${itemRows || `<p class="muted" style="font-size:0.85rem;">Nothing of note.</p>`}
+      ${itemRows || `<p class="muted" style="font-size:0.85rem;">No items.</p>`}
       <div class="formrow"><button class="quiet" id="pe-item-add">Add an item</button></div>
       <hr class="rule"><div class="smallcaps">Portrait</div>
       <div class="formrow"><label>Portrait URL</label><input type="text" id="pe-portrait" value="${esc(p.portrait || "")}" style="flex:1" placeholder="/portraits/… (optional)"></div>
@@ -530,9 +609,9 @@ function renderPersonEditor(p) {
           </div>`}
       <hr class="rule">
       <div class="formrow">
-        <button id="pe-save">${isNew ? "Note them down" : "Save"}</button>
+        <button id="pe-save">${isNew ? "Add person" : "Save"}</button>
         <button class="quiet" id="pe-cancel">Cancel</button>
-        ${isNew ? "" : `<button class="quiet grave" id="pe-delete" style="margin-left:auto;">Strike from the record</button>`}
+        ${isNew ? "" : `<button class="quiet grave" id="pe-delete" style="margin-left:auto;">Delete person</button>`}
       </div>
     </div>`;
     wire();
@@ -565,7 +644,7 @@ function renderPersonEditor(p) {
     const deleteBtn = $("#pe-delete");
     if (deleteBtn) {
       deleteBtn.onclick = async () => {
-        if (!confirm(`Strike ${p.name} from the record? The players' notes about them go too.`)) return;
+        if (!confirm(`Delete ${p.name}? This also deletes players' notes about them.`)) return;
         try {
           await api(`/api/people/${p.id}`, { method: "DELETE" });
           $("#people-editor").innerHTML = "";
@@ -636,7 +715,7 @@ function renderPlaceEditor(pl) {
   const isNew = !pl;
   pl = pl || { name: "", kind: "", description: "", portrait: null, revealed: true, fixed: false, hidden: {} };
   $("#places-editor").innerHTML = `<div class="card" style="max-width:620px; margin-top:1rem;">
-    <h3>${isNew ? "Mark a place on the map" : `Edit ${esc(pl.name)}`}</h3>
+    <h3>${isNew ? "Add a place" : `Edit ${esc(pl.name)}`}</h3>
     <div class="formrow"><label>Name</label><input type="text" id="ple-name" value="${esc(pl.name)}" style="flex:1"></div>
     <div class="formrow"><label>Kind</label><input type="text" id="ple-kind" value="${esc(pl.kind || "")}" style="flex:1" placeholder="ruin, forest, crossing…"></div>
     <div class="formrow"><label>Shown to players</label><input type="checkbox" id="ple-revealed" ${pl.revealed ? "checked" : ""}> <span class="muted" style="font-size:0.85rem;">appears in the players' journal</span></div>
@@ -660,16 +739,16 @@ function renderPlaceEditor(pl) {
     </div>
     <hr class="rule">
     <div class="formrow">
-      <button id="ple-save">${isNew ? "Mark it down" : "Save"}</button>
+      <button id="ple-save">${isNew ? "Add place" : "Save"}</button>
       <button class="quiet" id="ple-cancel">Cancel</button>
-      ${isNew || pl.fixed ? "" : `<button class="quiet grave" id="ple-delete" style="margin-left:auto;">Strike from the map</button>`}
+      ${isNew || pl.fixed ? "" : `<button class="quiet grave" id="ple-delete" style="margin-left:auto;">Delete place</button>`}
     </div>
   </div>`;
   $("#ple-cancel").onclick = () => ($("#places-editor").innerHTML = "");
   const deleteBtn = $("#ple-delete");
   if (deleteBtn) {
     deleteBtn.onclick = async () => {
-      if (!confirm(`Strike ${pl.name} from the map? The players' notes about it go too; anyone there loses their pin.`)) return;
+      if (!confirm(`Delete ${pl.name}? This also deletes players' notes about it and clears the location from anyone there.`)) return;
       try {
         await api(`/api/places/${pl.id}`, { method: "DELETE" });
         $("#places-editor").innerHTML = "";
@@ -707,33 +786,89 @@ function renderParty() {
         <td><strong>${esc(p.name)}</strong>${p.player ? `<br><span class="muted" style="font-size:0.85rem;">${esc(p.player)}</span>` : ""}</td>
         <td>${esc(p.ancestry || "")} ${esc(p.class || "")}<br><span class="muted" style="font-size:0.85rem;">${esc(p.subclass || "")}</span></td>
         <td><input type="number" class="num" min="1" max="10" value="${p.level}" data-pclevel="${p.id}"></td>
+        <td><div class="condition-toggles" aria-label="Conditions for ${esc(p.name)}">${CONDITIONS.map((condition) => {
+          const active = (p.conditions || []).includes(condition.id);
+          const action = active ? "Clear" : "Apply";
+          return `<button class="condition-toggle${active ? " active" : ""}" type="button" data-pccondition="${p.id}" data-condition="${condition.id}" aria-pressed="${active}" title="${action} ${condition.name}">${conditionIcon(condition.id)}<span>${condition.name}</span></button>`;
+        }).join("")}</div></td>
         <td><a href="/character/${p.id}" target="_blank">Open the sheet ↗</a></td>
-        <td><button class="quiet" data-pcdel="${p.id}">Strike out</button></td>
+        <td><button class="quiet grave" data-pcdel="${p.id}">Delete</button></td>
       </tr>`
     )
     .join("");
   $("#party-table").innerHTML = `
-    <tr><th>Character</th><th>Calling</th><th>Level</th><th>Sheet</th><th></th></tr>
-    ${rows || '<tr><td colspan="5" class="muted">No adventurers yet. Send your players to /create.</td></tr>'}`;
+    <tr><th>Character</th><th>Class</th><th>Level</th><th>Conditions</th><th>Sheet</th><th></th></tr>
+    ${rows || '<tr><td colspan="6" class="muted">No player characters yet. Send your players to /create.</td></tr>'}`;
   for (const el of document.querySelectorAll("[data-pclevel]")) {
     el.onchange = () =>
       api(`/api/party/${el.dataset.pclevel}`, { method: "PUT", body: { level: clampNum(el, 1, 10) } })
         .then(refresh).catch((e) => toast(e.message, true));
   }
-  for (const el of document.querySelectorAll("[data-pcdel]")) {
+  for (const el of document.querySelectorAll("[data-pccondition]")) {
     el.onclick = async () => {
-      const p = S.party.find((x) => x.id === el.dataset.pcdel);
-      if (!confirm(`Strike ${p.name} from the ledger? This removes the character sheet.`)) return;
+      const p = S.party.find((x) => x.id === el.dataset.pccondition);
+      const current = new Set(p.conditions || []);
+      if (current.has(el.dataset.condition)) current.delete(el.dataset.condition);
+      else current.add(el.dataset.condition);
       try {
-        await api(`/api/party/${el.dataset.pcdel}`, { method: "DELETE" });
-        toast(`${p.name} struck from the ledger.`);
+        await api(`/api/party/${p.id}/conditions`, { method: "PUT", body: { conditions: [...current] } });
         await refresh();
       } catch (e) {
         toast(e.message, true);
       }
     };
   }
+  for (const el of document.querySelectorAll("[data-pcdel]")) {
+    el.onclick = async () => {
+      const p = S.party.find((x) => x.id === el.dataset.pcdel);
+      if (!confirm(`Delete ${p.name}? This permanently removes the character sheet and journal drawings.`)) return;
+      try {
+        await api(`/api/party/${el.dataset.pcdel}`, { method: "DELETE" });
+        toast(`${p.name} deleted.`);
+        await refresh();
+      } catch (e) {
+        toast(e.message, true);
+      }
+    };
+  }
+  renderConsumableGrant();
 }
+
+function selectedConsumable() {
+  const value = $("#grant-consumable").value.trim().toLowerCase();
+  return CONSUMABLES.find((item) => item.name.toLowerCase() === value) || null;
+}
+
+function renderConsumableGrant() {
+  const pcSelect = $("#grant-pc");
+  const selectedPc = pcSelect.value;
+  pcSelect.innerHTML = (S.party || []).map((pc) => `<option value="${pc.id}">${esc(pc.name)}</option>`).join("");
+  if ([...pcSelect.options].some((option) => option.value === selectedPc)) pcSelect.value = selectedPc;
+  $("#consumable-options").innerHTML = CONSUMABLES.map((item) => `<option value="${esc(item.name)}"></option>`).join("");
+  const item = selectedConsumable();
+  $("#grant-rules").textContent = item?.description || "Start typing a name to search all 60 standard consumables.";
+  $("#grant-roll").textContent = item ? `Loot roll ${String(item.roll).padStart(2, "0")}` : "";
+}
+
+$("#grant-consumable").addEventListener("input", renderConsumableGrant);
+$("#grant-give").addEventListener("click", async () => {
+  const item = selectedConsumable();
+  const pcId = $("#grant-pc").value;
+  if (!pcId) return toast("Choose a character.", true);
+  if (!item) return toast("Choose a consumable from the list.", true);
+  try {
+    await api(`/api/party/${pcId}/inventory/grant`, {
+      method: "POST",
+      body: { catalogId: item.id, quantity: clampNum($("#grant-quantity"), 1, 5) }
+    });
+    const pc = S.party.find((entry) => entry.id === pcId);
+    toast(`${item.name} given to ${pc.name}.`);
+    $("#grant-consumable").value = "";
+    await refresh();
+  } catch (e) {
+    toast(e.message, true);
+  }
+});
 
 // --- ledger ---
 function renderLedger() {
@@ -764,7 +899,7 @@ function renderLedger() {
 
 $("#season-advance").addEventListener("click", async () => {
   await api("/api/season/advance", { method: "POST" });
-  toast("The season turns.");
+  toast("Season advanced.");
   await refresh();
 });
 

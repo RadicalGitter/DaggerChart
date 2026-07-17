@@ -29,7 +29,9 @@ designing anything; it is the source of truth. Code map + API:
 - The roll math (§5) and the reward curve (§6) are exact; do not rebalance.
 - Tone (§2, §12): steward's ledger, grounded warmth. Catastrophes reported
   plainly, no exclamation marks, no "EPIC LOOT" energy. Buttons are verbs from
-  the fiction (*Resolve the season*, *Open the ledger*).
+  the fiction when the metaphor is literal (*Open the journal*, *Advance the
+  season*); utility navigation stays direct (*Choose your character*, *Next*),
+  and destructive actions state exactly what they remove.
 - GM surfaces: light `ledger.css`. Player surfaces: dark `lamplight.css`.
 - i18n: game terms stay English (match the physical cards); UI phrasing has
   EN/SV strings in `public/shared/i18n.js`; long-press glossary (`TERMS`)
@@ -90,6 +92,17 @@ designing anything; it is the source of truth. Code map + API:
   only `/api/table` and the existing same-origin Journal/Character embeds.
   Shared rules for future visual options live in
   `docs/player-shell-visuals.md`.
+- `/tome` is the aged keepsake shell. Town alone owns settlement figures and
+  buildings. Character is one native two-page spread; adjacent Inventory owns
+  arms, armor, carried items, and further Domain-card spreads. Larger
+  collections turn through spreads inside one keepsake rather than adding
+  bookmarks. Chosen-character data comes from `playerCharacterView()`. Its
+  bottom utility dock shows that PC's Conditions and reserves
+  `#player-chat-slot` for future private messages.
+- PC inventory uses typed entries with lazy migration from legacy strings.
+  Standard Consumables resolve from `data/daggerheart/reference.json`, stack
+  to five, and use atomic server-side reactions. Contract and extension rules:
+  `docs/inventory.md`.
 
 - `/screen` is the projector in front of the table (the drafting board owns
   `/board`): it shows exactly one thing, chosen by the GM — a mood image,
@@ -100,12 +113,9 @@ designing anything; it is the source of truth. Code map + API:
   section in `/gm` holds the forms and the darken control.
 
 ## What's next (agreed ambitions, in rough order)
-- **Five planned features have full backend implementation plans in
-  [docs/master-plan.md](docs/master-plan.md)** — Fear/Hope tracker, GM
-  overlay + hotbar, GM↔player private messages, session perspectives with
-  Opus retelling, rules wiki. Read the plan (and its Shared foundations
-  section) before starting any of them; the GM will add design objectives
-  per feature when picked up.
+- **Seven planned features have backend implementation plans in
+  [docs/master-plan.md](docs/master-plan.md).** Read its Shared foundations
+  before starting one; suggested dependency order is 7 → 1 → 2 → 3 → 5 → 6 → 4.
 - ComfyUI wiring: the GM-side request UI exists on People cards (prompt saved
   to `portraitPrompt`, `POST /api/people/:id/portrait` is a stub) — connect it
   to the local 5090 using `docs/comfyui/waidrin-portraits-workflow.json`
@@ -117,4 +127,3 @@ designing anything; it is the source of truth. Code map + API:
   to building cards for a physical "live board".
 - Sheet personalization: per-class layouts, bookmarkable stats, click-tracked
   shortcut tray on sheets; GM-side custom groupings.
-- Glossary/domain-card plate type for the drafting board (`/board`).

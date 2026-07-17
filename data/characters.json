@@ -4,7 +4,7 @@
     "name": "Garrick",
     "role": "Foreman, the Lumber Camp",
     "status": "alive",
-    "description": "A broad, quiet man who was a sawyer's apprentice before the crossing. Counts his crew twice at dusk. Smells of pine pitch and never raises his voice.",
+    "description": "A broad, quiet man who was a sawyer's apprentice before the crossing. Counts his crew twice at dusk. Smells of pine pitch and never raises his voice. He and Jory go back to the old country — it was Jory who talked him aboard when the passage lists were full, and Garrick is not a man who forgets a kindness.",
     "portrait": null,
     "publicTraits": true,
     "traits": {
@@ -21,7 +21,7 @@
     "hidden": {
       "inspiration": 0,
       "penalty": 0,
-      "notes": ""
+      "notes": "Owes Jory his place on the crossing — Jory vouched for him when the lists were full. Garrick has seen the bunkhouse joinery up close and knows exactly what it is worth; he says nothing, out of debt. If a catastrophe ever traces back to Jory's work, Garrick's silence becomes part of the story. No mechanical effect — a loyalty thread."
     }
   },
   {
@@ -29,7 +29,7 @@
     "name": "Lyra",
     "role": "Foreman, the Hunter's Lodge",
     "status": "alive",
-    "description": "Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else.",
+    "description": "Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since.",
     "portrait": null,
     "publicTraits": true,
     "traits": {
@@ -46,7 +46,7 @@
     "hidden": {
       "inspiration": 0,
       "penalty": 0,
-      "notes": ""
+      "notes": "Her brother drowned in the storm on the crossing. Calder went into the water for him and came out empty-handed; neither of them has ever said a word about it to the other. She takes his palisade rounds without being asked when the anniversary comes round. She works the grief off in miles, not words. A quiet thread to pull: she would like Calder's night-list compared against what she reads in tracks — something is circling that neither of them has named yet."
     }
   },
   {
@@ -54,7 +54,7 @@
     "name": "Jory",
     "role": "Foreman, the Bunkhouse",
     "status": "alive",
-    "description": "Warm, tireless, everyone's friend. Talks a fine plan and swears by his joinery. The bunkhouse fire burns late with his stories, and no one sits alone at it.",
+    "description": "Warm, tireless, everyone's friend. Talks a fine plan and swears by his joinery. The bunkhouse fire burns late with his stories, and no one sits alone at it. Always ready to vouch for a stranger, too — the way he vouched for half the passage list back at the harbor.",
     "portrait": null,
     "publicTraits": true,
     "traits": {
@@ -71,7 +71,7 @@
     "hidden": {
       "inspiration": 0,
       "penalty": -2,
-      "notes": "Genuinely incompetent beneath the confident presentation (spec §8C). The bunkhouse walls have a lean to them; no one has the heart to say so. Pitch openly with his stated competence; the ledger quietly applies the truth. The players' discovery of this is a designed story — protect it."
+      "notes": "Genuinely incompetent beneath the confident presentation (spec §8C). The bunkhouse walls have a lean to them; no one has the heart to say so. Pitch openly with his stated competence; the ledger quietly applies the truth. The players' discovery of this is a designed story — protect it. His real gift is people: half the settlement is here because Jory spoke for them at the harbor — which is exactly why the reckoning, when it comes, will be a human problem and not a carpentry one. Least able to speak up: Garrick, who owes Jory his passage and knows what the joinery is worth."
     }
   },
   {
@@ -79,7 +79,7 @@
     "name": "Calder",
     "role": "Foreman, the Watchtower",
     "status": "alive",
-    "description": "A soldier once, somewhere he doesn't name. Sleeps in the afternoon so he can walk the palisade at night. Keeps a list of everything he's seen move in the dark.",
+    "description": "A soldier once, somewhere he doesn't name. Sleeps in the afternoon so he can walk the palisade at night. Keeps a list of everything he's seen move in the dark. During the storm on the crossing he went into the water three times for other people, and came out with two of them.",
     "portrait": null,
     "publicTraits": true,
     "traits": {
@@ -96,7 +96,7 @@
     "hidden": {
       "inspiration": 0,
       "penalty": 0,
-      "notes": ""
+      "notes": "A deserter. He walked away from a garrison that was ordered to burn a village rather than lose it (which army and where: GM's choice, when it matters). He boarded the ship under a dead man's name — his own is on no list anywhere. The one he couldn't pull from the water was Lyra's brother; he still carries the man's knife and has not found a way to give it back. He watches the dark so well because he is also watching for whoever might come looking for him."
     }
   },
   {
@@ -104,7 +104,7 @@
     "name": "Ellory",
     "role": "Foreman, the Storehouse",
     "status": "alive",
-    "description": "Was a harbor clerk's daughter and it shows: chalk marks on every barrel, a tally for every sack. The settlement eats in winter because Ellory counts in autumn.",
+    "description": "Was a harbor clerk's daughter and it shows: chalk marks on every barrel, a tally for every sack. The settlement eats in winter because Ellory counts in autumn. She keeps the passage manifest from the crossing in a locked drawer — fifty names, she'll tell you, and every one of them her business.",
     "portrait": null,
     "publicTraits": true,
     "traits": {
@@ -121,7 +121,7 @@
     "hidden": {
       "inspiration": 0,
       "penalty": 0,
-      "notes": ""
+      "notes": "Counts the way she does because her father's harbor office was ruined by one false ledger — someone else's hand, his name on it. She will not let a number stand that she didn't write herself. She has already noticed that the manifest holds a name no one in the settlement answers to, and that the count of the living still comes out right. She hasn't worked out that the answer is Calder. When she does, she will want a reason before she wants a judgment — but she will want one of the two."
     }
   }
 ]

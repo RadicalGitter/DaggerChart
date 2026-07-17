@@ -25,11 +25,6 @@
   <div class="candle-glow" aria-hidden="true"></div>
   <div class="dust" id="dust" aria-hidden="true"></div>
 
-  <header class="folio-head">
-    <div class="folio-season" id="folio-season">—</div>
-    <div class="folio-stores" id="folio-stores"></div>
-  </header>
-
   <main class="tome-viewport" id="tome-viewport">
     <div class="tome-scale" id="tome-scale">
       <div class="tome" id="tome" data-state="closed">
@@ -42,12 +37,14 @@
           <div class="paper-skin" aria-hidden="true"></div>
           <button class="close-tome" id="close-tome" type="button" data-i18n="table.book.close">Close the book</button>
           <div class="paper-scroll" id="left-content"></div>
+          <button class="spread-step spread-prev" id="spread-prev" type="button" aria-label="Previous pages">&#8592;</button>
           <span class="page-number" id="left-number"></span>
         </section>
 
         <section class="paper paper-right" aria-label="Right page">
           <div class="paper-skin" aria-hidden="true"></div>
           <div class="paper-scroll" id="right-content"></div>
+          <button class="spread-step spread-next" id="spread-next" type="button" aria-label="Next pages">&#8594;</button>
           <span class="page-number" id="right-number"></span>
         </section>
 
@@ -58,7 +55,6 @@
             <span class="cover-title" id="cover-title">The Settlement</span>
             <span class="cover-rule" aria-hidden="true"></span>
             <span class="cover-subtitle" data-i18n="table.book.subtitle">A ledger kept by lamplight</span>
-            <span class="cover-season" id="cover-season">—</span>
             <span class="cover-hint" data-i18n="table.book.choose">Choose a bookmark</span>
           </span>
           <span class="cover-face cover-inside" aria-hidden="true">
@@ -77,6 +73,23 @@
   </main>
 
   <p class="tome-instruction" id="tome-instruction" data-i18n="table.book.choose">Choose a bookmark</p>
+  <aside class="player-dock" id="player-dock" hidden>
+    <div class="condition-bar" id="condition-bar"></div>
+    <!-- The future private-chat client mounts here so conditions and messages
+         share one player utility dock without competing with the pages. -->
+    <div class="player-chat-slot" id="player-chat-slot" hidden></div>
+  </aside>
+  <section class="condition-popover" id="condition-popover" hidden role="dialog" aria-labelledby="condition-popover-title">
+    <button class="condition-popover-close" id="condition-popover-close" type="button" aria-label="Close">×</button>
+    <div class="condition-popover-mark" id="condition-popover-mark"></div>
+    <div><h2 id="condition-popover-title"></h2><p id="condition-popover-copy"></p></div>
+  </section>
+  <div class="inventory-dialog-backdrop" id="inventory-dialog" hidden>
+    <section class="inventory-dialog" role="dialog" aria-modal="true" aria-labelledby="inventory-dialog-title">
+      <button class="inventory-dialog-close" id="inventory-dialog-close" type="button" aria-label="Close">×</button>
+      <div id="inventory-dialog-body"></div>
+    </section>
+  </div>
   <a class="steward-door" href="/gm" aria-label="ledger">&#10087;</a>
 
   <script type="module" src="tome.js"></script>
