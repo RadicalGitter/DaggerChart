@@ -12,13 +12,13 @@ server/
   store.js    atomic JSON read/write (unique tmp+rename), timestamped backups
   views.js    audience whitelists for GM, shells, lore, PCs, and messages
 public/
-  shared/     themes, i18n, session pools, GM tools/messages, player chat, feedback and UX collectors
+  shared/     themes, i18n, session pools, GM tools/messages, rules search, player chat, feedback and UX collectors
   gm/         GM console (campaign controls, correspondence, quick table, feedback queue, and UX review map)
   login/      trusted-table chooser: finished-character bubbles + draft side view
   player/     player root: identity switcher and visual-tool shelf
-  table/      general arcana-card shell over all five player sections
+  table/      general arcana-card shell over six player sections, including Rules
   table-book/ settlement folio: town, folk, and chronicle
-  tome/       personal tome: journal, character, inventory, and private correspondence
+  tome/       personal tome: journal, character, inventory, Rules, and private correspondence
   screen/     the projector client (renders whatever the GM casts via /api/screen)
   create/     character creation wizard
   character/  live character sheet + hand manager
@@ -155,7 +155,8 @@ Consumable reactions; see [inventory.md](inventory.md).
 - **GM quick tools:** `/gm` and `/board` share a fixed hotbar with bounded Fear
   controls, unread correspondence, and a full-screen quick table. The message
   panel shows one PC thread at a time; the overlay combines live GM-whitelisted
-  PC vitals, the dedicated `hud` board, and static `gm-screen.json` reference rows.
+  PC vitals, the dedicated `hud` board, static `gm-screen.json` reference rows,
+  and a lazy-loaded rules search with compact article previews.
 - **Player correspondence:** `shared/player-chat.*` mounts in the tome's bottom
   dock for the current `settlement-pc`. It fetches only `/api/messages?pc=`,
   marks the player side read on open, and sends with `Ctrl+Enter`; EN/SV labels
@@ -163,8 +164,10 @@ Consumable reactions; see [inventory.md](inventory.md).
 - **Rules reference:** `/rules` ranks client-side search as title prefix,
   title substring, keyword, path, then body. Hashes are stable rule IDs;
   `seeAlso` supplies curated links and escaped body text passes through
-  `termify()`. Desktop uses independently scrolling index/article panes;
-  narrow screens switch between Browse and Rule views.
+  `termify()`. Ranking and normalization live in `shared/rules-search.js` and
+  are reused by the GM hotbar. Desktop uses independently scrolling
+  index/article panes; narrow screens switch between Browse and Rule views.
+  `/table` and `/tome` keep stable `?embed=1` reference iframes.
 - **Player-shell visuals:** `/player` is the root for choosing a focused visual
   tool. `/table`, `/table-book`, and `/tome` share `/api/table`, SSE,
   `settlement-pc`, and the existing embeds. See

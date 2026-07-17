@@ -1,4 +1,5 @@
 import { TERMS } from "/shared/i18n.js";
+import { prepareRuleNodes, searchRuleNodes } from "/shared/rules-search.js";
 
 const root = document.querySelector("#gm-tools-root");
 
@@ -13,6 +14,7 @@ if (root) {
       plus: `<path d="M12 5v14M5 12h14"/>`,
       eye: `<path d="M2.8 12s3.4-5.2 9.2-5.2 9.2 5.2 9.2 5.2-3.4 5.2-9.2 5.2S2.8 12 2.8 12z"/><circle cx="12" cy="12" r="2.3"/>`,
       message: `<path d="M21 15a4 4 0 0 1-4 4H8l-5 3 1.7-5.1A7 7 0 0 1 3 12V8a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5z"/>`,
+      book: `<path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H11a3 3 0 0 1 3 3v16a3 3 0 0 0-3-3H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M20 4.5A2.5 2.5 0 0 0 17.5 2H14v19a3 3 0 0 1 3-3h.5a2.5 2.5 0 0 1 2.5 2.5z"/>`,
       grid: `<rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6"/>`,
       close: `<path d="M5 5l14 14M19 5L5 19"/>`
     };
@@ -30,6 +32,7 @@ if (root) {
       </div>
       <span class="gm-tools-divider" aria-hidden="true"></span>
       <button type="button" class="gm-tools-messages-open" id="gm-tools-messages-open" aria-label="Open private messages" title="Open private messages">${icon("message")}<span class="gm-tools-message-badge" id="gm-tools-message-badge" hidden></span></button>
+      <button type="button" class="gm-tools-rules-open" id="gm-tools-rules-open" aria-label="Search rules" title="Search rules">${icon("book")}</button>
       <button type="button" class="gm-tools-overlay-open" id="gm-tools-overlay-open">${icon("grid")}<span>Quick table</span></button>
       <span class="gm-tools-notice" id="gm-tools-notice" role="status" hidden></span>
     </div>
@@ -72,8 +75,19 @@ if (root) {
           </section>
         </div>
         <section class="gm-tools-section gm-tools-reference" aria-labelledby="gm-tools-reference-title">
-          <div class="gm-tools-section-head"><h2 id="gm-tools-reference-title">Rules at hand</h2><span id="gm-tools-reference-source"></span></div>
-          <div class="gm-tools-reference-grid" id="gm-tools-reference-grid"></div>
+          <div class="gm-tools-section-head"><h2 id="gm-tools-reference-title">Rules at hand</h2><a id="gm-tools-rule-open" href="/rules/" target="_blank" rel="noreferrer">Open full reference</a></div>
+          <div class="gm-tools-rule-search">
+            <label for="gm-tools-rule-query">Search the rules</label>
+            <input id="gm-tools-rule-query" type="search" autocomplete="off" spellcheck="false" placeholder="Attack, rest, Hope…">
+          </div>
+          <div class="gm-tools-rule-workbench" id="gm-tools-rule-workbench" hidden>
+            <nav class="gm-tools-rule-results" id="gm-tools-rule-results" aria-label="Matching rules"></nav>
+            <article class="gm-tools-rule-preview" id="gm-tools-rule-preview" aria-live="polite"></article>
+          </div>
+          <div class="gm-tools-flat-reference" id="gm-tools-flat-reference">
+            <div class="gm-tools-reference-meta"><span>Quick tables</span><span class="gm-tools-reference-source" id="gm-tools-reference-source"></span></div>
+            <div class="gm-tools-reference-grid" id="gm-tools-reference-grid"></div>
+          </div>
         </section>
       </div>
     </section>`;
@@ -84,6 +98,9 @@ if (root) {
   let hud = { items: [], pins: [] };
   let messageData = { totalUnread: 0, threads: [] };
   let reference = null;
+  let rulesCorpus = null;
+  let ruleNodes = [];
+  let selectedRuleId = null;
   let fearBusy = false;
   let overlayOpen = false;
   let messagesOpen = false;
@@ -336,10 +353,63 @@ if (root) {
     </section>`).join("") || `<p class="gm-tools-empty">No quick reference is available.</p>`;
   }
 
+  function ruleBodyHtml(body) {
+    return String(body || "").split(/\n{2,}/).map((block) => {
+      const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+      if (lines.length && lines.every((line) => line.startsWith("- "))) {
+        return `<ul>${lines.map((line) => `<li>${esc(line.slice(2))}</li>`).join("")}</ul>`;
+      }
+      return `<p>${esc(lines.join(" "))}</p>`;
+    }).join("");
+  }
+
+  function renderRuleSearch() {
+    const query = $("#gm-tools-rule-query").value.trim();
+    const workbench = $("#gm-tools-rule-workbench");
+    const flatReference = $("#gm-tools-flat-reference");
+    const open = $("#gm-tools-rule-open");
+    if (!query) {
+      workbench.hidden = true;
+      flatReference.hidden = false;
+      open.href = "/rules/";
+      return;
+    }
+
+    const matches = searchRuleNodes(ruleNodes, query).slice(0, 8);
+    if (!matches.some((node) => node.id === selectedRuleId)) selectedRuleId = matches[0]?.id || null;
+    workbench.hidden = false;
+    flatReference.hidden = true;
+    $("#gm-tools-rule-results").innerHTML = matches.length
+      ? matches.map((node) => `<button type="button" data-rule-result="${esc(node.id)}" ${node.id === selectedRuleId ? `aria-current="true"` : ""}><strong>${esc(node.title)}</strong><span>${(node.path || []).map(esc).join(" / ")}</span></button>`).join("")
+      : `<p class="gm-tools-empty">No matching rules.</p>`;
+
+    const selected = matches.find((node) => node.id === selectedRuleId) || null;
+    $("#gm-tools-rule-preview").innerHTML = selected
+      ? `<div class="gm-tools-rule-path">${(selected.path || []).map(esc).join(" / ")}</div><h3>${esc(selected.title)}</h3><div class="gm-tools-rule-body">${ruleBodyHtml(selected.body)}</div>`
+      : `<p class="gm-tools-empty">Try another rule or table term.</p>`;
+    open.href = selected ? `/rules/#${encodeURIComponent(selected.id)}` : "/rules/";
+
+    for (const button of $("#gm-tools-rule-results").querySelectorAll("[data-rule-result]")) {
+      button.addEventListener("click", () => {
+        selectedRuleId = button.dataset.ruleResult;
+        renderRuleSearch();
+        $("#gm-tools-rule-query").focus();
+      });
+    }
+  }
+
+  async function ensureRules() {
+    if (rulesCorpus) return;
+    rulesCorpus = await api("/api/rules");
+    ruleNodes = prepareRuleNodes(rulesCorpus);
+    selectedRuleId = ruleNodes[0]?.id || null;
+  }
+
   function renderOverlay() {
     renderParty();
     renderHud();
     renderReference();
+    renderRuleSearch();
   }
 
   async function refreshData() {
@@ -386,7 +456,7 @@ if (root) {
     messagesLastFocus?.focus?.();
   }
 
-  async function openOverlay() {
+  async function openOverlay({ focusRules = false } = {}) {
     if (messagesOpen) closeMessages();
     lastFocus = document.activeElement;
     overlayOpen = true;
@@ -394,11 +464,13 @@ if (root) {
     document.body.classList.add("gm-tools-overlay-visible");
     try {
       await refreshData();
+      await ensureRules();
       renderOverlay();
     } catch (error) {
       showNotice(error.message);
     }
-    $("#gm-tools-overlay-close").focus();
+    if (focusRules) $("#gm-tools-rule-query").focus();
+    else $("#gm-tools-overlay-close").focus();
   }
 
   function closeOverlay() {
@@ -418,8 +490,17 @@ if (root) {
   $("#gm-tools-message-copy").addEventListener("keydown", (event) => {
     if (event.key === "Enter" && event.ctrlKey) { event.preventDefault(); void sendMessage(); }
   });
-  $("#gm-tools-overlay-open").addEventListener("click", openOverlay);
+  $("#gm-tools-rules-open").addEventListener("click", () => openOverlay({ focusRules: true }));
+  $("#gm-tools-overlay-open").addEventListener("click", () => openOverlay());
   $("#gm-tools-overlay-close").addEventListener("click", closeOverlay);
+  $("#gm-tools-rule-query").addEventListener("input", renderRuleSearch);
+  $("#gm-tools-rule-query").addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || !event.currentTarget.value) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.value = "";
+    renderRuleSearch();
+  });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && messagesOpen) closeMessages();
     else if (event.key === "Escape" && overlayOpen) closeOverlay();

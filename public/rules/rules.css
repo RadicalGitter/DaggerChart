@@ -294,6 +294,13 @@ button, input { font: inherit; }
 
 .mobile-switch, .article-back { display: none; }
 
+body.embed .rules-masthead,
+body.embed .rule-colors,
+body.embed #lang-toggle,
+body.embed .feedback-trigger { display: none !important; }
+body.embed .rules-workbench { height: 100vh; min-height: 100vh; }
+body.embed .rules-shell { min-height: 100vh; }
+
 #lang-toggle {
   top: 14px;
   right: 145px;
@@ -366,6 +373,11 @@ button, input { font: inherit; }
   }
   .rule-article h2 { font-size: clamp(2rem, 10vw, 2.7rem); }
   .article-body { font-size: 1rem; }
+
+  body.embed .rules-workbench { min-height: calc(100vh - 48px); }
+  body.embed .rules-index,
+  body.embed .article-pane { min-height: calc(100vh - 48px); }
+  body.embed .rule-article { min-height: calc(100vh - 92px); }
 }
 
 @media (max-width: 340px) {

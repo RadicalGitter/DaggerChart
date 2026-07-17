@@ -83,6 +83,10 @@ const SECTIONS = {
             )
             .join("")}</div>`
         : `<p class="empty">${t("table.nochronicle")}</p>`
+  },
+  rules: {
+    count: () => "§",
+    render: () => ""
   }
 };
 
@@ -121,6 +125,12 @@ function desiredPanel() {
         html: `<a class="switch-pc" data-switch>${t("journal.notyou")}</a><iframe src="/character/${encodeURIComponent(pc.id)}"></iframe>`
       };
     return { key: "picker", html: pickerHtml() };
+  }
+  if (selected === "rules") {
+    return {
+      key: "rules",
+      html: `<iframe title="${esc(t("rules.title"))}" src="/rules/?embed=1"></iframe>`
+    };
   }
   return { key: `${selected}`, html: SECTIONS[selected].render(data), volatile: true };
 }

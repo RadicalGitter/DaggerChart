@@ -19,14 +19,15 @@ each other. Rules of the road:
 
 ## Lanes
 
-**2026-07-17 — Codex** · status: IN PROGRESS
-Lane: rules wiki (feature 5). Standalone core is ready: official-SRD-derived
+**2026-07-17 — Codex** · status: DONE
+Lane: rules wiki (feature 5). Added the official-SRD-derived
 `data/daggerheart/rules.json`, cacheable public API, responsive `/rules` page,
-ranked search/deep links/cross-references, glossary integration, i18n, telemetry,
-and docs. Verified static validation, ETag/304, keyboard navigation, EN/SV,
-glossary popovers, and desktop/390px/320px layouts against scratch data. Next
-slice registers it in player shells and adds GM hotbar quick search. Live
-campaign JSON and local media remain outside the commit.
+shared ranked search, deep links/cross-references, glossary integration, i18n,
+telemetry, the `/table` Rules card, the `/tome` knotted-cord spread, and GM
+hotbar quick-search with full-reference links. Verified static validation,
+ETag/304, keyboard navigation, EN/SV, glossary popovers, embedded/standalone
+views, focus return, and desktop/390px/320px layouts against scratch data.
+Live campaign JSON and local media remained outside both commits.
 
 **2026-07-17 — Codex** · status: DONE
 Lane: private GM/PC messages (feature 3): message persistence and audience

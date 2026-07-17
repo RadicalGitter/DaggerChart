@@ -16,9 +16,9 @@ keeps a small Views control back to this root.
 
 ### Card deck — `/table`
 
-The general-purpose arcana deck. Five large tarot-flavored cards open Town,
-Folk of Note, Chronicle, Journal, and Character. On narrow screens the cards
-become banner rows. It is the broadest view, not the root route.
+The general-purpose arcana deck. Six large tarot-flavored cards open Town,
+Folk of Note, Chronicle, Journal, Character, and Rules. On narrow screens the
+cards become banner rows. It is the broadest view, not the root route.
 
 ### Physical tome — `/table-book`
 
@@ -30,16 +30,18 @@ with compact horizontal chapter tabs.
 
 ### Aged tome — `/tome`
 
-A personal weathered tome: Journal, Character, and Inventory only. Cracked
+A personal weathered tome: Journal, Character, Inventory, and Rules. Cracked
 leather, foxed parchment, candlelight, dust, and a restrained breathing motion
 make it feel handled rather than framed in a generic app panel. Navigation is
-by **keepsakes**: a pressed flower, bone charm, and key ring. A keepsake keeps
-its resting height when it migrates to the left edge.
+by **keepsakes**: a pressed flower, bone charm, key ring, and knotted cord. A
+keepsake keeps its resting height when it migrates to the left edge.
 
 Character is one native two-page spread with no nested scrolling. Inventory is
 its adjacent keepsake; its first spread holds equipped arms/armor and carried
 items, while detailed Domain cards turn onto further spreads. Journal remains
-the existing spoiler-safe embed.
+the existing spoiler-safe embed. Rules opens the shared reference in a stable
+embed opposite a lightweight chapter plate; the functional page comes first
+on narrow screens.
 
 Carried entries are buttons into a parchment editor. Mundane items expose
 freeform name, description, and quantity. Standard Consumables retain their

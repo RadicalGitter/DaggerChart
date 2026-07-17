@@ -376,7 +376,8 @@ const STRINGS = {
     "rules.source": "Official source",
     "rules.loading": "Opening the reference…",
     "rules.error": "The rules reference could not be loaded.",
-    "rules.backToIndex": "Back to the index"
+    "rules.backToIndex": "Back to the index",
+    "rules.openStandalone": "Open as a separate reference"
   },
   sv: {
     "create.title": "Skapa din rollperson",
@@ -727,7 +728,8 @@ const STRINGS = {
     "rules.source": "Officiell källa",
     "rules.loading": "Öppnar referensen…",
     "rules.error": "Regelreferensen kunde inte laddas.",
-    "rules.backToIndex": "Tillbaka till registret"
+    "rules.backToIndex": "Tillbaka till registret",
+    "rules.openStandalone": "Öppna som separat referens"
   }
 };
 

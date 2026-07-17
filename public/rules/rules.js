@@ -1,10 +1,14 @@
 import { initI18n, t, termify } from "/shared/i18n.js";
+import { prepareRuleNodes, searchRuleNodes } from "/shared/rules-search.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+const embedded = new URLSearchParams(location.search).get("embed") === "1";
+
+document.body.classList.toggle("embed", embedded);
 
 const state = {
   corpus: null,
@@ -15,39 +19,6 @@ const state = {
   selectedId: null,
   mobilePane: "browse"
 };
-
-function normalize(value) {
-  return String(value || "").trim().toLocaleLowerCase();
-}
-
-function searchable(node) {
-  return {
-    title: normalize(node.title),
-    path: normalize(node.path.join(" ")),
-    body: normalize(node.body),
-    keywords: (node.keywords || []).map(normalize)
-  };
-}
-
-function rank(node, query) {
-  const text = node._search;
-  if (text.title.startsWith(query)) return 0;
-  if (text.title.includes(query)) return 1;
-  if (text.keywords.some((keyword) => keyword.includes(query))) return 2;
-  if (text.path.includes(query)) return 3;
-  if (text.body.includes(query)) return 4;
-  return null;
-}
-
-function search(query) {
-  const clean = normalize(query);
-  if (!clean) return [...state.nodes].sort((a, b) => a.title.localeCompare(b.title));
-  return state.nodes
-    .map((node) => ({ node, score: rank(node, clean) }))
-    .filter((result) => result.score !== null)
-    .sort((a, b) => a.score - b.score || a.node.title.localeCompare(b.node.title))
-    .map((result) => result.node);
-}
 
 function bodyMarkup(body) {
   return String(body || "").split(/\n{2,}/).map((block) => {
@@ -113,7 +84,7 @@ function searchMarkup(nodes) {
 }
 
 function renderIndex() {
-  state.results = search(state.query);
+  state.results = searchRuleNodes(state.nodes, state.query);
   $("#rule-tree").innerHTML = state.query ? searchMarkup(state.results) : treeMarkup(state.nodes);
   const count = state.results.length;
   $("#index-count").textContent = state.query
@@ -185,9 +156,8 @@ async function loadRules() {
   const response = await fetch("/api/rules");
   if (!response.ok) throw new Error(`Rules request failed (${response.status}).`);
   const corpus = await response.json();
-  const nodes = Array.isArray(corpus.nodes) ? corpus.nodes : [];
   state.corpus = corpus;
-  state.nodes = nodes.map((node) => ({ ...node, _search: searchable(node) }));
+  state.nodes = prepareRuleNodes(corpus);
   state.byId = new Map(state.nodes.map((node) => [node.id, node]));
   const requested = decodeURIComponent(location.hash.slice(1));
   state.selectedId = state.byId.has(requested) ? requested : state.nodes[0]?.id;

@@ -105,6 +105,19 @@ const KEEPSAKES = {
         fill="#b38a3d" stroke="#6d5227" stroke-width="0.9"/>
       <path d="M113 23 L143 23" stroke="#e1c477" stroke-width="0.8" opacity="0.65"/>
     </svg>`
+  },
+  cord: {
+    label: { right: "38px", top: "52%", tilt: "-1deg" },
+    art: `<svg viewBox="0 0 168 46" aria-hidden="true">
+      <path d="M0 23 C 28 15, 51 31, 78 22 S 126 13, 158 24" fill="none" stroke="#33575a" stroke-width="3" stroke-linecap="round"/>
+      <path d="M0 21.8 C 28 14, 51 29.8, 78 20.8 S 126 12, 158 22.8" fill="none" stroke="#6f9da0" stroke-width="0.8" opacity="0.8"/>
+      <g fill="#bda35b" stroke="#604b25" stroke-width="0.7">
+        <circle cx="47" cy="27" r="4.5"/><circle cx="94" cy="18" r="4.5"/><circle cx="136" cy="18" r="4.5"/>
+      </g>
+      <path d="M42 22 C 47 17, 53 19, 53 25 C 52 31, 44 33, 41 27 Z" fill="none" stroke="#274447" stroke-width="1.4"/>
+      <path d="M89 16 C 94 10, 101 13, 100 19 C 98 24, 91 25, 88 20 Z" fill="none" stroke="#274447" stroke-width="1.4"/>
+      <path d="M131 16 C 136 11, 143 13, 142 20 C 140 25, 133 25, 130 21 Z" fill="none" stroke="#274447" stroke-width="1.4"/>
+    </svg>`
   }
 };
 
@@ -117,7 +130,8 @@ const KEEPSAKES = {
 const SECTION_ORDER = [
   { key: "journal", title: "journal.title", keepsake: "flower", tab: "#9d7fae", sway: "8.1s" },
   { key: "character", title: "table.character", keepsake: "charm", tab: "#c3ad7e", sway: "5.2s" },
-  { key: "inventory", title: "table.inventory", keepsake: "keyring", tab: "#b5893c", sway: "6.1s" }
+  { key: "inventory", title: "table.inventory", keepsake: "keyring", tab: "#b5893c", sway: "6.1s" },
+  { key: "rules", title: "rules.title", keepsake: "cord", tab: "#4f7e82", sway: "7.2s" }
 ];
 
 let data = null;
@@ -312,13 +326,27 @@ function journalSpreads() {
   return [{ key: `journal:${pc || ""}`, left: { html: `${pageHeading(t("journal.title"))}<p class="chapter-copy">${t("journal.sub")}</p>` }, right: { key: `journal:${pc || ""}`, embed: true, html: `<iframe title="${esc(t("journal.title"))}" src="/journal/?embed=1${pc ? `&pc=${encodeURIComponent(pc)}` : ""}"></iframe>` } }];
 }
 
+function rulesSpreads() {
+  const left = `<div class="tome-rules-plate">${pageHeading(t("rules.title"), t("rules.kicker"))}
+    <div class="tome-rules-knot" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="tome-rules-index"><span>At the Table</span><span>Combat</span><span>Recovery</span><span>Gear</span></div>
+    <a class="tome-rules-external" href="/rules/">${esc(t("rules.openStandalone"))} <span aria-hidden="true">&#8599;</span></a>
+  </div>`;
+  return [{
+    key: "rules",
+    left: { html: left },
+    right: { key: "rules", embed: true, html: `<iframe title="${esc(t("rules.title"))}" src="/rules/?embed=1"></iframe>` }
+  }];
+}
+
 function spreadsFor(section = SECTION_ORDER[selectedIndex]) {
   if (section.key === "town") return townSpreads();
   if (section.key === "folk") return folkSpreads();
   if (section.key === "chronicle") return chronicleSpreads();
   if (section.key === "journal") return journalSpreads();
   if (section.key === "character") return characterSpreads();
-  return inventorySpreads();
+  if (section.key === "inventory") return inventorySpreads();
+  return rulesSpreads();
 }
 
 function renderSide(side, descriptor, force) {
@@ -340,6 +368,7 @@ function pageStartNumber() {
 
 function renderSpread(force = false) {
   if (!data) return;
+  document.body.dataset.tomeSection = SECTION_ORDER[selectedIndex].key;
   setTelemetryMode(`${SECTION_ORDER[selectedIndex].key}:spread-${spreadIndex + 1}`);
   const spreads = spreadsFor();
   spreadIndex = Math.min(spreadIndex, spreads.length - 1);
@@ -622,6 +651,11 @@ function chooseSpread(nextIndex) {
   turnTo(selectedIndex, nextIndex, nextIndex > spreadIndex ? "forward" : "backward");
 }
 
+function resetMobilePagePosition() {
+  if (window.innerWidth > 760) return;
+  requestAnimationFrame(() => { $("#tome-viewport").scrollTop = 0; });
+}
+
 function openBook() {
   if (bookOpen || !data) return;
   bookOpen = true;
@@ -630,6 +664,7 @@ function openBook() {
   document.body.classList.add("tome-open");
   renderKeepsakes();
   layoutBook();
+  resetMobilePagePosition();
 }
 
 function closeBook() {
@@ -657,6 +692,7 @@ function turnTo(nextSection, nextSpread, direction) {
   sideKeys = { left: null, right: null };
   renderSpread(true);
   renderKeepsakes();
+  resetMobilePagePosition();
   if (reduced) return;
   turning = true;
   const sheet = $("#turn-sheet");

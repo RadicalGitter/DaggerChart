@@ -466,6 +466,24 @@ body::after {
   box-shadow: 0 3px 14px rgba(30, 16, 4, 0.45), 0 0 0 6px rgba(255, 248, 226, 0.35);
   background: #211b14;
 }
+.tome-rules-plate { min-height: 100%; display: flex; flex-direction: column; align-items: center; }
+.tome-rules-knot {
+  width: 210px; height: 54px; margin: 1.6rem auto 1.2rem;
+  display: flex; align-items: center; justify-content: space-around;
+  border-top: 3px solid #3e696c; transform: rotate(-1.5deg);
+}
+.tome-rules-knot i {
+  width: 15px; height: 15px; margin-top: -9px; display: block;
+  border: 2px solid #31575a; border-radius: 50%; background: #bca35d;
+  box-shadow: 0 2px 3px rgba(59, 42, 24, 0.28);
+}
+.tome-rules-index {
+  width: min(280px, 86%); display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.55rem; color: var(--ink-faded); font-variant: small-caps; font-size: 0.78rem;
+}
+.tome-rules-index span { padding: 0.45rem 0.3rem; border-bottom: 1px dotted rgba(107,81,54,0.46); text-align: center; }
+.tome-rules-external { margin-top: auto; margin-bottom: 1.2rem; color: var(--rubric); font-size: 0.78rem; text-decoration: none; border-bottom: 1px dotted currentColor; }
+.tome-rules-external:hover { color: var(--ink); }
 .switch-pc {
   display: inline-block; margin-bottom: 0.35rem; cursor: pointer;
   color: var(--ink-faded); font-size: 0.8rem;
@@ -658,6 +676,7 @@ body::after {
     width: 100%; height: auto; min-height: 0; display: flex; flex-direction: column; gap: 10px;
     animation: none; perspective: none;
   }
+  body[data-tome-section="rules"].tome-open .paper-right { order: -1; }
   body.tome-open .tome-shadow,
   body.tome-open .back-board,
   body.tome-open .page-block,
@@ -672,9 +691,13 @@ body::after {
     position: fixed; top: 38px; left: 8px; right: 8px; z-index: 45;
     gap: 5px;
   }
-  body.tome-open .keepsake { flex-basis: 110px; }
+  body.tome-open .keepsake { flex-basis: 84px; }
   body.tome-open .keepsake-emblem { width: 46px; height: 16px; }
-  body.tome-open .keepsake-label { font-size: 0.72rem; }
+  body.tome-open .keepsake-label {
+    min-height: 2.25em; padding: 0.12em 0.28em; display: grid; place-items: center;
+    font-size: 0.64rem; line-height: 1.05; text-align: center;
+    white-space: normal; overflow: visible; text-overflow: clip;
+  }
   body.tome-open .tome-instruction { display: none; }
   .player-dock { bottom: max(0.45rem, env(safe-area-inset-bottom)); max-width: calc(100vw - 1.2rem); flex-wrap: wrap; justify-content: center; }
   .player-dock .session-pools-host { padding-right: 0; padding-bottom: 0.3rem; border-right: 0; border-bottom: 1px solid rgba(174, 132, 72, 0.32); }

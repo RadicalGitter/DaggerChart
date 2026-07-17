@@ -33,12 +33,10 @@ Treat each plan's **Backend** section as settled architecture and its
   keepsake in the `KEEPSAKES` registry (`tome.js`) per
   [player-shell-visuals.md](player-shell-visuals.md).
 
-Suggested remaining order (dependencies, not importance): **finish 5 → 6 → 4**.
-7 (soft delete), 1 (Fear/Hope), 2 (GM quick tools), and 3 (private messages)
-are built. Feature 5's corpus, public API, and standalone reference are built;
-its player-shell and GM-hotbar entry points remain. Feature 6 (campaigns) must
-land before 4, which is campaign-scoped and the only feature needing network
-access.
+Suggested remaining order (dependencies, not importance): **6 → 4**.
+7 (soft delete), 1 (Fear/Hope), 2 (GM quick tools), 3 (private messages), and
+5 (rules reference) are built. Feature 6 (campaigns) must land before 4, which
+is campaign-scoped and the only feature needing network access.
 
 ---
 
@@ -280,15 +278,16 @@ shape above already holds it; nothing else should assume audio exists.
 
 ---
 
-## 5. Rules wiki — CORE BUILT
+## 5. Rules wiki — BUILT
 
-**Core built on `beta` (2026-07-17).** `data/daggerheart/rules.json` contains
+**Built on `beta` (2026-07-17).** `data/daggerheart/rules.json` contains
 34 paraphrased official-SRD entries across At the Table, Combat, Recovery, and
 Gear. `GET /api/rules` serves the corpus with public caching and ETag support;
 `/rules` supplies ranked search, grouped browsing, hash deep links, curated
 cross-references, glossary-enhanced escaped text, EN/SV chrome, content-free
-telemetry, and responsive index/article views. Player-shell registration and
-the GM hotbar quick-search remain the second integration slice.
+telemetry, and responsive index/article views. The same ranking module powers
+the GM hotbar quick-search. `/table` exposes the reference as a sixth card;
+`/tome` uses a knotted cord keepsake and a mobile-first embedded spread.
 
 **Goal.** A searchable, hierarchically grouped rules reference (Combat /
 Adventuring / Downtime / …) with cross-references ("you probably also meant…"),
@@ -333,7 +332,7 @@ run `termify()` over bodies so glossary long-press works inside rules text.
 
 **Frontend sketch.** New `public/rules/` page (lamplight themed, EN/SV
 chrome, search box + tree + article pane) served at `/rules`; registered as a
-shell section (card in `/table`, keepsake in `/tome` — perhaps a knotted cord).
+shell section (card in `/table`, knotted-cord keepsake in `/tome`).
 GM hotbar gets a quick-search that opens the same corpus in the overlay.
 Long-press glossary (`TERMS`) stays the "what does this word mean" layer;
 the wiki is the "how does this work" layer — link the glossary popover's term

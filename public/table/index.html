@@ -75,6 +75,7 @@
   .big-card[data-card="chronicle"] { background: #28333b; border-color: #536d7b; }
   .big-card[data-card="journal"] { background: #332c3a; border-color: #6d5c79; }
   .big-card[data-card="character"] { background: #3a3226; border-color: #756448; }
+  .big-card[data-card="rules"] { background: #24383a; border-color: #4f7378; }
   .deck.no-anim .big-card { transition: none; }
   .big-card:hover { border-color: #b79d66; filter: brightness(1.08); }
   .big-card.on-top { border-color: #d4b86a; }
@@ -189,6 +190,11 @@
         <div class="bc-rule"></div>
         <div class="bc-count" id="count-character">?</div>
         <div class="bc-sub smallcaps" id="sub-character"></div>
+      </button>
+      <button class="big-card" data-card="rules" data-sigil="§">
+        <div class="bc-title smallcaps" data-i18n="rules.title">Rules at Hand</div>
+        <div class="bc-rule"></div>
+        <div class="bc-count" id="count-rules">§</div>
       </button>
     </div>
     <section class="panel" id="panel" hidden>
