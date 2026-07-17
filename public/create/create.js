@@ -60,6 +60,7 @@ const draft = {
   portraitFixSeed: false,
   portraitStepsModifier: 0,
   portraitCfgModifier: 0,
+  portraitStyle: "style2",
   portraitAttempts: [],
   portraitSuggestion: "",
   portraitTags: [],
@@ -87,6 +88,7 @@ const PORTRAIT_TAGS = [
   { id: "practical", label: "portrait.tag.practical", prompt: "practical" }
 ];
 const PORTRAIT_MODIFIERS = [-1, 0, 1, 2];
+const PORTRAIT_STYLES = ["style1", "style2"];
 
 function portraitModifier(value) {
   const numeric = Number(value);
@@ -96,6 +98,14 @@ function portraitModifier(value) {
 function portraitModifierLabel(value) {
   const numeric = portraitModifier(value);
   return `${numeric >= 0 ? "+" : ""}${numeric}`;
+}
+
+function portraitStyle(value) {
+  return PORTRAIT_STYLES.includes(String(value)) ? String(value) : "style2";
+}
+
+function portraitStyleLabel(value) {
+  return t(`portrait.${portraitStyle(value)}`);
 }
 
 function normalizePortraitRequest(request = {}) {
@@ -109,7 +119,8 @@ function normalizePortraitRequest(request = {}) {
     mainHand: String(request.mainHand || "").trim().slice(0, 300),
     offHand: String(request.offHand || "").trim().slice(0, 300),
     stepsModifier: portraitModifier(request.stepsModifier),
-    cfgModifier: portraitModifier(request.cfgModifier)
+    cfgModifier: portraitModifier(request.cfgModifier),
+    style: portraitStyle(request.style)
   };
 }
 
@@ -189,7 +200,8 @@ function portraitRequestSnapshot(context = portraitRequestContext()) {
     mainHand: context.mainHand,
     offHand: context.offHand,
     stepsModifier: draft.portraitStepsModifier,
-    cfgModifier: draft.portraitCfgModifier
+    cfgModifier: draft.portraitCfgModifier,
+    style: draft.portraitStyle
   });
 }
 
@@ -216,7 +228,7 @@ function portraitHistoryHtml() {
       <img src="${esc(attempt.url)}" alt="${esc(t("portrait.attempt", { number: attempt.number }))}" loading="lazy" draggable="false">
       <div class="portrait-attempt-copy">
         <strong>${t("portrait.attempt", { number: attempt.number })}</strong>
-        <small>${t("portrait.attemptSettings", { steps: portraitModifierLabel(attempt.request.stepsModifier), cfg: portraitModifierLabel(attempt.request.cfgModifier) })}</small>
+        <small>${t("portrait.attemptSettings", { style: portraitStyleLabel(attempt.request.style), steps: portraitModifierLabel(attempt.request.stepsModifier), cfg: portraitModifierLabel(attempt.request.cfgModifier) })}</small>
         <span>${t("portrait.seedArchived")}</span>
       </div>
       <div class="portrait-attempt-actions">
@@ -263,6 +275,10 @@ function portraitStudioHtml() {
       </fieldset>
       <fieldset class="portrait-tuning">
         <legend>${t("portrait.tuning")}</legend>
+        <div class="portrait-style-group">
+          <span>${t("portrait.style")}</span>
+          <div class="portrait-style-buttons" role="group" aria-label="${t("portrait.style")}">${PORTRAIT_STYLES.map((style) => `<button type="button" data-portrait-style="${style}" class="${portraitStyle(draft.portraitStyle) === style ? "selected" : ""}" aria-pressed="${portraitStyle(draft.portraitStyle) === style}">${portraitStyleLabel(style)}</button>`).join("")}</div>
+        </div>
         <div class="portrait-tuning-row">
           ${[["steps", "portrait.steps", draft.portraitStepsModifier], ["cfg", "portrait.cfg", draft.portraitCfgModifier]].map(([kind, label, current]) => `<div class="portrait-modifier-group">
             <span>${t(label)}</span>
@@ -725,6 +741,11 @@ const steps = [
           if (modifier.dataset.portraitModifier === "cfg") draft.portraitCfgModifier = value;
           rerender();
         };
+        for (const style of root.querySelectorAll("[data-portrait-style]")) style.onclick = () => {
+          collectPortraitFields(root);
+          draft.portraitStyle = portraitStyle(style.dataset.portraitStyle);
+          rerender();
+        };
         const generate = root.querySelector("#portrait-generate");
         generate.onclick = async () => {
           collectPortraitFields(root);
@@ -911,6 +932,7 @@ function buildCharacter() {
       fixSeed: draft.portraitFixSeed,
       stepsModifier: draft.portraitStepsModifier,
       cfgModifier: draft.portraitCfgModifier,
+      style: draft.portraitStyle,
       lastSeed: Number.isSafeInteger(draft.portraitSeed) ? draft.portraitSeed : null,
       attempts: draft.portraitAttempts.map((attempt) => ({
         ...attempt,
@@ -1124,6 +1146,7 @@ function restoreDraft(serverSaved = null) {
     draft.portraitFixSeed = draft.portraitFixSeed === true;
     draft.portraitStepsModifier = portraitModifier(draft.portraitStepsModifier);
     draft.portraitCfgModifier = portraitModifier(draft.portraitCfgModifier);
+    draft.portraitStyle = portraitStyle(draft.portraitStyle);
     draft.portraitAttempts = normalizePortraitAttempts(draft.portraitAttempts);
     draft.portraitSeed = draft.portraitSeed !== null && draft.portraitSeed !== "" && Number.isSafeInteger(Number(draft.portraitSeed))
       ? Number(draft.portraitSeed)

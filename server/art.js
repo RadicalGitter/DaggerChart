@@ -16,6 +16,10 @@ const DEFAULT_WORKFLOWS = {
 const TOKEN_PATTERN = /\{\{([a-z_]+)\}\}/gi;
 const IMAGE_LIMIT = 32 * 1024 * 1024;
 const MODIFIER_VALUES = new Set([-1, 0, 1, 2]);
+const PORTRAIT_STYLES = Object.freeze({
+  style1: { sampler: "euler", scheduler: "ays+" },
+  style2: { sampler: "dpmpp_3m_sde_gpu", scheduler: "beta" }
+});
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const cleanId = (value) => String(value || "art").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 100) || "art";
@@ -34,6 +38,22 @@ function applySamplerModifiers(graph, stepsModifier, cfgModifier) {
       node.inputs.cfg = Math.max(0, Math.round((node.inputs.cfg + cfgOffset) * 100) / 100);
     }
   }
+  return graph;
+}
+
+function applyPortraitStyle(graph, style) {
+  if (style === null || style === undefined || style === "") return graph;
+  const selected = PORTRAIT_STYLES[String(style)];
+  if (!selected) throw new Error("Choose portrait Style 1 or Style 2.");
+  let applied = false;
+  for (const node of Object.values(graph)) {
+    if (!node?.inputs || typeof node.inputs !== "object") continue;
+    if (!Object.hasOwn(node.inputs, "sampler_name") || !Object.hasOwn(node.inputs, "scheduler")) continue;
+    node.inputs.sampler_name = selected.sampler;
+    node.inputs.scheduler = selected.scheduler;
+    applied = true;
+  }
+  if (!applied) throw new Error("The portrait workflow has no sampler and scheduler controls.");
   return graph;
 }
 
@@ -144,7 +164,7 @@ export class ArtWorkshop {
   }
 
   async request({
-    kind, entityId, prompt, negativePrompt = "", seed, width, height, stepsModifier = 0, cfgModifier = 0,
+    kind, entityId, prompt, negativePrompt = "", seed, width, height, stepsModifier = 0, cfgModifier = 0, style,
     primaryColor = "", secondaryColor = "", tags = [], armor = "", mainHand = "", offHand = ""
   }) {
     if (kind !== "portrait" && kind !== "scenic") throw new Error("Unknown art workflow.");
@@ -155,7 +175,7 @@ export class ArtWorkshop {
 
     const hasSeed = seed !== null && seed !== undefined && seed !== "" && Number.isSafeInteger(Number(seed));
     const numericSeed = hasSeed ? Number(seed) : crypto.randomInt(0, 2_147_483_647);
-    const defaults = kind === "portrait" ? { width: 960, height: 1280 } : { width: 1216, height: 832 };
+    const defaults = kind === "portrait" ? { width: 1104, height: 1472 } : { width: 1536, height: 864 };
     const tokens = {
       prompt: positive,
       positive_prompt: positive,
@@ -172,6 +192,7 @@ export class ArtWorkshop {
       off_hand: compactToken(offHand)
     };
     const graph = applySamplerModifiers(this.loadWorkflow(kind, tokens), stepsModifier, cfgModifier);
+    if (kind === "portrait") applyPortraitStyle(graph, style);
     const clientId = crypto.randomUUID();
     const queued = await this.comfy("prompt", {
       method: "POST",

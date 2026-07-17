@@ -1,6 +1,9 @@
 import { TAGS, ROOT_IDS, findTag, childIds, descendantIds } from "./taxonomy.js";
+import { initTerms } from "/shared/i18n.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
+
+initTerms();
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) =>
@@ -778,6 +781,7 @@ function showContextMenu(songId, x, y) {
         toast(`${song.title} is next.`);
       }
       if (button.dataset.action === "reuse") {
+        $("#song-description").value = song.description || "";
         $("#song-title").value = `${song.title} variation`;
         $("#song-prompt").value = song.prompt || "";
         toast("Prompt returned to the instrument.");
@@ -1231,6 +1235,7 @@ $("#generation-form").onsubmit = async (event) => {
     await api("/api/music/generate", {
       method: "POST",
       body: JSON.stringify({
+        description: $("#song-description").value,
         title: $("#song-title").value,
         prompt: $("#song-prompt").value,
         mode: selected ? "cover" : "create",

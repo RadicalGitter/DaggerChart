@@ -12,6 +12,16 @@ import { retellSession } from "./retell.js";
 import { suggestPortrait } from "./portrait-suggest.js";
 import { artWorkshop } from "./art.js";
 import {
+  SCENE_DIMENSIONS,
+  SCENE_ROOT_IDS,
+  SCENE_TAGS,
+  assertUniquePlaceName,
+  sceneInput,
+  sceneLibraryView,
+  scenePrompt,
+  sceneRecords
+} from "./art-library.js";
+import {
   musicView,
   characterThemeView,
   generateSong,
@@ -191,6 +201,97 @@ app.get("/api/art/status", (_req, res) => res.json({
   }
 }));
 
+function artLibraryView() {
+  const characters = state.pcs
+    .filter((pc) => isPlayablePc(pc))
+    .map((pc) => ({
+      id: pc.id,
+      campaignId: pc.campaignId,
+      campaign: campaignById(pc.campaignId)?.name || "",
+      name: pc.name,
+      player: pc.player || "",
+      portrait: pc.portrait || null,
+      class: pc.class?.name || "",
+      subclass: pc.subclass?.name || "",
+      ancestry: pc.ancestry?.name || "",
+      appearance: {
+        primaryColor: pc.appearance?.primaryColor || "",
+        secondaryColor: pc.appearance?.secondaryColor || ""
+      }
+    }));
+  const recordedUrls = new Set(state.artLibrary.scenes.map((scene) => scene.url));
+  const legacyScenes = state.places
+    .filter((place) => place.portrait && !recordedUrls.has(place.portrait))
+    .map((place) => sceneLibraryView({
+      id: `place_cover_${place.id}`,
+      placeId: place.id,
+      name: `${place.name} overview`,
+      url: place.portrait,
+      width: SCENE_DIMENSIONS.width,
+      height: SCENE_DIMENSIONS.height,
+      createdAt: null
+    }, false));
+  return {
+    dimensions: SCENE_DIMENSIONS,
+    taxonomy: { rootIds: SCENE_ROOT_IDS, tags: SCENE_TAGS },
+    characters,
+    places: state.places.map((place) => ({
+      id: place.id,
+      name: place.name,
+      kind: place.kind || "",
+      revealed: place.revealed !== false
+    })),
+    scenes: [
+      ...state.artLibrary.scenes.map((scene) => sceneLibraryView(scene)),
+      ...legacyScenes
+    ]
+  };
+}
+
+app.get("/api/art/library", (_req, res) => res.json(artLibraryView()));
+
+app.post("/api/art/scenes", guardAsync(async (req, res) => {
+  const input = sceneInput(req.body || {}, state.places);
+  const result = await artWorkshop.request({
+    kind: "scenic",
+    entityId: `${input.placeId}_${Date.now()}`,
+    prompt: scenePrompt(input),
+    negativePrompt: input.negativePrompt,
+    width: SCENE_DIMENSIONS.width,
+    height: SCENE_DIMENSIONS.height
+  });
+  if (!state.places.includes(input.place)) throw new Error("That location is no longer available.");
+  const records = sceneRecords(input, result);
+  state.artLibrary.scenes.push(...records);
+  if (input.castWhenReady) {
+    state.screen.current = {
+      type: "image",
+      refId: records[0].id,
+      url: records[0].url,
+      caption: [input.place.name, input.sublocation, input.name].filter(Boolean).join(" · "),
+      title: "",
+      body: "",
+      setAt: new Date().toISOString()
+    };
+  }
+  persist();
+  broadcast();
+  res.status(201).json({
+    scenes: records.map((record) => sceneLibraryView(record)),
+    projected: input.castWhenReady,
+    message: records.length === 1 ? "The scene is ready." : `${records.length} scene variants are ready.`
+  });
+}));
+
+app.delete("/api/art/scenes/:id", guard((req, res) => {
+  const index = state.artLibrary.scenes.findIndex((scene) => scene.id === req.params.id);
+  if (index < 0) throw new Error("No such scene in the library.");
+  const [scene] = state.artLibrary.scenes.splice(index, 1);
+  persist();
+  broadcast();
+  res.json({ removed: scene.name });
+}));
+
 app.post("/api/art/portrait/suggest", guardAsync(async (req, res) => {
   const draftId = String(req.body.draftId || "");
   if (!/^draft_[a-zA-Z0-9_-]{6,80}$/.test(draftId)) throw new Error("A valid character draft is required.");
@@ -213,6 +314,7 @@ app.post("/api/art/portrait", guardAsync(async (req, res) => {
     height: req.body.height,
     stepsModifier: req.body.stepsModifier,
     cfgModifier: req.body.cfgModifier,
+    style: req.body.style,
     primaryColor: req.body.primaryColor,
     secondaryColor: req.body.secondaryColor,
     tags: req.body.tags,
@@ -329,6 +431,7 @@ app.post("/api/party/:id/portrait", guardAsync(async (req, res) => {
     height: req.body.height,
     stepsModifier: req.body.stepsModifier,
     cfgModifier: req.body.cfgModifier,
+    style: req.body.style,
     primaryColor: req.body.primaryColor,
     secondaryColor: req.body.secondaryColor,
     tags: req.body.tags,
@@ -917,10 +1020,10 @@ app.post("/api/people/:id/portrait", guardAsync(async (req, res) => {
 
 app.post("/api/places", guard((req, res) => {
   const b = req.body;
-  if (!b.name || !b.name.trim()) throw new Error("A name is required.");
+  const name = assertUniquePlaceName(b.name, state.places);
   const place = {
     id: `place_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-    name: b.name.trim(),
+    name,
     kind: b.kind || "",
     description: b.description || "",
     portrait: b.portrait || null,
@@ -940,32 +1043,46 @@ app.post("/api/places/:id/image", guardAsync(async (req, res) => {
   if (!place) throw new Error("Unknown place.");
   place.imagePrompt = String(req.body.prompt || "").trim();
   persist();
+  const input = sceneInput({
+    placeId: place.id,
+    name: `${place.name} overview`,
+    description: place.imagePrompt,
+    negativePrompt: req.body.negativePrompt,
+    selectedTagIds: [],
+    excludedTagIds: [],
+    pins: [],
+    castWhenReady: false
+  }, state.places);
   const result = await artWorkshop.request({
     kind: "scenic",
     entityId: place.id,
-    prompt: place.imagePrompt,
-    negativePrompt: req.body.negativePrompt,
+    prompt: scenePrompt(input),
+    negativePrompt: input.negativePrompt,
     seed: req.body.seed,
-    width: req.body.width,
-    height: req.body.height
+    width: SCENE_DIMENSIONS.width,
+    height: SCENE_DIMENSIONS.height
   });
   if (!state.places.includes(place)) throw new Error("That place is no longer available.");
+  const records = sceneRecords(input, result);
+  state.artLibrary.scenes.push(...records);
   place.portrait = result.url;
   persist();
   broadcast();
-  res.json({ ...result, message: `${place.name}'s scene is ready.` });
+  res.json({ ...result, scenes: records.map((record) => sceneLibraryView(record)), message: `${place.name}'s scene is ready.` });
 }));
 
 app.put("/api/places/:id", guard((req, res) => {
   const i = state.places.findIndex((p) => p.id === req.params.id);
   if (i === -1) throw new Error("Unknown place.");
   const prev = state.places[i];
+  const body = { ...req.body };
+  if (body.name !== undefined) body.name = assertUniquePlaceName(body.name, state.places, prev.id);
   state.places[i] = {
     ...prev,
-    ...req.body,
+    ...body,
     id: prev.id,
     fixed: prev.fixed,
-    hidden: { ...prev.hidden, ...(req.body.hidden || {}) }
+    hidden: { ...prev.hidden, ...(body.hidden || {}) }
   };
   persist();
   broadcast();
@@ -981,6 +1098,7 @@ app.delete("/api/places/:id", guard((req, res) => {
     if (person.placeId === gone.id) person.placeId = null;
   }
   state.notes = state.notes.filter((n) => !(n.kind === "place" && n.refId === gone.id));
+  state.artLibrary.scenes = state.artLibrary.scenes.filter((scene) => scene.placeId !== gone.id);
   persist();
   broadcast();
   res.json({ removed: gone.name });

@@ -102,12 +102,15 @@ export const state = {
   messages: loadJson("messages.json", []),
   journalDoodles: loadJson("journal-doodles.json", {}),
   feedback: loadJson("feedback.json", []),
+  artLibrary: loadJson("art-library.json", { scenes: [] }),
   screen: loadJson("screen.json", { current: null }),
   tables: loadEventTables(),
   reference: loadJson("daggerheart/reference.json", null)
 };
 
 if (!Array.isArray(state.sessions)) state.sessions = [];
+if (!state.artLibrary || typeof state.artLibrary !== "object") state.artLibrary = { scenes: [] };
+if (!Array.isArray(state.artLibrary.scenes)) state.artLibrary.scenes = [];
 
 const knownCampaignIds = new Set(state.campaigns.campaigns.map((campaign) => campaign.id));
 let pcsMigrated = false;
@@ -185,6 +188,7 @@ export function persist() {
   saveJson("messages.json", state.messages);
   saveJson("journal-doodles.json", state.journalDoodles);
   saveJson("feedback.json", state.feedback);
+  saveJson("art-library.json", state.artLibrary);
   saveJson("screen.json", state.screen);
 }
 

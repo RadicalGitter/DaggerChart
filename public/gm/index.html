@@ -364,6 +364,126 @@
   .chance-reveal .entry-text { max-width: 64ch; margin: .85rem 0; font-size: 1rem; line-height: 1.58; }
   .chance-reveal .entry-reward { max-width: 62ch; margin: .8rem 0; padding-left: .8rem; border-left: 3px solid var(--rule-strong); }
   .chance-reveal .seen { color: var(--ink-faint); font-size: .78rem; font-style: italic; }
+
+  /* Image library: a catalog and working scene desk. */
+  body.images-open main { max-width: 1280px; }
+  .image-library-head {
+    display: flex; align-items: end; justify-content: space-between; gap: 1rem;
+    padding-bottom: .85rem; border-bottom: 1px solid var(--rule-strong);
+  }
+  .image-library-head h2 { margin: 0; }
+  .image-library-head p { margin: .25rem 0 0; }
+  .image-tabs {
+    display: grid; grid-template-columns: repeat(2, minmax(110px, 1fr));
+    border: 1px solid var(--rule-strong); border-radius: 4px; overflow: hidden;
+  }
+  .image-tabs button {
+    min-height: 38px; border: 0; border-right: 1px solid var(--rule-strong); border-radius: 0;
+    background: var(--paper); color: var(--ink-soft); font: inherit; font-size: .78rem;
+    font-variant: small-caps; cursor: pointer;
+  }
+  .image-tabs button:last-child { border-right: 0; }
+  .image-tabs button.active { background: var(--ink); color: var(--paper); }
+  .image-pane { padding-top: 1.2rem; }
+  .image-pane[hidden] { display: none; }
+  .image-count { margin: 0 0 .8rem; color: var(--ink-faint); font-size: .75rem; font-variant: small-caps; }
+  .image-character-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 1rem; }
+  .image-character-card, .scene-card {
+    min-width: 0; overflow: hidden; border: 1px solid var(--rule-strong); border-radius: 5px;
+    background: var(--paper-raised); box-shadow: 0 5px 14px rgba(58, 40, 25, .07);
+  }
+  .image-character-card figure, .scene-card figure { margin: 0; background: var(--paper-inset); }
+  .image-character-card figure { aspect-ratio: 3 / 4; }
+  .scene-card figure { aspect-ratio: 16 / 9; }
+  .image-character-card img, .scene-card img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .image-character-card .missing-portrait {
+    display: grid; width: 100%; height: 100%; place-items: center; padding: 1rem; box-sizing: border-box;
+    color: var(--ink-faint); text-align: center; font-style: italic;
+  }
+  .image-card-copy { padding: .75rem .8rem .85rem; }
+  .image-card-copy h3 { margin: 0; font-size: 1rem; overflow-wrap: anywhere; }
+  .image-card-copy p { margin: .25rem 0 .6rem; color: var(--ink-soft); font-size: .78rem; }
+  .image-card-actions { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .image-card-actions button, .image-card-actions a { font-size: .72rem; }
+  .scene-workbench { margin-bottom: 1.7rem; border-bottom: 1px solid var(--rule-strong); }
+  .scene-workbench-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: .8rem; }
+  .scene-workbench-head h3 { margin: 0; }
+  .scene-workbench-head span { color: var(--ink-faint); font-size: .72rem; font-variant: small-caps; }
+  .scene-fields { display: grid; grid-template-columns: minmax(220px, .8fr) minmax(250px, 1.2fr); gap: .75rem 1rem; }
+  .scene-fields label, .scene-advanced label, .scene-field > label { display: grid; min-width: 0; gap: .25rem; color: var(--ink-soft); font-size: .78rem; }
+  .scene-field { display: grid; min-width: 0; gap: .25rem; }
+  .scene-fields input, .scene-fields select, .scene-fields textarea, .scene-advanced textarea { width: 100%; box-sizing: border-box; }
+  .scene-field-wide { grid-column: 1 / -1; }
+  .scene-place-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .45rem; }
+  .scene-place-line button { padding: .42rem .65rem; white-space: nowrap; }
+  .scene-tag-desk { margin: 1.1rem 0; padding: 1rem 0; border-top: 1px dotted var(--rule-strong); border-bottom: 1px dotted var(--rule-strong); }
+  .scene-tag-desk-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .scene-tag-desk-head h4 { margin: 0; }
+  .scene-tag-tools { display: flex; flex-wrap: wrap; gap: .35rem; }
+  .scene-tag-tools button { padding: .35rem .55rem; font-size: .72rem; }
+  .scene-tag-pinner { display: grid; grid-template-columns: minmax(180px, 1fr) auto; gap: .45rem; max-width: 520px; margin: .7rem 0 .5rem; }
+  .scene-tag-pins { display: flex; flex-wrap: wrap; gap: .4rem; min-height: 30px; }
+  .scene-pin-wrap { display: inline-flex; align-items: stretch; }
+  .scene-pin {
+    padding: .32rem .55rem; border: 1px dashed var(--rule-strong); border-radius: 999px 0 0 999px;
+    background: transparent; color: var(--ink-soft); font: inherit; font-size: .72rem; cursor: pointer;
+  }
+  .scene-pin.selected { border-style: solid; border-color: var(--moss); color: var(--moss); background: var(--paper-inset); }
+  .scene-pin-remove {
+    width: 28px; padding: 0; border: 1px dashed var(--rule-strong); border-left: 0; border-radius: 0 999px 999px 0;
+    background: transparent; color: var(--ink-faint); font: 1rem/1 sans-serif; cursor: pointer;
+  }
+  .scene-pin-remove:hover { background: var(--paper-inset); color: var(--oxblood); }
+  .scene-tag-route { min-height: 1.1rem; margin: .55rem 0 .15rem; color: var(--ink-faint); font-size: .7rem; font-variant: small-caps; }
+  .scene-tag-stage { min-height: 390px; display: grid; align-content: center; overflow: hidden; }
+  .scene-tag-stage.is-forward { animation: scene-tag-forward .22s ease both; }
+  .scene-tag-stage.is-back { animation: scene-tag-back .18s ease both; }
+  .scene-root-grid, .scene-tag-row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: .7rem; }
+  .scene-root-grid { max-width: 850px; margin: auto; }
+  .scene-tag-group { text-align: center; }
+  .scene-tag-group h5 { margin: .3rem 0 .55rem; color: var(--ink-faint); font-size: .72rem; font-variant: small-caps; }
+  .scene-current-tag { display: grid; place-items: center; margin: .65rem auto; }
+  .scene-tag-bubble {
+    position: relative; width: 112px; height: 112px; flex: 0 0 112px; padding: .7rem;
+    border: 1px solid color-mix(in srgb, var(--rule-strong) 74%, var(--moss));
+    border-radius: 48% 52% 46% 54% / 52% 45% 55% 48%;
+    background: radial-gradient(circle at 34% 28%, rgba(255,255,255,.5), transparent 31%), var(--paper-inset);
+    color: var(--ink-soft); box-shadow: inset 0 0 0 4px rgba(255,255,255,.2), 0 4px 12px rgba(58,40,25,.08);
+    font: 600 .78rem/1.18 Georgia, serif; text-align: center; overflow-wrap: anywhere; cursor: pointer;
+    transition: transform .15s ease, border-color .15s ease, opacity .15s ease, box-shadow .15s ease;
+  }
+  .scene-tag-bubble:nth-child(2n) { border-radius: 53% 47% 51% 49% / 46% 54% 44% 56%; }
+  .scene-tag-bubble:nth-child(3n) { border-radius: 46% 54% 49% 51% / 55% 47% 53% 45%; }
+  .scene-tag-bubble:hover { transform: translateY(-3px) scale(1.025); border-color: var(--ink-soft); }
+  .scene-tag-bubble.explicit { border: 2px solid var(--oxblood); color: var(--oxblood); background-color: var(--paper); }
+  .scene-tag-bubble.inherited { border-color: var(--moss); color: var(--moss); box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--moss) 10%, transparent); }
+  .scene-tag-bubble.excluded { opacity: .48; text-decoration: line-through; border-style: dashed; }
+  .scene-tag-bubble.current { opacity: .38; cursor: pointer; transform: scale(.82); }
+  .scene-tag-bubble.current:hover { opacity: .7; transform: scale(.86); }
+  .scene-tag-bubble small { display: block; margin-top: .3rem; color: var(--ink-faint); font: 400 .58rem/1.1 sans-serif; font-variant: small-caps; }
+  .scene-tag-empty { margin: auto; color: var(--ink-faint); font-style: italic; }
+  .scene-tag-direction { width: 100%; min-height: 92px; box-sizing: border-box; resize: vertical; }
+  .scene-tag-legend { margin: .45rem 0 0; color: var(--ink-faint); font-size: .68rem; }
+  .scene-advanced { margin: .8rem 0; }
+  .scene-advanced summary { color: var(--ink-soft); cursor: pointer; font-size: .78rem; font-variant: small-caps; }
+  .scene-generate-line { display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; padding: .2rem 0 1.2rem; }
+  .scene-generate-line label { display: flex; align-items: center; gap: .4rem; color: var(--ink-soft); font-size: .78rem; }
+  .scene-generate-line .scene-generation-status { color: var(--ink-faint); font-size: .74rem; }
+  .scene-location-group { margin: 1.4rem 0 2rem; }
+  .scene-location-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--rule-strong); }
+  .scene-location-head h3 { margin: 0 0 .4rem; }
+  .scene-location-head button { font-size: .7rem; }
+  .scene-sublocation { margin: .85rem 0 1.1rem; }
+  .scene-sublocation h4 { margin: 0 0 .5rem; color: var(--ink-soft); font-size: .78rem; font-variant: small-caps; }
+  .scene-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .85rem; }
+  @keyframes scene-tag-forward {
+    from { opacity: 0; transform: scale(.9) translateY(12px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes scene-tag-back {
+    from { opacity: 0; transform: scale(1.08) translateY(-8px); }
+    to { opacity: 1; transform: none; }
+  }
   #toast {
     position: fixed; bottom: 1.2rem; right: 1.2rem;
     background: var(--ink); color: var(--paper); padding: 0.6rem 1rem; border-radius: 4px;
@@ -382,6 +502,9 @@
     .almanac-article { padding: 1.1rem 0 1.7rem; }
     .chance-grid { grid-template-columns: 1fr; }
     .chance-tool.travel { grid-column: auto; }
+    .scene-fields { grid-template-columns: 1fr; }
+    .scene-field-wide { grid-column: auto; }
+    .scene-tag-bubble { width: 100px; height: 100px; flex-basis: 100px; }
   }
   @media (max-width: 700px) {
     .layout { display: block; }
@@ -427,6 +550,10 @@
     .chance-controls label { flex: 1 1 128px; }
     .chance-controls input, .chance-controls select { width: 100%; max-width: none; }
     .chance-controls button { flex: 1 1 128px; }
+    .image-library-head { align-items: stretch; }
+    .scene-tag-stage { min-height: 470px; }
+    .scene-root-grid, .scene-tag-row { gap: .45rem; }
+    .scene-tag-bubble { width: 92px; height: 92px; flex-basis: 92px; padding: .5rem; font-size: .7rem; }
   }
   @media (max-width: 430px) {
     .almanac-head { display: block; }
@@ -436,6 +563,16 @@
     .chance-die.compound { font-size: .56rem; }
     .chance-reveal { padding: .9rem .85rem 1rem; }
     .chance-reveal-head { align-items: start; }
+    .image-library-head { display: block; }
+    .image-tabs { width: 100%; margin-top: .75rem; }
+    .scene-place-line, .scene-tag-pinner { grid-template-columns: 1fr; }
+    .scene-tag-stage { min-height: 0; padding: 2rem 0 6rem; }
+    .scene-tag-bubble { width: 86px; height: 86px; flex-basis: 86px; font-size: .65rem; }
+    .scene-grid { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scene-tag-stage.is-forward, .scene-tag-stage.is-back { animation: none; }
+    .scene-tag-bubble { transition: none; }
   }
 </style>
 </head>
@@ -452,6 +589,7 @@
     <a href="#folk" data-nav="folk">Folk</a>
     <a href="#people" data-nav="people">People</a>
     <a href="#places" data-nav="places">Places</a>
+    <a href="#images" data-nav="images">Images</a>
     <a href="#party" data-nav="party">Party</a>
     <a href="#sessions" data-nav="sessions">Sessions</a>
     <a href="#almanac" data-nav="almanac">Almanac</a>
@@ -557,6 +695,74 @@
       <hr class="rule">
       <button id="places-new" class="quiet">Add a place</button>
       <div id="places-editor"></div>
+    </section>
+
+    <section id="sec-images" hidden>
+      <header class="image-library-head">
+        <div>
+          <h2>Image library</h2>
+          <p class="muted">Character portraits and projected views of known places.</p>
+        </div>
+        <div class="image-tabs" role="tablist" aria-label="Image library view">
+          <button type="button" class="active" role="tab" aria-selected="true" aria-controls="image-characters" data-image-view="characters">Characters</button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="image-scenery" data-image-view="scenery">Scenery</button>
+        </div>
+      </header>
+
+      <div class="image-pane" id="image-characters" data-image-pane="characters">
+        <p class="image-count" id="image-character-count"></p>
+        <div class="image-character-grid" id="image-character-grid"></div>
+      </div>
+
+      <div class="image-pane" id="image-scenery" data-image-pane="scenery" hidden>
+        <form class="scene-workbench" id="scene-form">
+          <div class="scene-workbench-head">
+            <h3>Make a view</h3>
+            <span id="scene-format">1536 × 864 · 16:9</span>
+          </div>
+          <div class="scene-fields">
+            <div class="scene-field">
+              <label for="scene-place">Location</label>
+              <span class="scene-place-line"><select id="scene-place" required></select><button type="button" class="quiet" id="scene-open-place">Open location</button></span>
+            </div>
+            <label>Sub-location <input id="scene-sublocation" list="scene-sublocations" maxlength="120" placeholder="Optional — choose or add"></label>
+            <datalist id="scene-sublocations"></datalist>
+            <label>Image name <input id="scene-name" maxlength="120" required placeholder="The view kept in the library"></label>
+            <label class="scene-field-wide">Describe the place <textarea id="scene-description" rows="4" maxlength="6000" placeholder="What is physically present, where the eye rests, and what the moment feels like"></textarea></label>
+          </div>
+
+          <div class="scene-tag-desk">
+            <div class="scene-tag-desk-head">
+              <h4>Visual direction</h4>
+              <div class="scene-tag-tools">
+                <button type="button" class="quiet" id="scene-tag-back">Back</button>
+                <button type="button" class="quiet" id="scene-tag-start">Start over</button>
+                <button type="button" class="quiet" id="scene-tag-clear">Clear tags</button>
+              </div>
+            </div>
+            <div class="scene-tag-pinner"><input id="scene-tag-pin-input" maxlength="80" placeholder="Pin a custom direction"><button type="button" class="quiet" id="scene-tag-pin-add">Pin</button></div>
+            <div class="scene-tag-pins" id="scene-tag-pins" aria-label="Pinned directions"></div>
+            <div class="scene-tag-route" id="scene-tag-route">Start</div>
+            <div class="scene-tag-stage" id="scene-tag-stage" aria-live="polite"></div>
+            <label class="muted" for="scene-tag-direction">Compiled direction — editable</label>
+            <textarea class="scene-tag-direction" id="scene-tag-direction" maxlength="6000"></textarea>
+            <p class="scene-tag-legend">Click to include. Click an inherited branch to leave it out. Double-click to open a branch.</p>
+          </div>
+
+          <details class="scene-advanced">
+            <summary>Generation details</summary>
+            <label>Negative prompt <textarea id="scene-negative" rows="3" maxlength="4000"></textarea></label>
+          </details>
+          <div class="scene-generate-line">
+            <button type="submit" id="scene-generate">Make the view</button>
+            <label><input type="checkbox" id="scene-cast"> show it on the projector when ready</label>
+            <span class="scene-generation-status" id="scene-generation-status"></span>
+          </div>
+        </form>
+
+        <p class="image-count" id="scene-library-count"></p>
+        <div id="scene-library"></div>
+      </div>
     </section>
 
     <section id="sec-party" hidden>

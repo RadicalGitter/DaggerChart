@@ -8,7 +8,26 @@ let CONSUMABLES = [];
 let FEEDBACK = [];
 let TELEMETRY = { pages: {} };
 let ART_STATUS = { workflows: { portrait: { ready: false, reason: "missing" }, scenic: { ready: false, reason: "missing" } } };
+let ART_LIBRARY = { dimensions: { width: 1536, height: 864, aspect: "16:9" }, taxonomy: { rootIds: [], tags: [] }, characters: [], places: [], scenes: [] };
 let selectedUxRoute = null;
+let imageLibraryView = "characters";
+
+function storedScenePins() {
+  try {
+    const pins = JSON.parse(localStorage.getItem("settlement-scene-pins") || "[]");
+    return Array.isArray(pins) ? pins.filter((pin) => pin?.id && pin?.label) : [];
+  } catch {
+    return [];
+  }
+}
+
+const sceneTagState = {
+  route: [],
+  explicit: new Set(),
+  excluded: new Set(),
+  pins: storedScenePins(),
+  clickTimer: null
+};
 
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) =>
@@ -36,18 +55,20 @@ async function api(path, opts = {}) {
 }
 
 async function refresh() {
-  const [nextState, items, feedback, telemetry, artStatus] = await Promise.all([
+  const [nextState, items, feedback, telemetry, artStatus, artLibrary] = await Promise.all([
     api("/api/state"),
     api("/api/items/consumables"),
     api("/api/feedback"),
     api("/api/telemetry").catch(() => ({ pages: {} })),
-    api("/api/art/status").catch(() => ART_STATUS)
+    api("/api/art/status").catch(() => ART_STATUS),
+    api("/api/art/library").catch(() => ART_LIBRARY)
   ]);
   S = nextState;
   CONSUMABLES = items;
   FEEDBACK = feedback;
   TELEMETRY = telemetry;
   ART_STATUS = artStatus;
+  ART_LIBRARY = artLibrary;
   renderNav();
   renderDowntimePicker();
   renderStores();
@@ -55,6 +76,7 @@ async function refresh() {
   renderFolk();
   renderPeople();
   renderPlaces();
+  renderImageLibrary();
   renderParty();
   renderSessions();
   renderLedger();
@@ -293,8 +315,10 @@ function showSection(key) {
   for (const sec of document.querySelectorAll("main > section")) {
     sec.hidden = sec.id !== `sec-${key === "town" ? "town" : key}`;
   }
+  document.body.classList.toggle("images-open", key === "images");
   if (key === "ux") requestAnimationFrame(renderUx);
   if (key === "almanac") setAlmanacView(almanacView);
+  if (key === "images") requestAnimationFrame(renderImageLibrary);
 }
 
 function artHint(kind) {
@@ -304,6 +328,352 @@ function artHint(kind) {
   if (workflow?.reason === "prompt-token-missing") return `Add {{prompt}} to ${workflow.file}.`;
   return workflow?.reason || "The API workflow needs attention.";
 }
+
+// --- image library and scenery tag board ---
+function sceneTags() {
+  return Array.isArray(ART_LIBRARY.taxonomy?.tags) ? ART_LIBRARY.taxonomy.tags : [];
+}
+
+function sceneTagMap() {
+  return new Map(sceneTags().map((tag) => [tag.id, tag]));
+}
+
+function directSceneChildren(id, tagsById = sceneTagMap()) {
+  const tag = tagsById.get(id);
+  return (tag?.groups || []).flatMap((group) => group.ids || []);
+}
+
+function sceneDescendants(id, tagsById = sceneTagMap()) {
+  return directSceneChildren(id, tagsById).flatMap((childId) => [childId, ...sceneDescendants(childId, tagsById)]);
+}
+
+function effectiveSceneTagIds() {
+  const tagsById = sceneTagMap();
+  const effective = new Set();
+  const visit = (id, blocked = false) => {
+    const nextBlocked = blocked || sceneTagState.excluded.has(id);
+    if (!nextBlocked) effective.add(id);
+    for (const childId of directSceneChildren(id, tagsById)) visit(childId, nextBlocked);
+  };
+  for (const id of sceneTagState.explicit) {
+    if (tagsById.has(id)) visit(id);
+  }
+  return sceneTags().map((tag) => tag.id).filter((id) => effective.has(id));
+}
+
+function sceneTagSelectionState(id) {
+  if (sceneTagState.explicit.has(id)) return "explicit";
+  if (sceneTagState.excluded.has(id)) return "excluded";
+  return effectiveSceneTagIds().includes(id) ? "inherited" : "";
+}
+
+function compiledSceneDirection() {
+  const tagsById = sceneTagMap();
+  const authored = effectiveSceneTagIds().map((id) => tagsById.get(id)?.payload).filter(Boolean);
+  const customPins = new Map(sceneTagState.pins.filter((pin) => !pin.authored).map((pin) => [pin.id, pin]));
+  const custom = [...sceneTagState.explicit].map((id) => customPins.get(id)?.payload).filter(Boolean);
+  return [...authored, ...custom].join("; ");
+}
+
+function syncSceneDirection() {
+  const field = $("#scene-tag-direction");
+  if (field) field.value = compiledSceneDirection();
+}
+
+function toggleSceneTag(id) {
+  const tagsById = sceneTagMap();
+  const state = sceneTagSelectionState(id);
+  if (state === "explicit") {
+    sceneTagState.explicit.delete(id);
+    if (tagsById.has(id)) {
+      const branch = new Set([id, ...sceneDescendants(id, tagsById)]);
+      for (const excludedId of [...sceneTagState.excluded]) {
+        if (branch.has(excludedId)) sceneTagState.excluded.delete(excludedId);
+      }
+    }
+  } else if (state === "inherited") {
+    sceneTagState.excluded.add(id);
+  } else if (state === "excluded") {
+    sceneTagState.excluded.delete(id);
+  } else {
+    sceneTagState.explicit.add(id);
+    sceneTagState.excluded.delete(id);
+  }
+  syncSceneDirection();
+  renderSceneTagBoard();
+}
+
+function sceneTagPath(id) {
+  const tagsById = sceneTagMap();
+  const path = [];
+  let cursor = tagsById.get(id);
+  while (cursor) {
+    path.unshift(cursor.id);
+    cursor = cursor.parentId ? tagsById.get(cursor.parentId) : null;
+  }
+  return path;
+}
+
+function openSceneTag(id) {
+  if (!sceneTagMap().has(id)) return;
+  sceneTagState.route = sceneTagPath(id);
+  renderSceneTagBoard("forward");
+}
+
+function sceneTagBack() {
+  if (!sceneTagState.route.length) return;
+  sceneTagState.route.pop();
+  renderSceneTagBoard("back");
+}
+
+function sceneTagBubble(tag, current = false) {
+  const state = current ? "current" : sceneTagSelectionState(tag.id);
+  const stateLabel = current ? "return" : state === "explicit" ? "chosen" : state === "inherited" ? "included" : state === "excluded" ? "left out" : "";
+  return `<button type="button" class="scene-tag-bubble ${state}" data-scene-tag="${esc(tag.id)}" ${current ? "data-scene-current=\"true\"" : ""} aria-pressed="${state === "explicit" || state === "inherited"}">${esc(tag.label)}${stateLabel ? `<small>${esc(stateLabel)}</small>` : ""}</button>`;
+}
+
+function wireSceneTagButtons(root) {
+  for (const button of root.querySelectorAll("[data-scene-tag]")) {
+    const id = button.dataset.sceneTag;
+    if (button.dataset.sceneCurrent) {
+      button.onclick = sceneTagBack;
+      continue;
+    }
+    button.onclick = () => {
+      clearTimeout(sceneTagState.clickTimer);
+      sceneTagState.clickTimer = setTimeout(() => toggleSceneTag(id), 230);
+    };
+    button.ondblclick = (event) => {
+      event.preventDefault();
+      clearTimeout(sceneTagState.clickTimer);
+      openSceneTag(id);
+    };
+  }
+}
+
+function saveScenePins() {
+  localStorage.setItem("settlement-scene-pins", JSON.stringify(sceneTagState.pins));
+}
+
+function renderScenePins() {
+  const root = $("#scene-tag-pins");
+  if (!root) return;
+  root.innerHTML = sceneTagState.pins.length
+    ? sceneTagState.pins.map((pin) => `<span class="scene-pin-wrap"><button type="button" class="scene-pin ${sceneTagState.explicit.has(pin.id) ? "selected" : ""}" data-scene-pin="${esc(pin.id)}">${esc(pin.label)}</button><button type="button" class="scene-pin-remove" data-scene-pin-remove="${esc(pin.id)}" aria-label="Remove ${esc(pin.label)}" title="Remove pin">×</button></span>`).join("")
+    : `<span class="muted" style="font-size:.72rem;">No pinned directions.</span>`;
+  for (const button of root.querySelectorAll("[data-scene-pin]")) {
+    const pin = sceneTagState.pins.find((entry) => entry.id === button.dataset.scenePin);
+    button.onclick = () => {
+      clearTimeout(sceneTagState.clickTimer);
+      sceneTagState.clickTimer = setTimeout(() => toggleSceneTag(pin.id), 230);
+    };
+    button.ondblclick = (event) => {
+      event.preventDefault();
+      clearTimeout(sceneTagState.clickTimer);
+      if (pin.authored) openSceneTag(pin.id);
+    };
+  }
+  for (const button of root.querySelectorAll("[data-scene-pin-remove]")) {
+    button.onclick = () => {
+      sceneTagState.pins = sceneTagState.pins.filter((pin) => pin.id !== button.dataset.scenePinRemove);
+      sceneTagState.explicit.delete(button.dataset.scenePinRemove);
+      saveScenePins();
+      syncSceneDirection();
+      renderSceneTagBoard();
+    };
+  }
+}
+
+function addScenePin() {
+  const field = $("#scene-tag-pin-input");
+  const label = field.value.trim();
+  if (!label) return;
+  const authored = sceneTags().find((tag) => tag.label.toLocaleLowerCase("en") === label.toLocaleLowerCase("en"));
+  const slug = label.toLocaleLowerCase("en").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "direction";
+  const pin = authored
+    ? { id: authored.id, label: authored.label, payload: authored.payload, authored: true }
+    : { id: `scene-pin-${slug}-${Date.now().toString(36)}`, label, payload: label, authored: false };
+  if (!sceneTagState.pins.some((entry) => entry.id === pin.id || entry.label.toLocaleLowerCase("en") === pin.label.toLocaleLowerCase("en"))) {
+    sceneTagState.pins.push(pin);
+    saveScenePins();
+  }
+  field.value = "";
+  renderScenePins();
+}
+
+function renderSceneTagBoard(animation = "") {
+  const stage = $("#scene-tag-stage");
+  if (!stage) return;
+  const tagsById = sceneTagMap();
+  sceneTagState.route = sceneTagState.route.filter((id) => tagsById.has(id));
+  const currentId = sceneTagState.route.at(-1);
+  const current = currentId ? tagsById.get(currentId) : null;
+  $("#scene-tag-route").textContent = current
+    ? sceneTagState.route.map((id) => tagsById.get(id)?.label).filter(Boolean).join(" / ")
+    : "Start";
+  if (!sceneTags().length) {
+    stage.innerHTML = `<p class="scene-tag-empty">The direction index is unavailable.</p>`;
+  } else if (!current) {
+    const roots = ART_LIBRARY.taxonomy.rootIds.map((id) => tagsById.get(id)).filter(Boolean);
+    stage.innerHTML = `<div class="scene-root-grid">${roots.map((tag) => sceneTagBubble(tag)).join("")}</div>`;
+  } else if (!current.groups?.length) {
+    stage.innerHTML = `<div class="scene-current-tag">${sceneTagBubble(current, true)}</div><p class="scene-tag-empty">No finer branches have been written for this direction.</p>`;
+  } else {
+    stage.innerHTML = current.groups.map((group, index) => {
+      const row = (group.ids || []).map((id) => tagsById.get(id)).filter(Boolean).map((tag) => sceneTagBubble(tag)).join("");
+      const currentBubble = index === 0 ? `<div class="scene-current-tag">${sceneTagBubble(current, true)}</div>` : "";
+      return `<div class="scene-tag-group"><h5>${esc(group.label)}</h5><div class="scene-tag-row">${row}</div></div>${currentBubble}`;
+    }).join("");
+  }
+  stage.classList.remove("is-forward", "is-back");
+  if (animation) {
+    void stage.offsetWidth;
+    stage.classList.add(animation === "back" ? "is-back" : "is-forward");
+  }
+  wireSceneTagButtons(stage);
+  renderScenePins();
+  $("#scene-tag-back").disabled = sceneTagState.route.length === 0;
+  $("#scene-tag-start").disabled = sceneTagState.route.length === 0;
+}
+
+function setImageLibraryView(view) {
+  imageLibraryView = view === "scenery" ? "scenery" : "characters";
+  document.querySelectorAll("[data-image-view]").forEach((button) => {
+    const active = button.dataset.imageView === imageLibraryView;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  document.querySelectorAll("[data-image-pane]").forEach((pane) => {
+    pane.hidden = pane.dataset.imagePane !== imageLibraryView;
+  });
+}
+
+function openPlaceFromLibrary(placeId) {
+  const place = (S.places || []).find((entry) => entry.id === placeId);
+  if (!place) return toast("That location is no longer available.", true);
+  location.hash = "places";
+  showSection("places");
+  renderPlaceEditor(place);
+  requestAnimationFrame(() => $("#places-editor")?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }));
+}
+
+function updateSceneSublocations() {
+  const placeId = $("#scene-place")?.value;
+  const names = [...new Set((ART_LIBRARY.scenes || []).filter((scene) => scene.placeId === placeId && scene.sublocation).map((scene) => scene.sublocation))].sort((a, b) => a.localeCompare(b));
+  $("#scene-sublocations").innerHTML = names.map((name) => `<option value="${esc(name)}"></option>`).join("");
+}
+
+function renderCharacterImages() {
+  const characters = (ART_LIBRARY.characters || []).filter((character) => character.portrait);
+  $("#image-character-count").textContent = `${characters.length} active portrait${characters.length === 1 ? "" : "s"}`;
+  $("#image-character-grid").innerHTML = characters.length ? characters.map((character) => `<article class="image-character-card">
+    <figure><img src="${esc(character.portrait)}" alt="Portrait of ${esc(character.name)}"></figure>
+    <div class="image-card-copy">
+      <h3>${esc(character.name)}</h3>
+      <p>${[character.ancestry, character.class, character.subclass, character.player].filter(Boolean).map(esc).join(" · ")}</p>
+      <div class="image-card-actions"><button type="button" class="quiet" data-character-image="${esc(character.id)}">Show at the table</button><a href="/character/${encodeURIComponent(character.id)}" target="_blank">Open sheet ↗</a></div>
+    </div>
+  </article>`).join("") : `<p class="muted">No active character has chosen a portrait yet.</p>`;
+  for (const button of document.querySelectorAll("[data-character-image]")) {
+    button.onclick = () => {
+      const character = characters.find((entry) => entry.id === button.dataset.characterImage);
+      if (character) project({ type: "image", url: character.portrait, caption: character.name });
+    };
+  }
+}
+
+function sceneCard(scene, place) {
+  const meta = [scene.variantCount > 1 ? `variant ${scene.variant} of ${scene.variantCount}` : "", scene.createdAt ? new Date(scene.createdAt).toLocaleDateString() : ""].filter(Boolean).join(" · ");
+  return `<article class="scene-card">
+    <figure><img src="${esc(scene.url)}" alt="${esc(scene.name)} at ${esc(place.name)}"></figure>
+    <div class="image-card-copy">
+      <h3>${esc(scene.name)}</h3>
+      ${meta ? `<p>${esc(meta)}</p>` : ""}
+      <div class="image-card-actions">
+        <button type="button" class="quiet" data-scene-show="${esc(scene.id)}">Show at the table</button>
+        ${scene.removable ? `<button type="button" class="quiet" data-scene-remove="${esc(scene.id)}">Remove record</button>` : ""}
+      </div>
+    </div>
+  </article>`;
+}
+
+function renderSceneLibrary() {
+  const scenes = ART_LIBRARY.scenes || [];
+  $("#scene-library-count").textContent = `${scenes.length} saved view${scenes.length === 1 ? "" : "s"}`;
+  const groups = (ART_LIBRARY.places || []).map((place) => ({ place, scenes: scenes.filter((scene) => scene.placeId === place.id) })).filter((group) => group.scenes.length);
+  $("#scene-library").innerHTML = groups.length ? groups.map(({ place, scenes: placeScenes }) => {
+    const sublocations = [...new Set(placeScenes.map((scene) => scene.sublocation || "Location overview"))];
+    return `<section class="scene-location-group">
+      <header class="scene-location-head"><h3>${esc(place.name)}</h3><button type="button" class="quiet" data-scene-place-open="${esc(place.id)}">Open location</button></header>
+      ${sublocations.map((sublocation) => `<div class="scene-sublocation"><h4>${esc(sublocation)}</h4><div class="scene-grid">${placeScenes.filter((scene) => (scene.sublocation || "Location overview") === sublocation).map((scene) => sceneCard(scene, place)).join("")}</div></div>`).join("")}
+    </section>`;
+  }).join("") : `<p class="muted">No scenery has been kept yet.</p>`;
+  for (const button of document.querySelectorAll("[data-scene-place-open]")) button.onclick = () => openPlaceFromLibrary(button.dataset.scenePlaceOpen);
+  for (const button of document.querySelectorAll("[data-scene-show]")) button.onclick = () => {
+    const scene = scenes.find((entry) => entry.id === button.dataset.sceneShow);
+    const place = (ART_LIBRARY.places || []).find((entry) => entry.id === scene?.placeId);
+    if (scene) project({ type: "image", url: scene.url, caption: [place?.name, scene.sublocation, scene.name].filter(Boolean).join(" · ") });
+  };
+  for (const button of document.querySelectorAll("[data-scene-remove]")) button.onclick = async () => {
+    const scene = scenes.find((entry) => entry.id === button.dataset.sceneRemove);
+    if (!scene || !confirm(`Remove “${scene.name}” from the library? The image file will be kept.`)) return;
+    try {
+      await api(`/api/art/scenes/${encodeURIComponent(scene.id)}`, { method: "DELETE" });
+      toast("The library record was removed. The image file was kept.");
+      await refresh();
+      setImageLibraryView("scenery");
+    } catch (error) { toast(error.message, true); }
+  };
+}
+
+function renderImageLibrary() {
+  if (!$("#image-character-grid")) return;
+  setImageLibraryView(imageLibraryView);
+  renderCharacterImages();
+  const placeSelect = $("#scene-place");
+  const selectedPlace = placeSelect.value;
+  placeSelect.innerHTML = (ART_LIBRARY.places || []).map((place) => `<option value="${esc(place.id)}">${esc(place.name)}</option>`).join("");
+  if ((ART_LIBRARY.places || []).some((place) => place.id === selectedPlace)) placeSelect.value = selectedPlace;
+  const dimensions = ART_LIBRARY.dimensions || { width: 1536, height: 864, aspect: "16:9" };
+  $("#scene-format").textContent = `${dimensions.width} × ${dimensions.height} · ${dimensions.aspect}`;
+  $("#scene-generate").disabled = !ART_STATUS.workflows?.scenic?.ready || !placeSelect.options.length;
+  $("#scene-generation-status").textContent = artHint("scenic");
+  updateSceneSublocations();
+  renderSceneTagBoard();
+  renderSceneLibrary();
+}
+
+async function generateScene(event) {
+  event.preventDefault();
+  const button = $("#scene-generate");
+  button.disabled = true;
+  $("#scene-generation-status").textContent = "The view is being made.";
+  try {
+    const result = await api("/api/art/scenes", { method: "POST", body: {
+      placeId: $("#scene-place").value,
+      sublocation: $("#scene-sublocation").value,
+      name: $("#scene-name").value,
+      description: $("#scene-description").value,
+      negativePrompt: $("#scene-negative").value,
+      selectedTagIds: [...sceneTagState.explicit],
+      excludedTagIds: [...sceneTagState.excluded],
+      pins: sceneTagState.pins.filter((pin) => !pin.authored).map(({ id, label, payload }) => ({ id, label, payload })),
+      tagDirection: $("#scene-tag-direction").value,
+      castWhenReady: $("#scene-cast").checked
+    } });
+    $("#scene-name").value = "";
+    $("#scene-description").value = "";
+    toast(result.message);
+    await refresh();
+    setImageLibraryView("scenery");
+  } catch (error) {
+    toast(error.message, true);
+    $("#scene-generation-status").textContent = error.message;
+  } finally {
+    button.disabled = !ART_STATUS.workflows?.scenic?.ready || !$("#scene-place").options.length;
+  }
+}
+
 window.addEventListener("hashchange", () => showSection(location.hash.slice(1) || "season"));
 
 $("#ux-route").addEventListener("change", () => {
@@ -1830,6 +2200,31 @@ document.querySelectorAll("[data-wiki-filter]").forEach((button) => {
 document.querySelectorAll("[data-almanac-view]").forEach((button) => {
   button.addEventListener("click", () => setAlmanacView(button.dataset.almanacView));
 });
+
+document.querySelectorAll("[data-image-view]").forEach((button) => {
+  button.addEventListener("click", () => setImageLibraryView(button.dataset.imageView));
+});
+$("#scene-place").addEventListener("change", updateSceneSublocations);
+$("#scene-open-place").addEventListener("click", () => openPlaceFromLibrary($("#scene-place").value));
+$("#scene-tag-back").addEventListener("click", sceneTagBack);
+$("#scene-tag-start").addEventListener("click", () => {
+  sceneTagState.route = [];
+  renderSceneTagBoard("back");
+});
+$("#scene-tag-clear").addEventListener("click", () => {
+  sceneTagState.explicit.clear();
+  sceneTagState.excluded.clear();
+  syncSceneDirection();
+  renderSceneTagBoard();
+});
+$("#scene-tag-pin-add").addEventListener("click", addScenePin);
+$("#scene-tag-pin-input").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    addScenePin();
+  }
+});
+$("#scene-form").addEventListener("submit", generateScene);
 
 // --- boot ---
 showSection(location.hash.slice(1) || "season");

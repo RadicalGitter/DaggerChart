@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { Blob } from "node:buffer";
 import { ROOT, loadJson, saveJson } from "./store.js";
+import { musicDescription, sunoGenerationPayload } from "./music-payload.js";
 
 const MUSIC_FILE = "music.json";
 const LIBRARY_ROOT = path.resolve(process.env.MUSIC_LIBRARY_DIR || path.join(ROOT, "Visseren"));
@@ -200,6 +201,7 @@ function songView(song, { includePrompt = true } = {}) {
   const view = {
     id: song.id,
     title: song.title,
+    description: song.description || "",
     status: song.status,
     source: song.source,
     mode: song.mode,
@@ -485,26 +487,7 @@ export async function syncSunoSnapshot({ collectionName, sourceUrl, songs }) {
 }
 
 function livePayload(song) {
-  const instrumental = song.settings.instrumental !== false;
-  const direction = cleanText([song.prompt, song.settings.style].filter(Boolean).join(", "), 1000);
-  const base = {
-    customMode: instrumental,
-    instrumental,
-    model: modelName(song.settings),
-    callBackUrl: callbackUrl()
-  };
-  if (instrumental) {
-    base.style = direction;
-    base.title = song.title.slice(0, base.model === "V4_5ALL" ? 80 : 100);
-    if (song.settings.negativeTags) base.negativeTags = cleanText(song.settings.negativeTags, 200);
-    for (const key of ["styleWeight", "weirdnessConstraint", "audioWeight"]) {
-      const value = Number(song.settings[key]);
-      if (Number.isFinite(value)) base[key] = Math.max(0, Math.min(1, value));
-    }
-  } else {
-    base.prompt = direction.slice(0, 500);
-  }
-  return base;
+  return sunoGenerationPayload(song, { model: modelName(song.settings), callBackUrl: callbackUrl() });
 }
 
 async function uploadCoverSource(song) {
@@ -637,6 +620,7 @@ export async function refreshPendingMusic() {
 }
 
 export async function generateSong({
+  description = "",
   title,
   prompt,
   pcId = null,
@@ -659,6 +643,7 @@ export async function generateSong({
   // or API cost becomes materially different.
   const song = {
     id: id("song"),
+    description: musicDescription(description),
     title: cleanText(title, 100) || (pcId ? "A new overture" : "An untitled cue"),
     prompt: cleanedPrompt,
     status: "queued",

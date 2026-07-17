@@ -38,6 +38,14 @@ without starting a generation.
    `Visseren/Character Themes/<Character Name>` and records that theme as the
    character's cover source.
 
+The music tag board's optional **Description** field is sent verbatim inside
+square brackets as the custom-mode lyrics prompt. Supplying it changes the
+provider request from instrumental mode to `customMode: true` with
+`instrumental: false`; the compiled tag direction remains the style prompt.
+The brackets are an intentional direction cue rather than a guarantee that
+the renderer will never vocalize the text. Without a Description, generation
+keeps the existing instrumental request shape.
+
 Removing a song from the desk removes metadata only. It never deletes audio.
 
 ## Suno web-library mirror

@@ -76,13 +76,16 @@ const STRINGS = {
     "portrait.tuning": "Painter's balance",
     "portrait.steps": "Steps",
     "portrait.cfg": "CFG",
+    "portrait.style": "Rendering style",
+    "portrait.style1": "Style 1",
+    "portrait.style2": "Style 2",
     "portrait.recommended": "recommended",
     "portrait.fixSeed": "Fix the image seed",
     "portrait.fixSeedHelp": "Once a portrait exists, new paintings reuse its hidden composition seed.",
     "portrait.history": "Portrait attempts",
     "portrait.historyHelp": "Every painting stays here. Revisit one or paint it again with its exact brief and hidden seed.",
     "portrait.attempt": "Attempt {number}",
-    "portrait.attemptSettings": "Steps {steps} · CFG {cfg}",
+    "portrait.attemptSettings": "{style} · Steps {steps} · CFG {cfg}",
     "portrait.seedArchived": "Exact brief and seed archived",
     "portrait.useAttempt": "Use portrait",
     "portrait.goAgain": "Go again",
@@ -525,13 +528,16 @@ const STRINGS = {
     "portrait.tuning": "Målarens balans",
     "portrait.steps": "Steg",
     "portrait.cfg": "CFG",
+    "portrait.style": "Bildstil",
+    "portrait.style1": "Stil 1",
+    "portrait.style2": "Stil 2",
     "portrait.recommended": "rekommenderad",
     "portrait.fixSeed": "Lås bildens frö",
     "portrait.fixSeedHelp": "När ett porträtt finns återanvänder nya målningar dess dolda kompositionsfrö.",
     "portrait.history": "Porträttförsök",
     "portrait.historyHelp": "Varje målning stannar här. Återvänd till en eller måla den igen med exakt samma beskrivning och dolda frö.",
     "portrait.attempt": "Försök {number}",
-    "portrait.attemptSettings": "Steg {steps} · CFG {cfg}",
+    "portrait.attemptSettings": "{style} · Steg {steps} · CFG {cfg}",
     "portrait.seedArchived": "Exakt beskrivning och frö arkiverade",
     "portrait.useAttempt": "Använd porträtt",
     "portrait.goAgain": "Försök igen",
@@ -928,6 +934,10 @@ export function seasonLabel(label) {
 
 // ---------- the glossary: brief "oh right, that's what it does" notes ----------
 export const TERMS = {
+  "music-description": {
+    en: ["Description", "You can use this to influence the produced music; write in general terms happens in the music (you can use vibes or specifics, or both!)."],
+    sv: ["Beskrivning", "Du kan använda detta för att påverka musiken som skapas; skriv i allmänna drag vad som händer i musiken (du kan använda stämningar eller detaljer, eller båda!)."]
+  },
   evasion: {
     en: ["Evasion", "The number an attack roll must meet or beat to hit you."],
     sv: ["Evasion", "Talet ett attackslag måste nå eller överträffa för att träffa dig."]
@@ -1136,9 +1146,20 @@ function wireTerms() {
   document.addEventListener("click", (e) => {
     const el = e.target.closest("[data-term]");
     if (suppressClick) { suppressClick = false; e.preventDefault(); e.stopPropagation(); return; }
-    if (el) showTerm(el.dataset.term, el);
+    if (el) {
+      // A glossary term can be the visible text inside a form label. Prevent
+      // the label's synthetic input click from immediately closing the note.
+      if (el.closest("label")) e.preventDefault();
+      showTerm(el.dataset.term, el);
+    }
     else hideTerm();
   }, true);
+  document.addEventListener("keydown", (e) => {
+    const el = e.target.closest("[data-term]");
+    if (!el || (e.key !== "Enter" && e.key !== " ")) return;
+    e.preventDefault();
+    showTerm(el.dataset.term, el);
+  });
   document.addEventListener("contextmenu", (e) => {
     if (e.target.closest("[data-term]")) e.preventDefault();
   });
@@ -1177,5 +1198,9 @@ export function initI18n() {
   document.documentElement.lang = lang;
   applyStatic();
   wireToggle();
+  wireTerms();
+}
+
+export function initTerms() {
   wireTerms();
 }
