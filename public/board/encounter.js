@@ -4,6 +4,8 @@
 // Dragging an enemy card up against a player card puts them in melee.
 
 import { ENCOUNTER_STAGE_ASPECT, encounterEngagements, engagedIds } from "/shared/encounter-stage.js";
+import { createCreatureExplorer } from "/shared/creature-explorer.js";
+import { prepareRuleNodes, searchRuleNodes } from "/shared/rules-search.js";
 
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) =>
@@ -15,11 +17,17 @@ const TYPE_COST = { Minion: 1, Social: 1, Support: 1, Horde: 2, Ranged: 2, Skulk
 
 let BESTIARY = [];
 let IDENTITIES = [];
+let RULE_NODES = [];
+let GM_SCREEN = { sections: [] };
 let encounters = [];
 let current = null;        // the open encounter (local source of truth while editing)
 let projectedId = null;    // which encounter id is on the table screen, if any
+let projectedScreen = null;
 let selectedEntityId = null;
 let previewAdversaryId = null;
+let creatureExplorer = null;
+let inspectorMode = "details";
+let focusedRuleId = null;
 let overlayOpen = false;
 let saveTimer = null;
 let drag = null;
@@ -42,17 +50,20 @@ style.textContent = `
   #enc-bp b { color: var(--ink); }
   #enc-bp.over b { color: var(--oxblood); }
   #enc-project[aria-pressed="true"] { color: var(--paper-raised); background: var(--oxblood); border-color: var(--oxblood); }
-  #enc-main { flex: 1; display: flex; min-height: 0; }
-  #enc-bestiary { width: 250px; flex: none; overflow-y: auto; border-right: 1px solid var(--rule-strong); background: var(--paper-raised); }
-  #enc-bestiary h3 { font-variant: small-caps; letter-spacing: 0.06em; font-size: 0.8rem; color: var(--ink-faint); margin: 0.7rem 0.8rem 0.2rem; }
-  .enc-row { display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.8rem; cursor: pointer; font-size: 0.86rem; }
-  .enc-row:hover, .enc-row.previewing { background: var(--paper-inset); }
-  .enc-row .who { flex: 1; min-width: 0; }
-  .enc-row .who small { display: block; color: var(--ink-faint); font-size: 0.72rem; }
-  .enc-row .add { flex: none; padding: 0.05rem 0.5rem; font-size: 0.95rem; }
-  #enc-stage-wrap { flex: 1; display: grid; place-items: center; min-width: 0; background: #0e0b07; padding: 10px; }
+  #enc-pane-tabs { display: none; flex: none; border-bottom: 1px solid var(--rule-strong); background: var(--paper-inset); }
+  #enc-pane-tabs button { flex: 1; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: transparent; }
+  #enc-pane-tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: #d46d43; background: linear-gradient(180deg, rgba(212,109,67,.16), rgba(212,109,67,.03)); }
+  #enc-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(250px, 290px) minmax(340px, 1fr) minmax(270px, 330px); }
+  #enc-bestiary { min-width: 0; min-height: 0; overflow: hidden; border-right: 1px solid var(--rule-strong); background: var(--paper-raised); }
+  #enc-bestiary.creature-explorer { height: 100%; }
+  #enc-stage-wrap { display: grid; place-items: center; min-width: 0; min-height: 0; background: #0e0b07; padding: 10px; }
   #enc-stage { border-radius: 6px; box-shadow: 0 0 0 1px #3a3022, 0 14px 50px rgba(0,0,0,0.5) inset; }
-  #enc-inspector { width: 300px; flex: none; overflow-y: auto; border-left: 1px solid var(--rule-strong); background: var(--paper-raised); padding: 0.8rem; font-size: 0.88rem; }
+  #enc-side { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); border-left: 1px solid var(--rule-strong); background: var(--paper-raised); }
+  #enc-side-tabs { display: flex; border-bottom: 1px solid var(--rule-strong); }
+  #enc-side-tabs button { flex: 1; padding: .55rem; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: transparent; font: inherit; font-size: .72rem; cursor: pointer; }
+  #enc-side-tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: #d46d43; background: linear-gradient(180deg, rgba(212,109,67,.15), transparent); }
+  #enc-inspector, #enc-rules { min-height: 0; overflow-y: auto; padding: 0.8rem; font-size: 0.88rem; }
+  #enc-inspector[hidden], #enc-rules[hidden] { display: none; }
   #enc-inspector h2 { margin: 0 0 0.1rem; font-size: 1.05rem; }
   #enc-inspector .muted { color: var(--ink-faint); font-size: 0.78rem; }
   #enc-inspector .statline { margin: 0.5rem 0; }
@@ -62,8 +73,37 @@ style.textContent = `
   #enc-inspector .viterow .dot { cursor: pointer; width: 13px; height: 13px; }
   #enc-inspector .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.8rem; }
   #enc-inspector .actions button { font-size: 0.82rem; padding: 0.28rem 0.7rem; }
+  .enc-rule-tags { display: flex; flex-wrap: wrap; gap: .3rem; margin: .7rem 0; }
+  .enc-rule-tags button { padding: .2rem .42rem; color: #8a482f; border: 1px solid #d48661; background: transparent; font: inherit; font-size: .65rem; cursor: pointer; }
+  .enc-rule-tags button:hover { color: #3f281f; background: #f2c09f; }
+  .enc-rules-head { position: sticky; z-index: 2; top: -.8rem; margin: -.8rem -.8rem .7rem; padding: .7rem .8rem; border-bottom: 1px solid var(--rule-strong); background: var(--paper-raised); }
+  .enc-rules-head strong, .enc-rules-head span { display: block; }
+  .enc-rules-head span { margin-top: .18rem; color: var(--ink-faint); font-size: .65rem; line-height: 1.35; }
+  #enc-rule-search { width: 100%; margin-top: .55rem; }
+  .enc-rule-section { margin: .85rem 0 1.1rem; }
+  .enc-rule-section h3 { margin: 0 0 .4rem; color: var(--ink-faint); font-size: .68rem; font-variant: small-caps; text-transform: uppercase; }
+  .enc-rule-entry { width: 100%; display: block; margin: 0 0 .4rem; padding: .55rem .6rem; color: var(--ink); border: 1px solid var(--rule); border-left: 3px solid var(--rule-strong); border-radius: 2px; background: var(--paper); text-align: left; cursor: pointer; }
+  .enc-rule-entry.relevant { border-left-color: #d46d43; }
+  .enc-rule-entry[aria-pressed="true"] { color: #3d281e; border-color: #d46d43; background: linear-gradient(135deg, #f6c49f, #e99a68); }
+  .enc-rule-entry strong, .enc-rule-entry small { display: block; }
+  .enc-rule-entry small { margin-top: .2rem; color: var(--ink-faint); font-size: .62rem; line-height: 1.35; }
+  .enc-rule-entry[aria-pressed="true"] small { color: #674232; }
+  .enc-rule-entry.focused { outline: 2px solid #e9a26f; outline-offset: 1px; }
+  .enc-quick-table { margin: 0 0 .55rem; border-top: 1px solid var(--rule); }
+  .enc-quick-table summary { padding: .45rem 0; cursor: pointer; font-size: .72rem; font-weight: 600; }
+  .enc-quick-row { display: grid; grid-template-columns: minmax(70px, .7fr) minmax(0, 1fr); gap: .25rem .5rem; padding: .35rem 0; border-top: 1px dotted var(--rule); font-size: .65rem; }
+  .enc-quick-row b { color: var(--oxblood); }
+  .enc-quick-row small { grid-column: 1 / -1; color: var(--ink-faint); }
   #enc-empty-note { color: var(--ink-faint); font-style: italic; font-size: 0.84rem; }
-  @media (max-width: 900px) { #enc-bestiary { width: 200px; } #enc-inspector { width: 240px; } }
+  @media (max-width: 1150px) {
+    #enc-pane-tabs { display: flex; }
+    #enc-main { position: relative; display: block; }
+    #enc-main > [data-enc-pane] { position: absolute; inset: 0; display: none; border: 0; }
+    #enc-main[data-pane="creatures"] > [data-enc-pane="creatures"],
+    #enc-main[data-pane="field"] > [data-enc-pane="field"],
+    #enc-main[data-pane="inspect"] > [data-enc-pane="inspect"] { display: grid; }
+    #enc-main[data-pane="creatures"] > [data-enc-pane="creatures"] { display: block; }
+  }
 `;
 document.head.append(style);
 
@@ -71,6 +111,10 @@ const cssLink = document.createElement("link");
 cssLink.rel = "stylesheet";
 cssLink.href = "/shared/encounter-cards.css";
 document.head.append(cssLink);
+const explorerCss = document.createElement("link");
+explorerCss.rel = "stylesheet";
+explorerCss.href = "/shared/creature-explorer.css";
+document.head.append(explorerCss);
 
 const overlay = document.createElement("div");
 overlay.id = "enc-overlay";
@@ -88,10 +132,22 @@ overlay.innerHTML = `
     <button class="quiet" id="enc-delete">Remove encounter</button>
     <button class="quiet" id="enc-close">Back to the board</button>
   </div>
-  <div id="enc-main">
-    <div id="enc-bestiary"></div>
-    <div id="enc-stage-wrap"><div id="enc-stage" class="enc-stage"></div></div>
-    <div id="enc-inspector"></div>
+  <nav id="enc-pane-tabs" aria-label="Encounter workspace">
+    <button type="button" data-enc-pane-button="creatures" aria-selected="false">Creatures</button>
+    <button type="button" data-enc-pane-button="field" aria-selected="true">Field</button>
+    <button type="button" data-enc-pane-button="inspect" aria-selected="false">Details & rules</button>
+  </nav>
+  <div id="enc-main" data-pane="field">
+    <aside id="enc-bestiary" data-enc-pane="creatures"></aside>
+    <div id="enc-stage-wrap" data-enc-pane="field"><div id="enc-stage" class="enc-stage"></div></div>
+    <aside id="enc-side" data-enc-pane="inspect">
+      <nav id="enc-side-tabs" aria-label="Encounter reference">
+        <button type="button" data-inspector-mode="details" aria-selected="true">Details</button>
+        <button type="button" data-inspector-mode="rules" aria-selected="false">Rules</button>
+      </nav>
+      <div id="enc-inspector"></div>
+      <div id="enc-rules" hidden></div>
+    </aside>
   </div>`;
 document.body.append(overlay);
 
@@ -100,12 +156,16 @@ const stage = $("#enc-stage");
 
 // ---------- data ----------
 async function loadStatic() {
-  const [adv, party] = await Promise.all([
+  const [adv, party, rules, gmScreen] = await Promise.all([
     fetch("/api/adversaries").then((r) => r.json()),
-    fetch("/api/party").then((r) => r.json())
+    fetch("/api/party").then((r) => r.json()),
+    fetch("/api/rules").then((r) => r.json()),
+    fetch("/api/gm-screen").then((r) => r.json())
   ]);
   BESTIARY = adv.adversaries || [];
   IDENTITIES = Array.isArray(party) ? party : [];
+  RULE_NODES = prepareRuleNodes(rules);
+  GM_SCREEN = gmScreen;
 }
 
 async function loadEncounters() {
@@ -116,6 +176,7 @@ async function loadEncounters() {
 
 async function loadProjection() {
   const state = await fetch("/api/state").then((r) => r.json());
+  projectedScreen = state.screen || null;
   projectedId = state.screen?.type === "encounter" ? state.screen.refId : null;
 }
 
@@ -274,27 +335,24 @@ function wireCard(el, entity) {
 // ---------- bestiary rail ----------
 function renderBestiary() {
   const rail = $("#enc-bestiary");
-  const fronts = [...new Set(BESTIARY.map((a) => a.front || "Elsewhere"))];
-  rail.innerHTML = fronts.map((front) => `
-    <h3>${esc(front)}</h3>
-    ${BESTIARY.filter((a) => (a.front || "Elsewhere") === front).map((a) => `
-      <div class="enc-row ${a.id === previewAdversaryId ? "previewing" : ""}" data-preview="${esc(a.id)}">
-        <span class="who">${esc(a.name)}<small>Tier ${a.tier} ${esc(a.type)} · ${TYPE_COST[a.type] ?? 2} pt${a.type === "Minion" ? "/group" : ""}</small></span>
-        <button class="quiet add" data-summon="${esc(a.id)}" title="Add to the encounter">+</button>
-      </div>`).join("")}`).join("");
-
-  for (const row of rail.querySelectorAll("[data-preview]")) {
-    row.addEventListener("click", (event) => {
-      if (event.target.dataset.summon) return;
-      previewAdversaryId = row.dataset.preview;
-      selectedEntityId = null;
-      renderBestiary();
-      renderInspector();
-      renderStage();
+  if (!creatureExplorer) {
+    creatureExplorer = createCreatureExplorer({
+      host: rail,
+      creatures: BESTIARY,
+      activeId: previewAdversaryId,
+      pointCost: (creature) => `${TYPE_COST[creature.type] ?? 2} pt${creature.type === "Minion" ? "/group" : ""}`,
+      onPreview: (id) => {
+        previewAdversaryId = id;
+        selectedEntityId = null;
+        renderInspector();
+        renderRules();
+        renderStage();
+        if (window.matchMedia("(max-width: 1150px)").matches) setCompactPane("inspect");
+      },
+      onAdd: summon
     });
-  }
-  for (const button of rail.querySelectorAll("[data-summon]")) {
-    button.addEventListener("click", () => summon(button.dataset.summon));
+  } else {
+    creatureExplorer.update(BESTIARY, previewAdversaryId);
   }
 }
 
@@ -319,6 +377,7 @@ function summon(adversaryId) {
   selectedEntityId = entity.id;
   previewAdversaryId = null;
   renderAll();
+  if (window.matchMedia("(max-width: 1150px)").matches) setCompactPane("field");
   queueSave();
 }
 
@@ -326,6 +385,21 @@ function summon(adversaryId) {
 const dots = (marked, max, cls) =>
   Array.from({ length: max }, (_, i) =>
     `<span class="dot ${cls} ${i < marked ? "on harm" : ""}" data-dot-index="${i}"></span>`).join("");
+
+const ruleById = (id) => RULE_NODES.find((node) => node.id === id) || null;
+
+function activeRuleRefs() {
+  const entity = current?.entities.find((candidate) => candidate.id === selectedEntityId);
+  const block = entity?.kind === "adversary" ? adversary(entity.refId) : adversary(previewAdversaryId);
+  return block?.ruleRefs || [];
+}
+
+function ruleTagsHtml(block) {
+  const rules = (block?.ruleRefs || []).map(ruleById).filter(Boolean);
+  return rules.length ? `<div class="enc-rule-tags" aria-label="Relevant rules">${rules.map((rule) =>
+    `<button type="button" data-open-rule="${esc(rule.id)}" title="Open ${esc(rule.title)} in the rules pane">${esc(rule.title)}</button>`
+  ).join("")}</div>` : "";
+}
 
 function statBlockHtml(block) {
   return `
@@ -340,6 +414,7 @@ function statBlockHtml(block) {
     </div>
     <div style="font-size:0.84rem;"><b>${esc(block.weapon.name)}</b> · ${esc(block.weapon.range)} · ${esc(block.weapon.damage)}</div>
     ${block.experiences?.length ? `<div class="muted" style="margin-top:0.25rem;">${block.experiences.map((e) => `${esc(e.name)} +${e.bonus}`).join(", ")}</div>` : ""}
+    ${ruleTagsHtml(block)}
     ${block.features.map((f) => `
       <div class="feature"><b>${esc(f.name)}</b> — <span class="muted">${esc(f.kind)}</span>${f.cost ? ` <span class="cost">· spend a ${esc(f.cost)}</span>` : ""}<br>${esc(f.text)}</div>`).join("")}`;
 }
@@ -353,6 +428,7 @@ function renderInspector() {
     panel.innerHTML = block ? `${statBlockHtml(block)}
       <div class="actions"><button data-act="summon">Add to the encounter</button></div>` : "";
     panel.querySelector("[data-act=summon]")?.addEventListener("click", () => summon(previewAdversaryId));
+    wireInspectorRuleTags(panel);
     return;
   }
 
@@ -411,6 +487,159 @@ function renderInspector() {
     renderAll();
     queueSave();
   });
+  wireInspectorRuleTags(panel);
+}
+
+function wireInspectorRuleTags(panel) {
+  for (const button of panel.querySelectorAll("[data-open-rule]")) {
+    button.addEventListener("click", () => {
+      focusedRuleId = button.dataset.openRule;
+      setInspectorMode("rules");
+      renderRules();
+      requestAnimationFrame(() => $("#enc-rules .enc-rule-entry.focused")?.scrollIntoView({ block: "nearest" }));
+    });
+  }
+}
+
+function setInspectorMode(mode) {
+  inspectorMode = mode === "rules" ? "rules" : "details";
+  $("#enc-inspector").hidden = inspectorMode !== "details";
+  $("#enc-rules").hidden = inspectorMode !== "rules";
+  for (const button of overlay.querySelectorAll("[data-inspector-mode]")) {
+    button.setAttribute("aria-selected", String(button.dataset.inspectorMode === inspectorMode));
+  }
+}
+
+function setCompactPane(pane) {
+  const selected = ["creatures", "field", "inspect"].includes(pane) ? pane : "field";
+  $("#enc-main").dataset.pane = selected;
+  for (const button of overlay.querySelectorAll("[data-enc-pane-button]")) {
+    button.setAttribute("aria-selected", String(button.dataset.encPaneButton === selected));
+  }
+  if (selected === "field") requestAnimationFrame(renderStage);
+}
+
+function ruleEntryHtml(rule, relevantIds) {
+  const relevant = relevantIds.has(rule.id);
+  const projected = projectedScreen?.type === "rule" && projectedScreen.refId === rule.id;
+  return `<button type="button" class="enc-rule-entry${relevant ? " relevant" : ""}${focusedRuleId === rule.id ? " focused" : ""}"
+    data-project-rule="${esc(rule.id)}" aria-pressed="${projected}">
+    <strong>${esc(rule.title)}</strong>
+    <small>${esc(rule.body)}</small>
+  </button>`;
+}
+
+function screenPayload(screen) {
+  if (!screen?.type) return { type: null };
+  return {
+    type: screen.type,
+    refId: screen.refId || null,
+    url: screen.url || null,
+    caption: screen.caption || "",
+    title: screen.title || "",
+    body: screen.body || ""
+  };
+}
+
+async function setProjectedScreen(payload) {
+  const response = await fetch("/api/screen", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) return false;
+  const result = await response.json();
+  projectedScreen = result.current || null;
+  projectedId = projectedScreen?.type === "encounter" ? projectedScreen.refId : null;
+  renderHeader();
+  updateRuleProjectionState();
+  return true;
+}
+
+function updateRuleProjectionState() {
+  for (const button of overlay.querySelectorAll("[data-project-rule]")) {
+    button.setAttribute("aria-pressed", String(projectedScreen?.type === "rule" && projectedScreen.refId === button.dataset.projectRule));
+  }
+}
+
+async function toggleRuleProjection(ruleId) {
+  const alreadyShowing = projectedScreen?.type === "rule" && projectedScreen.refId === ruleId;
+  await setProjectedScreen(alreadyShowing ? { type: null } : { type: "rule", refId: ruleId });
+}
+
+function wireRuleProjection(button) {
+  let press = null;
+  const restore = async (active) => {
+    if (!active || active.restored) return;
+    active.restored = true;
+    await active.projecting;
+    await setProjectedScreen(active.prior);
+  };
+
+  button.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+    press = { prior: screenPayload(projectedScreen), temporary: false, released: false, restored: false, projecting: Promise.resolve() };
+    try { button.setPointerCapture(event.pointerId); } catch { /* pointer capture is optional */ }
+    press.timer = setTimeout(() => {
+      if (!press) return;
+      press.temporary = true;
+      press.projecting = setProjectedScreen({ type: "rule", refId: button.dataset.projectRule });
+      if (press.released) restore(press);
+    }, 360);
+  });
+  button.addEventListener("pointerup", () => {
+    const active = press;
+    press = null;
+    if (!active) return;
+    active.released = true;
+    clearTimeout(active.timer);
+    if (active.temporary) restore(active);
+    else toggleRuleProjection(button.dataset.projectRule);
+  });
+  button.addEventListener("pointercancel", () => {
+    const active = press;
+    press = null;
+    if (!active) return;
+    active.released = true;
+    clearTimeout(active.timer);
+    if (active.temporary) restore(active);
+  });
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    if (event.detail === 0) toggleRuleProjection(button.dataset.projectRule);
+  });
+}
+
+function renderRules() {
+  const panel = $("#enc-rules");
+  const previousQuery = panel.querySelector("#enc-rule-search")?.value || "";
+  const relevantIds = new Set(activeRuleRefs());
+  const relevant = [...relevantIds].map(ruleById).filter(Boolean);
+  const commonIds = ["spotlight", "action-roll-outcomes", "attack-rolls", "damage-rolls", "damage-thresholds", "movement-under-pressure", "conditions", "fear", "quick-rulings"];
+  const queryMatches = previousQuery ? searchRuleNodes(RULE_NODES, previousQuery).slice(0, 16) : [];
+  const common = commonIds.map(ruleById).filter((rule) => rule && !relevantIds.has(rule.id));
+  const quickTables = (GM_SCREEN.sections || []).map((section) => `<details class="enc-quick-table">
+    <summary>${esc(section.title)}</summary>
+    ${(section.rows || []).map((row) => `<div class="enc-quick-row"><span>${esc(row.label)}</span><b>${esc(row.value)}</b>${row.note ? `<small>${esc(row.note)}</small>` : ""}</div>`).join("")}
+  </details>`).join("");
+
+  panel.innerHTML = `<div class="enc-rules-head"><strong>Rules at hand</strong><span>Click to toggle on the projector. Hold to show only while pressed.</span>
+      <input type="search" id="enc-rule-search" value="${esc(previousQuery)}" placeholder="Search rules" aria-label="Search combat rules"></div>
+    ${relevant.length ? `<section class="enc-rule-section"><h3>Relevant to this creature</h3>${relevant.map((rule) => ruleEntryHtml(rule, relevantIds)).join("")}</section>` : ""}
+    ${previousQuery ? `<section class="enc-rule-section"><h3>Search results</h3>${queryMatches.length ? queryMatches.map((rule) => ruleEntryHtml(rule, relevantIds)).join("") : `<p id="enc-empty-note">No matching rule.</p>`}</section>`
+      : `<section class="enc-rule-section"><h3>Combat essentials</h3>${common.map((rule) => ruleEntryHtml(rule, relevantIds)).join("")}</section>`}
+    <section class="enc-rule-section"><h3>Quick tables</h3>${quickTables}</section>`;
+
+  const search = panel.querySelector("#enc-rule-search");
+  search.addEventListener("input", () => {
+    const cursor = search.selectionStart;
+    renderRules();
+    const next = panel.querySelector("#enc-rule-search");
+    next.focus({ preventScroll: true });
+    next.setSelectionRange(cursor, cursor);
+  });
+  for (const button of panel.querySelectorAll("[data-project-rule]")) wireRuleProjection(button);
+  focusedRuleId = null;
 }
 
 // ---------- header ----------
@@ -441,10 +670,17 @@ function renderAll() {
   renderBestiary();
   renderStage();
   renderInspector();
+  renderRules();
 }
 
 // ---------- wiring ----------
 $("#enc-close").addEventListener("click", () => setOpen(false));
+for (const button of overlay.querySelectorAll("[data-enc-pane-button]")) {
+  button.addEventListener("click", () => setCompactPane(button.dataset.encPaneButton));
+}
+for (const button of overlay.querySelectorAll("[data-inspector-mode]")) {
+  button.addEventListener("click", () => setInspectorMode(button.dataset.inspectorMode));
+}
 $("#enc-new").addEventListener("click", async () => {
   const response = await fetch("/api/encounters", {
     method: "POST",
@@ -475,15 +711,7 @@ $("#enc-name").addEventListener("input", (event) => {
 $("#enc-project").addEventListener("click", async () => {
   if (!current) return;
   const projected = projectedId === current.id;
-  const response = await fetch("/api/screen", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(projected ? { type: null } : { type: "encounter", refId: current.id })
-  });
-  if (response.ok) {
-    projectedId = projected ? null : current.id;
-    renderHeader();
-  }
+  await setProjectedScreen(projected ? { type: null } : { type: "encounter", refId: current.id });
 });
 $("#enc-delete").addEventListener("click", async () => {
   if (!current) return;
@@ -507,7 +735,10 @@ stream.onmessage = () => {
   clearTimeout(streamTimer);
   streamTimer = setTimeout(async () => {
     await loadProjection().catch(() => {});
-    if (overlayOpen) renderHeader();
+    if (overlayOpen) {
+      renderHeader();
+      updateRuleProjectionState();
+    }
   }, 500);
 };
 
@@ -519,6 +750,8 @@ async function setOpen(next) {
     if (!BESTIARY.length) await loadStatic();
     await Promise.all([loadEncounters(), loadProjection()]);
     if (!current) current = encounters[0] || null;
+    setCompactPane("field");
+    setInspectorMode(inspectorMode);
     renderAll();
   } catch (error) {
     console.error(error);
@@ -532,3 +765,4 @@ const bar = document.getElementById("bar");
 const anchor = bar?.querySelector("#pin-add");
 if (bar) bar.insertBefore(openButton, anchor || null);
 openButton.addEventListener("click", () => setOpen(true));
+if (new URLSearchParams(location.search).get("tool") === "encounter") setOpen(true);

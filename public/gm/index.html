@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="/shared/ledger.css">
 <link rel="stylesheet" href="/shared/gm-tools.css">
 <link rel="stylesheet" href="/shared/folk-cards.css">
+<link rel="stylesheet" href="party-sheet.css">
 <style>
   html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
   .layout { display: grid; grid-template-columns: 220px 1fr; height: 100vh; min-height: 0; overflow: hidden; }
@@ -288,10 +289,6 @@
   .party-selected-actions button { min-height: 34px; padding: .3rem .55rem; font-size: .7rem; }
   .party-actions-compact { display: none; }
   .party-sheet-stage { position: relative; min-height: 0; overflow: hidden; }
-  .party-sheet-frame { width: 100%; height: 100%; display: block; border: 0; background: #171c19; }
-  .party-sheet-frame[hidden] { display: none; }
-  .party-sheet-placeholder { position: absolute; inset: 0; display: grid; place-items: center; padding: 2rem; color: #b9aa8a; text-align: center; background: #171c19; }
-  .party-sheet-placeholder[hidden] { display: none; }
   .party-actions-dialog {
     width: min(820px, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); padding: 0; overflow: hidden;
     color: var(--ink); border: 1px solid var(--rule-strong); border-radius: 4px; background: var(--paper);
@@ -1084,8 +1081,7 @@
         <div class="party-sheet-pane">
           <header class="party-sheet-toolbar" id="party-selected-tools"></header>
           <div class="party-sheet-stage">
-            <iframe class="party-sheet-frame" id="party-sheet-frame" title="Selected character sheet" hidden></iframe>
-            <div class="party-sheet-placeholder" id="party-sheet-placeholder">Choose a character card to open their sheet here.</div>
+            <div class="gm-party-sheet-host" id="party-gm-sheet"></div>
           </div>
         </div>
       </div>

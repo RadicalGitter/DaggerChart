@@ -2,6 +2,7 @@
 import { CONDITIONS, conditionIcon } from "/shared/conditions.js";
 import { prepareRuleNodes, searchRuleNodes } from "/shared/rules-search.js";
 import { folkPortraitGridHtml, wireFolkPortraitCards } from "/shared/folk-cards.js";
+import { createGmPartySheet } from "./party-sheet.js";
 
 let S = null; // last fetched gm state
 let selectedBuilding = null;
@@ -44,6 +45,7 @@ const sceneTagState = {
 };
 
 const $ = (sel) => document.querySelector(sel);
+const partySheet = createGmPartySheet($("#party-gm-sheet"));
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -345,7 +347,7 @@ function showSection(key) {
   if (key === "ux") requestAnimationFrame(renderUx);
   if (key === "almanac") setAlmanacView(almanacView);
   if (key === "images") requestAnimationFrame(renderImageLibrary);
-  if (key === "party") requestAnimationFrame(syncPartySheetFrame);
+  if (key === "party") requestAnimationFrame(syncPartySheet);
 }
 
 function artHint(kind) {
@@ -1772,22 +1774,8 @@ function partyRosterCard(p) {
   </button>`;
 }
 
-function syncPartySheetFrame() {
-  const frame = $("#party-sheet-frame");
-  const placeholder = $("#party-sheet-placeholder");
-  const selected = selectedPartyMember();
-  if (!selected) {
-    frame.hidden = true;
-    placeholder.hidden = false;
-    return;
-  }
-  if (frame.dataset.pcId !== selected.id) {
-    frame.dataset.pcId = selected.id;
-    frame.src = `/character/${encodeURIComponent(selected.id)}?embed=1&gm=1`;
-    frame.title = `${selected.name}'s character sheet`;
-  }
-  frame.hidden = false;
-  placeholder.hidden = true;
+function syncPartySheet() {
+  partySheet.setCharacter(selectedPartyMember());
 }
 
 function wirePartyPortraitButtons(root) {
@@ -1885,7 +1873,7 @@ function selectPartyMember(id, { focus = false } = {}) {
     if (active && focus) card.focus({ preventScroll: true });
   }
   renderSelectedPartyTools(p);
-  syncPartySheetFrame();
+  syncPartySheet();
   const grant = $("#grant-pc");
   if (grant && [...grant.options].some((option) => option.value === selectedPartyId)) grant.value = selectedPartyId;
 }
@@ -1895,22 +1883,27 @@ function renderParty() {
   const retired = (S.party || []).filter((pc) => pc.active === false);
   if (!active.some((pc) => pc.id === selectedPartyId)) selectedPartyId = active[0]?.id || null;
   if (selectedPartyId) localStorage.setItem("settlement-gm-party-selection", selectedPartyId);
-  $("#party-card-grid").innerHTML = active.length
+  const grid = $("#party-card-grid");
+  grid.innerHTML = active.length
     ? active.map(partyRosterCard).join("")
     : `<p class="party-roster-empty">No active player characters. Send your players to /create or restore someone below.</p>`;
-  for (const card of $("#party-card-grid").querySelectorAll("[data-party-select]")) {
+  for (const card of grid.querySelectorAll("[data-party-select]")) {
     card.tabIndex = card.dataset.partySelect === selectedPartyId ? 0 : -1;
-    card.onclick = () => selectPartyMember(card.dataset.partySelect);
-    card.onkeydown = (event) => {
-      if (!["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft"].includes(event.key)) return;
-      event.preventDefault();
-      const direction = ["ArrowDown", "ArrowRight"].includes(event.key) ? 1 : -1;
-      const index = active.findIndex((pc) => pc.id === card.dataset.partySelect);
-      selectPartyMember(active[(index + direction + active.length) % active.length].id, { focus: true });
-    };
   }
+  grid.onclick = (event) => {
+    const card = event.target.closest("[data-party-select]");
+    if (card && grid.contains(card)) selectPartyMember(card.dataset.partySelect);
+  };
+  grid.onkeydown = (event) => {
+    const card = event.target.closest("[data-party-select]");
+    if (!card || !["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft"].includes(event.key)) return;
+    event.preventDefault();
+    const direction = ["ArrowDown", "ArrowRight"].includes(event.key) ? 1 : -1;
+    const index = active.findIndex((pc) => pc.id === card.dataset.partySelect);
+    selectPartyMember(active[(index + direction + active.length) % active.length].id, { focus: true });
+  };
   renderSelectedPartyTools(selectedPartyMember());
-  if (document.body.classList.contains("party-open")) syncPartySheetFrame();
+  if (document.body.classList.contains("party-open")) syncPartySheet();
   $("#stepped-back").hidden = retired.length === 0;
   $("#stepped-back-count").textContent = String(retired.length);
   $("#stepped-back-list").innerHTML = retired.map((p) => `<div class="stepped-back-row">

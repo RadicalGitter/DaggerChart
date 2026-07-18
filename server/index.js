@@ -1476,9 +1476,9 @@ app.delete("/api/encounters/:id", guard((req, res) => {
 
 // --- the table screen: GM projects, everyone sees ---
 
-app.get("/api/screen", (_req, res) => res.json(screenView()));
+app.get("/api/screen", (_req, res) => res.json(screenView(rulesCorpus)));
 
-const SCREEN_TYPES = new Set(["image", "text", "paper", "stores", "buildings", "folk", "person", "place", "encounter"]);
+const SCREEN_TYPES = new Set(["image", "text", "rule", "paper", "stores", "buildings", "folk", "person", "place", "encounter"]);
 
 app.put("/api/screen", guard((req, res) => {
   const { type, refId, url, caption, title, body } = req.body;
@@ -1488,6 +1488,7 @@ app.put("/api/screen", guard((req, res) => {
     if (!SCREEN_TYPES.has(type)) throw new Error("Unsupported screen type.");
     if (type === "image" && (!url || !url.trim())) throw new Error("An image needs a URL.");
     if (type === "text" && !(title || "").trim() && !(body || "").trim()) throw new Error("Write something first.");
+    if (type === "rule" && !rulesCorpus.nodes.find((node) => node.id === refId)) throw new Error("Unknown rule.");
     if (type === "paper" && !state.pcs.some((pc) => (pc.inventory || []).some((item) => typeof item === "object" && item.id === refId && item.kind === "paper"))) throw new Error("Unknown paper.");
     if (type === "folk" && !state.characters.find((c) => c.id === refId)) throw new Error("Unknown folk.");
     if (type === "person" && !state.people.find((p) => p.id === refId)) throw new Error("Unknown person.");

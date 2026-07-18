@@ -48,6 +48,10 @@ function html(v) {
       return `
         ${v.title ? `<div class="text-title">${esc(v.title)}</div><hr class="divider">` : ""}
         ${v.body ? `<p class="text-body">${esc(v.body)}</p>` : ""}`;
+    case "rule":
+      return `<div class="rule-path smallcaps">${esc((v.path || []).join(" · "))}</div>
+        <div class="text-title">${esc(v.title)}</div><hr class="divider">
+        <p class="text-body rule-body">${esc(v.body)}</p>`;
     case "paper":
       return paperArtifactHtml(v, { id: "projected-paper-title" });
     case "encounter":

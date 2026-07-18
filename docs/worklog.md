@@ -20,6 +20,16 @@ each other. Rules of the road:
 ## Lanes
 
 **2026-07-18 — Codex** · status: DONE
+Lane: encounter and GM-interface design pass plus the native GM Party sheet.
+Replaced the flat bestiary with a reusable front/role creature explorer, tagged
+all adversaries with practical rule references, added searchable quick rules
+and toggle/hold projector gestures, and made the encounter workspace responsive
+inside the persistent GM shell. Replaced the Party iframe with a tabbed native
+GM sheet and a delegated roster selector. Recorded the next console-overhaul
+recommendations in `docs/gm-interface-review.md`. Verified all 68 tests and the
+live desktop/constrained layouts without creating encounter or campaign data.
+
+**2026-07-18 — Codex** · status: DONE
 Lane: resilient player feedback capture. Normalized modern CSS colors in the
 screenshot clone and added a drawable fallback canvas so capture failures can
 no longer prevent a player from filing a ticket. Verified on the live character

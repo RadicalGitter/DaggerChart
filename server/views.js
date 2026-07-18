@@ -242,6 +242,9 @@ export function gmView() {
       subclass: p.subclass?.name,
       ancestry: p.ancestry?.name,
       community: p.community?.name,
+      pronouns: p.pronouns || "",
+      classDomains: [...(p.class?.domains || [])],
+      spellcastTrait: p.subclass?.spellcastTrait || null,
       conditions: conditionView(p),
       hp: numericView(p.hp),
       hpMax: numericView(p.hpMax),
@@ -253,7 +256,8 @@ export function gmView() {
       armor: {
         name: p.armor?.name || "",
         score: numericView(p.armor?.score),
-        marked: numericView(p.armorMarked)
+        marked: numericView(p.armorMarked),
+        feature: p.armor?.feature || ""
       },
       thresholds: {
         major: numericView(p.thresholds?.major),
@@ -264,6 +268,35 @@ export function gmView() {
         name: experience.name || "",
         bonus: numericView(experience.bonus)
       })),
+      weapons: {
+        primary: weaponView(p.weapons?.primary),
+        secondary: weaponView(p.weapons?.secondary)
+      },
+      inventory: inventoryView(p, state.reference),
+      background: (p.background || []).map((entry, index) => ({
+        id: entry.id || `legacy-${index + 1}`,
+        q: entry.q || "",
+        a: entry.a || ""
+      })),
+      connections: (p.connections || []).map((entry) => ({ q: entry.q || "", note: entry.note || "" })),
+      domainCards: (p.domainCards || []).map((card) => ({
+        id: card.id,
+        name: card.name || "",
+        domain: card.domain || "",
+        type: card.type || "",
+        level: card.level,
+        recallCost: card.recallCost,
+        text: card.text || "",
+        location: card.location || "loadout"
+      })),
+      domainCardEntitlement: domainCardEntitlement(p, state.reference),
+      features: {
+        hopeFeature: featureView(p.features?.hopeFeature),
+        classFeatures: (p.features?.classFeatures || []).map(featureView).filter(Boolean),
+        foundation: (p.features?.foundation || []).map(featureView).filter(Boolean),
+        ancestry: (p.features?.ancestry || []).map(featureView).filter(Boolean),
+        community: (p.features?.community || []).map(featureView).filter(Boolean)
+      },
       papers: inventoryView(p, state.reference).filter((item) => item.kind === "paper")
     })),
     people: state.people,
@@ -276,7 +309,7 @@ export function gmView() {
 // The table screen: whatever the GM chose to project, resolved at read time
 // through the same public whitelists as everything else. Even when the GM
 // deliberately shows an unrevealed person, only public fields cross the wire.
-export function screenView() {
+export function screenView(rulesCorpus = null) {
   const cur = state.screen.current;
   const idle = () => ({
     type: "idle",
@@ -289,6 +322,16 @@ export function screenView() {
       return { type: "image", url: cur.url, caption: cur.caption || "" };
     case "text":
       return { type: "text", title: cur.title || "", body: cur.body || "" };
+    case "rule": {
+      const rule = (rulesCorpus?.nodes || []).find((node) => node.id === cur.refId);
+      if (!rule) return idle();
+      return {
+        type: "rule",
+        title: rule.title || "Rule",
+        path: [...(rule.path || [])],
+        body: rule.body || ""
+      };
+    }
     case "paper": {
       const item = state.pcs
         .flatMap((pc) => inventoryView(pc, state.reference))
