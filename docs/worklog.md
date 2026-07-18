@@ -20,6 +20,12 @@ each other. Rules of the road:
 ## Lanes
 
 **2026-07-18 — Codex** · status: DONE
+Lane: resilient player feedback capture. Normalized modern CSS colors in the
+screenshot clone and added a drawable fallback canvas so capture failures can
+no longer prevent a player from filing a ticket. Verified on the live character
+sheet and covered the fallback contract with a client regression test.
+
+**2026-07-18 — Codex** · status: DONE
 Lane: universal player return control. Added one shared floating route back to
 `/player` across every top-level player surface, suppressed it inside embeds
 and on the player/login hubs, and verified live route coverage and navigation.

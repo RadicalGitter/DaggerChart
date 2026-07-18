@@ -12,6 +12,113 @@ if (new URLSearchParams(location.search).get("embed") !== "1") {
   else initFeedback();
 }
 
+const COLOR_PROPERTIES = [
+  ["color", "#201a14"],
+  ["background-color", "transparent"],
+  ["border-top-color", "transparent"],
+  ["border-right-color", "transparent"],
+  ["border-bottom-color", "transparent"],
+  ["border-left-color", "transparent"],
+  ["outline-color", "transparent"],
+  ["text-decoration-color", "transparent"],
+  ["column-rule-color", "transparent"],
+  ["-webkit-text-stroke-color", "transparent"],
+  ["fill", "#201a14"],
+  ["stroke", "transparent"],
+  ["stop-color", "transparent"],
+  ["flood-color", "transparent"],
+  ["lighting-color", "transparent"]
+];
+const MODERN_COLOR = /(?:color-mix|oklab|oklch|lab|lch|color)\(/i;
+const SRGB_COLOR = /^color\(srgb\s+([+-]?(?:\d*\.)?\d+)\s+([+-]?(?:\d*\.)?\d+)\s+([+-]?(?:\d*\.)?\d+)(?:\s*\/\s*([+-]?(?:\d*\.)?\d+))?\)$/i;
+const CAPTURE_STYLE = `
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  *::before, *::after {
+    content: none !important;
+    color: rgb(32, 26, 20) !important;
+    background: none !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+`;
+function legacyColor(value, fallback) {
+  if (!value || value === "none") return value || fallback;
+  if (value === "transparent") return "rgba(0, 0, 0, 0)";
+  if (/^(?:rgba?|hsla?)\(/i.test(value) || /^#[\da-f]{3,8}$/i.test(value)) return value;
+  const srgb = value.match(SRGB_COLOR);
+  if (!srgb) return fallback;
+  const channel = (part) => Math.round(Math.max(0, Math.min(1, Number(part))) * 255);
+  const alpha = srgb[4] === undefined ? 1 : Math.max(0, Math.min(1, Number(srgb[4])));
+  return `rgba(${channel(srgb[1])}, ${channel(srgb[2])}, ${channel(srgb[3])}, ${alpha.toFixed(3)})`;
+}
+
+function applyLegacyStyles(sourceElements, targetElements) {
+  const count = Math.min(sourceElements.length, targetElements.length);
+  for (let index = 0; index < count; index += 1) {
+    const computed = getComputedStyle(sourceElements[index]);
+    const targetStyle = targetElements[index].style;
+    for (const [property, fallback] of COLOR_PROPERTIES) {
+      const value = computed.getPropertyValue(property);
+      if (MODERN_COLOR.test(value)) targetStyle.setProperty(property, legacyColor(value, fallback), "important");
+    }
+    for (const property of ["background-image", "border-image-source", "box-shadow", "text-shadow"]) {
+      if (MODERN_COLOR.test(computed.getPropertyValue(property))) targetStyle.setProperty(property, "none", "important");
+    }
+  }
+}
+
+function addCaptureStyle(targetDocument) {
+  const captureStyle = targetDocument.createElement("style");
+  captureStyle.dataset.feedbackCaptureStyle = "";
+  captureStyle.textContent = CAPTURE_STYLE;
+  targetDocument.head.append(captureStyle);
+  return captureStyle;
+}
+
+function prepareFeedbackSource() {
+  const elements = [document.documentElement, ...document.documentElement.querySelectorAll("*")];
+  const inlineStyles = elements.map((element) => element.getAttribute("style"));
+  applyLegacyStyles(elements, elements);
+  const captureStyle = addCaptureStyle(document);
+
+  return () => {
+    captureStyle.remove();
+    elements.forEach((element, index) => {
+      const original = inlineStyles[index];
+      if (original === null) element.removeAttribute("style");
+      else element.setAttribute("style", original);
+    });
+  };
+}
+
+function sanitizeFeedbackClone(clonedDocument) {
+  const sourceElements = [document.documentElement, ...document.documentElement.querySelectorAll("*")];
+  const clonedElements = [clonedDocument.documentElement, ...clonedDocument.documentElement.querySelectorAll("*")];
+  applyLegacyStyles(sourceElements, clonedElements);
+
+  if (!clonedDocument.querySelector("[data-feedback-capture-style]")) addCaptureStyle(clonedDocument);
+}
+
+function createFallbackCapture() {
+  const fallback = document.createElement("canvas");
+  const scale = Math.min(window.devicePixelRatio || 1, 1.5, 1600 / Math.max(1, window.innerWidth));
+  fallback.width = Math.max(1, Math.round(window.innerWidth * scale));
+  fallback.height = Math.max(1, Math.round(window.innerHeight * scale));
+  const context = fallback.getContext("2d");
+  context.fillStyle = legacyColor(getComputedStyle(document.body).backgroundColor, "#17120c");
+  context.fillRect(0, 0, fallback.width, fallback.height);
+
+  const padding = Math.max(24, Math.round(fallback.width * 0.035));
+  context.fillStyle = "rgba(240, 221, 176, .82)";
+  context.font = `${Math.max(20, Math.round(fallback.width / 38))}px Georgia, serif`;
+  context.fillText(document.title || location.pathname, padding, padding * 1.8, fallback.width - padding * 2);
+  context.fillStyle = "rgba(240, 221, 176, .48)";
+  context.font = `${Math.max(13, Math.round(fallback.width / 70))}px sans-serif`;
+  context.fillText(location.pathname, padding, padding * 2.7, fallback.width - padding * 2);
+  return fallback;
+}
+
 function initFeedback() {
   const trigger = document.createElement("button");
   trigger.type = "button";
@@ -94,7 +201,10 @@ function initFeedback() {
     trigger.hidden = !playerFeatureEnabled("feedback");
     strokes.length = 0;
     overlay.querySelector("textarea").value = "";
-    overlay.querySelector(".feedback-status").textContent = "";
+    const status = overlay.querySelector(".feedback-status");
+    status.classList.remove("is-error");
+    delete status.dataset.captureError;
+    status.textContent = "";
   }
   overlay.querySelector(".feedback-close").onclick = close;
   overlay.addEventListener("click", (event) => { if (event.target === overlay) close(); });
@@ -103,39 +213,52 @@ function initFeedback() {
     if (!playerFeatureEnabled("feedback")) return;
     trigger.hidden = true;
     const status = overlay.querySelector(".feedback-status");
+    let captured;
+    let captureFailed = false;
     try {
       const { default: html2canvas } = await import("/vendor/html2canvas/html2canvas.esm.js");
-      const captured = await html2canvas(document.documentElement, {
-        backgroundColor: getComputedStyle(document.body).backgroundColor || "#17120c",
-        useCORS: true,
-        logging: false,
-        scale: Math.min(window.devicePixelRatio || 1, 1.5),
-        x: window.scrollX,
-        y: window.scrollY,
-        width: window.innerWidth,
-        height: window.innerHeight,
-        scrollX: window.scrollX,
-        scrollY: window.scrollY,
-        windowWidth: window.innerWidth,
-        windowHeight: window.innerHeight,
-        ignoreElements: (element) => !!element.closest?.("[data-feedback-ui]")
-      });
-      const ratio = Math.min(1, 1600 / captured.width);
-      canvas.width = Math.max(1, Math.round(captured.width * ratio));
-      canvas.height = Math.max(1, Math.round(captured.height * ratio));
-      base = document.createElement("canvas");
-      base.width = canvas.width;
-      base.height = canvas.height;
-      base.getContext("2d").drawImage(captured, 0, 0, base.width, base.height);
-      strokes.length = 0;
-      redraw();
-      overlay.hidden = false;
-      overlay.querySelector(".feedback-panel").scrollTop = 0;
+      const restoreSource = prepareFeedbackSource();
+      try {
+        captured = await html2canvas(document.body, {
+          backgroundColor: legacyColor(getComputedStyle(document.body).backgroundColor, "#17120c"),
+          useCORS: true,
+          logging: false,
+          scale: Math.min(window.devicePixelRatio || 1, 1.5),
+          x: window.scrollX,
+          y: window.scrollY,
+          width: window.innerWidth,
+          height: window.innerHeight,
+          scrollX: window.scrollX,
+          scrollY: window.scrollY,
+          windowWidth: window.innerWidth,
+          windowHeight: window.innerHeight,
+          onclone: sanitizeFeedbackClone,
+          ignoreElements: (element) => !!element.closest?.("[data-feedback-ui]")
+        });
+      } finally {
+        restoreSource();
+      }
     } catch (error) {
-      trigger.hidden = false;
+      captured = createFallbackCapture();
+      captureFailed = true;
+      status.dataset.captureError = error.message || error.name;
       console.error("Feedback screenshot capture failed:", error);
-      alert(`${t("feedback.captureError")} ${error.message || ""}`.trim());
     }
+
+    const ratio = Math.min(1, 1600 / captured.width);
+    canvas.width = Math.max(1, Math.round(captured.width * ratio));
+    canvas.height = Math.max(1, Math.round(captured.height * ratio));
+    base = document.createElement("canvas");
+    base.width = canvas.width;
+    base.height = canvas.height;
+    base.getContext("2d").drawImage(captured, 0, 0, base.width, base.height);
+    strokes.length = 0;
+    redraw();
+    status.classList.toggle("is-error", captureFailed);
+    status.textContent = captureFailed ? t("feedback.captureError") : "";
+    if (!captureFailed) delete status.dataset.captureError;
+    overlay.hidden = false;
+    overlay.querySelector(".feedback-panel").scrollTop = 0;
   };
 
   overlay.querySelector("form").onsubmit = async (event) => {
