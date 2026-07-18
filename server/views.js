@@ -346,6 +346,43 @@ export function screenView() {
         wide: true
       };
     }
+    case "encounter": {
+      const encounter = state.encounters.encounters.find((e) => e.id === cur.refId);
+      if (!encounter) return idle();
+      // Players see only the cards: labels, portraits, positions, and who has
+      // fallen. Stat blocks, HP, and bestiary identities stay GM-side.
+      return {
+        type: "encounter",
+        name: encounter.name || "",
+        entities: (encounter.entities || []).map((entity) => {
+          if (entity.kind === "pc") {
+            const pc = state.pcs.find((p) => p.id === entity.refId);
+            return {
+              id: entity.id,
+              kind: "pc",
+              label: pc?.name || entity.label || "",
+              portrait: pc?.portrait || null,
+              appearance: appearanceView(pc || {}),
+              x: numericView(entity.x),
+              y: numericView(entity.y),
+              w: numericView(entity.w),
+              defeated: entity.defeated === true
+            };
+          }
+          return {
+            id: entity.id,
+            kind: "adversary",
+            label: entity.label || "",
+            portrait: null,
+            appearance: null,
+            x: numericView(entity.x),
+            y: numericView(entity.y),
+            w: numericView(entity.w),
+            defeated: entity.defeated === true
+          };
+        })
+      };
+    }
     default:
       return idle();
   }

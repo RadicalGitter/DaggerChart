@@ -1,0 +1,95 @@
+/* Encounter stage cards — the party floating-card look, extended with a
+   hostile variant. Shared by the GM board's encounter builder and the
+   projector, so the table sees exactly what the GM arranged. */
+
+.enc-stage {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(84, 70, 44, 0.22), transparent 62%),
+    #17120c;
+  font-family: Georgia, "Times New Roman", serif;
+  color: #f0e5cf;
+}
+.enc-stage * { box-sizing: border-box; }
+.enc-tethers { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.enc-tethers line { stroke: rgba(196, 92, 60, 0.55); stroke-width: 2.5; stroke-dasharray: 3 6; stroke-linecap: round; }
+.enc-melee-mark { fill: #e8b06a; font-size: 15px; text-anchor: middle; dominant-baseline: central; }
+
+.enc-card {
+  --enc-w: 120px;
+  --enc-primary: #8b7653;
+  --enc-secondary: #9fcdb7;
+  position: absolute;
+  width: var(--enc-w);
+  aspect-ratio: 3 / 4;
+  transform: translate(-50%, -50%);
+  user-select: none;
+  touch-action: none;
+}
+.enc-card-surface {
+  position: relative; width: 100%; height: 100%; overflow: hidden;
+  border: 2px solid color-mix(in srgb, var(--enc-primary) 76%, #e7d49f);
+  border-radius: 5px;
+  background: #252a26;
+  box-shadow: 0 11px 23px rgba(0, 0, 0, 0.38),
+    0 2px 7px color-mix(in srgb, var(--enc-secondary) 22%, transparent),
+    inset 0 0 0 2px rgba(235, 218, 173, 0.25);
+  transition: box-shadow 0.16s ease, filter 0.25s ease;
+}
+.enc-card-surface::before {
+  content: ""; position: absolute; z-index: 2; inset: 5px; pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--enc-secondary) 56%, rgba(255, 255, 255, 0.36));
+  border-radius: 2px;
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.16);
+}
+.enc-card-surface::after {
+  content: ""; position: absolute; z-index: 2; inset: 0; pointer-events: none;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.16), transparent 22%, transparent 70%,
+    color-mix(in srgb, var(--enc-primary) 28%, transparent));
+}
+.enc-portrait { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; }
+.enc-portrait img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.enc-glyph {
+  color: color-mix(in srgb, var(--enc-secondary) 72%, #f0d9a2);
+  font-size: calc(var(--enc-w) * 0.38);
+  line-height: 1;
+  text-shadow: 0 5px 18px rgba(0, 0, 0, 0.5);
+}
+.enc-name {
+  position: absolute; z-index: 4; right: 6%; bottom: 5%; left: 6%; min-height: 18%;
+  display: grid; place-items: center; padding: 0.24rem 0.35rem;
+  color: #fff2d5;
+  border: 1px solid color-mix(in srgb, var(--enc-secondary) 48%, #d8bb78);
+  border-radius: 2px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--enc-primary) 74%, #38271f), #2c2923 72%);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.42), inset 0 1px rgba(255, 255, 255, 0.18);
+  text-align: center;
+  font-size: clamp(0.55rem, calc(var(--enc-w) * 0.088), 1.05rem);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+/* Hostile cards: ash and oxblood instead of the party's warm brass. */
+.enc-card.hostile { --enc-primary: #6e2f24; --enc-secondary: #c45c3c; }
+.enc-card.hostile .enc-card-surface { background: #1f1a17; }
+.enc-card.hostile .enc-name { color: #f5ddc9; }
+
+/* Engagement: cards in melee take an ember edge. */
+.enc-card.engaged .enc-card-surface {
+  box-shadow: 0 11px 23px rgba(0, 0, 0, 0.45),
+    0 0 0 2px rgba(196, 92, 60, 0.65),
+    0 0 22px rgba(196, 92, 60, 0.4),
+    inset 0 0 0 2px rgba(235, 218, 173, 0.25);
+}
+
+/* The fallen fade back into the dark. */
+.enc-card.defeated { z-index: 0; }
+.enc-card.defeated .enc-card-surface { filter: grayscale(0.9) brightness(0.55); }
+.enc-card.defeated .enc-name { text-decoration: line-through; text-decoration-thickness: 1px; }
+
+/* GM-stage extras (inert on the projector, which never sets these classes). */
+.enc-card.draggable .enc-card-surface { cursor: grab; }
+.enc-card.dragging { z-index: 30; }
+.enc-card.dragging .enc-card-surface { cursor: grabbing; box-shadow: 0 22px 40px rgba(0, 0, 0, 0.55), inset 0 0 0 2px rgba(244, 226, 180, 0.34); }
+.enc-card.selected .enc-card-surface { outline: 2px solid #e8b06a; outline-offset: 2px; }

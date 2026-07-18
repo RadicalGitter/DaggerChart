@@ -123,6 +123,14 @@ designing anything; it is the source of truth. Code map + API:
   project becomes remote, public, or materially larger.** See
   `docs/ux-telemetry.md`.
 
+- The combat encounter builder lives on `/board` (⚔ Encounter): bestiary stat
+  blocks in `data/adversaries.json` (RAW Daggerheart format, Visseren-flavored,
+  hand-editable; the server never writes it), saved encounters in
+  `data/encounters.json`. Each entity is one floating card on a shared 16:9
+  stage; melee is derived from card adjacency (enemy against PC) by
+  `public/shared/encounter-stage.js`, identically on the GM board and the
+  projector. Projection goes through the `encounter` screen type and exposes
+  only labels, portraits, positions, and who has fallen — never stats.
 - `/screen` is the projector in front of the table (the drafting board owns
   `/board`): it shows exactly one thing, chosen by the GM — a mood image,
   a folk/person/place card, the stores, the buildings, or free text.

@@ -1383,11 +1383,102 @@ app.delete("/api/places/:id", guard((req, res) => {
   res.json({ removed: gone.name });
 }));
 
+// --- the encounter builder: bestiary, saved encounters, live card positions ---
+
+app.get("/api/adversaries", (_req, res) => res.json(state.adversaries));
+
+const findEncounter = (id) => {
+  const encounter = state.encounters.encounters.find((e) => e.id === id);
+  if (!encounter) throw new Error("Unknown encounter.");
+  return encounter;
+};
+
+// Card positions are normalized (x, y in 0..1 of the stage; w as a fraction of
+// stage width) so the GM board and the projector lay the same scene out alike.
+function cleanEncounterEntities(raw) {
+  if (!Array.isArray(raw)) throw new Error("An encounter needs a list of entities.");
+  const adversaryIds = new Set(state.adversaries.adversaries.map((a) => a.id));
+  const seen = new Set();
+  return raw.slice(0, 60).map((entity) => {
+    const id = String(entity?.id || "");
+    if (!/^en_[a-zA-Z0-9_-]{3,60}$/.test(id) || seen.has(id)) throw new Error("Bad entity id.");
+    seen.add(id);
+    const kind = entity.kind === "pc" ? "pc" : "adversary";
+    const refId = String(entity.refId || "");
+    if (kind === "pc" && !state.pcs.some((pc) => pc.id === refId)) throw new Error("Unknown character in the encounter.");
+    if (kind === "adversary" && !adversaryIds.has(refId)) throw new Error("Unknown adversary in the encounter.");
+    const num = (value, fallback, min, max) =>
+      Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : fallback;
+    return {
+      id,
+      kind,
+      refId,
+      label: String(entity.label || "").slice(0, 60),
+      x: num(entity.x, 0.5, 0, 1),
+      y: num(entity.y, 0.5, 0, 1),
+      w: num(entity.w, 0.09, 0.04, 0.3),
+      hp: num(entity.hp, 0, 0, 99),
+      stress: num(entity.stress, 0, 0, 99),
+      defeated: entity.defeated === true
+    };
+  });
+}
+
+app.get("/api/encounters", (_req, res) => res.json(state.encounters));
+
+app.post("/api/encounters", guard((req, res) => {
+  const name = String(req.body?.name || "").trim().slice(0, 80) || "Unnamed encounter";
+  const pcs = currentActivePcs();
+  const encounter = {
+    id: `enc_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+    name,
+    createdAt: new Date().toISOString(),
+    entities: pcs.map((pc, index) => ({
+      id: `en_pc_${pc.id}`,
+      kind: "pc",
+      refId: pc.id,
+      label: pc.name,
+      x: 0.14 + (index % 2) * 0.1,
+      y: pcs.length > 1 ? 0.18 + (index / (pcs.length - 1)) * 0.6 : 0.45,
+      w: 0.09,
+      hp: 0,
+      stress: 0,
+      defeated: false
+    }))
+  };
+  state.encounters.encounters.push(encounter);
+  persist();
+  res.json(encounter);
+}));
+
+app.put("/api/encounters/:id", guard((req, res) => {
+  const encounter = findEncounter(req.params.id);
+  if (req.body?.name !== undefined) {
+    encounter.name = String(req.body.name || "").trim().slice(0, 80) || encounter.name;
+  }
+  if (req.body?.entities !== undefined) encounter.entities = cleanEncounterEntities(req.body.entities);
+  persist();
+  // The projector follows along live; the GM board ignores its own echo.
+  broadcast();
+  res.json(encounter);
+}));
+
+app.delete("/api/encounters/:id", guard((req, res) => {
+  const encounter = findEncounter(req.params.id);
+  state.encounters.encounters = state.encounters.encounters.filter((e) => e.id !== encounter.id);
+  if (state.screen.current?.type === "encounter" && state.screen.current.refId === encounter.id) {
+    state.screen.current = null;
+  }
+  persist();
+  broadcast();
+  res.json({ removed: encounter.name });
+}));
+
 // --- the table screen: GM projects, everyone sees ---
 
 app.get("/api/screen", (_req, res) => res.json(screenView()));
 
-const SCREEN_TYPES = new Set(["image", "text", "paper", "stores", "buildings", "folk", "person", "place"]);
+const SCREEN_TYPES = new Set(["image", "text", "paper", "stores", "buildings", "folk", "person", "place", "encounter"]);
 
 app.put("/api/screen", guard((req, res) => {
   const { type, refId, url, caption, title, body } = req.body;
@@ -1401,6 +1492,7 @@ app.put("/api/screen", guard((req, res) => {
     if (type === "folk" && !state.characters.find((c) => c.id === refId)) throw new Error("Unknown folk.");
     if (type === "person" && !state.people.find((p) => p.id === refId)) throw new Error("Unknown person.");
     if (type === "place" && !state.places.find((p) => p.id === refId)) throw new Error("Unknown place.");
+    if (type === "encounter" && !state.encounters.encounters.find((e) => e.id === refId)) throw new Error("Unknown encounter.");
     state.screen.current = {
       type,
       refId: refId || null,

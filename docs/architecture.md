@@ -174,6 +174,9 @@ docs/         this file, the design spec, ComfyUI workflow
 | `POST /api/music/suno-snapshot` | reconcile a validated browser snapshot and cache missing Suno MP3s locally |
 | `POST /api/music/playlists`, `POST /api/music/playlists/:id/songs` | create playlists and add songs |
 | `PUT/DELETE /api/music/songs/:id` | rename or remove song metadata; deletion keeps audio on disk |
+| `GET /api/adversaries` | the GM bestiary (`data/adversaries.json`): RAW stat blocks flavored to Visseren; never on player whitelists |
+| `GET/POST /api/encounters` | saved encounter documents; creating one seeds a card per current-campaign active PC |
+| `PUT/DELETE /api/encounters/:id` | rename or move validated entity cards (broadcasts so the projector follows); deleting a projected encounter clears the screen |
 | `GET/PUT /api/board` | backward-compatible alias for the `main` drafting board |
 | `GET/PUT /api/board/:name` | named `main` or `hud` board document `{items, pins}` |
 | `GET /api/gm-screen` | static flat SRD quick-reference sections for GM surfaces |
@@ -217,6 +220,17 @@ Consumable reactions; see [inventory.md](inventory.md).
   gamified fanfare; microcopy per §12.
 - **Live updates:** pages listen to `/api/stream` and refetch (debounced).
   Character plates on the board update as players tap their sheets.
+- **Encounter stage:** `/board` carries a full-screen encounter builder
+  (`board/encounter.js`). Adversaries come from the bestiary; every entity is
+  one floating card (`shared/encounter-cards.css`) on a 16:9 stage with
+  normalized positions, so the GM board and `/screen` lay the scene out
+  identically via `shared/encounter-stage.js`. Dragging an enemy card against
+  a player card derives melee (tether + ember ring) — engagement is computed,
+  never stored. The header shows RAW battle points ((3 × party) + 2, costs by
+  adversary role); the inspector tracks per-instance HP/Stress and defeat.
+  "Show at the table" projects through `screenView()`, which whitelists
+  labels, portraits, positions, and defeat only — stat blocks, vitals, and
+  bestiary identities never reach players.
 - **GM quick tools:** `/gm` and `/board` share a fixed hotbar with bounded Fear
   controls, unread correspondence, and a full-screen quick table. The message
   panel shows one PC thread at a time; the overlay combines live GM-whitelisted

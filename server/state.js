@@ -118,6 +118,8 @@ export const state = {
   feedback: loadJson("feedback.json", []),
   artLibrary: loadJson("art-library.json", { scenes: [] }),
   screen: loadJson("screen.json", { current: null }),
+  adversaries: loadJson("adversaries.json", { adversaries: [] }),
+  encounters: loadJson("encounters.json", { encounters: [] }),
   tables: loadEventTables(),
   reference: loadJson("daggerheart/reference.json", null)
 };
@@ -228,6 +230,9 @@ export function persist() {
   saveJson("feedback.json", state.feedback);
   saveJson("art-library.json", state.artLibrary);
   saveJson("screen.json", state.screen);
+  // The bestiary (adversaries.json) is hand-edited reference data; the
+  // server reads it but never writes it back.
+  saveJson("encounters.json", state.encounters);
 }
 
 export function getCharacter(id) {

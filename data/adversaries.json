@@ -1,0 +1,246 @@
+{
+  "note": "GM bestiary for the encounter builder. RAW Daggerheart adversary format, flavored to Visseren. Descriptions and features are GM-facing; only the display label of a placed card ever reaches the projector.",
+  "adversaries": [
+    {
+      "id": "adv_crooked_lackey",
+      "name": "Crooked Lackey",
+      "front": "The Changed",
+      "tier": 1,
+      "type": "Minion",
+      "description": "A bandit taken young by the sap. Joints knot the wrong way and the eyes have gone amber, but the hunger for other people's supplies is entirely ordinary.",
+      "motives": "Grab what can be carried, stay near the pack, run when the pack breaks.",
+      "difficulty": 9,
+      "thresholds": null,
+      "hp": 1,
+      "stress": 1,
+      "atk": -2,
+      "weapon": { "name": "Daggers", "range": "Melee", "damage": "2 phy" },
+      "experiences": [{ "name": "Thief", "bonus": 2 }],
+      "features": [
+        { "name": "Minion (3)", "kind": "Passive", "text": "Defeated by any damage. For every 3 damage a PC deals, defeat one additional Lackey within range of the attack." },
+        { "name": "Dogpile", "kind": "Action", "cost": "Fear", "text": "Spotlight all Lackeys within Close range of one target. They move into Melee and make one shared attack; on a success, combine 2 physical damage per participating Lackey." }
+      ]
+    },
+    {
+      "id": "adv_split_skin_cutter",
+      "name": "Split-Skin Cutter",
+      "front": "The Changed",
+      "tier": 1,
+      "type": "Standard",
+      "description": "A footpad whose old scars have opened into seams of black glass. Climbs like something with too many joints, because it has too many joints.",
+      "motives": "Flank, cut, take the high ground, keep the exits in sight.",
+      "difficulty": 12,
+      "thresholds": { "major": 8, "severe": 14 },
+      "hp": 5,
+      "stress": 3,
+      "atk": 1,
+      "weapon": { "name": "Daggers", "range": "Melee", "damage": "1d8+1 phy" },
+      "experiences": [{ "name": "Thief", "bonus": 2 }],
+      "features": [
+        { "name": "Jointed Climber", "kind": "Passive", "text": "Climbs as easily as running." },
+        { "name": "Drop Attack", "kind": "Passive", "text": "A successful standard attack made from above deals 1d10+1 physical damage instead." }
+      ]
+    },
+    {
+      "id": "adv_needle_eye",
+      "name": "Needle-Eye",
+      "front": "The Changed",
+      "tier": 1,
+      "type": "Ranged",
+      "description": "A sniper whose skin has gone translucent where the sap runs thickest. Nearly invisible against a tree line at dusk; patient in a way the unchanged never were.",
+      "motives": "Stay Hidden, pick off the isolated, relocate after every exposure.",
+      "difficulty": 13,
+      "thresholds": { "major": 4, "severe": 7 },
+      "hp": 3,
+      "stress": 2,
+      "atk": -1,
+      "weapon": { "name": "Shortbow", "range": "Far", "damage": "1d10+2 phy" },
+      "experiences": [{ "name": "Stealth", "bonus": 2 }],
+      "features": [
+        { "name": "Translucent Ambush", "kind": "Passive", "text": "A successful standard attack made while Hidden deals 1d10+4 physical damage instead." }
+      ]
+    },
+    {
+      "id": "adv_root_hulk",
+      "name": "Root-Hulk",
+      "front": "The Changed",
+      "tier": 1,
+      "type": "Bruiser",
+      "description": "What is left when the sap finishes with a big man. Arms too long, bark grown through the forearms, a grip that does not understand letting go.",
+      "motives": "Isolate one target, hold them for the others, feel nothing.",
+      "difficulty": 12,
+      "thresholds": { "major": 7, "severe": 14 },
+      "hp": 7,
+      "stress": 4,
+      "atk": -3,
+      "weapon": { "name": "Knotted Club", "range": "Melee", "damage": "1d4+6 phy" },
+      "experiences": [{ "name": "Unveiled Threats", "bonus": 3 }],
+      "features": [
+        { "name": "Pinned Prey", "kind": "Passive", "text": "Creatures Restrained by the Hulk take double damage from other adversaries." },
+        { "name": "Long-Armed Hold", "kind": "Action", "text": "Attack a target in Melee. On a success, deal no damage; the target becomes Restrained and Vulnerable. A successful Strength Roll frees them. They are also freed if the Hulk takes Major or greater damage." }
+      ]
+    },
+    {
+      "id": "adv_grafted_captain",
+      "name": "Grafted Captain",
+      "front": "The Changed",
+      "tier": 1,
+      "type": "Leader",
+      "description": "A bandit officer the sap chose to keep clever. The grafts along the spine twitch when orders are given, as if something else agrees.",
+      "motives": "Coordinate, spend the lackeys, take the prize, leave before the cost gets personal.",
+      "difficulty": 13,
+      "thresholds": { "major": 7, "severe": 14 },
+      "hp": 6,
+      "stress": 3,
+      "atk": 2,
+      "weapon": { "name": "Hooked Javelin", "range": "Close", "damage": "1d8+3 phy" },
+      "experiences": [{ "name": "Pack Tactics", "bonus": 2 }],
+      "features": [
+        { "name": "Shared Nerve", "kind": "Action", "text": "Mark a Stress when spotlighted to also spotlight two allies within Close range." },
+        { "name": "More Bodies", "kind": "Action", "text": "Call three Crooked Lackeys onto the field at Far range." },
+        { "name": "Finish the Fallen", "kind": "Action", "cost": "Fear", "text": "Attack a Vulnerable target within Close range. On a success, deal 2d6+12 physical damage and the target marks a Stress." },
+        { "name": "Feeding Momentum", "kind": "Reaction", "text": "Gain a Fear when the Captain succeeds on an attack against a PC." }
+      ]
+    },
+    {
+      "id": "adv_pale_wolf",
+      "name": "Pale Wolf",
+      "front": "The Wilds",
+      "tier": 1,
+      "type": "Skulk",
+      "description": "The wolves of the dark hexes have gone bone-white and quiet. They do not howl before they come, which the settlers agree is the worst part.",
+      "motives": "Circle wide, test the weakest, drag one away from the fire.",
+      "difficulty": 12,
+      "thresholds": { "major": 6, "severe": 11 },
+      "hp": 4,
+      "stress": 2,
+      "atk": 1,
+      "weapon": { "name": "Bite", "range": "Melee", "damage": "1d6+2 phy" },
+      "experiences": [{ "name": "Silent Hunt", "bonus": 2 }],
+      "features": [
+        { "name": "Pack Fangs", "kind": "Passive", "text": "The standard attack deals 1d6+4 physical damage instead while another Pale Wolf is in Melee with the target." },
+        { "name": "Drag Down", "kind": "Action", "cost": "Fear", "text": "Attack a target already in Melee with a Pale Wolf. On a success, the target is knocked prone, becomes Vulnerable, and is moved Very Close toward the dark." }
+      ]
+    },
+    {
+      "id": "adv_glass_quilled_boar",
+      "name": "Glass-Quilled Boar",
+      "front": "The Wilds",
+      "tier": 1,
+      "type": "Bruiser",
+      "description": "A forest boar that rooted where the sap pools. Its bristles have hardened into black glass; it is in constant pain and blames whoever is nearest.",
+      "motives": "Charge the loudest thing, break what it hits, keep charging.",
+      "difficulty": 12,
+      "thresholds": { "major": 8, "severe": 15 },
+      "hp": 6,
+      "stress": 3,
+      "atk": 1,
+      "weapon": { "name": "Tusks", "range": "Melee", "damage": "1d8+3 phy" },
+      "experiences": [{ "name": "Bullheaded", "bonus": 2 }],
+      "features": [
+        { "name": "Goring Charge", "kind": "Action", "text": "Move up to Close in a straight line and attack. On a success, deal 1d12+3 physical damage and the target is knocked back Very Close." },
+        { "name": "Quill Burst", "kind": "Reaction", "text": "When the boar marks Severe damage, every creature within Very Close range takes 1d6 physical damage from flying glass." }
+      ]
+    },
+    {
+      "id": "adv_sap_choked_shambler",
+      "name": "Sap-Choked Shambler",
+      "front": "The Wilds",
+      "tier": 1,
+      "type": "Standard",
+      "description": "A dead tree that did not stop. It walks on split roots at a mourner's pace and reaches for anything warm. Burns well, eventually.",
+      "motives": "Advance, grip, squeeze, add the warmth to the sap.",
+      "difficulty": 13,
+      "thresholds": { "major": 8, "severe": 14 },
+      "hp": 5,
+      "stress": 2,
+      "atk": 0,
+      "weapon": { "name": "Root-Limbs", "range": "Melee", "damage": "1d8+2 phy" },
+      "experiences": [{ "name": "Implacable", "bonus": 2 }],
+      "features": [
+        { "name": "Green Wood", "kind": "Passive", "text": "Physical damage from slashing or piercing weapons is reduced by 1. Fire damage is doubled." },
+        { "name": "Rooted Grip", "kind": "Action", "text": "Attack a target in Melee. On a success, deal half damage and the target is Restrained until they break free with a successful action roll (13)." }
+      ]
+    },
+    {
+      "id": "adv_black_sap_swarm",
+      "name": "Black-Sap Midge Swarm",
+      "front": "The Wilds",
+      "tier": 1,
+      "type": "Horde",
+      "description": "Midges that breed in sap pools, rising in a column that moves with intent. Each bite leaves a fleck of black beneath the skin.",
+      "motives": "Envelop, madden, follow the bleeding.",
+      "difficulty": 10,
+      "thresholds": { "major": 6, "severe": 11 },
+      "hp": 5,
+      "stress": 2,
+      "atk": 0,
+      "weapon": { "name": "Biting Cloud", "range": "Very Close", "damage": "1d6+2 phy" },
+      "experiences": [],
+      "features": [
+        { "name": "Horde (1d4+1)", "kind": "Passive", "text": "When the swarm has marked half or more of its HP, its standard attack deals 1d4+1 physical damage instead." },
+        { "name": "Maddening Drone", "kind": "Action", "cost": "Fear", "text": "Every creature inside the swarm's Very Close range marks a Stress unless they succeed on an Instinct Roll (12)." }
+      ]
+    },
+    {
+      "id": "adv_drowned_reacher",
+      "name": "Drowned Reacher",
+      "front": "The Coast",
+      "tier": 1,
+      "type": "Standard",
+      "description": "Salt-bloated dead that walk out of the surf on still nights. Some wear crossing-clothes. Nobody has yet looked one in the face and said a name aloud.",
+      "motives": "Reach the living, hold them, walk back toward the water.",
+      "difficulty": 11,
+      "thresholds": { "major": 7, "severe": 12 },
+      "hp": 5,
+      "stress": 1,
+      "atk": 0,
+      "weapon": { "name": "Grasping Hands", "range": "Melee", "damage": "1d6+3 phy" },
+      "experiences": [{ "name": "Dead Calm", "bonus": 2 }],
+      "features": [
+        { "name": "Waterlogged", "kind": "Passive", "text": "Moves at half pace on land. Unaffected by effects that frighten or dishearten." },
+        { "name": "Undertow Grip", "kind": "Action", "text": "Attack a target in Melee. On a success, deal no damage; the target is Restrained and pulled Very Close toward the waterline. A successful Strength Roll breaks the grip." }
+      ]
+    },
+    {
+      "id": "adv_outrider",
+      "name": "Outrider of the Old Claims",
+      "front": "The Old Claims",
+      "tier": 2,
+      "type": "Ranged",
+      "description": "A scout in unfamiliar colors, riding land their maps already name. They observe more than they attack, and they always report home.",
+      "motives": "Watch, mark, wound the bold, be elsewhere when help arrives.",
+      "difficulty": 14,
+      "thresholds": { "major": 9, "severe": 17 },
+      "hp": 4,
+      "stress": 3,
+      "atk": 2,
+      "weapon": { "name": "Recurve Bow", "range": "Far", "damage": "2d8+1 phy" },
+      "experiences": [{ "name": "Read the Land", "bonus": 3 }],
+      "features": [
+        { "name": "Never Seen Twice", "kind": "Reaction", "text": "After making a standard attack, mark a Stress to move up to Close range without provoking." },
+        { "name": "Signal Arrow", "kind": "Action", "cost": "Fear", "text": "Loose a whistling arrow skyward. Begin a countdown (3); when it ends, mounted reinforcements reach the edge of the field." }
+      ]
+    },
+    {
+      "id": "adv_sap_priest",
+      "name": "Sap-Priest of the Green Debt",
+      "front": "The Changed",
+      "tier": 2,
+      "type": "Support",
+      "description": "One of the Changed who stopped fighting the sap and started listening. Speaks of what is owed to the land in a voice with too many layers.",
+      "motives": "Keep the grafted standing, collect the debt, convert the wounded.",
+      "difficulty": 13,
+      "thresholds": { "major": 8, "severe": 15 },
+      "hp": 4,
+      "stress": 3,
+      "atk": 0,
+      "weapon": { "name": "Blackthorn Staff", "range": "Close", "damage": "1d6+2 phy" },
+      "experiences": [{ "name": "Litany of the Debt", "bonus": 2 }],
+      "features": [
+        { "name": "Mend the Graft", "kind": "Action", "text": "A Changed ally within Close range clears 2 HP as sap seals the wound." },
+        { "name": "Feed the Sap", "kind": "Action", "cost": "Fear", "text": "Spotlight a Changed ally within Far range. Their next attack this scene deals an extra 1d6 damage." }
+      ]
+    }
+  ]
+}
