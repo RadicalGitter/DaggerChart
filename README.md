@@ -124,6 +124,21 @@ Per the spec's build phases, plus ambitions agreed at the table:
 - **Magic item cards**: print-ready card fronts matching the physical deck ("mold" idea — layered paper in a sleeve).
 - **Sheet personalization**: per-class sheet layouts, bookmarkable stats, a draggable shortcut tray.
 
-Daggerheart SRD content is used under the Darrington Press Community Gaming
-License. Reference data sourced from
+This product includes materials from the
+[Daggerheart System Reference Document 1.0](https://www.daggerheart.com/srd/),
+© Critical Role, LLC. All rights reserved. The SRD was created by Darrington
+Press and is used under the
+[Darrington Press Community Gaming License](https://darringtonpress.com/license/).
+The structured-source conversion by
+[seansbox/daggerheart-srd](https://github.com/seansbox/daggerheart-srd) is a
+previous modification. This application further modifies format, structure,
+taxonomy, practical rule references, and source metadata. Additional structured
+reference data is sourced from
 [daggersearch/daggerheart-data](https://github.com/daggersearch/daggerheart-data).
+
+Selected community adversaries are adapted from
+[Julia's Arsenal](https://github.com/juliaisaway/julias-arsenal-for-daggerheart),
+© 2026 Julia Alberto, under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). See the complete
+[adversary source audit](docs/adversary-sources.md) for counts, snapshots, and
+modifications.

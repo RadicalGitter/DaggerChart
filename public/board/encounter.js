@@ -16,6 +16,7 @@ const esc = (s) =>
 const TYPE_COST = { Minion: 1, Social: 1, Support: 1, Horde: 2, Ranged: 2, Skulk: 2, Standard: 2, Leader: 3, Bruiser: 4, Solo: 5 };
 
 let BESTIARY = [];
+let BESTIARY_SOURCES = [];
 let IDENTITIES = [];
 let RULE_NODES = [];
 let GM_SCREEN = { sections: [] };
@@ -66,6 +67,7 @@ style.textContent = `
   #enc-inspector[hidden], #enc-rules[hidden] { display: none; }
   #enc-inspector h2 { margin: 0 0 0.1rem; font-size: 1.05rem; }
   #enc-inspector .muted { color: var(--ink-faint); font-size: 0.78rem; }
+  #enc-inspector .provenance { margin-top: .18rem; color: #8a482f; font-size: .64rem; font-variant: small-caps; }
   #enc-inspector .statline { margin: 0.5rem 0; }
   #enc-inspector .feature { margin: 0.5rem 0; line-height: 1.4; font-size: 0.84rem; }
   #enc-inspector .feature b { font-size: 0.86rem; }
@@ -162,7 +164,9 @@ async function loadStatic() {
     fetch("/api/rules").then((r) => r.json()),
     fetch("/api/gm-screen").then((r) => r.json())
   ]);
-  BESTIARY = adv.adversaries || [];
+  BESTIARY_SOURCES = adv.sources || [];
+  const sourceNames = new Map(BESTIARY_SOURCES.map((source) => [source.id, source.name]));
+  BESTIARY = (adv.adversaries || []).map((card) => ({ ...card, sourceName: sourceNames.get(card.sourceId) || "Unattributed" }));
   IDENTITIES = Array.isArray(party) ? party : [];
   RULE_NODES = prepareRuleNodes(rules);
   GM_SCREEN = gmScreen;
@@ -401,22 +405,38 @@ function ruleTagsHtml(block) {
   ).join("")}</div>` : "";
 }
 
+function thresholdLabel(thresholds) {
+  if (!thresholds) return "—";
+  return `${thresholds.major ?? "—"}/${thresholds.severe ?? "—"}`;
+}
+
+function attackLabel(modifier) {
+  return typeof modifier === "number" && modifier >= 0 ? `+${modifier}` : String(modifier ?? "—");
+}
+
+function sourceLabel(block) {
+  const source = BESTIARY_SOURCES.find((entry) => entry.id === block.sourceId);
+  if (!source) return "Unattributed card";
+  return source.author ? `${source.name} · ${source.author}` : source.name;
+}
+
 function statBlockHtml(block) {
   return `
     <h2>${esc(block.name)}</h2>
-    <div class="muted">Tier ${block.tier} ${esc(block.type)} · ${esc(block.front || "")}</div>
+    <div class="muted">Tier ${block.tier} ${esc(block.typeDetail || block.type)} · ${esc(block.front || "")}</div>
+    <div class="provenance">${esc(sourceLabel(block))}</div>
     <p style="font-size:0.83rem; line-height:1.45;">${esc(block.description)}</p>
     <div class="muted" style="font-style:italic;">${esc(block.motives)}</div>
     <div class="statline">
       <div class="s"><b>${block.difficulty}</b><span>Difficulty</span></div>
-      <div class="s"><b>${block.thresholds ? `${block.thresholds.major}/${block.thresholds.severe}` : "—"}</b><span>Thresholds</span></div>
-      <div class="s"><b>${block.atk >= 0 ? "+" : ""}${block.atk}</b><span>ATK</span></div>
+      <div class="s"><b>${esc(thresholdLabel(block.thresholds))}</b><span>Thresholds</span></div>
+      <div class="s"><b>${esc(attackLabel(block.atk))}</b><span>ATK</span></div>
     </div>
     <div style="font-size:0.84rem;"><b>${esc(block.weapon.name)}</b> · ${esc(block.weapon.range)} · ${esc(block.weapon.damage)}</div>
     ${block.experiences?.length ? `<div class="muted" style="margin-top:0.25rem;">${block.experiences.map((e) => `${esc(e.name)} +${e.bonus}`).join(", ")}</div>` : ""}
     ${ruleTagsHtml(block)}
     ${block.features.map((f) => `
-      <div class="feature"><b>${esc(f.name)}</b> — <span class="muted">${esc(f.kind)}</span>${f.cost ? ` <span class="cost">· spend a ${esc(f.cost)}</span>` : ""}<br>${esc(f.text)}</div>`).join("")}`;
+      <div class="feature"><b>${esc(f.name)}</b> — <span class="muted">${esc(f.kind)}${f.timing ? ` · ${esc(f.timing)}` : ""}</span>${f.cost ? ` <span class="cost">· spend a ${esc(f.cost)}</span>` : ""}<br>${esc(f.text)}</div>`).join("")}`;
 }
 
 function renderInspector() {

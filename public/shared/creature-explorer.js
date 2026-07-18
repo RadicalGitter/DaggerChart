@@ -10,15 +10,16 @@ export function creatureRoleBand(type) {
   return "Other roles";
 }
 
-export function filterCreatures(creatures, tier = "all") {
+export function filterCreatures(creatures, tier = "all", sourceId = "all") {
   const list = Array.isArray(creatures) ? creatures : [];
-  if (tier === "all") return list;
-  return list.filter((creature) => String(creature.tier) === String(tier));
+  return list.filter((creature) =>
+    (tier === "all" || String(creature.tier) === String(tier)) &&
+    (sourceId === "all" || String(creature.sourceId || "unknown") === String(sourceId)));
 }
 
-export function buildCreatureTaxonomy(creatures, tier = "all") {
+export function buildCreatureTaxonomy(creatures, tier = "all", sourceId = "all") {
   const fronts = new Map();
-  for (const creature of filterCreatures(creatures, tier)) {
+  for (const creature of filterCreatures(creatures, tier, sourceId)) {
     const frontName = String(creature.front || "Elsewhere");
     const roleName = String(creature.type || "Unclassified");
     if (!fronts.has(frontName)) fronts.set(frontName, { label: frontName, roles: new Map(), creatures: [] });
@@ -47,7 +48,7 @@ export function buildCreatureTaxonomy(creatures, tier = "all") {
 function matchesCreature(creature, query) {
   if (!query) return true;
   const featureText = (creature.features || []).map((feature) => `${feature.name || ""} ${feature.text || ""}`).join(" ");
-  return [creature.name, creature.front, creature.type, creature.description, creature.motives, featureText]
+  return [creature.name, creature.front, creature.type, creature.sourceId, creature.sourceName, creature.description, creature.motives, featureText]
     .join(" ").toLocaleLowerCase().includes(query);
 }
 
@@ -57,6 +58,7 @@ export function createCreatureExplorer({ host, creatures = [], activeId = null, 
   let source = Array.isArray(creatures) ? creatures : [];
   let selectedId = activeId;
   let tier = "all";
+  let sourceId = "all";
   let query = "";
   let route = [];
   let transitioning = false;
@@ -73,6 +75,7 @@ export function createCreatureExplorer({ host, creatures = [], activeId = null, 
     <div class="ce-filters">
       <input type="search" data-ce-search maxlength="80" autocomplete="off" placeholder="Find a creature" aria-label="Find a creature">
       <select data-ce-tier aria-label="Threat tier"></select>
+      <select data-ce-source aria-label="Card source"></select>
     </div>
     <div class="ce-route" data-ce-route></div>
     <div class="ce-stage" data-ce-stage aria-live="polite"></div>`;
@@ -80,9 +83,10 @@ export function createCreatureExplorer({ host, creatures = [], activeId = null, 
   const stage = host.querySelector("[data-ce-stage]");
   const search = host.querySelector("[data-ce-search]");
   const tierSelect = host.querySelector("[data-ce-tier]");
+  const sourceSelect = host.querySelector("[data-ce-source]");
 
   function taxonomy() {
-    return buildCreatureTaxonomy(source, tier);
+    return buildCreatureTaxonomy(source, tier, sourceId);
   }
 
   function currentFront(tree = taxonomy()) {
@@ -156,7 +160,7 @@ export function createCreatureExplorer({ host, creatures = [], activeId = null, 
   }
 
   function searchResults() {
-    const found = filterCreatures(source, tier).filter((creature) => matchesCreature(creature, query));
+    const found = filterCreatures(source, tier, sourceId).filter((creature) => matchesCreature(creature, query));
     return found.length ? `<div class="ce-results">${found.map((creature) => `
       <div class="ce-result ${creature.id === selectedId ? "selected" : ""}">
         <button type="button" data-ce-creature="${esc(creature.id)}"><strong>${esc(creature.name)}</strong><small>${esc(creature.front)} · Tier ${esc(creature.tier)} ${esc(creature.type)}</small></button>
@@ -188,11 +192,13 @@ export function createCreatureExplorer({ host, creatures = [], activeId = null, 
     const tree = taxonomy();
     validateRoute(tree);
     tierSelect.innerHTML = `<option value="all">All tiers</option>${tree.tiers.map((value) => `<option value="${value}" ${String(tier) === String(value) ? "selected" : ""}>Tier ${value}</option>`).join("")}`;
+    const sources = [...new Map(source.map((creature) => [creature.sourceId || "unknown", creature.sourceName || creature.sourceId || "Unattributed"])).entries()];
+    sourceSelect.innerHTML = `<option value="all">All sources</option>${sources.map(([id, label]) => `<option value="${esc(id)}" ${sourceId === id ? "selected" : ""}>${esc(label)}</option>`).join("")}`;
     host.querySelector("[data-ce-back]").disabled = route.length === 0 || transitioning;
     host.querySelector("[data-ce-start]").disabled = route.length === 0 || transitioning;
 
     if (query) {
-      host.querySelector("[data-ce-route]").textContent = `Search · ${filterCreatures(source, tier).filter((creature) => matchesCreature(creature, query)).length} found`;
+      host.querySelector("[data-ce-route]").textContent = `Search · ${filterCreatures(source, tier, sourceId).filter((creature) => matchesCreature(creature, query)).length} found`;
       stage.innerHTML = searchResults();
       wireStage();
       return;
@@ -226,6 +232,7 @@ export function createCreatureExplorer({ host, creatures = [], activeId = null, 
   host.querySelector("[data-ce-start]").addEventListener("click", () => transition(() => { route = []; }, host.querySelector("[data-ce-start]"), "back"));
   search.addEventListener("input", () => { query = search.value.trim().toLocaleLowerCase(); render(); });
   tierSelect.addEventListener("change", () => { tier = tierSelect.value; render(); });
+  sourceSelect.addEventListener("change", () => { sourceId = sourceSelect.value; render(); });
 
   render();
 

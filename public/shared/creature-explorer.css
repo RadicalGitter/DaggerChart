@@ -31,6 +31,7 @@
   padding: .55rem .8rem 0;
 }
 .ce-filters input, .ce-filters select { min-width: 0; padding: .38rem .45rem; font-size: .76rem; }
+.ce-filters [data-ce-source] { grid-column: 1 / -1; }
 .ce-route { min-height: 1rem; padding: .38rem .8rem 0; color: var(--ink-faint); font-size: .65rem; font-variant: small-caps; }
 
 .ce-stage {
