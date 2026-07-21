@@ -5,3 +5,7 @@ data/telemetry.json
 .claude/settings.local.json
 .env.local
 public/generated/art/
+data/cartography-images/
+# Generated/mirrored audio and master exports — large binaries, keep out of git.
+Visseren/
+*.wav
