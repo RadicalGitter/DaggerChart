@@ -2,10 +2,36 @@
 
 Oscar's 2026-07-17 session of ideas, gathered into one buildable design.
 Everything here is **hidden layer** (spec §8): server-side, GM console
-only, never in a player payload. The unifying fiction: the PCs and folk
-were written into being by the Bard (or a trickster god) — the `/tome`
-the players write in *is his book*. These systems are the machinery of
-that authorship.
+only, never in a player payload. The PCs and folk were written into being
+by the Bard — the `/tome` the players write in *is his book*. These
+systems are the machinery of that authorship.
+
+## 0. The invitation and the half-truth
+
+The god whose mind contains this world is properly named **the Dreamer**.
+The Dreamer knew their current muse, **Vessarin**, was dying and deliberately
+invited the Bard into themself. The Bard was told that he only needed to wake
+Vessarin from her dream. That was the Dreamer's half-truth.
+
+- Vessarin was a well of power, not the true source of creativity.
+- **Vesserin'ka** is the true muse and the source from which the Dreamer's
+  creativity comes. She is not the Dreamer; the similarity was part of the
+  ambiguity that made the lie possible.
+- The Bard agreed that only the death or wakening of *the dreamer* could
+  release him. Vessarin died, but her death did not satisfy the agreement.
+  The words referred to the Dreamer, the god enclosing this place, not to the
+  dying muse he had been led to imagine.
+- The Bard remains inside the place into which he was invited. He now
+  understands enough of the deception to be obsessed with finding
+  Vesserin'ka.
+- He has made a pact with the Abyss in pursuit of Vesserin'ka, believing the
+  true muse may provide a path to the Dreamer. His ultimate object is to face
+  the god who bound him, whether waking or death is ultimately the way out.
+
+This is the cosmological foundation beneath the authorship systems below.
+The distinction among **Visseren** (the world), **Vessarin** (the dead
+reservoir), **Vesserin'ka** (the true muse), and **the Dreamer** (the god whose
+mind contains them) is intentional and must be preserved in future writing.
 
 ## 1. The reward pages (LLM prompter)
 

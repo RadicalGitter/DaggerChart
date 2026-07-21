@@ -34,7 +34,10 @@ designing anything; it is the source of truth. Code map + API:
   the fiction when the metaphor is literal (*Open the journal*, *Advance the
   season*); utility navigation stays direct (*Choose your character*, *Next*),
   and destructive actions state exactly what they remove.
-- GM surfaces: light `ledger.css`. Player surfaces: dark `lamplight.css`.
+- GM surfaces use `ledger.css` for structure plus the darker shared
+  `gm-theme.css` worktable layer. Player surfaces remain dark `lamplight.css`.
+  GM tools stay dense and operational; fantasy character comes from material,
+  edge, and state treatments rather than reducing information density.
 - i18n: game terms stay English (match the physical cards); UI phrasing has
   EN/SV strings in `public/shared/i18n.js`; long-press glossary (`TERMS`)
   explains terms per language. New player-facing strings need both languages.

@@ -10,12 +10,17 @@ server/
   music.js    song metadata, playlists, character themes, Suno provider boundary
   retell.js   isolated Anthropic prompt and retry boundary for session accounts
   portrait-suggest.js bounded Anthropic writing aid for portrait briefs
+  llm-credits.js per-player budget for the Anthropic writing aids
+  beacon.js   env-gated publisher of the server's current public IP/port
   telemetry.js bounded, content-free local UX aggregation
   state.js    domain logic: roll resolution, modifiers, season, log
+  live-session.js campaign play clock and timed private character states
+  character-presentations.js canonical identity, disguises, and Beastform overlays
+  sheet-beauty.js deterministic sheet recipes, token entitlement, and immutable versions
   store.js    atomic JSON read/write (unique tmp+rename), timestamped backups
   views.js    audience whitelists for GM, shells, lore, PCs, and messages
 public/
-  shared/     themes, i18n, session pools, GM tools/messages, rules search, player chat/notes, feedback and UX collectors
+  shared/     themes, i18n, dark GM worktable layer, session pools, GM tools/messages, rules search, player chat/notes, feedback and UX collectors
   gm/         GM console (campaign/session controls, Almanac, correspondence, quick table, feedback queue, and UX review map)
   login/      trusted-table chooser: movable portrait cards + draft side view
   player/     player root: identity switcher, everyday tools, and visual-tool shelf
@@ -33,6 +38,13 @@ public/
 data/         all persistent state (see README)
 docs/         this file, the design spec, ComfyUI workflow
 ```
+
+Persistent visual treatments use the domain/recipe/anchor/renderer separation
+documented in [semantic-adornment.md](semantic-adornment.md). General interface
+work should preserve that boundary rather than importing character-sheet CSS
+or slot names into unrelated surfaces. Sheet-specific implementation work
+continues in the [Sheet Beautifier skill](../sheet-beautifier/SKILL.md) and its
+[slot contract](../sheet-beautifier/references/slot-contract.md).
 
 ## Server
 
@@ -54,6 +66,19 @@ docs/         this file, the design spec, ComfyUI workflow
   tracking per building, stockpile wipe on 0, standing `effect` capture, log
   entry, snapshot. `modifierBreakdown()` returns visible modifiers itemized and
   hidden ones only as part of the total (spoiler rule §8B).
+- **`live-session.js`** — owns the explicit start/pause/resume/end play clock
+  and attendance-aware timed private states.
+- **`character-presentations.js`** — preserves canonical PCs while projecting
+  Bob's active persona or Kaya's tier-gated Beastform into party and sheet views.
+  and settles reusable timed character states only for present participants.
+  Heliga Erik's private Light/Neutral/Shadow balance is the first consumer; its
+  Shadow invocation atomically feeds the shared Fear pool through `index.js`.
+  See [character-special-states.md](character-special-states.md).
+- **`sheet-beauty.js`** — derives two stable character-sheet treatment
+  candidates from class, Tier, and bounded completion signals. Commits spend
+  level-derived tokens and store complete immutable recipes; restoring a prior
+  recipe or baseline is free. The extension contract lives in
+  `sheet-beautifier/SKILL.md`.
 - **`views.js`** — **the** spoiler boundary. `tableView()`, `loreView()`, and
   `playerCharacterView()`
   build player payloads from explicit whitelists; hidden fields, unrevealed
@@ -110,6 +135,19 @@ docs/         this file, the design spec, ComfyUI workflow
 - **`portrait-suggest.js`** — sends only bounded, player-known portrait context
   to Anthropic and returns one editable prose suggestion. It never generates
   an image or writes character state.
+- **`llm-credits.js`** — a per-owner budget (`data/llm-credits.json`, tracked,
+  hand-editable) for the player-reachable Anthropic aids. One account per PC or
+  unfinished draft; fresh accounts read the `defaultGrant` without being
+  written. Routes check `hasCredit` and return **HTTP 402** with the standing
+  when exhausted, then `spendCredit` only *after* a successful provider call —
+  a failed call is free. `requestTopOff`/`grantCredits` drive the player's
+  ask-the-steward flow and the GM Expansions panel. It is a courtesy meter for
+  the trusted table, not a security boundary.
+- **`beacon.js`** — env-gated; publishes the server's current public IP and
+  port to DuckDNS and/or a private gist on a timer so player devices survive a
+  home-IP change. Target-building and payloads are pure; every failure is
+  logged and swallowed. `startBeacon` runs after `app.listen`. See
+  [remote-access.md](remote-access.md).
 - **`telemetry.js`** — owns gitignored `telemetry.json`, validates the fixed
   player-surface whitelist, and aggregates bounded route/mode/viewport timing
   and click candidates without content or identity. See
@@ -125,6 +163,9 @@ docs/         this file, the design spec, ComfyUI workflow
 | `PUT /api/campaigns/:id` | rename or archive/restore a campaign; the current campaign cannot be archived |
 | `PUT /api/campaigns/current` | switch the active campaign used by party, chronicle, downtime, group delivery, and music surfaces |
 | `PUT /api/session` | set bounded Fear and/or its player visibility; persists and broadcasts |
+| `GET/POST /api/live-session/gm`, `POST /api/live-session/{start,pause,resume,end}` | private GM play clock and participant timing controls |
+| `GET/POST /api/party/:id/presentation*` | owner presentation studio, activation, persona/Beastform customization, and alternate portrait generation |
+| `GET/PUT /api/party/:id/shadow`, `POST .../invoke` | Erik-only balance; invocation adds one Fear during active play |
 | `POST /api/sessions` | open one current-campaign gathering record with chosen active participants |
 | `PUT /api/sessions/:id` | edit GM fields/attendance while gathering or returned text during review |
 | `POST /api/sessions/:id/perspectives` | create or replace only that participating active PC's perspective |
@@ -155,7 +196,13 @@ docs/         this file, the design spec, ComfyUI workflow
 | `GET /api/character-drafts`, `GET/PUT/DELETE /api/character-drafts/:id` | resumable unfinished creator state, listed separately from completed PCs |
 | `GET/POST/PUT/DELETE /api/party[/:id]` | active player characters; DELETE retires without destroying the stored record or keyed data |
 | `PUT /api/party/:id/background` | replace the active PC's bounded, filled background memories |
-| `POST /api/party/:id/background/suggest` | return one editable Anthropic expansion without saving it |
+| `POST /api/party/:id/background/suggest` | return one editable Anthropic expansion without saving it; charges one word-weaving credit on success, 402 when exhausted |
+| `POST /api/party/:id/background/spark` | three short divergent inspiration seeds for one memory field (works on a blank field); one credit on success, 402 when exhausted |
+| `POST /api/party/:id/background/weave` | one holistic read-only reflection across every written memory; one credit on success, 400 with no memories, 402 when exhausted |
+| `GET /api/llm-credits?owner=<pcId\|draftId>` | one owner's word-weaving standing `{granted, used, remaining, requested}` |
+| `POST /api/llm-credits/request` | player asks the steward for more; records a standing request, broadcasts |
+| `GET /api/llm-credits/gm` | full credit ledger with resolved names for the GM Expansions panel |
+| `POST /api/llm-credits/grant` | GM grants more expansions to one owner (bounded 1..200), clears the request, broadcasts |
 | `POST /api/party/:id/restore` | return a retired character to player choosers and sheets |
 | `PUT /api/party/:id/conditions` | replace a PC's validated standard Conditions; broadcasts to player clients |
 | `GET /api/items/consumables` | the 60-entry standard Consumables catalog |
@@ -210,14 +257,29 @@ Consumable reactions; see [inventory.md](inventory.md).
 
 - No framework, no build. Each page is `index.html` + one JS module; shared
   code only in `public/shared/`.
+- **Installable player shell (PWA):** `public/pwa/` holds the manifest, icons,
+  and service worker; the server exposes them as `/manifest.webmanifest` and
+  `/sw.js` (root path, so the worker's scope covers every player surface).
+  Strategy: network-first with cache fallback for player pages and the
+  whitelisted API snapshot reads (`/api/table`, `/api/lore`, `/api/rules`,
+  `/api/reference`, `/api/party`, `/api/messages`, consumables, doodles);
+  cache-then-refresh for images; `/api/stream`, non-GET requests, and every
+  GM surface (`/gm`, `/board`, `/music`, `/screen`, `/cartography`) are never
+  intercepted. The worker widens nothing: it only replays responses the
+  server's whitelists already released to that device. Bump `VERSION` in
+  `public/pwa/sw.js` after breaking shell changes. `shared/pwa.js` registers
+  the worker and adds an Android haptic tick; `shared/native-feel.css`
+  hardens touch behavior (tap highlight, control selection, overscroll,
+  same-frame pressed states) on all player pages.
 - **Creator sub-steps:** a main creation section may define a static or
   data-driven `parts` count. The fixed footer renders secondary progress and
   moves forward content left/backward content right. Versioned `step`, `part`,
   and draft state are saved locally and mirrored through the character-draft
   API; signing the final covenant deletes the draft only after the PC exists.
-- **Themes:** GM surfaces use `ledger.css` (light, steward's-ledger). Player
-  surfaces use `lamplight.css` (dark). Tone per spec §2: quiet, warm, no
-  gamified fanfare; microcopy per §12.
+- **Themes:** GM surfaces keep `ledger.css` as their dense structural base and
+  load `gm-theme.css` last for the dark, lamplit worktable treatment. Player
+  surfaces use `lamplight.css`. Tone per spec §2: quiet, warm, no gamified
+  fanfare; microcopy per §12.
 - **Live updates:** pages listen to `/api/stream` and refetch (debounced).
   Character plates on the board update as players tap their sheets.
 - **Encounter stage:** `/board` carries a full-screen encounter builder
@@ -245,6 +307,11 @@ Consumable reactions; see [inventory.md](inventory.md).
   `/api/notes`, and keeps Character, Journal, Inventory, and Rules at hand.
   Embedded pages omit it. The standalone sheet adds a sticky section index;
   the tome accepts `?section=` deep links.
+- **Party portraits:** `shared/party-cards.*` mounts beside the player field
+  kit on standalone views. It reads public identities from `/api/party`,
+  filters to the selected PC's campaign, and renders only portrait/name cards.
+  Drag and resize layouts persist locally per viewer and peer; no placement is
+  campaign state and no character-sheet fields cross the card boundary.
 - **Session chronicle:** GM **Sessions** is a gathering/review folio with
   attendance, completion seals, separate factual/emphasis fields, and an
   explicit publication gate. The Journal's fourth physical bookmark shows a
@@ -287,17 +354,25 @@ Consumable reactions; see [inventory.md](inventory.md).
   [character-sheet-vision.md](character-sheet-vision.md).
 - **Background studio:** `/background/:id` edits optional, structured memories
   after character creation. Empty fields never enter the stored character or
-  sheet. Each field may request one bounded expansion from
-  `server/background-suggest.js`; the response remains a separate draft until
-  the player explicitly accepts it. The adviser receives only public character
-  identity, the selected field, existing player-written memories, and the
-  current seed.
+  sheet. It is meant to be a playground as much as a serious tool, with three
+  AI aids from `server/background-suggest.js` (each one word-weaving credit) and
+  one free offline one: **Expand** rewrites the current field into a fuller
+  passage; **Kindle sparks** returns three short divergent seeds for one field
+  and works even when it is blank; **Weave it together** returns one holistic,
+  read-only reflection across every written memory (it never overwrites a
+  field); **Draw a muse** shuffles a free, offline nudge card from a local
+  bilingual deck. Every AI response stays a separate draft until the player
+  accepts it. All aids receive only public character identity plus the relevant
+  memory text — never hidden fields — through the shared `identityBlock`.
 - **i18n** (`shared/i18n.js`): per-device language (localStorage, EN/SV).
   Game terms (Hope, Stress, Evasion, Loadout…) stay English to match the
   physical cards; UI phrasing translates; the long-press glossary explains
   terms in the chosen language. `t(key)` strings, `TERMS` glossary,
   `termify(escapedText)` auto-links capitalized game terms inside rules text,
   `initI18n()` wires the toggle + popovers. GM console is English-only for now.
+  The same popover doubles as a **hover/focus/long-press tooltip for controls**
+  via a `data-hint="<TERMS key>"` attribute (opens without hijacking the click);
+  to add one, follow the `hoverable-tooltip` skill (`hoverable-tooltip/SKILL.md`).
 - **Hand manager** (`character/sheet.js`): Loadout (max 5) / Vault per SRD;
   acquiring filters reference cards by the PC's class domains and level.
 - **Character overtures:** completing creation queues two drafts from a concise

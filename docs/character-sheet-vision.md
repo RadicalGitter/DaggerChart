@@ -1,5 +1,13 @@
 # Character sheet visual direction
 
+Related contracts:
+
+- [Semantic adornment heuristics](semantic-adornment.md) — general recipe,
+  anchor, and renderer boundaries.
+- [Sheet Beautifier skill](../sheet-beautifier/SKILL.md) — extension workflow.
+- [Beautification slot contract](../sheet-beautifier/references/slot-contract.md)
+  — stable sheet anchors and versioning rules.
+
 The character sheet should feel like a personal artifact shaped by its class,
 not a dashboard with fantasy decoration. Intent governs every irregular shape:
 important game information stays easy to find, while the page's composition,
@@ -25,6 +33,10 @@ marks, and movement express who the character is.
   favorite-color secondary accent. Both travel with the PC through the
   player-facing whitelist; a surface may use less color, but it must not invent
   a conflicting identity palette.
+- Persistent decoration follows the recipe → semantic anchor → versioned
+  renderer boundary in [semantic-adornment.md](semantic-adornment.md). Sheet
+  redesigns must preserve or explicitly migrate those anchors instead of
+  relying on existing IDs, wrapper order, or child position.
 
 ## Class compositions
 
@@ -61,6 +73,27 @@ put it down. Undo, reset-to-class-layout, keyboard/touch alternatives, overlap
 warnings, and viewport clamping are required before this becomes player-facing.
 Drawing strokes remain a separate transparent layer so rearranging parchment
 does not bake or corrupt doodles.
+
+## Sheetwright treatments
+
+Character sheets also have deterministic beautification recipes. A recipe
+uses fixed semantic slots for the masthead, portrait frame, module edges,
+Tier flourish, and information-specific marks. It never generates freeform
+coordinates, so a later treatment matures or replaces an existing slot instead
+of covering it with a new random mark.
+
+Players may preview two stable treatments without cost, commit one by spending
+a beautifying token, and freely restore any committed version or the unadorned
+baseline. Characters begin with two tokens and gain one per level. The active
+version points into immutable history, while each new candidate is informed by
+the current class, level/Tier, portrait, completed background, Domain cards,
+covenant, and connections. Only completion booleans reach the recipe; prose is
+never copied into visual metadata. The implementation contract and extension
+workflow live in the [Sheet Beautifier skill](../sheet-beautifier/SKILL.md).
+The current CSS still contains
+several selectors coupled to today's sheet markup; replace them with explicit
+`data-beauty-slot` anchors and introduce a versioned renderer/style pack before
+a major sheet overhaul.
 
 ## Communal sketch bin
 

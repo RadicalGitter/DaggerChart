@@ -123,6 +123,26 @@ designing anything; it is the source of truth. Code map + API:
   project becomes remote, public, or materially larger.** See
   `docs/ux-telemetry.md`.
 
+- The player surfaces are an installable PWA: manifest/worker/icons in
+  `public/pwa/`, served as `/manifest.webmanifest` and root-scoped `/sw.js`.
+  The worker is network-first with offline cache fallback, snapshots only
+  already-whitelisted player API reads, and never intercepts `/api/stream`,
+  non-GET requests, or GM surfaces. `shared/native-feel.css` + `shared/pwa.js`
+  give player pages installed-app touch behavior; new player pages should
+  include the same head block. Bump `VERSION` in `public/pwa/sw.js` after
+  breaking shell changes.
+- Word-weaving credits (`server/llm-credits.js`, `data/llm-credits.json`) cap
+  the player-reachable Anthropic aids (background expansions, portrait briefs)
+  per PC/draft so out-of-play use never quietly runs up the API bill. Routes
+  check `hasCredit` → 402 when spent, `spendCredit` only after a successful
+  call. Players ask the steward for more; the GM grants from the **Expansions**
+  panel. It's a courtesy meter for the trusted table, not a security boundary —
+  do not treat it as access control.
+- `server/beacon.js` (env-gated, off by default) publishes the server's public
+  IP/port to DuckDNS and/or a private gist so player devices survive a home-IP
+  change. **Do not port-forward to expose the site publicly until claim tokens,
+  a GM key, and HTTPS exist** — the LAN model has no auth. Full gate and the
+  Tailscale interim are in [docs/remote-access.md](docs/remote-access.md).
 - The combat encounter builder lives on `/board` (⚔ Encounter): bestiary stat
   blocks in `data/adversaries.json` (RAW Daggerheart format, Visseren-flavored,
   hand-editable; the server never writes it), saved encounters in

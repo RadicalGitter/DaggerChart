@@ -67,6 +67,13 @@ Inventory, and Rules. It resolves only the current `settlement-pc`, posts throug
 existing notes route, and is omitted from embeds to avoid nested controls.
 `/tome?open=1&section=<key>` opens a named keepsake directly.
 
+Those same standalone surfaces mount `public/shared/party-cards.*`. Its Party
+control fetches only the public `/api/party` identity list, selects peers from
+the chosen PC's campaign, and shows portrait/name cards without sheet data.
+Position and size are normalized per viewer/peer in local storage so the cards
+survive navigation and viewport changes. The campaign's **Party portraits**
+feature switch removes the control immediately.
+
 Keepsakes are defined in the `KEEPSAKES` registry in `public/tome/tome.js` —
 one entry per object (art, label placement, sway). **Future player
 customization should resolve a player's choice to a key in this registry**;
