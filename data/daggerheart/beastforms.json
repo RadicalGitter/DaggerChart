@@ -1,0 +1,209 @@
+{
+  "source": "Daggerheart SRD 1.0, Beastform Sheets, pp. 10-13 (Darrington Press Community Gaming License)",
+  "forms": [
+    {
+      "id": "agile-scout", "tier": 1, "name": "Agile Scout", "examples": ["Fox", "Mouse", "Weasel"],
+      "trait": "Agility", "traitBonus": 1, "evasionBonus": 2,
+      "attack": { "range": "Melee", "trait": "Agility", "damage": "d4 physical" },
+      "advantages": ["deceive", "locate", "sneak"],
+      "features": [
+        { "name": "Agile", "text": "Your movement is silent, and you can spend a Hope to move up to Far range without rolling." },
+        { "name": "Fragile", "text": "When you take Major or greater damage, you drop out of Beastform." }
+      ]
+    },
+    {
+      "id": "household-friend", "tier": 1, "name": "Household Friend", "examples": ["Cat", "Dog", "Rabbit"],
+      "trait": "Instinct", "traitBonus": 1, "evasionBonus": 2,
+      "attack": { "range": "Melee", "trait": "Instinct", "damage": "d6 physical" },
+      "advantages": ["climb", "locate", "protect"],
+      "features": [
+        { "name": "Companion", "text": "When you Help an Ally, you can roll a d8 as your advantage die." },
+        { "name": "Fragile", "text": "When you take Major or greater damage, you drop out of Beastform." }
+      ]
+    },
+    {
+      "id": "nimble-grazer", "tier": 1, "name": "Nimble Grazer", "examples": ["Deer", "Gazelle", "Goat"],
+      "trait": "Agility", "traitBonus": 1, "evasionBonus": 3,
+      "attack": { "range": "Melee", "trait": "Agility", "damage": "d6 physical" },
+      "advantages": ["leap", "sneak", "sprint"],
+      "features": [
+        { "name": "Elusive Prey", "text": "When an attack roll against you would succeed, mark a Stress and roll a d4. Add the result to your Evasion against this attack." },
+        { "name": "Fragile", "text": "When you take Major or greater damage, you drop out of Beastform." }
+      ]
+    },
+    {
+      "id": "pack-predator", "tier": 1, "name": "Pack Predator", "examples": ["Coyote", "Hyena", "Wolf"],
+      "trait": "Strength", "traitBonus": 2, "evasionBonus": 1,
+      "attack": { "range": "Melee", "trait": "Strength", "damage": "d8+2 physical" },
+      "advantages": ["attack", "sprint", "track"],
+      "features": [
+        { "name": "Hobbling Strike", "text": "On a successful Melee attack, mark a Stress to make the target temporarily Vulnerable." },
+        { "name": "Pack Hunting", "text": "When you attack the same target as an ally who acted immediately before you, add a d8 to your damage roll." }
+      ]
+    },
+    {
+      "id": "aquatic-scout", "tier": 1, "name": "Aquatic Scout", "examples": ["Eel", "Fish", "Octopus"],
+      "trait": "Agility", "traitBonus": 1, "evasionBonus": 2,
+      "attack": { "range": "Melee", "trait": "Agility", "damage": "d4 physical" },
+      "advantages": ["navigate", "sneak", "swim"],
+      "features": [
+        { "name": "Aquatic", "text": "You can breathe and move naturally underwater." },
+        { "name": "Fragile", "text": "When you take Major or greater damage, you drop out of Beastform." }
+      ]
+    },
+    {
+      "id": "stalking-arachnid", "tier": 1, "name": "Stalking Arachnid", "examples": ["Tarantula", "Wolf Spider"],
+      "trait": "Finesse", "traitBonus": 1, "evasionBonus": 2,
+      "attack": { "range": "Melee", "trait": "Finesse", "damage": "d6+1 physical" },
+      "advantages": ["attack", "climb", "sneak"],
+      "features": [
+        { "name": "Venomous Bite", "text": "On a successful Melee attack, the target becomes temporarily Poisoned and takes 1d10 direct physical damage each time they act." },
+        { "name": "Webslinger", "text": "Create strong webbing that supports one creature, or temporarily Restrain a target within Close range with a successful Finesse Roll." }
+      ]
+    },
+    {
+      "id": "armored-sentry", "tier": 2, "name": "Armored Sentry", "examples": ["Armadillo", "Pangolin", "Turtle"],
+      "trait": "Strength", "traitBonus": 1, "evasionBonus": 1,
+      "attack": { "range": "Melee", "trait": "Strength", "damage": "d8+2 physical" },
+      "advantages": ["dig", "locate", "protect"],
+      "features": [
+        { "name": "Armored Shell", "text": "Gain resistance to physical damage. Mark an Armor Slot to retract and further reduce physical damage by your Armor Score, but you cannot perform other actions while retracted." },
+        { "name": "Cannonball", "text": "Mark a Stress so an ally can launch you at a Close target for d12+2 physical damage using their Proficiency; spend a Hope to hit a second nearby target for half damage." }
+      ]
+    },
+    {
+      "id": "powerful-beast", "tier": 2, "name": "Powerful Beast", "examples": ["Bear", "Bull", "Moose"],
+      "trait": "Strength", "traitBonus": 3, "evasionBonus": 1,
+      "attack": { "range": "Melee", "trait": "Strength", "damage": "d10+4 physical" },
+      "advantages": ["navigate", "protect", "scare"],
+      "features": [
+        { "name": "Rampage", "text": "When a damage die rolls 1, roll a d10 and add it. Before an attack, mark a Stress for +1 Proficiency on that attack." },
+        { "name": "Thick Hide", "text": "Gain +2 to your damage thresholds." }
+      ]
+    },
+    {
+      "id": "mighty-strider", "tier": 2, "name": "Mighty Strider", "examples": ["Camel", "Horse", "Zebra"],
+      "trait": "Agility", "traitBonus": 1, "evasionBonus": 2,
+      "attack": { "range": "Melee", "trait": "Agility", "damage": "d8+1 physical" },
+      "advantages": ["leap", "navigate", "sprint"],
+      "features": [
+        { "name": "Carrier", "text": "Carry up to two willing allies when you move." },
+        { "name": "Trample", "text": "Mark a Stress to move in a straight line up to Close range and attack all targets along it; successful targets take d8+1 physical damage and become temporarily Vulnerable." }
+      ]
+    },
+    {
+      "id": "striking-serpent", "tier": 2, "name": "Striking Serpent", "examples": ["Cobra", "Rattlesnake", "Viper"],
+      "trait": "Finesse", "traitBonus": 1, "evasionBonus": 2,
+      "attack": { "range": "Very Close", "trait": "Finesse", "damage": "d8+4 physical" },
+      "advantages": ["climb", "deceive", "sprint"],
+      "features": [
+        { "name": "Venomous Strike", "text": "Attack any number of targets within Very Close range; successful targets become temporarily Poisoned and take 1d10 direct physical damage whenever they act." },
+        { "name": "Warning Hiss", "text": "Mark a Stress to force targets within Melee range back to Very Close range." }
+      ]
+    },
+    {
+      "id": "pouncing-predator", "tier": 2, "name": "Pouncing Predator", "examples": ["Cheetah", "Lion", "Panther"],
+      "trait": "Instinct", "traitBonus": 1, "evasionBonus": 3,
+      "attack": { "range": "Melee", "trait": "Instinct", "damage": "d8+6 physical" },
+      "advantages": ["attack", "climb", "sneak"],
+      "features": [
+        { "name": "Fleet", "text": "Spend a Hope to move up to Far range without rolling." },
+        { "name": "Takedown", "text": "Mark a Stress to enter Melee and attack; on success gain +2 Proficiency for the attack and the target marks a Stress." }
+      ]
+    },
+    {
+      "id": "winged-beast", "tier": 2, "name": "Winged Beast", "examples": ["Hawk", "Owl", "Raven"],
+      "trait": "Finesse", "traitBonus": 1, "evasionBonus": 3,
+      "attack": { "range": "Melee", "trait": "Finesse", "damage": "d4+2 physical" },
+      "advantages": ["deceive", "locate", "scare"],
+      "features": [
+        { "name": "Bird's-Eye View", "text": "Fly at will. Once per rest while airborne, ask the GM a question about the scene below; the first roll using that information gains advantage." },
+        { "name": "Hollow Bones", "text": "Take -2 to your damage thresholds." }
+      ]
+    },
+    {
+      "id": "great-predator", "tier": 3, "name": "Great Predator", "examples": ["Dire Wolf", "Velociraptor", "Sabertooth Tiger"],
+      "trait": "Strength", "traitBonus": 2, "evasionBonus": 2,
+      "attack": { "range": "Melee", "trait": "Strength", "damage": "d12+8 physical" },
+      "advantages": ["attack", "sneak", "sprint"],
+      "features": [{ "name": "Carrier", "text": "Carry up to two willing allies when you move." }, { "name": "Vicious Maul", "text": "On a successful attack, spend a Hope to make the target temporarily Vulnerable and gain +1 Proficiency for the attack." }]
+    },
+    {
+      "id": "mighty-lizard", "tier": 3, "name": "Mighty Lizard", "examples": ["Alligator", "Crocodile", "Gila Monster"],
+      "trait": "Instinct", "traitBonus": 2, "evasionBonus": 1,
+      "attack": { "range": "Melee", "trait": "Instinct", "damage": "d10+7 physical" },
+      "advantages": ["attack", "sneak", "track"],
+      "features": [{ "name": "Physical Defense", "text": "Gain +3 to your damage thresholds." }, { "name": "Snapping Strike", "text": "On a successful Melee attack, spend a Hope to make the target temporarily Restrained and Vulnerable." }]
+    },
+    {
+      "id": "great-winged-beast", "tier": 3, "name": "Great Winged Beast", "examples": ["Giant Eagle", "Falcon"],
+      "trait": "Finesse", "traitBonus": 2, "evasionBonus": 3,
+      "attack": { "range": "Melee", "trait": "Finesse", "damage": "d8+6 physical" },
+      "advantages": ["deceive", "distract", "locate"],
+      "features": [{ "name": "Bird's-Eye View", "text": "Fly at will. Once per rest while airborne, ask the GM a question about the scene below; the first roll using that information gains advantage." }, { "name": "Carrier", "text": "Carry up to two willing allies when you move." }]
+    },
+    {
+      "id": "aquatic-predator", "tier": 3, "name": "Aquatic Predator", "examples": ["Dolphin", "Orca", "Shark"],
+      "trait": "Agility", "traitBonus": 2, "evasionBonus": 4,
+      "attack": { "range": "Melee", "trait": "Agility", "damage": "d10+6 physical" },
+      "advantages": ["attack", "swim", "track"],
+      "features": [{ "name": "Aquatic", "text": "Breathe and move naturally underwater." }, { "name": "Vicious Maul", "text": "On a successful attack, spend a Hope to make the target Vulnerable and gain +1 Proficiency for the attack." }]
+    },
+    {
+      "id": "legendary-beast", "tier": 3, "name": "Legendary Beast", "examples": ["Evolved Tier 1 Beastform"],
+      "trait": null, "traitBonus": 0, "evasionBonus": 2,
+      "attack": { "range": "Varies", "trait": "Varies", "damage": "+6 to base form" },
+      "advantages": [], "requiresChoice": true,
+      "features": [{ "name": "Evolved", "text": "Choose a Tier 1 Beastform. Retain its traits and features, add +6 damage, +1 to its trait, and +2 Evasion." }]
+    },
+    {
+      "id": "legendary-hybrid", "tier": 3, "name": "Legendary Hybrid", "examples": ["Griffon", "Sphinx"],
+      "trait": "Strength", "traitBonus": 2, "evasionBonus": 3,
+      "attack": { "range": "Melee", "trait": "Strength", "damage": "d10+8 physical" },
+      "advantages": [], "requiresChoice": true,
+      "features": [{ "name": "Hybrid Features", "text": "Mark an additional Stress. Choose two Tier 1-2 forms and take four advantages and two features from them." }]
+    },
+    {
+      "id": "massive-behemoth", "tier": 4, "name": "Massive Behemoth", "examples": ["Elephant", "Mammoth", "Rhinoceros"],
+      "trait": "Strength", "traitBonus": 3, "evasionBonus": 1,
+      "attack": { "range": "Melee", "trait": "Strength", "damage": "d12+12 physical" },
+      "advantages": ["locate", "protect", "scare", "sprint"],
+      "features": [{ "name": "Carrier", "text": "Carry up to four willing allies when you move." }, { "name": "Demolish", "text": "Spend a Hope to move up to Far in a straight line and attack all targets along it for d8+10 physical damage; successful targets become temporarily Vulnerable." }, { "name": "Undaunted", "text": "Gain +2 to all damage thresholds." }]
+    },
+    {
+      "id": "terrible-lizard", "tier": 4, "name": "Terrible Lizard", "examples": ["Brachiosaurus", "Tyrannosaurus"],
+      "trait": "Strength", "traitBonus": 3, "evasionBonus": 2,
+      "attack": { "range": "Melee", "trait": "Strength", "damage": "d12+10 physical" },
+      "advantages": ["attack", "deceive", "scare", "track"],
+      "features": [{ "name": "Devastating Strikes", "text": "When you deal Severe damage in Melee, mark a Stress to make the target mark an additional Hit Point." }, { "name": "Massive Stride", "text": "Move up to Far range without rolling and ignore rough terrain when your size permits." }]
+    },
+    {
+      "id": "mythic-aerial-hunter", "tier": 4, "name": "Mythic Aerial Hunter", "examples": ["Dragon", "Pterodactyl", "Roc", "Wyvern"],
+      "trait": "Finesse", "traitBonus": 3, "evasionBonus": 4,
+      "attack": { "range": "Melee", "trait": "Finesse", "damage": "d10+11 physical" },
+      "advantages": ["attack", "deceive", "locate", "navigate"],
+      "features": [{ "name": "Carrier", "text": "Carry up to three willing allies when you move." }, { "name": "Deadly Raptor", "text": "Fly at will and move up to Far as part of your action. After a straight-line charge from at least Close range, reroll damage dice below your Proficiency." }]
+    },
+    {
+      "id": "epic-aquatic-beast", "tier": 4, "name": "Epic Aquatic Beast", "examples": ["Giant Squid", "Whale"],
+      "trait": "Agility", "traitBonus": 3, "evasionBonus": 3,
+      "attack": { "range": "Melee", "trait": "Agility", "damage": "d10+10 physical" },
+      "advantages": ["locate", "protect", "scare", "track"],
+      "features": [{ "name": "Ocean Master", "text": "Breathe and move naturally underwater. A successful Melee attack can temporarily Restrain its target." }, { "name": "Unyielding", "text": "When you would mark an Armor Slot, roll a d6; on 5+, reduce severity without marking it." }]
+    },
+    {
+      "id": "mythic-beast", "tier": 4, "name": "Mythic Beast", "examples": ["Evolved Tier 1 or Tier 2 Beastform"],
+      "trait": null, "traitBonus": 0, "evasionBonus": 3,
+      "attack": { "range": "Varies", "trait": "Varies", "damage": "+9 and one die size to base form" },
+      "advantages": [], "requiresChoice": true,
+      "features": [{ "name": "Evolved", "text": "Choose a Tier 1-2 form. Retain it, add +9 damage, +2 to its trait, +3 Evasion, and increase its damage die one size." }]
+    },
+    {
+      "id": "mythic-hybrid", "tier": 4, "name": "Mythic Hybrid", "examples": ["Chimera", "Cockatrice", "Manticore"],
+      "trait": "Strength", "traitBonus": 3, "evasionBonus": 2,
+      "attack": { "range": "Melee", "trait": "Strength", "damage": "d12+10 physical" },
+      "advantages": [], "requiresChoice": true,
+      "features": [{ "name": "Hybrid Features", "text": "Mark 2 additional Stress. Choose three Tier 1-3 forms and take five advantages and three features from them." }]
+    }
+  ]
+}
