@@ -3,6 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#211b14">
+<link rel="apple-touch-icon" href="/pwa/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="/shared/native-feel.css">
+<script type="module" src="/shared/pwa.js"></script>
 <title>Background studio</title>
 <link rel="stylesheet" href="/shared/ledger.css">
 <link rel="stylesheet" href="/shared/lamplight.css">
@@ -19,6 +27,10 @@
       <div class="character-mark" id="character-mark" aria-live="polite"></div>
     </header>
 
+    <div class="studio-actions" id="studio-actions" hidden>
+      <button id="weave-button" type="button" data-hint="bg.weave" data-i18n="background.weave">Weave it together</button>
+    </div>
+
     <main class="studio-layout" id="studio" hidden>
       <nav class="memory-thread" id="memory-thread" data-i18n-aria="background.nav" aria-label="Background memories"></nav>
 
@@ -29,12 +41,32 @@
           <h2 id="memory-title"></h2>
           <p id="memory-prompt"></p>
         </header>
+
+        <div class="muse-line" id="muse-line" hidden>
+          <span class="muse-sigil" aria-hidden="true">✦</span>
+          <span class="muse-text" id="muse-text"></span>
+          <button type="button" class="muse-close" id="muse-close" data-i18n-aria="background.muse.dismiss" aria-label="Clear the muse">×</button>
+        </div>
+
         <textarea id="memory-text" maxlength="6000" rows="15"></textarea>
         <footer class="leaf-actions">
           <span class="save-state" id="save-state" role="status"></span>
           <span class="character-count" id="character-count" aria-hidden="true"></span>
-          <button id="ask-expansion" type="button" data-i18n="background.ask">Expand this memory</button>
+          <span class="credit-state" id="credit-state" role="status" hidden></span>
+          <button id="request-credit" type="button" hidden data-i18n="background.credits.request">Ask the steward for more</button>
+          <button id="draw-muse" type="button" class="quiet" data-hint="bg.muse" data-i18n="background.muse">Draw a muse</button>
+          <button id="kindle-sparks" type="button" data-hint="bg.sparks" data-i18n="background.sparks">Kindle sparks</button>
+          <button id="ask-expansion" type="button" data-hint="bg.expand" data-i18n="background.ask">Expand this memory</button>
         </footer>
+
+        <aside class="spark-tray" id="spark-tray" hidden aria-labelledby="spark-title">
+          <div class="spark-head">
+            <span class="smallcaps" id="spark-title" data-i18n="background.sparks.kicker">Sparks to riff on</span>
+            <button type="button" class="muse-close" id="dismiss-sparks" data-i18n-aria="background.sparks.dismiss" aria-label="Clear sparks">×</button>
+          </div>
+          <p class="spark-hint" data-i18n="background.sparks.hint">Tap a spark to fold it into this memory.</p>
+          <div class="spark-cards" id="spark-cards"></div>
+        </aside>
 
         <aside class="suggestion-leaf" id="suggestion-leaf" hidden aria-labelledby="suggestion-title">
           <span class="smallcaps" data-i18n="background.suggestion.kicker">A possible telling</span>
@@ -47,6 +79,17 @@
         </aside>
       </section>
     </main>
+
+    <div class="weave-veil" id="weave-panel" hidden>
+      <div class="weave-sheet" role="dialog" aria-labelledby="weave-title" aria-modal="true">
+        <button type="button" class="muse-close weave-close" id="weave-close" data-i18n-aria="background.weave.close" aria-label="Close">×</button>
+        <span class="smallcaps weave-kicker" data-i18n="background.weave.kicker">The throughline</span>
+        <h3 id="weave-title" data-i18n="background.weave.title">What your memories share</h3>
+        <p class="weave-loading" id="weave-loading" data-i18n="background.weaving">Weaving the threads…</p>
+        <div id="weave-text"></div>
+        <p class="weave-note" data-i18n="background.weave.note">A reflection to read — your memories are untouched.</p>
+      </div>
+    </div>
 
     <section class="load-error" id="load-error" hidden>
       <p data-i18n="background.loadError">This character's memories could not be opened.</p>
