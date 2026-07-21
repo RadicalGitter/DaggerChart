@@ -1,0 +1,44 @@
+/* Installed-app touch feel for the player surfaces.
+   Kills the small tells that read "webpage" on a phone: grey tap flashes,
+   accidental text selection on controls, whole-page rubber-banding, the
+   double-tap zoom delay — and gives every control a same-frame pressed state.
+   Inputs and page text keep normal selection; only controls are hardened. */
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The page itself never rubber-bands or pull-to-refreshes; inner panels
+   (which set their own overscroll-behavior: contain) still scroll freely. */
+html {
+  overscroll-behavior: none;
+}
+
+button,
+[role="button"],
+a,
+summary,
+label {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Same-frame acknowledgement under the finger. Brightness, not transform:
+   several surfaces position controls with inline transforms. */
+button:not(:disabled):active,
+[role="button"]:active,
+summary:active {
+  filter: brightness(0.86);
+}
+
+/* Text fields stay fully selectable and editable. */
+input,
+textarea,
+select,
+[contenteditable] {
+  -webkit-user-select: auto;
+  user-select: auto;
+  touch-action: auto;
+}
