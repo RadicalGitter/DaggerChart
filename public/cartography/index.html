@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Cartographer's Atlas</title>
+  <link rel="stylesheet" href="/shared/ledger.css">
+  <link rel="stylesheet" href="cartography.css">
+</head>
+<body>
+  <div class="atlas-shell">
+    <header class="atlas-head">
+      <div>
+        <span class="atlas-kicker" id="atlas-kicker">Private field office</span>
+        <h1 id="atlas-title">The Cartographer's Atlas</h1>
+      </div>
+      <div class="atlas-owner" id="atlas-owner"></div>
+    </header>
+
+    <main class="atlas-workspace" id="atlas-workspace" hidden>
+      <aside class="sheet-case">
+        <header>
+          <div><span class="smallcaps" id="case-label">Map case</span><strong id="sheet-count">0 sheets</strong></div>
+          <button type="button" class="icon-button" id="new-sheet" title="New blank sheet" aria-label="New blank sheet">+</button>
+        </header>
+        <div class="sheet-list" id="sheet-list"></div>
+        <button type="button" class="case-action" id="upload-map" hidden>Place a map in the case</button>
+      </aside>
+
+      <section class="map-desk">
+        <div class="map-toolbar" id="map-toolbar">
+          <div class="tool-group drawing-tools" role="group" aria-label="Drawing tools">
+            <button type="button" class="tool-button" data-tool="pen" title="Draw"><span aria-hidden="true">✎</span><b>Draw</b></button>
+            <button type="button" class="tool-button" data-tool="eraser" title="Erase"><span aria-hidden="true">⌫</span><b>Erase</b></button>
+            <button type="button" class="tool-button" data-tool="note" title="Place a speculation"><span aria-hidden="true">⌖</span><b>Pin</b></button>
+            <button type="button" class="tool-button gm-only" data-tool="zone" title="Place a true region"><span aria-hidden="true">▱</span><b>Region</b></button>
+          </div>
+          <div class="tool-group gm-only blueprint-layers" role="group" aria-label="Blueprint line type">
+            <button type="button" class="layer-button active" data-draw-layer="structure">Structure</button>
+            <button type="button" class="layer-button" data-draw-layer="detail">Detail</button>
+          </div>
+          <div class="tool-group ink-colors" id="ink-colors" aria-label="Ink color"></div>
+          <div class="tool-group ink-widths" role="group" aria-label="Line width">
+            <button type="button" class="width-button" data-width="0.0025" title="Fine line">·</button>
+            <button type="button" class="width-button" data-width="0.0045" title="Ordinary line">•</button>
+            <button type="button" class="width-button" data-width="0.008" title="Broad line">●</button>
+          </div>
+          <span class="toolbar-spacer"></span>
+          <div class="tool-group zoom-tools" role="group" aria-label="Map scale">
+            <button type="button" class="icon-button" id="zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
+            <output id="zoom-value">100%</output>
+            <button type="button" class="icon-button" id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+          </div>
+          <button type="button" class="tool-button export-button" id="export-map" title="Export the visible map"><span aria-hidden="true">⇩</span><b>Export</b></button>
+        </div>
+
+        <div class="map-scroll" id="map-scroll">
+          <div class="map-empty" id="map-empty">
+            <span aria-hidden="true">⌑</span>
+            <p>No map sheet is open.</p>
+          </div>
+          <div class="map-plane" id="map-plane" hidden>
+            <div class="map-paper" id="map-paper">
+              <img id="map-image" alt="" hidden>
+              <div class="blank-grid" id="blank-grid" aria-hidden="true"></div>
+              <canvas id="ink-layer" aria-label="Map drawing layer"></canvas>
+              <div class="truth-zones" id="truth-zones"></div>
+              <div class="map-pins" id="map-pins"></div>
+              <button type="button" class="map-note-target" id="map-note-target" aria-label="Place a note on the map"></button>
+            </div>
+          </div>
+        </div>
+
+        <footer class="map-status">
+          <span id="map-status">Choose a sheet from the case.</span>
+          <button type="button" class="quiet" id="clear-ink" hidden>Clear my ink</button>
+        </footer>
+      </section>
+
+      <aside class="map-ledger" id="map-ledger">
+        <div class="sheet-details" id="sheet-details"></div>
+        <div class="note-details" id="note-details"></div>
+      </aside>
+    </main>
+
+    <section class="access-message" id="access-message" hidden>
+      <span aria-hidden="true">⌑</span>
+      <h2>The map case remains closed.</h2>
+      <p>This desk belongs to the appointed cartographer.</p>
+      <a href="/player">Return to your tools</a>
+    </section>
+  </div>
+
+  <dialog id="blank-dialog">
+    <form method="dialog" id="blank-form">
+      <header><span class="smallcaps">Fresh vellum</span><h2>Begin a blank map</h2></header>
+      <label>Map title<input id="blank-title" maxlength="120" required></label>
+      <label class="gm-only"><input id="blank-issued" type="checkbox"> Issue this sheet to Oore now</label>
+      <div class="dialog-actions"><button type="button" value="cancel" class="quiet" data-close-dialog="blank-dialog">Cancel</button><button value="default" id="blank-submit">Begin the sheet</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="upload-dialog">
+    <form method="dialog" id="upload-form">
+      <header><span class="smallcaps">Keeper's source</span><h2>Place a map in the case</h2></header>
+      <label>Map title<input id="upload-title" maxlength="120" required></label>
+      <label>Image<input id="upload-file" type="file" accept="image/png,image/jpeg,image/webp" required></label>
+      <label><input id="upload-issued" type="checkbox"> Issue this map to Oore immediately</label>
+      <p class="upload-note">Leave it unissued to keep the complete source map on the GM side only.</p>
+      <div class="dialog-actions"><button type="button" value="cancel" class="quiet" data-close-dialog="upload-dialog">Cancel</button><button value="default" id="upload-submit">Place the map</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="submit-dialog" class="submission-dialog">
+    <form method="dialog" id="submit-form">
+      <header><span class="smallcaps" id="submit-kicker">The last quiet review</span><h2 id="submit-heading">Send this to the Dreamer?</h2></header>
+      <div class="submission-seal" aria-hidden="true">⌑</div>
+      <p id="submit-warning">This makes a permanent revision. The Dreamer may use it to change what becomes true; sending another revision later will not erase what has already been seen.</p>
+      <dl class="submission-summary" id="submission-summary"></dl>
+      <div class="submission-notes" id="submission-notes"></div>
+      <label class="submission-attestation"><input id="submit-attestation" type="checkbox" required><span id="submit-attestation-label">I have checked the paths, marks, and speculations I am choosing to send.</span></label>
+      <div class="dialog-actions"><button type="button" class="quiet" data-close-dialog="submit-dialog" id="submit-cancel">Return to the draft</button><button value="default" id="submit-confirm">Send this to the Dreamer</button></div>
+    </form>
+  </dialog>
+
+  <div class="atlas-toast" id="atlas-toast" role="status"></div>
+  <script type="module" src="cartography.js"></script>
+</body>
+</html>

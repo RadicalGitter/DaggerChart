@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "ownerPcId": "pc_1784315512566_6dpx",
+  "sheets": [
+    {
+      "id": "map_oore_fieldbook",
+      "title": "Oore's field map",
+      "createdBy": "cartographer",
+      "visibility": "cartographer",
+      "width": 1600,
+      "height": 1000,
+      "image": null,
+      "strokes": [],
+      "notes": [],
+      "submissions": [],
+      "blueprint": {
+        "strokes": [],
+        "revision": 0,
+        "confirmedHash": null,
+        "confirmedCoverage": [],
+        "pendingDiff": null
+      },
+      "truth": {
+        "overview": "",
+        "zones": []
+      },
+      "renderPlan": {
+        "status": "unplanned",
+        "revision": 0,
+        "invalidatedZoneIds": [],
+        "map": {
+          "kind": "parchment-map",
+          "dependencyHash": null,
+          "status": "needs-render",
+          "imageUrl": null,
+          "brief": "",
+          "updatedAt": null
+        },
+        "scenes": []
+      },
+      "createdAt": "2026-07-20T00:00:00.000Z",
+      "updatedAt": "2026-07-20T00:00:00.000Z"
+    }
+  ]
+}
