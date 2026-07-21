@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "shadowPcId": "pc_1784315090465_aouy",
+  "sessions": [],
+  "shadowStates": {
+    "pc_1784315090465_aouy": {
+      "position": "neutral",
+      "changedAt": null,
+      "totalsMs": {
+        "light": 0,
+        "neutral": 0,
+        "shadow": 0
+      },
+      "transitions": [],
+      "invocations": []
+    }
+  }
+}
