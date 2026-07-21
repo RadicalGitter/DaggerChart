@@ -1,18 +1,119 @@
 [
   {
+    "id": "log_1784323676928_e0fxn",
+    "ts": "2026-07-17T21:27:56.928Z",
+    "season": "Spring, Year 1",
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "published": false,
+    "type": "party",
+    "summary": "Scratch Hero steps back from the tale."
+  },
+  {
+    "id": "log_1784321507723_rttmu",
+    "ts": "2026-07-17T20:51:47.723Z",
+    "season": "Spring, Year 1",
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "published": false,
+    "type": "party",
+    "summary": "Red Neck is now known as Redneck."
+  },
+  {
+    "id": "log_1784316505711_142x4",
+    "ts": "2026-07-17T19:28:25.711Z",
+    "season": "Spring, Year 1",
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "published": true,
+    "type": "party",
+    "summary": "Scratch Hero takes their place in the settlement."
+  },
+  {
+    "id": "log_1784315560827_zikg9",
+    "ts": "2026-07-17T19:12:40.827Z",
+    "season": "Spring, Year 1",
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "published": false,
+    "type": "party",
+    "summary": "Vide Hamn is now known as Oore."
+  },
+  {
+    "id": "log_1784315512566_j5u0v",
+    "ts": "2026-07-17T19:11:52.566Z",
+    "season": "Spring, Year 1",
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "published": true,
+    "type": "party",
+    "summary": "Vide Hamn takes their place in the settlement."
+  },
+  {
+    "id": "log_1784315282406_orc9p",
+    "ts": "2026-07-17T19:08:02.406Z",
+    "season": "Spring, Year 1",
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "published": false,
+    "type": "party",
+    "summary": "King is now known as Heliga Erik."
+  },
+  {
+    "id": "log_1784315090465_u42mi",
+    "ts": "2026-07-17T19:04:50.465Z",
+    "season": "Spring, Year 1",
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "published": true,
+    "type": "party",
+    "summary": "King takes their place in the settlement."
+  },
+  {
+    "id": "log_1784314691416_nbikx",
+    "ts": "2026-07-17T18:58:11.416Z",
+    "season": "Spring, Year 1",
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "published": true,
+    "type": "party",
+    "summary": "Red Neck takes their place in the settlement."
+  },
+  {
+    "id": "log_1784314621189_2wh3n",
+    "ts": "2026-07-17T18:57:01.189Z",
+    "season": "Spring, Year 1",
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "published": true,
+    "type": "party",
+    "summary": "Bob Näslös takes their place in the settlement."
+  },
+  {
+    "id": "log_1784314405624_ap973",
+    "ts": "2026-07-17T18:53:25.624Z",
+    "season": "Spring, Year 1",
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "published": true,
+    "type": "party",
+    "summary": "Kaya takes their place in the settlement."
+  },
+  {
+    "id": "log_1784261257831_jjsti",
+    "ts": "2026-07-17T04:07:37.831Z",
+    "season": "Spring, Year 1",
+    "published": false,
+    "type": "party",
+    "summary": "Sirad Ashimya takes their place in the settlement.",
+    "campaignId": "cmp_mrorhwu2_bazshi"
+  },
+  {
     "id": "log_1783851527631_hhc5h",
     "ts": "2026-07-12T10:18:47.631Z",
     "season": "Spring, Year 1",
-    "published": true,
+    "published": false,
     "type": "party",
-    "summary": "Sirad Ashimya takes their place in the settlement."
+    "summary": "Sirad Ashimya takes their place in the settlement.",
+    "campaignId": "cmp_mrorhwu2_bazshi"
   },
   {
     "id": "log_1783804626877_znncv",
     "ts": "2026-07-11T21:17:06.877Z",
     "season": "Spring, Year 1",
-    "published": true,
+    "published": false,
     "type": "party",
-    "summary": "Sirad Ashimya takes their place in the settlement."
+    "summary": "Sirad Ashimya takes their place in the settlement.",
+    "campaignId": "cmp_mrorhwu2_bazshi"
   }
 ]

@@ -402,6 +402,36 @@ const STRINGS = {
     "player.hub.views": "Views",
     "player.hub.atHand": "At hand",
     "player.hub.essentials": "Everyday tools",
+    "presentation.tool": "Other faces",
+    "presentation.back": "Player root",
+    "presentation.disguise.title": "The Disguise Cabinet",
+    "presentation.disguise.subtitle": "Keep a face ready, then decide which one the party sees.",
+    "presentation.beastform.title": "The Living Menagerie",
+    "presentation.beastform.subtitle": "Choose a form, shape its appearance, and assume it when the moment calls.",
+    "presentation.canonical": "Return to yourself",
+    "presentation.newPersona": "Create persona",
+    "presentation.personaName": "Persona name",
+    "presentation.description": "What others should understand at a glance",
+    "presentation.prompt": "Portrait description",
+    "presentation.save": "Keep this face",
+    "presentation.remove": "Remove persona",
+    "presentation.activate": "Wear this face",
+    "presentation.generate": "Paint portrait",
+    "presentation.generating": "Painting...",
+    "presentation.active": "Currently shown to the party",
+    "presentation.formTier": "Tier {tier} Beastforms",
+    "presentation.examples": "Possible creatures",
+    "presentation.advantages": "Advantage when you",
+    "presentation.features": "Form features",
+    "presentation.transform": "Transform · mark 1 Stress",
+    "presentation.evolve": "Evolution · spend 3 Hope",
+    "presentation.evolutionTrait": "Evolution trait",
+    "presentation.beastName": "Your form's name or species",
+    "presentation.changed": "Changed from Kaya",
+    "presentation.canonicalValue": "Kaya",
+    "presentation.formValue": "Beast",
+    "presentation.unconfigured": "This advanced form will need its component forms configured before it can be assumed.",
+    "presentation.domainUnavailable": "Domain spells and weapon actions remain here for reference, but cannot be used while transformed.",
     "sheet.tool.navigation": "Character sheet navigation",
     "sheet.tool.record": "field record",
     "sheet.tool.arrange": "Arrange",
@@ -411,6 +441,47 @@ const STRINGS = {
     "sheet.tool.move": "Move section",
     "sheet.tool.up": "Move section up",
     "sheet.tool.down": "Move section down",
+    "beauty.open": "Beautify",
+    "beauty.kicker": "The sheetwright's atelier",
+    "beauty.title": "Shape this field record",
+    "beauty.tokens": "{n} beautifying tokens",
+    "beauty.token": "1 beautifying token",
+    "beauty.intro": "Previewing costs nothing. Committing a new design costs one token; returning to any committed version is free.",
+    "beauty.recipeName": "{variant} {motif}",
+    "beauty.variant.etched": "Etched",
+    "beauty.variant.illuminated": "Illuminated",
+    "beauty.motif.refrain": "refrain",
+    "beauty.motif.grove": "grove-work",
+    "beauty.motif.bulwark": "bulwark",
+    "beauty.motif.trail": "trail-work",
+    "beauty.motif.veil": "hidden seam",
+    "beauty.motif.halo": "votive rays",
+    "beauty.motif.constellation": "star-map",
+    "beauty.motif.blade": "blade-work",
+    "beauty.motif.diagram": "indexed diagram",
+    "beauty.motif.mechanism": "mechanism",
+    "beauty.motif.fieldwork": "field-work",
+    "beauty.pass": "Pass {n}",
+    "beauty.grade": "grade {n}",
+    "beauty.preview": "Preview",
+    "beauty.choosePreview": "Choose a treatment to see it on the sheet.",
+    "beauty.previewing": "Previewing {name}",
+    "beauty.commit": "Commit this treatment · 1 token",
+    "beauty.noTokens": "Another token comes with the next level",
+    "beauty.informedBy": "What this treatment can read",
+    "beauty.unlock.classIdentity": "Class identity and its visual grammar",
+    "beauty.unlock.tier": "Current level and character tier",
+    "beauty.unlock.portrait": "The completed portrait",
+    "beauty.unlock.fullBackground": "The full remembered background",
+    "beauty.unlock.domains": "The character's Domain cards",
+    "beauty.unlock.covenant": "The signed covenant",
+    "beauty.unlock.connections": "The completed connections",
+    "beauty.history": "Committed versions",
+    "beauty.baseline": "Return to the unadorned sheet",
+    "beauty.active": "in use",
+    "beauty.restore": "Use this version",
+    "beauty.empty": "No treatment has been committed yet.",
+    "beauty.error": "The sheetwright could not keep that change.",
     "background.short": "Background",
     "background.kicker": "Remembered life",
     "background.title": "Background studio",
@@ -422,6 +493,26 @@ const STRINGS = {
     "background.saved": "Memory kept.",
     "background.saveError": "The memory could not be kept.",
     "background.suggestError": "No expansion could be found just now.",
+    "background.credits.left": "{n} expansions left",
+    "background.credits.request": "Ask the steward for more",
+    "background.credits.requested": "The steward has been asked",
+    "background.credits.requestError": "The request could not be sent.",
+    "background.muse": "Draw a muse",
+    "background.muse.dismiss": "Clear the muse",
+    "background.sparks": "Kindle sparks",
+    "background.sparking": "Catching sparks…",
+    "background.sparkError": "No sparks caught just now.",
+    "background.sparks.kicker": "Sparks to riff on",
+    "background.sparks.hint": "Tap a spark to fold it into this memory.",
+    "background.sparks.dismiss": "Clear sparks",
+    "background.weave": "Weave it together",
+    "background.weave.hint": "Reflect on everything you've written so far",
+    "background.weaving": "Weaving the threads…",
+    "background.weaveError": "The weave unravelled. Try again shortly.",
+    "background.weave.kicker": "The throughline",
+    "background.weave.title": "What your memories share",
+    "background.weave.note": "A reflection to read — your memories are untouched.",
+    "background.weave.close": "Close",
     "background.loadError": "This character's memories could not be opened.",
     "background.suggestion.kicker": "A possible telling",
     "background.suggestion.title": "Suggested expansion",
@@ -457,6 +548,12 @@ const STRINGS = {
     "player.notes.saved": "Note kept.",
     "player.notes.error": "The note could not be kept.",
     "player.notes.atHand": "Tools at hand",
+    "partyCards.short": "Party",
+    "partyCards.open": "Show party portraits",
+    "partyCards.close": "Hide party portraits",
+    "partyCards.resize": "Resize portrait card",
+    "partyCards.empty": "No other characters are in this party yet.",
+    "partyCards.error": "The party portraits could not be opened.",
     "player.dice.open": "Dice",
     "player.dice.title": "Duality Dice",
     "player.dice.close": "Close the dice tray",
@@ -962,6 +1059,36 @@ const STRINGS = {
     "player.hub.views": "Vyer",
     "player.hub.atHand": "Nära till hands",
     "player.hub.essentials": "Vardagliga verktyg",
+    "presentation.tool": "Andra gestalter",
+    "presentation.back": "Spelarrot",
+    "presentation.disguise.title": "Förklädnadskabinettet",
+    "presentation.disguise.subtitle": "Ha ett ansikte redo och bestäm sedan vilket sällskapet ser.",
+    "presentation.beastform.title": "Det levande menageriet",
+    "presentation.beastform.subtitle": "Välj en form, forma dess utseende och anta den när stunden kräver det.",
+    "presentation.canonical": "Återgå till dig själv",
+    "presentation.newPersona": "Skapa persona",
+    "presentation.personaName": "Personans namn",
+    "presentation.description": "Vad andra ska förstå vid första anblick",
+    "presentation.prompt": "Porträttbeskrivning",
+    "presentation.save": "Bevara detta ansikte",
+    "presentation.remove": "Ta bort personan",
+    "presentation.activate": "Bär detta ansikte",
+    "presentation.generate": "Måla porträtt",
+    "presentation.generating": "Målar...",
+    "presentation.active": "Visas för närvarande för sällskapet",
+    "presentation.formTier": "Beastforms på Tier {tier}",
+    "presentation.examples": "Möjliga varelser",
+    "presentation.advantages": "Advantage när du",
+    "presentation.features": "Formens särdrag",
+    "presentation.transform": "Förvandla · markera 1 Stress",
+    "presentation.evolve": "Evolution · spendera 3 Hope",
+    "presentation.evolutionTrait": "Evolution-egenskap",
+    "presentation.beastName": "Din forms namn eller art",
+    "presentation.changed": "Förändrat från Kaya",
+    "presentation.canonicalValue": "Kaya",
+    "presentation.formValue": "Best",
+    "presentation.unconfigured": "Denna avancerade form behöver sina delformer konfigurerade innan den kan antas.",
+    "presentation.domainUnavailable": "Domänbesvärjelser och vapenhandlingar finns kvar som referens, men kan inte användas i Beastform.",
     "sheet.tool.navigation": "Navigering för rollformuläret",
     "sheet.tool.record": "fältanteckning",
     "sheet.tool.arrange": "Ordna",
@@ -971,6 +1098,47 @@ const STRINGS = {
     "sheet.tool.move": "Flytta del",
     "sheet.tool.up": "Flytta delen uppåt",
     "sheet.tool.down": "Flytta delen nedåt",
+    "beauty.open": "Försköna",
+    "beauty.kicker": "Formgivarens ateljé",
+    "beauty.title": "Forma denna fältanteckning",
+    "beauty.tokens": "{n} försköningstecken",
+    "beauty.token": "1 försköningstecken",
+    "beauty.intro": "Förhandsvisningar kostar ingenting. Att spara en ny utformning kostar ett tecken; att återvända till en sparad version är gratis.",
+    "beauty.recipeName": "{variant} {motif}",
+    "beauty.variant.etched": "Inristat",
+    "beauty.variant.illuminated": "Illuminerat",
+    "beauty.motif.refrain": "refrängverk",
+    "beauty.motif.grove": "lundverk",
+    "beauty.motif.bulwark": "bålverk",
+    "beauty.motif.trail": "spårverk",
+    "beauty.motif.veil": "dold söm",
+    "beauty.motif.halo": "votivstrålar",
+    "beauty.motif.constellation": "stjärnkarta",
+    "beauty.motif.blade": "klingverk",
+    "beauty.motif.diagram": "indexerat diagram",
+    "beauty.motif.mechanism": "mekanism",
+    "beauty.motif.fieldwork": "fältverk",
+    "beauty.pass": "Omgång {n}",
+    "beauty.grade": "grad {n}",
+    "beauty.preview": "Förhandsvisa",
+    "beauty.choosePreview": "Välj en behandling för att se den på formuläret.",
+    "beauty.previewing": "Förhandsvisar {name}",
+    "beauty.commit": "Spara behandlingen · 1 tecken",
+    "beauty.noTokens": "Nästa tecken kommer med nästa level",
+    "beauty.informedBy": "Vad behandlingen kan läsa",
+    "beauty.unlock.classIdentity": "Klassidentiteten och dess formspråk",
+    "beauty.unlock.tier": "Nuvarande level och karaktärens tier",
+    "beauty.unlock.portrait": "Det färdiga porträttet",
+    "beauty.unlock.fullBackground": "Den fullständiga ihågkomna bakgrunden",
+    "beauty.unlock.domains": "Karaktärens Domain-kort",
+    "beauty.unlock.covenant": "Det undertecknade förbundet",
+    "beauty.unlock.connections": "De färdiga relationerna",
+    "beauty.history": "Sparade versioner",
+    "beauty.baseline": "Återgå till det osmyckade formuläret",
+    "beauty.active": "används",
+    "beauty.restore": "Använd denna version",
+    "beauty.empty": "Ingen behandling har sparats ännu.",
+    "beauty.error": "Formgivaren kunde inte bevara ändringen.",
     "background.short": "Bakgrund",
     "background.kicker": "Det ihågkomna livet",
     "background.title": "Bakgrundsateljé",
@@ -982,6 +1150,26 @@ const STRINGS = {
     "background.saved": "Minnet bevarades.",
     "background.saveError": "Minnet kunde inte bevaras.",
     "background.suggestError": "Ingen utbyggnad kunde hittas just nu.",
+    "background.credits.left": "{n} utbyggnader kvar",
+    "background.credits.request": "Be förvaltaren om fler",
+    "background.credits.requested": "Förvaltaren har tillfrågats",
+    "background.credits.requestError": "Begäran kunde inte skickas.",
+    "background.muse": "Dra en musa",
+    "background.muse.dismiss": "Rensa musan",
+    "background.sparks": "Tänd gnistor",
+    "background.sparking": "Fångar gnistor…",
+    "background.sparkError": "Inga gnistor fångades just nu.",
+    "background.sparks.kicker": "Gnistor att spinna vidare på",
+    "background.sparks.hint": "Tryck på en gnista för att väva in den i minnet.",
+    "background.sparks.dismiss": "Rensa gnistor",
+    "background.weave": "Väv samman allt",
+    "background.weave.hint": "Begrunda allt du har skrivit hittills",
+    "background.weaving": "Väver trådarna…",
+    "background.weaveError": "Väven repades upp. Försök igen snart.",
+    "background.weave.kicker": "Den röda tråden",
+    "background.weave.title": "Vad dina minnen delar",
+    "background.weave.note": "En spegling att läsa — dina minnen är orörda.",
+    "background.weave.close": "Stäng",
     "background.loadError": "Rollpersonens minnen kunde inte öppnas.",
     "background.suggestion.kicker": "En möjlig berättelse",
     "background.suggestion.title": "Föreslagen utbyggnad",
@@ -1017,6 +1205,12 @@ const STRINGS = {
     "player.notes.saved": "Anteckningen sparades.",
     "player.notes.error": "Anteckningen kunde inte sparas.",
     "player.notes.atHand": "Verktyg nära till hands",
+    "partyCards.short": "Gruppen",
+    "partyCards.open": "Visa gruppens porträtt",
+    "partyCards.close": "Dölj gruppens porträtt",
+    "partyCards.resize": "Ändra storlek på porträttkortet",
+    "partyCards.empty": "Det finns inga andra rollpersoner i gruppen ännu.",
+    "partyCards.error": "Gruppens porträtt kunde inte öppnas.",
     "player.dice.open": "Tärningar",
     "player.dice.title": "Dualitetstärningar",
     "player.dice.close": "Stäng tärningsbrickan",
@@ -1294,6 +1488,22 @@ export const TERMS = {
   season: {
     en: ["Season", "Roughly half a year of game time passes between each building's rolls."],
     sv: ["Årstid", "Ungefär ett halvt spelår går mellan varje byggnads slag."]
+  },
+  "bg.expand": {
+    en: ["Expand this memory", "Rewrites what you've written into a fuller, more vivid passage, keeping your facts. You choose whether to keep it. Costs one expansion."],
+    sv: ["Bygg ut minnet", "Skriver om det du skrivit till en fylligare, mer levande text och behåller dina fakta. Du väljer om du vill behålla den. Kostar en utbyggnad."]
+  },
+  "bg.sparks": {
+    en: ["Kindle sparks", "Offers three short, different story seeds for this memory — even a blank one. Tap any to fold it in. Costs one expansion."],
+    sv: ["Tänd gnistor", "Ger tre korta, olika uppslag för det här minnet — även ett tomt. Tryck på ett för att väva in det. Kostar en utbyggnad."]
+  },
+  "bg.weave": {
+    en: ["Weave it together", "Reads all your memories and reflects the throughline, a tension, and a question back to you. It never changes your writing. Costs one expansion."],
+    sv: ["Väv samman allt", "Läser alla dina minnen och speglar tillbaka den röda tråden, en spänning och en fråga. Den ändrar aldrig din text. Kostar en utbyggnad."]
+  },
+  "bg.muse": {
+    en: ["Draw a muse", "A free nudge card to spark ideas when you're stuck. Just a prompt to think about — it writes nothing and costs nothing."],
+    sv: ["Dra en musa", "Ett gratis kort som knuffar igång idéer när du kört fast. Bara något att fundera på — det skriver ingenting och kostar ingenting."]
   }
 };
 
@@ -1351,15 +1561,40 @@ function hideTerm() {
   if (popEl) { popEl.remove(); popEl = null; }
 }
 
+// A hint reads from the same glossary but explains an action control (a button)
+// rather than a game term. Unlike terms, hints open on hover and focus and never
+// swallow a normal click — the control still does its job — so they suit the
+// "what does this button do?" case. Long-press still previews on touch.
+const hintKey = (el) => el.dataset.term || el.dataset.hint;
+
 function wireTerms() {
   document.addEventListener("pointerdown", (e) => {
-    const el = e.target.closest("[data-term]");
+    const el = e.target.closest("[data-term],[data-hint]");
     if (!el) { hideTerm(); return; }
     clearTimeout(pressTimer);
     pressTimer = setTimeout(() => {
       suppressClick = true;
-      showTerm(el.dataset.term, el);
+      showTerm(hintKey(el), el);
     }, 450);
+  });
+
+  // Desktop: hints preview on hover and clear when the pointer leaves.
+  document.addEventListener("pointerover", (e) => {
+    if (e.pointerType === "touch") return;
+    const el = e.target.closest("[data-hint]");
+    if (el) showTerm(el.dataset.hint, el);
+  });
+  document.addEventListener("pointerout", (e) => {
+    const el = e.target.closest("[data-hint]");
+    if (el && !el.contains(e.relatedTarget)) hideTerm();
+  });
+  // Keyboard: tabbing onto a hinted control previews it, matching hover.
+  document.addEventListener("focusin", (e) => {
+    const el = e.target.closest?.("[data-hint]");
+    if (el) showTerm(el.dataset.hint, el);
+  });
+  document.addEventListener("focusout", (e) => {
+    if (e.target.closest?.("[data-hint]")) hideTerm();
   });
   for (const ev of ["pointerup", "pointercancel", "pointerleave"]) {
     document.addEventListener(ev, () => clearTimeout(pressTimer));

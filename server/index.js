@@ -12,7 +12,9 @@ import { addInventoryItem, consumables, grantConsumable, inventoryEntry, updateI
 import { clearTelemetry, recordTelemetryBatch, telemetryView } from "./telemetry.js";
 import { retellSession } from "./retell.js";
 import { suggestPortrait } from "./portrait-suggest.js";
-import { BACKGROUND_FIELD_DEFINITIONS, normalizeBackgroundEntries, suggestBackground } from "./background-suggest.js";
+import { BACKGROUND_FIELD_DEFINITIONS, normalizeBackgroundEntries, suggestBackground, suggestSparks, weaveBackground } from "./background-suggest.js";
+import { gmLedgerView, grantCredits, hasCredit, playerCreditView, requestTopOff, spendCredit } from "./llm-credits.js";
+import { startBeacon } from "./beacon.js";
 import { artWorkshop } from "./art.js";
 import { resolveDualityRoll } from "./duality-roll.js";
 import { DEFAULT_PLAYER_FEATURES, normalizePlayerFeatures, playerFeaturePatch } from "./player-features.js";
@@ -47,6 +49,48 @@ import {
   configureSunoMirror,
   syncSunoSnapshot
 } from "./music.js";
+import {
+  addSheetNote,
+  addTruthZone,
+  beginBlueprintConfirmation,
+  cartographyGmView,
+  cartographyImagePath,
+  cartographyPlayerView,
+  compileRenderPlan,
+  createBlankSheet,
+  createImageSheet,
+  deleteSheet,
+  deleteSheetNote,
+  deleteTruthZone,
+  isCartographer,
+  replaceBlueprintStrokes,
+  replaceSheetStrokes,
+  submitSheetToDreamer,
+  updateMapTruth,
+  updateSheet,
+  updateSheetNote,
+  updateTruthZone
+} from "./cartography.js";
+import {
+  endLiveSession,
+  liveSessionGmView,
+  pauseLiveSession,
+  recordShadowInvocation,
+  resumeLiveSession,
+  setShadowPosition,
+  shadowPlayerView,
+  startLiveSession
+} from "./live-session.js";
+import {
+  activatePresentation,
+  customizeBeastform,
+  playerPresentationView,
+  presentationRole,
+  removePersona,
+  setGeneratedPresentationPortrait,
+  upsertPersona
+} from "./character-presentations.js";
+import { commitSheetBeauty, restoreSheetBeauty } from "./sheet-beauty.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -109,6 +153,8 @@ app.use("/gm", express.static(path.join(PUBLIC, "gm")));
 app.use("/board", express.static(path.join(PUBLIC, "board")));
 app.use("/login", express.static(path.join(PUBLIC, "login")));
 app.use("/player", express.static(path.join(PUBLIC, "player")));
+app.use("/cartography", express.static(path.join(PUBLIC, "cartography")));
+app.use("/presentation", express.static(path.join(PUBLIC, "presentation")));
 app.use("/table", express.static(path.join(PUBLIC, "table")));
 app.use("/table-book", express.static(path.join(PUBLIC, "table-book")));
 app.use("/tome", express.static(path.join(PUBLIC, "tome")));
@@ -120,6 +166,14 @@ app.use("/screen", express.static(path.join(PUBLIC, "screen")));
 app.use("/music", express.static(path.join(PUBLIC, "music")));
 app.use("/rules", express.static(path.join(PUBLIC, "rules")));
 app.use("/generated", express.static(path.join(PUBLIC, "generated"), { maxAge: "1h" }));
+// The installable player shell. The service worker must be served from the
+// root path so its scope covers every player surface; no-cache keeps updates
+// prompt (the browser re-checks it on each navigation).
+app.use("/pwa", express.static(path.join(PUBLIC, "pwa"), { maxAge: "1h" }));
+app.get("/manifest.webmanifest", (_req, res) =>
+  res.type("application/manifest+json").sendFile(path.join(PUBLIC, "pwa", "manifest.webmanifest")));
+app.get("/sw.js", (_req, res) =>
+  res.set("Cache-Control", "no-cache").sendFile(path.join(PUBLIC, "pwa", "sw.js")));
 // /character/<id> serves the sheet shell; the page reads the id from the URL.
 app.get("/character/:id", (_req, res) => res.sendFile(path.join(PUBLIC, "character", "index.html")));
 app.get("/background/:id", (_req, res) => res.sendFile(path.join(PUBLIC, "background", "index.html")));
@@ -227,6 +281,207 @@ app.get("/api/rules", (_req, res) => {
 
 app.get("/api/party", (_req, res) => res.json(partyListView()));
 
+app.get("/api/party/:id/shadow", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such active character.");
+  const view = shadowPlayerView(state.liveSession, pc.id, pc.campaignId);
+  if (!view) throw new Error("This character does not carry the balance of light and shadow.");
+  res.json(view);
+}));
+
+app.put("/api/party/:id/shadow", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such active character.");
+  setShadowPosition(state.liveSession, pc.id, req.body?.position, pc.campaignId, "player");
+  persist();
+  broadcast();
+  res.json(shadowPlayerView(state.liveSession, pc.id, pc.campaignId));
+}));
+
+app.post("/api/party/:id/shadow/invoke", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such active character.");
+  if (state.session.fear >= 12) throw new Error("The GM Fear pool is full; the shadow cannot create another token.");
+  const invocation = recordShadowInvocation(state.liveSession, pc.id, pc.campaignId);
+  state.session.fear += 1;
+  persist();
+  broadcast();
+  res.json({
+    ok: true,
+    fearAdded: invocation.fearAdded,
+    shadow: shadowPlayerView(state.liveSession, pc.id, pc.campaignId)
+  });
+}));
+
+// --- the cartographer's case: Oore-only field sheets, with a GM-private source layer ---
+function cartographerById(pcId) {
+  const pc = activePcById(String(pcId || ""));
+  if (!pc || !isCartographer(state.cartography, pc.id)) throw new Error("This character does not hold the cartographer's case.");
+  return pc;
+}
+
+function saveCartography() {
+  saveJson("cartography.json", state.cartography);
+  broadcast();
+}
+
+app.get("/api/cartography/gm", (_req, res) => res.json(cartographyGmView(state.cartography, state.pcs)));
+
+app.get("/api/cartography", guard((req, res) => {
+  const pc = cartographerById(req.query.pc);
+  res.json(cartographyPlayerView(state.cartography, pc.id, state.pcs));
+}));
+
+app.get("/api/cartography/images/:sheetId", guard((req, res) => {
+  const sheet = state.cartography.sheets.find((candidate) => candidate.id === req.params.sheetId);
+  if (!sheet?.image) throw new Error("No such map image.");
+  if (req.query.gm !== "1") {
+    cartographerById(req.query.pc);
+    if (sheet.visibility !== "cartographer") throw new Error("That map has not been issued.");
+  }
+  const imagePath = cartographyImagePath(sheet);
+  if (!imagePath) throw new Error("No such map image.");
+  res.set("Cache-Control", "private, no-store");
+  res.type(sheet.image.mimeType).sendFile(imagePath);
+}));
+
+app.post("/api/cartography/sheets", guard((req, res) => {
+  const pc = cartographerById(req.body?.pcId);
+  const sheet = createBlankSheet(state.cartography, { title: req.body?.title, createdBy: "cartographer" });
+  saveCartography();
+  res.status(201).json(cartographyPlayerView(state.cartography, pc.id, state.pcs));
+}));
+
+app.post("/api/cartography/gm/sheets", guard((req, res) => {
+  const sheet = createBlankSheet(state.cartography, {
+    title: req.body?.title,
+    createdBy: "gm",
+    visibility: req.body?.visibility
+  });
+  saveCartography();
+  res.status(201).json({ ok: true, sheetId: sheet.id });
+}));
+
+app.post("/api/cartography/gm/images", guard((req, res) => {
+  const sheet = createImageSheet(state.cartography, req.body);
+  saveCartography();
+  res.status(201).json({ ok: true, sheetId: sheet.id });
+}));
+
+app.put("/api/cartography/gm/sheets/:sheetId", guard((req, res) => {
+  updateSheet(state.cartography, req.params.sheetId, req.body, "gm");
+  saveCartography();
+  res.json({ ok: true });
+}));
+
+app.put("/api/cartography/gm/sheets/:sheetId/blueprint", guard((req, res) => {
+  const { diff } = replaceBlueprintStrokes(state.cartography, req.params.sheetId, req.body?.strokes);
+  saveCartography();
+  res.json({ ok: true, diff });
+}));
+
+app.post("/api/cartography/gm/sheets/:sheetId/confirm-blueprint", guard((req, res) => {
+  const confirmation = beginBlueprintConfirmation(state.cartography, req.params.sheetId);
+  saveCartography();
+  res.status(202).json({ ok: true, status: "compiling", ...confirmation });
+  setTimeout(() => {
+    try {
+      compileRenderPlan(state.cartography, req.params.sheetId);
+      saveCartography();
+    } catch (error) {
+      console.error(`Cartography render-plan compilation failed: ${error.message}`);
+    }
+  }, 0);
+}));
+
+app.put("/api/cartography/gm/sheets/:sheetId/truth", guard((req, res) => {
+  const truth = updateMapTruth(state.cartography, req.params.sheetId, req.body);
+  compileRenderPlan(state.cartography, req.params.sheetId);
+  saveCartography();
+  res.json(truth);
+}));
+
+app.post("/api/cartography/gm/sheets/:sheetId/zones", guard((req, res) => {
+  const zone = addTruthZone(state.cartography, req.params.sheetId, req.body);
+  compileRenderPlan(state.cartography, req.params.sheetId);
+  saveCartography();
+  res.status(201).json(zone);
+}));
+
+app.put("/api/cartography/gm/sheets/:sheetId/zones/:zoneId", guard((req, res) => {
+  const zone = updateTruthZone(state.cartography, req.params.sheetId, req.params.zoneId, req.body);
+  compileRenderPlan(state.cartography, req.params.sheetId);
+  saveCartography();
+  res.json(zone);
+}));
+
+app.delete("/api/cartography/gm/sheets/:sheetId/zones/:zoneId", guard((req, res) => {
+  deleteTruthZone(state.cartography, req.params.sheetId, req.params.zoneId);
+  compileRenderPlan(state.cartography, req.params.sheetId);
+  saveCartography();
+  res.json({ ok: true });
+}));
+
+app.delete("/api/cartography/gm/sheets/:sheetId", guard((req, res) => {
+  deleteSheet(state.cartography, req.params.sheetId, "gm");
+  saveCartography();
+  res.json({ ok: true });
+}));
+
+app.put("/api/cartography/sheets/:sheetId", guard((req, res) => {
+  const pc = cartographerById(req.body?.pcId);
+  updateSheet(state.cartography, req.params.sheetId, req.body, "cartographer");
+  saveCartography();
+  res.json(cartographyPlayerView(state.cartography, pc.id, state.pcs));
+}));
+
+app.put("/api/cartography/sheets/:sheetId/ink", guard((req, res) => {
+  cartographerById(req.body?.pcId);
+  const sheet = replaceSheetStrokes(state.cartography, req.params.sheetId, req.body?.strokes);
+  saveCartography();
+  res.json({ ok: true, strokes: sheet.strokes.length });
+}));
+
+app.post("/api/cartography/sheets/:sheetId/submit", guard((req, res) => {
+  const pc = cartographerById(req.body?.pcId);
+  const submission = submitSheetToDreamer(state.cartography, req.params.sheetId);
+  saveCartography();
+  res.status(201).json({
+    ok: true,
+    revision: submission.revision,
+    submittedAt: submission.submittedAt,
+    view: cartographyPlayerView(state.cartography, pc.id, state.pcs)
+  });
+}));
+
+app.post("/api/cartography/sheets/:sheetId/notes", guard((req, res) => {
+  cartographerById(req.body?.pcId);
+  const note = addSheetNote(state.cartography, req.params.sheetId, req.body);
+  saveCartography();
+  res.status(201).json(note);
+}));
+
+app.put("/api/cartography/sheets/:sheetId/notes/:noteId", guard((req, res) => {
+  cartographerById(req.body?.pcId);
+  const note = updateSheetNote(state.cartography, req.params.sheetId, req.params.noteId, req.body);
+  saveCartography();
+  res.json(note);
+}));
+
+app.delete("/api/cartography/sheets/:sheetId/notes/:noteId", guard((req, res) => {
+  cartographerById(req.query.pc);
+  deleteSheetNote(state.cartography, req.params.sheetId, req.params.noteId);
+  saveCartography();
+  res.json({ ok: true });
+}));
+
+app.delete("/api/cartography/sheets/:sheetId", guard((req, res) => {
+  const pc = cartographerById(req.query.pc);
+  deleteSheet(state.cartography, req.params.sheetId, "cartographer");
+  saveCartography();
+  res.json(cartographyPlayerView(state.cartography, pc.id, state.pcs));
+}));
+
 app.get("/api/art/status", (_req, res) => res.json({
   ...artWorkshop.status(),
   suggestions: {
@@ -330,10 +585,12 @@ app.delete("/api/art/scenes/:id", guard((req, res) => {
 app.post("/api/art/portrait/suggest", guardAsync(async (req, res) => {
   const draftId = String(req.body.draftId || "");
   if (!/^draft_[a-zA-Z0-9_-]{6,80}$/.test(draftId)) throw new Error("A valid character draft is required.");
-  // This is a trusted five-player table with no per-player quota. Add request
-  // throttling here before exposing character creation beyond that boundary.
+  // Word-weaving credits are charged to the draft during creation.
+  if (!hasCredit(draftId)) {
+    return res.status(402).json({ error: "No expansions left. Ask the steward for more.", credits: playerCreditView(draftId) });
+  }
   const result = await suggestPortrait(req.body.context || {});
-  res.json(result);
+  res.json({ ...result, credits: spendCredit(draftId) });
 }));
 
 app.post("/api/art/portrait", guardAsync(async (req, res) => {
@@ -410,6 +667,25 @@ app.get("/api/party/:id", guard((req, res) => {
   res.json(pc);
 }));
 
+app.post("/api/party/:id/sheet-beauty/commit", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  commitSheetBeauty(pc, state.sheetBeauty, String(req.body?.candidateId || ""));
+  persist();
+  broadcast();
+  res.status(201).json(playerCharacterView(pc.id));
+}));
+
+app.post("/api/party/:id/sheet-beauty/restore", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  const versionId = req.body?.versionId == null ? null : String(req.body.versionId);
+  restoreSheetBeauty(pc, state.sheetBeauty, versionId);
+  persist();
+  broadcast();
+  res.json(playerCharacterView(pc.id));
+}));
+
 app.post("/api/party", guard((req, res) => {
   const campaignId = String(req.body?.campaignId || state.campaigns.currentId);
   if (!isActiveCampaign(campaignId)) throw new Error("Choose an active campaign.");
@@ -460,6 +736,9 @@ app.put("/api/party/:id", guard((req, res) => {
     };
   }
   state.pcs[i] = next;
+  if (state.characterPresentations.active[next.id]?.kind === "beastform" && next.hp >= next.hpMax) {
+    delete state.characterPresentations.active[next.id];
+  }
   persist();
   broadcast();
   res.json(playerCharacterView(next.id));
@@ -486,13 +765,91 @@ app.post("/api/party/:id/background/suggest", guardAsync(async (req, res) => {
   const currentText = String(req.body?.currentText || "").trim();
   if (!currentText) throw new Error("Write a beginning before asking for an expansion.");
   if (currentText.length > 6000) throw new Error("That memory is too long to expand.");
+  if (!hasCredit(pc.id)) {
+    return res.status(402).json({ error: "No expansions left. Ask the steward for more.", credits: playerCreditView(pc.id) });
+  }
   const result = await suggestBackground({
     pc,
     field: definition,
     currentText,
     locale: req.body?.locale === "sv" ? "sv" : "en"
   });
-  res.json(result);
+  // Charge only after a successful answer; a failed provider call is free.
+  res.json({ ...result, credits: spendCredit(pc.id) });
+}));
+
+app.post("/api/party/:id/background/spark", guardAsync(async (req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  const fieldId = String(req.body?.fieldId || "");
+  const publicPc = playerCharacterView(pc.id);
+  const existing = publicPc.background.find((field) => field.id === fieldId);
+  const definition = BACKGROUND_FIELD_DEFINITIONS.find((field) => field.id === fieldId)
+    || (existing ? { id: existing.id, title: existing.q } : null);
+  if (!definition) throw new Error("Choose a background memory.");
+  // Sparks are the inspiration aid: they work even on an empty field.
+  const currentText = String(req.body?.currentText || "").slice(0, 6000);
+  if (!hasCredit(pc.id)) {
+    return res.status(402).json({ error: "No expansions left. Ask the steward for more.", credits: playerCreditView(pc.id) });
+  }
+  const result = await suggestSparks({
+    pc,
+    field: definition,
+    currentText,
+    locale: req.body?.locale === "sv" ? "sv" : "en"
+  });
+  res.json({ ...result, credits: spendCredit(pc.id) });
+}));
+
+app.post("/api/party/:id/background/weave", guardAsync(async (req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  const memories = playerCharacterView(pc.id).background.filter((entry) => entry?.a?.trim());
+  if (!memories.length) throw new Error("Write at least one memory before weaving.");
+  if (!hasCredit(pc.id)) {
+    return res.status(402).json({ error: "No expansions left. Ask the steward for more.", credits: playerCreditView(pc.id) });
+  }
+  const result = await weaveBackground({
+    pc,
+    memories,
+    locale: req.body?.locale === "sv" ? "sv" : "en"
+  });
+  res.json({ ...result, credits: spendCredit(pc.id) });
+}));
+
+// --- word-weaving credits: the per-player budget for the writing aids ---
+
+// Best-effort human name for an owner id (PC or draft), for the GM ledger.
+function creditOwnerName(owner) {
+  const pc = state.pcs.find((candidate) => candidate.id === owner);
+  if (pc) return { name: pc.name || "Unnamed", kind: "character", active: isPlayablePc(pc) };
+  const draft = state.characterDrafts.find((candidate) => candidate.id === owner);
+  if (draft) return { name: draft.draft?.name || "Unfinished draft", kind: "draft", active: true };
+  return { name: owner, kind: "unknown", active: false };
+}
+
+app.get("/api/llm-credits", guard((req, res) => {
+  res.json(playerCreditView(String(req.query.owner || "")));
+}));
+
+app.post("/api/llm-credits/request", guard((req, res) => {
+  const credits = requestTopOff(String(req.body?.owner || ""), req.body?.note);
+  broadcast();
+  res.json(credits);
+}));
+
+app.get("/api/llm-credits/gm", guard((_req, res) => {
+  const ledger = gmLedgerView();
+  res.json({
+    defaultGrant: ledger.defaultGrant,
+    accounts: ledger.accounts.map((account) => ({ ...account, ...creditOwnerName(account.owner) }))
+  });
+}));
+
+app.post("/api/llm-credits/grant", guard((req, res) => {
+  const credits = grantCredits(String(req.body?.owner || ""), req.body?.amount);
+  broadcast();
+  res.json(credits);
 }));
 
 app.put("/api/party/:id/name", guard((req, res) => {
@@ -715,6 +1072,138 @@ app.put("/api/session", guard((req, res) => {
   persist();
   broadcast();
   res.json({ ...state.session });
+}));
+
+app.get("/api/party/:id/presentation", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  const view = playerPresentationView(pc, state.characterPresentations, state.beastforms);
+  if (!view) throw new Error("This character has no alternate presentation tool.");
+  res.json({
+    pc: playerCharacterView(pc.id),
+    canonical: { name: pc.name, portrait: pc.portrait || null, traits: { ...(pc.traits || {}) }, evasion: pc.evasion },
+    studio: view,
+    art: artWorkshop.status().workflows.portrait
+  });
+}));
+
+app.post("/api/party/:id/presentation/activate", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  activatePresentation(pc, state.characterPresentations, state.beastforms, req.body);
+  persist();
+  broadcast();
+  res.json({ pc: playerCharacterView(pc.id), studio: playerPresentationView(pc, state.characterPresentations, state.beastforms) });
+}));
+
+app.post("/api/party/:id/personas", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  const persona = upsertPersona(state.characterPresentations, pc.id, req.body);
+  persist();
+  broadcast();
+  res.status(201).json(persona);
+}));
+
+app.delete("/api/party/:id/personas/:personaId", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  removePersona(state.characterPresentations, pc.id, req.params.personaId);
+  persist();
+  broadcast();
+  res.status(204).end();
+}));
+
+app.put("/api/party/:id/beastforms/:formId", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  const form = state.beastforms.find((item) => item.id === req.params.formId);
+  if (!form) throw new Error("No such Beastform.");
+  const customization = customizeBeastform(state.characterPresentations, pc.id, form, req.body);
+  persist();
+  broadcast();
+  res.json(customization);
+}));
+
+app.post("/api/party/:id/presentation/:refId/portrait", guardAsync(async (req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  const role = presentationRole(state.characterPresentations, pc.id);
+  if (!role) throw new Error("This character has no alternate portrait workshop.");
+  const refId = String(req.params.refId || "");
+  const prompt = String(req.body?.prompt || "").trim();
+  if (!prompt) throw new Error("Describe the portrait first.");
+  if (role === "beastform") {
+    const form = state.beastforms.find((item) => item.id === refId);
+    if (!form) throw new Error("No such Beastform.");
+    customizeBeastform(state.characterPresentations, pc.id, form, { prompt });
+  } else {
+    const persona = state.characterPresentations.personas[pc.id]?.find((item) => item.id === refId);
+    if (!persona) throw new Error("No such persona.");
+    persona.prompt = prompt;
+  }
+  persist();
+  const result = await artWorkshop.request({
+    kind: "portrait",
+    entityId: `presentation_${pc.id}_${refId}`,
+    prompt,
+    negativePrompt: req.body.negativePrompt,
+    seed: req.body.seed,
+    stepsModifier: req.body.stepsModifier,
+    cfgModifier: req.body.cfgModifier,
+    style: req.body.style,
+    primaryColor: req.body.primaryColor || pc.appearance?.primaryColor,
+    secondaryColor: req.body.secondaryColor || pc.appearance?.secondaryColor,
+    tags: req.body.tags,
+    embellishPrompt: req.body.embellishPrompt
+  });
+  setGeneratedPresentationPortrait(state.characterPresentations, pc.id, refId, result.url);
+  persist();
+  broadcast();
+  res.json(result);
+}));
+
+app.get("/api/live-session/gm", (_req, res) => {
+  res.json(liveSessionGmView(state.liveSession, state.campaigns.currentId));
+});
+
+app.post("/api/live-session/start", guard((req, res) => {
+  const campaignId = state.campaigns.currentId;
+  const participants = sessionParticipants(req.body?.participants, campaignId, true);
+  startLiveSession(state.liveSession, campaignId, participants);
+  persist();
+  broadcast();
+  res.status(201).json(liveSessionGmView(state.liveSession, campaignId));
+}));
+
+app.post("/api/live-session/pause", guard((_req, res) => {
+  pauseLiveSession(state.liveSession, state.campaigns.currentId);
+  persist();
+  broadcast();
+  res.json(liveSessionGmView(state.liveSession, state.campaigns.currentId));
+}));
+
+app.post("/api/live-session/resume", guard((_req, res) => {
+  resumeLiveSession(state.liveSession, state.campaigns.currentId);
+  persist();
+  broadcast();
+  res.json(liveSessionGmView(state.liveSession, state.campaigns.currentId));
+}));
+
+app.post("/api/live-session/end", guard((_req, res) => {
+  const clock = endLiveSession(state.liveSession, state.campaigns.currentId);
+  persist();
+  broadcast();
+  res.json({ ok: true, clock });
+}));
+
+app.put("/api/gm/party/:id/shadow", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such active character.");
+  setShadowPosition(state.liveSession, pc.id, req.body?.position, pc.campaignId, "gm");
+  persist();
+  broadcast();
+  res.json(liveSessionGmView(state.liveSession, state.campaigns.currentId));
 }));
 
 // --- private GM/PC threads ---
@@ -1786,4 +2275,6 @@ app.listen(PORT, () => {
   console.log(`  Player table:    http://localhost:${PORT}/table`);
   console.log(`  Player root:     http://localhost:${PORT}/player`);
   console.log(`  Music desk:      http://localhost:${PORT}/music`);
+  // Publish the current public address, if a beacon target is configured.
+  startBeacon({ port: PORT });
 });

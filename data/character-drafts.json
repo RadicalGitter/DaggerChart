@@ -1,0 +1,268 @@
+[
+  {
+    "id": "draft_1784310404899_lhixzfke",
+    "version": 3,
+    "step": 7,
+    "part": 0,
+    "savedAt": "2026-07-17T20:54:42.414Z",
+    "draft": {
+      "campaignId": "cmp_mrorhwu2_bazshi",
+      "name": "King",
+      "player": "Marcus",
+      "pronouns": "He",
+      "classId": "core_class_seraph",
+      "subclassId": "core_subclass_divine_wielder",
+      "classItem": "A sigil of your god",
+      "ancestryId": "core_ancestry_faerie",
+      "communityId": "core_community_wanderborne",
+      "traits": {
+        "Agility": -1,
+        "Strength": 0,
+        "Finesse": 0,
+        "Instinct": 1,
+        "Presence": 1,
+        "Knowledge": 2
+      },
+      "primaryId": "core_weapon_scepter",
+      "secondaryId": null,
+      "armorId": "core_armor_chainmail_armor",
+      "potion": "Minor Health Potion (clear 1d4 HP)",
+      "experiences": [
+        "",
+        ""
+      ],
+      "background": {},
+      "domainCardIds": [
+        "core_domain_card_mending_touch",
+        "core_domain_card_reassurance"
+      ],
+      "connections": {},
+      "shell": "table",
+      "pen": "brush",
+      "portrait": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314196238-1.png",
+      "portraitPrompt": "Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair",
+      "portraitNegativePrompt": "",
+      "portraitSeed": 1473658477,
+      "portraitFixSeed": false,
+      "portraitStepsModifier": 0,
+      "portraitCfgModifier": 0,
+      "portraitStyle": "style1",
+      "portraitEmbellishPrompt": true,
+      "portraitAttempts": [
+        {
+          "id": "portrait_attempt_1784313096551_0",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784313095629-1.png",
+          "seed": 1592518993,
+          "createdAt": "2026-07-17T18:31:36.550Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313096551_1",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784313095720-2.png",
+          "seed": 1592518993,
+          "createdAt": "2026-07-17T18:31:36.550Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313165051_0",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784313164223-1.png",
+          "seed": 64031819,
+          "createdAt": "2026-07-17T18:32:45.051Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313165051_1",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784313164238-2.png",
+          "seed": 64031819,
+          "createdAt": "2026-07-17T18:32:45.051Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314197163_0",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314196238-1.png",
+          "seed": 1473658477,
+          "createdAt": "2026-07-17T18:49:57.162Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314197163_1",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314196269-2.png",
+          "seed": 1473658477,
+          "createdAt": "2026-07-17T18:49:57.162Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true
+          }
+        }
+      ],
+      "portraitSuggestion": "",
+      "portraitTextSource": "mine",
+      "portraitTags": [
+        "androgynous"
+      ],
+      "portraitEquipment": {
+        "armor": true,
+        "mainHand": true,
+        "offHand": false
+      },
+      "favoriteColor": "#c96f72",
+      "covenant": {
+        "read": false,
+        "warned": false,
+        "signed": false,
+        "signedAt": null
+      }
+    }
+  },
+  {
+    "id": "draft_a349aa2e-5185-4622-8d28-e9a9bd2f10ed",
+    "version": 3,
+    "step": 0,
+    "part": 0,
+    "savedAt": "2026-07-17T23:18:13.495Z",
+    "draft": {
+      "campaignId": "cmp_mrorhwu2_bazshi",
+      "name": "",
+      "player": "",
+      "pronouns": "",
+      "classId": null,
+      "subclassId": null,
+      "classItem": null,
+      "ancestryId": null,
+      "communityId": null,
+      "traits": {
+        "Agility": null,
+        "Strength": null,
+        "Finesse": null,
+        "Instinct": null,
+        "Presence": null,
+        "Knowledge": null
+      },
+      "primaryId": null,
+      "secondaryId": null,
+      "armorId": null,
+      "potion": null,
+      "experiences": [
+        "",
+        ""
+      ],
+      "background": {},
+      "domainCardIds": [],
+      "connections": {},
+      "shell": "table",
+      "pen": "quill",
+      "portrait": null,
+      "portraitPrompt": "",
+      "portraitNegativePrompt": "",
+      "portraitSeed": null,
+      "portraitFixSeed": false,
+      "portraitStepsModifier": 0,
+      "portraitCfgModifier": 0,
+      "portraitStyle": "style2",
+      "portraitEmbellishPrompt": true,
+      "portraitAttempts": [],
+      "portraitSuggestion": "",
+      "portraitTextSource": "mine",
+      "portraitTags": [],
+      "portraitEquipment": {
+        "armor": true,
+        "mainHand": true,
+        "offHand": true
+      },
+      "favoriteColor": "#c96f72",
+      "covenant": {
+        "read": false,
+        "warned": false,
+        "signed": false,
+        "signedAt": null
+      }
+    }
+  }
+]

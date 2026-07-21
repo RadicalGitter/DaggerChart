@@ -1,0 +1,28 @@
+{
+  "currentId": "cmp_mrorhwu2_bazshi",
+  "campaigns": [
+    {
+      "id": "cmp_mrorhwu2_bazshi",
+      "name": "The Settlement",
+      "status": "active",
+      "createdAt": "2026-07-17T09:55:06.745Z",
+      "playerFeatures": {
+        "settlement": false,
+        "folk": true,
+        "chronicle": true,
+        "journal": true,
+        "character": true,
+        "inventory": true,
+        "rules": true,
+        "notes": true,
+        "partyCards": true,
+        "dice": false,
+        "messages": true,
+        "feedback": true,
+        "characterCreation": true,
+        "music": true,
+        "sessionPools": true
+      }
+    }
+  ]
+}

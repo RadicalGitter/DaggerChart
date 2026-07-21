@@ -5,7 +5,7 @@
     "role": "Foreman, the Lumber Camp",
     "status": "alive",
     "description": "A broad, quiet man who was a sawyer's apprentice before the crossing. Counts his crew twice at dusk. Smells of pine pitch and never raises his voice. He and Jory go back to the old country — it was Jory who talked him aboard when the passage lists were full, and Garrick is not a man who forgets a kindness.",
-    "portrait": null,
+    "portrait": "/generated/art/portrait/Garrick.png",
     "publicTraits": true,
     "traits": {
       "Agility": 0,
@@ -22,6 +22,42 @@
       "inspiration": 0,
       "penalty": 0,
       "notes": "Owes Jory his place on the crossing — Jory vouched for him when the lists were full. Garrick has seen the bunkhouse joinery up close and knows exactly what it is worth; he says nothing, out of debt. If a catastrophe ever traces back to Jory's work, Garrick's silence becomes part of the story. No mechanical effect — a loyalty thread."
+    },
+    "trustedForWork": true,
+    "age": {
+      "band": "unknown",
+      "years": 0
+    },
+    "connections": [],
+    "experiences": [],
+    "portraitPrompt": "A broad, quiet man who was a sawyer's apprentice before the crossing. Counts his crew twice at dusk. Smells of pine pitch and never raises his voice. He and Jory go back to the old country — it was Jory who talked him aboard when the passage lists were full, and Garrick is not a man who forgets a kindness.",
+    "portraitNegativePrompt": "",
+    "portraitDirection": {
+      "tags": [],
+      "primaryColor": "#805447",
+      "secondaryColor": "#6d806f",
+      "equipment": {
+        "armor": {
+          "enabled": true,
+          "text": ""
+        },
+        "mainHand": {
+          "enabled": true,
+          "text": ""
+        },
+        "offHand": {
+          "enabled": true,
+          "text": ""
+        }
+      }
+    },
+    "portraitWorkshop": {
+      "stepsModifier": 0,
+      "cfgModifier": 0,
+      "style": "style2",
+      "embellishPrompt": true,
+      "fixSeed": false,
+      "lastSeed": 0
     }
   },
   {
@@ -47,7 +83,14 @@
       "inspiration": 0,
       "penalty": 0,
       "notes": "Her brother drowned in the storm on the crossing. Calder went into the water for him and came out empty-handed; neither of them has ever said a word about it to the other. She takes his palisade rounds without being asked when the anniversary comes round. She works the grief off in miles, not words. A quiet thread to pull: she would like Calder's night-list compared against what she reads in tracks — something is circling that neither of them has named yet."
-    }
+    },
+    "trustedForWork": true,
+    "age": {
+      "band": "unknown",
+      "years": 0
+    },
+    "connections": [],
+    "experiences": []
   },
   {
     "id": "chr_jory",
@@ -72,7 +115,14 @@
       "inspiration": 0,
       "penalty": -2,
       "notes": "Genuinely incompetent beneath the confident presentation (spec §8C). The bunkhouse walls have a lean to them; no one has the heart to say so. Pitch openly with his stated competence; the ledger quietly applies the truth. The players' discovery of this is a designed story — protect it. His real gift is people: half the settlement is here because Jory spoke for them at the harbor — which is exactly why the reckoning, when it comes, will be a human problem and not a carpentry one. Least able to speak up: Garrick, who owes Jory his passage and knows what the joinery is worth."
-    }
+    },
+    "trustedForWork": true,
+    "age": {
+      "band": "unknown",
+      "years": 0
+    },
+    "connections": [],
+    "experiences": []
   },
   {
     "id": "chr_calder",
@@ -97,7 +147,14 @@
       "inspiration": 0,
       "penalty": 0,
       "notes": "A deserter. He walked away from a garrison that was ordered to burn a village rather than lose it (which army and where: GM's choice, when it matters). He boarded the ship under a dead man's name — his own is on no list anywhere. The one he couldn't pull from the water was Lyra's brother; he still carries the man's knife and has not found a way to give it back. He watches the dark so well because he is also watching for whoever might come looking for him."
-    }
+    },
+    "trustedForWork": true,
+    "age": {
+      "band": "unknown",
+      "years": 0
+    },
+    "connections": [],
+    "experiences": []
   },
   {
     "id": "chr_ellory",
@@ -122,6 +179,13 @@
       "inspiration": 0,
       "penalty": 0,
       "notes": "Counts the way she does because her father's harbor office was ruined by one false ledger — someone else's hand, his name on it. She will not let a number stand that she didn't write herself. She has already noticed that the manifest holds a name no one in the settlement answers to, and that the count of the living still comes out right. She hasn't worked out that the answer is Calder. When she does, she will want a reason before she wants a judgment — but she will want one of the two."
-    }
+    },
+    "trustedForWork": true,
+    "age": {
+      "band": "unknown",
+      "years": 0
+    },
+    "connections": [],
+    "experiences": []
   }
 ]

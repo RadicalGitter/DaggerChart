@@ -2,6 +2,7 @@ import { initI18n, t, termify } from "/shared/i18n.js";
 import { prepareRuleNodes, searchRuleNodes } from "/shared/rules-search.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import "/shared/feedback.js";
+import "/shared/player-tools.js";
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) =>

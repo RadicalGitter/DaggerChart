@@ -9,6 +9,7 @@ test("every feedback-enabled player surface receives the shared home control", (
   const entrypoints = [
     "public/background/background.js",
     "public/character/sheet.js",
+    "public/cartography/cartography.js",
     "public/create/create.js",
     "public/journal/journal.js",
     "public/music/music.js",

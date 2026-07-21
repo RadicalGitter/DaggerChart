@@ -1,0 +1,300 @@
+{
+  "main": {
+    "items": [
+      {
+        "id": "changed_start",
+        "type": "note",
+        "x": 30,
+        "y": 90,
+        "w": 370,
+        "props": {
+          "title": "The Changed Knives - Start Here",
+          "text": "SHORT TIER 1 FIGHT | FIVE PCs | 10 BATTLE POINTS\n\nBefore play: Oore takes the domain card owed by Prepared. Redneck and Heliga Erik roll Prayer Dice. Ask every PC where they are in camp.\n\nStart with 2 Fear from the ambush. The first enemy spotlight is a soft move: the Captain points the Lackeys toward the supply wagon and demands the settlers stand aside.\n\nThe attackers want the wagon, not a massacre. When the Captain and Hulk fall, or half the force is gone with an escape route open, the survivors flee or surrender."
+        }
+      },
+      {
+        "id": "changed_field",
+        "type": "note",
+        "x": 430,
+        "y": 90,
+        "w": 370,
+        "props": {
+          "title": "Battlefield and Stakes",
+          "text": "SUPPLY WAGON: center; height and cover among cargo.\nFIREPIT: Very Close; embers expose Hidden attackers or force movement. Fear can turn it into a camp fire.\nTENTS AND LINES: Close; an appropriate action roll (11) can temporarily Restrain an adversary.\nTREE LINE: Far; Needle-Eye begins Hidden here.\nSETTLERS: threatened collateral, not combatants.\n\nSUPPLIES DRAGGED AWAY (4): Tick down when an adversary at the wagon gets an uncontested spotlight, or when a PC rolls with Fear while nobody protects it. At 0 the wagon reaches Far and this becomes a chase. A decisive action to secure it can tick up 1, maximum 4."
+        }
+      },
+      {
+        "id": "changed_pacing",
+        "type": "note",
+        "x": 830,
+        "y": 90,
+        "w": 370,
+        "props": {
+          "title": "Pacing and End Conditions",
+          "text": "1. Let every PC act before escalating.\n2. Hulk creates a rescue problem; Sniper makes the tree line matter; Captain coordinates.\n3. Do not use Finish the Fallen in the first cycle. Telegraph it first.\n4. Avoid repeatedly targeting the same low-Evasion PC.\n5. If the force collapses without a real decision, add two Split-Skin Cutters from opposite sides.\n6. Do not grind through every HP. Retreat or surrender once the Captain and Hulk are down, or the bandits have clearly lost."
+        }
+      },
+      {
+        "id": "changed_captain",
+        "type": "note",
+        "x": 30,
+        "y": 500,
+        "w": 370,
+        "props": {
+          "title": "Grafted Captain - Leader",
+          "text": "Difficulty 13 | Thresholds 7/14 | HP 2 | Stress 2\nATK +2 | Hooked Javelin, Close | 1d8+3 physical\nExperience: Pack Tactics +2\n\nSHARED NERVE - Action: Mark Stress when spotlighted to also spotlight two allies within Close.\nMORE BODIES - Action: Bring three Crooked Lackeys in at Far. Use only to escalate.\nFINISH THE FALLEN - Fear Action: Attack a Vulnerable target within Close. Success: 2d6+12 physical and target marks Stress.\nFEEDING MOMENTUM - Reaction: Gain Fear after a successful attack against a PC."
+        }
+      },
+      {
+        "id": "changed_hulk",
+        "type": "note",
+        "x": 430,
+        "y": 500,
+        "w": 370,
+        "props": {
+          "title": "Root-Hulk - Bruiser",
+          "text": "Difficulty 12 | Thresholds 7/14 | HP 7 | Stress 4\nATK -3 | Knotted Club, Melee | 1d4+6 physical\nExperience: Unveiled Threats +3\n\nPINNED PREY - Passive: Creatures Restrained by the Hulk take double damage from other adversaries.\nLONG-ARMED HOLD - Action: Attack in Melee. Success deals no damage; target becomes Restrained and Vulnerable. A successful Strength Roll frees them. Major or greater damage to the Hulk also frees them.\n\nCreate the threat, then give the party a spotlight to answer it."
+        }
+      },
+      {
+        "id": "changed_sniper",
+        "type": "note",
+        "x": 830,
+        "y": 500,
+        "w": 370,
+        "props": {
+          "title": "Needle-Eye - Ranged",
+          "text": "Difficulty 13 | Thresholds 4/7 | HP 3 | Stress 2\nATK -1 | Shortbow, Far | 1d10+2 physical\nExperience: Stealth +2\n\nTRANSLUCENT AMBUSH - Passive: A successful standard attack while Hidden deals 1d10+4 physical instead.\n\nBegins Hidden at the tree line. Repositions after being exposed. Targets isolated characters, but does not repeatedly punish the same player."
+        }
+      },
+      {
+        "id": "changed_lackeys",
+        "type": "note",
+        "x": 30,
+        "y": 870,
+        "w": 370,
+        "props": {
+          "title": "Five Crooked Lackeys - Minions",
+          "text": "Difficulty 9 | HP 1 each | Stress 1\nATK -2 | Daggers, Melee | 2 physical\nExperience: Thief +2\n\nMINION (3): Any damage defeats one. Every 3 damage defeats one additional Lackey within the attack's range.\nDOGPILE - Fear Action: All Lackeys within Close of one target move into Melee and make one shared attack. Success deals 2 physical per participating Lackey.\n\nFirst priority: the wagon. Second: help the Hulk isolate a defender."
+        }
+      },
+      {
+        "id": "changed_cutters",
+        "type": "note",
+        "x": -363.1429519653319,
+        "y": 682.5714721679688,
+        "w": 370,
+        "props": {
+          "title": "Optional: Two Split-Skin Cutters",
+          "text": "Each Cutter adds 2 Battle Points. Add both only if the first cycle is too easy.\n\nDifficulty 12 | Thresholds 8/14 | HP 5 | Stress 3\nATK +1 | Daggers, Melee | 1d8+1 physical\nExperience: Thief +2\n\nJOINTED CLIMBER: Climbs as easily as running.\nDROP ATTACK: A successful attack from above deals 1d10+1 physical instead.\n\nHave them arrive from opposite sides of the camp. Do not add them merely because the PCs rolled well."
+        }
+      },
+      {
+        "id": "changed_clues",
+        "type": "note",
+        "x": 830,
+        "y": 870,
+        "w": 370,
+        "props": {
+          "title": "Evidence After the Fight",
+          "text": "Keep the cause open tonight.\n\n- They were ordinary bandits until recently.\n- The changes grew through old wounds first.\n- Black sap under the skin smells of wet iron and reacts faintly to nearby magic.\n- The Captain carries a rough charcoal sketch of this new camp. Someone knew where the settlers stopped.\n\nA living captive can be questioned later. The immediate reward is keeping the settlement's first shared supplies."
+        }
+      },
+      {
+        "id": "changed_pc_kaya",
+        "type": "character",
+        "x": 40,
+        "y": 1260,
+        "w": 320,
+        "props": {
+          "pcId": "pc_1784314405624_lbzq"
+        }
+      },
+      {
+        "id": "changed_pc_bob",
+        "type": "character",
+        "x": 400,
+        "y": 1260,
+        "w": 320,
+        "props": {
+          "pcId": "pc_1784314621189_vf1p"
+        }
+      },
+      {
+        "id": "changed_pc_redneck",
+        "type": "character",
+        "x": 760,
+        "y": 1260,
+        "w": 320,
+        "props": {
+          "pcId": "pc_1784314691416_p83s"
+        }
+      },
+      {
+        "id": "changed_pc_erik",
+        "type": "character",
+        "x": 1120,
+        "y": 1260,
+        "w": 320,
+        "props": {
+          "pcId": "pc_1784315090465_aouy"
+        }
+      },
+      {
+        "id": "changed_pc_oore",
+        "type": "character",
+        "x": 1480,
+        "y": 1260,
+        "w": 320,
+        "props": {
+          "pcId": "pc_1784315512566_6dpx"
+        }
+      },
+      {
+        "id": "it_1784407328924_nexw",
+        "type": "character",
+        "x": 1417.0229829535263,
+        "y": 334.6945502681411,
+        "w": 320,
+        "props": {
+          "pcId": "pc_1784314621189_vf1p"
+        }
+      }
+    ],
+    "pins": [
+      {
+        "id": "changed_view",
+        "name": "The Changed Knives",
+        "x": 20,
+        "y": 5,
+        "z": 0.72
+      }
+    ]
+  },
+  "hud": {
+    "items": [
+      {
+        "id": "changed_hud_open",
+        "type": "note",
+        "x": 0,
+        "y": 0,
+        "w": 330,
+        "props": {
+          "title": "Opening Beat",
+          "text": "Oore: take owed domain card. Both Seraphs: roll Prayer Dice. Ask each PC where they are.\n\nStart with 2 Fear. Captain directs Lackeys toward the supply wagon; no PC damage on the first enemy spotlight."
+        }
+      },
+      {
+        "id": "changed_hud_plan",
+        "type": "note",
+        "x": 360,
+        "y": 0,
+        "w": 330,
+        "props": {
+          "title": "Enemy Plan",
+          "text": "Lackeys take wagon. Hulk Restrains and makes the rescue problem. Sniper fires once from Hidden, then moves. Captain coordinates. Telegraph Finish the Fallen before using it."
+        }
+      },
+      {
+        "id": "changed_hud_stats",
+        "type": "note",
+        "x": 0,
+        "y": 260,
+        "w": 690,
+        "props": {
+          "title": "Quick Stats",
+          "text": "CAPTAIN D13 | 7/14 | HP6 S3 | +2 Close 1d8+3\nHULK D12 | 7/14 | HP7 S4 | -3 Melee 1d4+6\nSNIPER D13 | 4/7 | HP3 S2 | -1 Far 1d10+2 (Hidden 1d10+4)\nLACKEY D9 | Minion 3 | -2 Melee 2 each\nOPTIONAL CUTTER D12 | 8/14 | HP5 S3 | +1 Melee 1d8+1"
+        }
+      },
+      {
+        "id": "changed_hud_end",
+        "type": "note",
+        "x": 720,
+        "y": 260,
+        "w": 330,
+        "props": {
+          "title": "Escalation and End",
+          "text": "If the first cycle collapses, add two Cutters. Otherwise do not.\n\nSurvivors flee or surrender when Captain and Hulk fall, or half the force is gone and escape is open. Keep the mutation's cause unanswered tonight."
+        }
+      },
+      {
+        "id": "changed_supply",
+        "type": "counter",
+        "x": 0,
+        "y": 560,
+        "w": 210,
+        "props": {
+          "label": "Supplies countdown (0 = taken)",
+          "value": 4
+        }
+      },
+      {
+        "id": "changed_captain_hp",
+        "type": "counter",
+        "x": 230,
+        "y": 560,
+        "w": 210,
+        "props": {
+          "label": "Captain HP marked / 6",
+          "value": 0
+        }
+      },
+      {
+        "id": "changed_captain_stress",
+        "type": "counter",
+        "x": 460,
+        "y": 560,
+        "w": 210,
+        "props": {
+          "label": "Captain Stress / 3",
+          "value": 0
+        }
+      },
+      {
+        "id": "changed_hulk_hp",
+        "type": "counter",
+        "x": 690,
+        "y": 560,
+        "w": 210,
+        "props": {
+          "label": "Hulk HP marked / 7",
+          "value": 0
+        }
+      },
+      {
+        "id": "changed_hulk_stress",
+        "type": "counter",
+        "x": 920,
+        "y": 560,
+        "w": 210,
+        "props": {
+          "label": "Hulk Stress / 4",
+          "value": 0
+        }
+      },
+      {
+        "id": "changed_sniper_hp",
+        "type": "counter",
+        "x": 0,
+        "y": 760,
+        "w": 210,
+        "props": {
+          "label": "Sniper HP marked / 3",
+          "value": 0
+        }
+      },
+      {
+        "id": "changed_lackeys",
+        "type": "counter",
+        "x": 230,
+        "y": 760,
+        "w": 210,
+        "props": {
+          "label": "Lackeys remaining / 5",
+          "value": 5
+        }
+      }
+    ],
+    "pins": []
+  }
+}

@@ -1,4 +1,4 @@
-import { t, initI18n } from "/shared/i18n.js";
+import { t, initI18n, lang } from "/shared/i18n.js";
 import { SHELLS, DEFAULT_SHELL, shellEntryRoute, validShell } from "/shared/shells.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import { playerFeatureEnabled, setPlayerFeatureContext } from "/shared/player-features.js";
@@ -122,13 +122,21 @@ function renderEssentials() {
   section.hidden = !pc;
   if (!pc) return;
   const id = encodeURIComponent(pc.id);
+  const cartography = pc.tools?.includes("cartography")
+    ? `<a href="/cartography/?pc=${id}"><span aria-hidden="true">⌑</span><strong>${esc(lang === "sv" ? "Kartografens atlas" : "Cartographer's atlas")}</strong></a>`
+    : "";
+  const presentation = pc.tools?.includes("presentation")
+    ? `<a href="/presentation/?pc=${id}"><span aria-hidden="true">◐</span><strong>${esc(t("presentation.tool"))}</strong></a>`
+    : "";
   const actions = [
     playerFeatureEnabled("character") ? `<a href="/character/${id}"><span aria-hidden="true">◇</span><strong>${esc(t("table.character"))}</strong></a>` : "",
     playerFeatureEnabled("character") ? `<a href="/background/${id}"><span aria-hidden="true">⌁</span><strong>${esc(t("background.short"))}</strong></a>` : "",
     playerFeatureEnabled("notes") ? `<button type="button" data-open-notes><span aria-hidden="true">✎</span><strong>${esc(t("player.notes.open"))}</strong></button>` : "",
     playerFeatureEnabled("journal") ? `<a href="/journal/?pc=${id}"><span aria-hidden="true">▤</span><strong>${esc(t("journal.title"))}</strong></a>` : "",
     playerFeatureEnabled("inventory") ? `<a href="/tome?open=1&amp;section=inventory"><span aria-hidden="true">▧</span><strong>${esc(t("table.inventory"))}</strong></a>` : "",
-    playerFeatureEnabled("rules") ? `<a href="/rules"><span aria-hidden="true">⌘</span><strong>${esc(t("rules.title"))}</strong></a>` : ""
+    playerFeatureEnabled("rules") ? `<a href="/rules"><span aria-hidden="true">⌘</span><strong>${esc(t("rules.title"))}</strong></a>` : "",
+    cartography,
+    presentation
   ].filter(Boolean);
   $("#essential-actions").innerHTML = actions.join("");
   section.hidden = actions.length === 0;

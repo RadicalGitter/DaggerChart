@@ -7,6 +7,9 @@ import { inventoryView } from "./inventory.js";
 import { normalizePlayerFeatures, PLAYER_FEATURE_DEFINITIONS } from "./player-features.js";
 import { domainCardEntitlement } from "../public/shared/domain-card-rules.js";
 import { projectFor } from "./construction.js";
+import { liveSessionGmView, shadowPlayerView } from "./live-session.js";
+import { applyBeastformSheet, playerPresentationView, presentationIdentity } from "./character-presentations.js";
+import { sheetBeautyView } from "./sheet-beauty.js";
 
 const PLAYER_CONDITIONS = new Set(["hidden", "restrained", "vulnerable"]);
 const conditionView = (p) => [...new Set(p.conditions || [])].filter((id) => PLAYER_CONDITIONS.has(id));
@@ -68,15 +71,23 @@ const weaponView = (weapon) => weapon ? {
   feature: weapon.feature || ""
 } : null;
 
-const identityView = (p) => ({
+const identityView = (p) => {
+  const presented = presentationIdentity(p, state.characterPresentations, state.beastforms);
+  return ({
   id: p.id,
   campaignId: p.campaignId,
-  name: p.name,
+  name: presented.name,
   player: p.player || "",
-  portrait: p.portrait || null,
+  portrait: presented.portrait,
+  presentation: presented.presentation,
   shell: shellOf(p),
-  appearance: appearanceView(p)
-});
+  appearance: appearanceView(p),
+  tools: [
+    ...(p.id === state.cartography.ownerPcId ? ["cartography"] : []),
+    ...(playerPresentationView(p, state.characterPresentations, state.beastforms) ? ["presentation"] : [])
+  ]
+  });
+};
 
 const messageView = (message) => ({
   id: message.id,
@@ -128,8 +139,12 @@ const tableIdentityView = (p) => ({
 export function playerCharacterView(id) {
   const p = activePcs().find((pc) => pc.id === id);
   if (!p) return null;
-  return {
+  const view = {
     ...identityView(p),
+    canonicalName: p.name,
+    shadowBalance: shadowPlayerView(state.liveSession, p.id, p.campaignId),
+    presentationStudio: playerPresentationView(p, state.characterPresentations, state.beastforms),
+    sheetBeauty: sheetBeautyView(p, state.sheetBeauty),
     playerFeatures: normalizePlayerFeatures(state.campaigns.campaigns.find((campaign) => campaign.id === p.campaignId)?.playerFeatures),
     pen: penOf(p),
     pronouns: p.pronouns || "",
@@ -144,6 +159,7 @@ export function playerCharacterView(id) {
     ancestry: { id: p.ancestry?.id || "", name: p.ancestry?.name || "" },
     community: { id: p.community?.id || "", name: p.community?.name || "" },
     traits: Object.fromEntries(Object.entries(p.traits || {}).map(([name, value]) => [name, value])),
+    proficiency: numericView(p.proficiency, 1),
     evasion: p.evasion,
     hpMax: p.hpMax,
     hp: p.hp,
@@ -181,6 +197,7 @@ export function playerCharacterView(id) {
       community: (p.features?.community || []).map(featureView).filter(Boolean)
     }
   };
+  return applyBeastformSheet(view, state.characterPresentations, state.beastforms, p);
 }
 
 export function partyListView() {
@@ -210,6 +227,7 @@ export function gmView() {
       fear: state.session.fear,
       showFearToPlayers: state.session.showFearToPlayers
     },
+    liveSession: liveSessionGmView(state.liveSession, state.campaigns.currentId),
     campaigns: {
       currentId: state.campaigns.currentId,
       campaigns: state.campaigns.campaigns.map((campaign) => ({ ...campaign }))

@@ -11,6 +11,7 @@ let FEEDBACK = [];
 let TELEMETRY = { pages: {} };
 let ART_STATUS = { workflows: { portrait: { ready: false, reason: "missing" }, scenic: { ready: false, reason: "missing" } } };
 let ART_LIBRARY = { dimensions: { width: 1536, height: 864, aspect: "16:9" }, taxonomy: { rootIds: [], tags: [] }, characters: [], places: [], scenes: [] };
+let CREDITS = { defaultGrant: 15, accounts: [] };
 let selectedUxRoute = null;
 let imageLibraryView = "characters";
 let selectedFolkId = null;
@@ -71,13 +72,14 @@ async function api(path, opts = {}) {
 }
 
 async function refresh() {
-  const [nextState, items, feedback, telemetry, artStatus, artLibrary] = await Promise.all([
+  const [nextState, items, feedback, telemetry, artStatus, artLibrary, credits] = await Promise.all([
     api("/api/state"),
     api("/api/items/consumables"),
     api("/api/feedback"),
     api("/api/telemetry").catch(() => ({ pages: {} })),
     api("/api/art/status").catch(() => ART_STATUS),
-    api("/api/art/library").catch(() => ART_LIBRARY)
+    api("/api/art/library").catch(() => ART_LIBRARY),
+    api("/api/llm-credits/gm").catch(() => CREDITS)
   ]);
   S = nextState;
   CONSUMABLES = items;
@@ -85,6 +87,7 @@ async function refresh() {
   TELEMETRY = telemetry;
   ART_STATUS = artStatus;
   ART_LIBRARY = artLibrary;
+  CREDITS = credits;
   renderNav();
   renderDowntimePicker();
   renderStores();
@@ -100,6 +103,7 @@ async function refresh() {
   renderTown();
   renderScreen();
   renderFeedback();
+  renderCredits();
   renderUx();
 }
 
@@ -124,6 +128,34 @@ function renderFeedback() {
         agentNotes: document.querySelector(`[data-feedback-notes="${CSS.escape(id)}"]`).value
       } });
       toast("Ticket triage saved.");
+      await refresh();
+    } catch (error) { toast(error.message, true); }
+  };
+}
+
+// --- word-weaving credits: per-player Anthropic-aid budgets ---
+function renderCredits() {
+  const grid = $("#credits-grid");
+  if (!grid) return;
+  const accounts = [...(CREDITS.accounts || [])].sort((a, b) =>
+    (b.requested ? 1 : 0) - (a.requested ? 1 : 0) || (b.used - a.used));
+  const pending = accounts.filter((account) => account.requested).length;
+  const badge = $("#credits-pending");
+  if (badge) badge.textContent = pending ? `${pending} awaiting a grant` : "";
+  grid.innerHTML = accounts.length ? accounts.map((account) => `<article class="card${account.requested ? " credit-asked" : ""}">
+    <div class="credit-head"><strong>${esc(account.name || account.owner)}</strong><span class="muted">${esc(account.kind)}${account.active ? "" : " · stepped back"}</span></div>
+    <div class="credit-meta">${account.used} used · ${account.remaining} left of ${account.granted}${account.requested ? ` · <em>asked${account.note ? `: ${esc(account.note)}` : ""}</em>` : ""}</div>
+    <div class="formrow">
+      <input type="number" min="1" max="200" value="${account.requested ? 15 : 10}" data-credit-amount="${esc(account.owner)}" style="width:5rem">
+      <button class="quiet" type="button" data-credit-grant="${esc(account.owner)}">Grant</button>
+    </div>
+  </article>`).join("") : `<p class="muted">No expansions requested yet. Each character or draft starts with ${CREDITS.defaultGrant} on first use.</p>`;
+  for (const button of document.querySelectorAll("[data-credit-grant]")) button.onclick = async () => {
+    const owner = button.dataset.creditGrant;
+    const amount = Number(document.querySelector(`[data-credit-amount="${CSS.escape(owner)}"]`).value) || 0;
+    try {
+      await api("/api/llm-credits/grant", { method: "POST", body: { owner, amount } });
+      toast("Expansions granted.");
       await refresh();
     } catch (error) { toast(error.message, true); }
   };
@@ -336,6 +368,7 @@ function showSection(key) {
   document.body.classList.toggle("board-open", key === "board");
   document.body.classList.toggle("music-open", key === "music");
   document.body.classList.toggle("party-open", key === "party");
+  document.body.classList.toggle("cartography-open", key === "cartography");
   if (key === "music") {
     requestAnimationFrame(() => {
       document.querySelector(".gm-music-frame")?.contentWindow?.postMessage(
@@ -2050,6 +2083,63 @@ function perspectiveSealsHtml(session) {
   ).join("")}</div>`;
 }
 
+function liveSessionHtml() {
+  const live = S.liveSession || {};
+  const clock = live.clock;
+  const shadow = live.shadow;
+  const erik = shadow ? S.party.find((pc) => pc.id === shadow.pcId) : null;
+  const positionLabel = shadow ? shadow.position[0].toUpperCase() + shadow.position.slice(1) : "Neutral";
+  const shadowHtml = shadow && erik ? `<section class="erik-balance-gm">
+    <div><strong>${esc(erik.name)} · ${esc(positionLabel)}</strong><p>Private balance. The Dreamer may apply +1 or −1 elsewhere without spending Fear; Erik's Shadow invocation instead adds one Fear automatically.</p></div>
+    <div class="erik-balance-gm-controls" role="group" aria-label="Set Erik's balance">
+      ${["light", "neutral", "shadow"].map((entry) => `<button type="button" data-gm-shadow="${entry}" class="${entry === shadow.position ? "selected" : ""}">${entry}</button>`).join("")}
+    </div>
+    <div class="erik-time-ledger"><span>Light <b>${durationLabel(shadow.totalsMs.light)}</b></span><span>Neutral <b>${durationLabel(shadow.totalsMs.neutral)}</b></span><span>Shadow <b>${durationLabel(shadow.totalsMs.shadow)}</b></span></div>
+  </section>` : "";
+  if (!clock) return `<article class="live-session-panel">
+    <header class="live-session-head"><div><strong>The table is quiet</strong><span>Start the clock when play begins</span></div><output class="live-session-clock">00:00</output></header>
+    <div class="live-session-body">
+      <fieldset class="session-roster" id="live-session-roster"><legend>Who is in play</legend>${S.party.filter((pc) => pc.active).map((pc) => `<label><input type="checkbox" data-live-participant value="${esc(pc.id)}" checked><span>${esc(pc.name)}</span></label>`).join("")}</fieldset>
+      <div class="live-session-actions"><button type="button" id="live-session-start">Begin play</button></div>
+      ${shadowHtml}
+    </div>
+  </article>`;
+  const names = clock.participants.map((id) => S.party.find((pc) => pc.id === id)?.name || "Unknown character");
+  return `<article class="live-session-panel" data-live-status="${esc(clock.status)}">
+    <header class="live-session-head"><div><strong>${clock.status === "paused" ? "Play is paused" : "The session is in play"}</strong><span>${clock.status === "paused" ? "Timed character states are still" : "Timed character states are being counted"}</span></div><output class="live-session-clock" data-live-elapsed data-base="${clock.elapsedMs}" data-running="${clock.status === "running"}">${durationLabel(clock.elapsedMs)}</output></header>
+    <div class="live-session-body"><div class="live-participants">${names.map((name) => `<span>${esc(name)}</span>`).join("")}</div>
+      <div class="live-session-actions">${clock.status === "running" ? `<button type="button" class="quiet" id="live-session-pause">Pause play</button>` : `<button type="button" id="live-session-resume">Resume play</button>`}<button type="button" class="quiet" id="live-session-end">End play</button></div>
+      ${shadowHtml}
+    </div>
+  </article>`;
+}
+
+function wireLiveSession() {
+  $("#live-session-start")?.addEventListener("click", async () => {
+    const participants = [...document.querySelectorAll("[data-live-participant]:checked")].map((input) => input.value);
+    try {
+      await api("/api/live-session/start", { method: "POST", body: { participants } });
+      await refreshSessionSection("The live session clock has begun.");
+    } catch (error) { toast(error.message, true); }
+  });
+  $("#live-session-pause")?.addEventListener("click", async () => {
+    try { await api("/api/live-session/pause", { method: "POST" }); await refreshSessionSection("Play is paused."); } catch (error) { toast(error.message, true); }
+  });
+  $("#live-session-resume")?.addEventListener("click", async () => {
+    try { await api("/api/live-session/resume", { method: "POST" }); await refreshSessionSection("Play resumes."); } catch (error) { toast(error.message, true); }
+  });
+  $("#live-session-end")?.addEventListener("click", async () => {
+    if (!confirm("End active play and stop all timed character states?")) return;
+    try { await api("/api/live-session/end", { method: "POST" }); await refreshSessionSection("Active play has ended."); } catch (error) { toast(error.message, true); }
+  });
+  for (const button of document.querySelectorAll("[data-gm-shadow]")) button.onclick = async () => {
+    try {
+      await api(`/api/gm/party/${encodeURIComponent(S.liveSession.shadow.pcId)}/shadow`, { method: "PUT", body: { position: button.dataset.gmShadow } });
+      await refreshSessionSection(`Erik moves into ${button.dataset.gmShadow}.`);
+    } catch (error) { toast(error.message, true); }
+  };
+}
+
 function openSessionHtml(session) {
   const editable = session.status === "gathering" || session.status === "failed";
   const reviewing = session.status === "review";
@@ -2175,6 +2265,8 @@ function renderSessions(force = false) {
   const open = sessions.filter((session) => session.status !== "published");
   const published = sessions.filter((session) => session.status === "published");
   const campaign = S.campaigns?.campaigns?.find((entry) => entry.id === S.campaigns.currentId);
+  $("#live-session-panel").innerHTML = liveSessionHtml();
+  wireLiveSession();
   $("#session-campaign-name").textContent = campaign?.name || "Current campaign";
   $("#session-opening-note").textContent = open.length
     ? "Finish the open account before beginning the next session."
@@ -2204,6 +2296,15 @@ $("#sec-sessions").addEventListener("focusout", () => {
     if (!document.activeElement?.closest("#sec-sessions") && S) renderSessions(true);
   }, 0);
 });
+
+setInterval(() => {
+  for (const output of document.querySelectorAll("[data-live-elapsed]")) {
+    const base = Number(output.dataset.base) || 0;
+    const renderedAt = Number(output.dataset.renderedAt) || Date.now();
+    if (!output.dataset.renderedAt) output.dataset.renderedAt = String(renderedAt);
+    output.textContent = durationLabel(base + (output.dataset.running === "true" ? Date.now() - renderedAt : 0));
+  }
+}, 1000);
 
 // --- ledger ---
 function renderLedger() {

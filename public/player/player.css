@@ -220,10 +220,10 @@ main { width: min(1260px, 100%); margin: 0 auto; padding: clamp(1.4rem, 4vh, 3.5
   #identity-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   main { padding: 1.2rem 0.8rem 2rem; }
   .view-choice { margin-bottom: 2rem; }
-  .essential-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .essential-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .essential-actions a, .essential-actions button { min-height: 62px; border-bottom: 1px solid #3b423c; }
-  .essential-actions > :nth-child(3) { border-right: 0; }
-  .essential-actions > :nth-child(n+4) { border-bottom: 0; }
+  .essential-actions > :nth-child(2n) { border-right: 0; }
+  .essential-actions > :nth-last-child(-n+2) { border-bottom: 0; }
   .view-shelf { grid-template-columns: 1fr; gap: 0.5rem; }
   .view-shelf.shell-count-3, .view-shelf.shell-count-2, .view-shelf.shell-count-1 { width: 100%; grid-template-columns: 1fr; }
   .view-artifact { min-height: 170px; grid-template-columns: 44% 1fr; grid-template-rows: 1fr; padding: 0.6rem 0; }

@@ -1,36 +1,902 @@
 [
   {
-    "name": "Sirad Ashimya",
-    "pronouns": "he/him",
-    "player": "Oscar",
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "name": "Kaya",
+    "pronouns": "Hon",
+    "player": "Alva",
+    "shell": "table",
+    "pen": "quill",
     "level": 1,
     "class": {
-      "id": "core_class_guardian",
-      "name": "Guardian",
+      "id": "core_class_druid",
+      "name": "Druid",
       "domains": [
-        "VALOR",
-        "BLADE"
+        "SAGE",
+        "ARCANA"
       ]
     },
     "subclass": {
-      "id": "core_subclass_stalwart",
-      "name": "Stalwart",
-      "spellcastTrait": null
+      "id": "core_subclass_warden_of_renewal",
+      "name": "Warden Of Renewal",
+      "spellcastTrait": "Instinct"
     },
     "ancestry": {
-      "id": "core_ancestry_faun",
-      "name": "Faun"
+      "id": "core_ancestry_elf",
+      "name": "Elf"
+    },
+    "community": {
+      "id": "core_community_wildborne",
+      "name": "Wildborne"
+    },
+    "traits": {
+      "Agility": 0,
+      "Strength": -1,
+      "Finesse": 1,
+      "Instinct": 2,
+      "Presence": 1,
+      "Knowledge": 0
+    },
+    "evasion": 10,
+    "hpMax": 6,
+    "hp": 1,
+    "stressMax": 6,
+    "stress": 2,
+    "hopeMax": 6,
+    "hope": 4,
+    "armor": {
+      "name": "Chainmail Armor",
+      "score": 4,
+      "feature": "Heavy: -1 to Evasion"
+    },
+    "armorMarked": 1,
+    "thresholds": {
+      "major": 8,
+      "severe": 16
+    },
+    "weapons": {
+      "primary": {
+        "id": "core_weapon_hand_runes",
+        "name": "Hand Runes",
+        "type": "PRIMARY_MAGIC",
+        "trait": "Instinct",
+        "range": "Very Close",
+        "damage": "d10 mag",
+        "burden": "One Handed",
+        "feature": ""
+      },
+      "secondary": {
+        "id": "core_weapon_small_dagger",
+        "name": "Small Dagger",
+        "type": "SECONDARY",
+        "trait": "Finesse",
+        "range": "Melee",
+        "damage": "d8 phy",
+        "burden": "One Handed",
+        "feature": "Paired: +2 to primary weapon damage to targets within Melee range"
+      }
+    },
+    "inventory": [
+      "A torch",
+      "50 feet of rope",
+      "Basic supplies",
+      "A handful of gold",
+      "Minor Health Potion (clear 1d4 HP)",
+      "A small bag of rocks and bones",
+      {
+        "id": "paper_1784314405266_xcfdx",
+        "kind": "paper",
+        "paperType": "covenant",
+        "name": "Covenant of Observed Footsteps",
+        "body": "",
+        "author": "Office of Adventuring Licences, Omens & Minor Observations",
+        "createdAt": "2026-07-17T18:53:23.859Z",
+        "signedName": "Kaya",
+        "signedAt": "2026-07-17T18:53:23.859Z",
+        "covenantVersion": 1,
+        "quantity": 1
+      }
+    ],
+    "experiences": [],
+    "background": [
+      {
+        "id": "roots",
+        "q": "Where I come from",
+        "a": "Grew up in a small house surrounded by deep forests. Was taught to feel and practice the connection to plants"
+      },
+      {
+        "id": "early-memory",
+        "q": "An early memory",
+        "a": "As a small child, wandering and getting lost in the forest. After hours of anxious wandering, and the darkness getting closer, I sat down under a big oak tree and closed my eyes. After a while, it felt like the tree hugged me from the back. Suddenly I got a flash of a vision, like a golden lightning through the forest floor, showing me the way back home. Wandering back, I could feel like all the mushrooms surrounding me were chanting my name, showing me love on my way back."
+      },
+      {
+        "id": "turning-point",
+        "q": "The moment that changed me",
+        "a": "Was close to drowning in a small lake. Sank deeper into the dark, the air had left my lungs. As my eyes were losing vision and I felt myself drift away, I heard a clear voice calling through the deep. It yelled at me to get up. Keep fighting, push myself towards the surface. As I tried, I lost strength again and kept sinking. Then I felt cold, scaled hands grab both my arms and forcefully pull me towards the surface. Next thing I know I’m lying on the shore, cold, shivering, and couching brown lake water. In that moment, I realized, I had so much more to accomplish in this lifetime."
+      },
+      {
+        "id": "road",
+        "q": "Why I took the road",
+        "a": "The call of having a bigger purpose, needing to get something accomplished for the greater good of all beings."
+      },
+      {
+        "id": "beliefs",
+        "q": "What I believe",
+        "a": "That all life is sacred, everything in our world is magical and deserves respect. It becomes difficult in the moments that are about survival. Someone attacking you, needing to eat an animal to survive."
+      },
+      {
+        "id": "longing",
+        "q": "What I want",
+        "a": "Well being and safety for all, and the want to discover the limits of our magical capacities."
+      },
+      {
+        "id": "fear",
+        "q": "What I fear losing",
+        "a": "My connection to all beings."
+      },
+      {
+        "id": "unfinished",
+        "q": "What remains unfinished",
+        "a": "The mistake was leaving people I love behind when I needed to go out and see where the world takes me."
+      }
+    ],
+    "connections": [],
+    "domainCards": [
+      {
+        "id": "core_domain_card_natures_tongue",
+        "name": "Nature's Tongue",
+        "domain": "SAGE",
+        "type": "Ability",
+        "level": 1,
+        "recallCost": 0,
+        "text": "You can speak the language of the natural world. When you want to speak to the plants and animals around you, make an Instinct Roll (12). On a success, they'll give you the information they know. On a roll with Fear, their knowledge might be limited or come at a cost.\n\nAdditionally, before you make a Spellcast Roll while within a natural environment, you can spend a Hope to gain a +2 bonus to the roll.",
+        "location": "loadout"
+      },
+      {
+        "id": "core_domain_card_vicious_entangle",
+        "name": "Vicious Entangle",
+        "domain": "SAGE",
+        "type": "Spell",
+        "level": 1,
+        "recallCost": 1,
+        "text": "Make a Spellcast Roll against a target within Far range. On a success, roots and vines reach out from the ground, dealing 1d8+1 physical damage and temporarily Restraining the target.\n\nAdditionally on a success, you can spend a Hope to temporarily Restrain another adversary within Very Close range of your target.",
+        "location": "loadout"
+      }
+    ],
+    "features": {
+      "hopeFeature": {
+        "name": "Evolution",
+        "text": "Spend 3 Hope to transform into a Beastform without marking a Stress. When you do, choose one trait to raise by +1 until you drop out of that Beastform."
+      },
+      "classFeatures": [
+        {
+          "name": "Beastform",
+          "text": "Mark a Stress to magically transform into a creature of your tier or lower from the Beastform list. You can drop out of this form at any time. While transformed, you can't use weapons or cast spells from domain cards, but you can still use other features or abilities you have access to. Spells you cast before you transform stay active and last for their normal duration, and you can talk and communicate as normal. Additionally, you gain the Beastform's features, add their Evasion bonus to your Evasion, and use the trait specified in their statistics for your attack. While you're in a Beastform, your armor becomes part of your body and you mark Armor Slots as usual; when you drop out of a Beastform, those marked Armor Slots remain marked. If you mark your last Hit Point, you automatically drop out of this form."
+        },
+        {
+          "name": "Wildtouch",
+          "text": "You can perform harmless, subtle effects that involve nature -- such as causing a flower to rapidly grow, summoning a slight gust of wind, or starting a campfire -- at will."
+        }
+      ],
+      "foundation": [
+        {
+          "name": "Clarity of Nature",
+          "text": "Once per long rest, you can create a space of natural serenity within Close range. When you spend a few minutes resting within the space, clear Stress equal to your Instinct, distributed as you choose between you and your allies."
+        },
+        {
+          "name": "Regeneration",
+          "text": "Touch a creature and spend 3 Hope. That creature clears 1d4 Hit Points."
+        }
+      ],
+      "ancestry": [
+        {
+          "name": "Quick Reactions",
+          "text": "Mark a Stress to gain advantage on a reaction roll."
+        },
+        {
+          "name": "Celestial Trance",
+          "text": "During a rest, you can drop into a trance to choose an additional downtime move."
+        }
+      ],
+      "community": [
+        {
+          "name": "Lightfoot",
+          "text": "Your movement is naturally silent. You have advantage on rolls to move without being heard."
+        }
+      ]
+    },
+    "portrait": "/generated/art/portrait/draft_1784310373789_17t1hlyi-1784314245154-2.png",
+    "portraitPrompt": "Kaya, elf, Druid, mossy, whimsical, kind, serene, pointy ears, long hair with small braids, feathers in hair, trustworthy, grounded, low eye contact, inclusive, red hair, forehead jewelry",
+    "appearance": {
+      "primaryColor": "#4f774f",
+      "secondaryColor": "#4e7a27"
+    },
+    "portraitDirection": {
+      "tags": [
+        "fierce",
+        "feminine"
+      ],
+      "includeArmor": true,
+      "includeMainHand": true,
+      "includeOffHand": true
+    },
+    "portraitWorkshop": {
+      "fixSeed": false,
+      "stepsModifier": 0,
+      "cfgModifier": 0,
+      "style": "style2",
+      "embellishPrompt": true,
+      "lastSeed": 356279773,
+      "attempts": [
+        {
+          "id": "portrait_attempt_1784312914736_0",
+          "url": "/generated/art/portrait/draft_1784310373789_17t1hlyi-1784312914003-1.png",
+          "seed": 736519778,
+          "createdAt": "2026-07-17T18:28:34.736Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Kaya, elf, Druid, mossy, whimsical, kind, serene, pointy ears, long hair with small braids, feathers in hair, trustworthy, grounded, low eye contact, inclusive Visual identity: feminine, fierce. Use #4f774f as the primary class detail color and #4e7a27 as the secondary favorite-color accent. Visible equipment: main hand: Hand Runes; off hand: Small Dagger.",
+            "negativePrompt": "",
+            "primaryColor": "#4f774f",
+            "secondaryColor": "#4e7a27",
+            "tags": [
+              "feminine",
+              "fierce"
+            ],
+            "armor": "",
+            "mainHand": "Hand Runes",
+            "offHand": "Small Dagger",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784312914736_1",
+          "url": "/generated/art/portrait/draft_1784310373789_17t1hlyi-1784312914014-2.png",
+          "seed": 736519778,
+          "createdAt": "2026-07-17T18:28:34.736Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Kaya, elf, Druid, mossy, whimsical, kind, serene, pointy ears, long hair with small braids, feathers in hair, trustworthy, grounded, low eye contact, inclusive Visual identity: feminine, fierce. Use #4f774f as the primary class detail color and #4e7a27 as the secondary favorite-color accent. Visible equipment: main hand: Hand Runes; off hand: Small Dagger.",
+            "negativePrompt": "",
+            "primaryColor": "#4f774f",
+            "secondaryColor": "#4e7a27",
+            "tags": [
+              "feminine",
+              "fierce"
+            ],
+            "armor": "",
+            "mainHand": "Hand Runes",
+            "offHand": "Small Dagger",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313026251_0",
+          "url": "/generated/art/portrait/draft_1784310373789_17t1hlyi-1784313025487-1.png",
+          "seed": 453113685,
+          "createdAt": "2026-07-17T18:30:26.251Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Kaya, elf, Druid, mossy, whimsical, kind, serene, pointy ears, long hair with small braids, feathers in hair, trustworthy, grounded, low eye contact, inclusive, red hair Visual identity: feminine, fierce. Use #4f774f as the primary class detail color and #4e7a27 as the secondary favorite-color accent. Visible equipment: main hand: Hand Runes; off hand: Small Dagger.",
+            "negativePrompt": "",
+            "primaryColor": "#4f774f",
+            "secondaryColor": "#4e7a27",
+            "tags": [
+              "feminine",
+              "fierce"
+            ],
+            "armor": "",
+            "mainHand": "Hand Runes",
+            "offHand": "Small Dagger",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313026251_1",
+          "url": "/generated/art/portrait/draft_1784310373789_17t1hlyi-1784313025554-2.png",
+          "seed": 453113685,
+          "createdAt": "2026-07-17T18:30:26.251Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Kaya, elf, Druid, mossy, whimsical, kind, serene, pointy ears, long hair with small braids, feathers in hair, trustworthy, grounded, low eye contact, inclusive, red hair Visual identity: feminine, fierce. Use #4f774f as the primary class detail color and #4e7a27 as the secondary favorite-color accent. Visible equipment: main hand: Hand Runes; off hand: Small Dagger.",
+            "negativePrompt": "",
+            "primaryColor": "#4f774f",
+            "secondaryColor": "#4e7a27",
+            "tags": [
+              "feminine",
+              "fierce"
+            ],
+            "armor": "",
+            "mainHand": "Hand Runes",
+            "offHand": "Small Dagger",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313122607_0",
+          "url": "/generated/art/portrait/draft_1784310373789_17t1hlyi-1784313121818-1.png",
+          "seed": 96592115,
+          "createdAt": "2026-07-17T18:32:02.607Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Kaya, elf, Druid, mossy, whimsical, kind, serene, pointy ears, long hair with small braids, feathers in hair, trustworthy, grounded, low eye contact, inclusive, red hair Visual identity: feminine, fierce. Use #4f774f as the primary class detail color and #4e7a27 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Hand Runes; off hand: Small Dagger.",
+            "negativePrompt": "",
+            "primaryColor": "#4f774f",
+            "secondaryColor": "#4e7a27",
+            "tags": [
+              "feminine",
+              "fierce"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Hand Runes",
+            "offHand": "Small Dagger",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313122607_1",
+          "url": "/generated/art/portrait/draft_1784310373789_17t1hlyi-1784313121862-2.png",
+          "seed": 96592115,
+          "createdAt": "2026-07-17T18:32:02.607Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Kaya, elf, Druid, mossy, whimsical, kind, serene, pointy ears, long hair with small braids, feathers in hair, trustworthy, grounded, low eye contact, inclusive, red hair Visual identity: feminine, fierce. Use #4f774f as the primary class detail color and #4e7a27 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Hand Runes; off hand: Small Dagger.",
+            "negativePrompt": "",
+            "primaryColor": "#4f774f",
+            "secondaryColor": "#4e7a27",
+            "tags": [
+              "feminine",
+              "fierce"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Hand Runes",
+            "offHand": "Small Dagger",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314168847_0",
+          "url": "/generated/art/portrait/draft_1784310373789_17t1hlyi-1784314168106-1.png",
+          "seed": 1667736943,
+          "createdAt": "2026-07-17T18:49:28.844Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Kaya, elf, Druid, mossy, whimsical, kind, serene, pointy ears, long hair with small braids, feathers in hair, trustworthy, grounded, low eye contact, inclusive, red hair, septum piercing Visual identity: feminine, fierce. Use #4f774f as the primary class detail color and #4e7a27 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Hand Runes; off hand: Small Dagger.",
+            "negativePrompt": "",
+            "primaryColor": "#4f774f",
+            "secondaryColor": "#4e7a27",
+            "tags": [
+              "feminine",
+              "fierce"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Hand Runes",
+            "offHand": "Small Dagger",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314168847_1",
+          "url": "/generated/art/portrait/draft_1784310373789_17t1hlyi-1784314168156-2.png",
+          "seed": 1667736943,
+          "createdAt": "2026-07-17T18:49:28.844Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Kaya, elf, Druid, mossy, whimsical, kind, serene, pointy ears, long hair with small braids, feathers in hair, trustworthy, grounded, low eye contact, inclusive, red hair, septum piercing Visual identity: feminine, fierce. Use #4f774f as the primary class detail color and #4e7a27 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Hand Runes; off hand: Small Dagger.",
+            "negativePrompt": "",
+            "primaryColor": "#4f774f",
+            "secondaryColor": "#4e7a27",
+            "tags": [
+              "feminine",
+              "fierce"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Hand Runes",
+            "offHand": "Small Dagger",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314246262_0",
+          "url": "/generated/art/portrait/draft_1784310373789_17t1hlyi-1784314245130-1.png",
+          "seed": 356279773,
+          "createdAt": "2026-07-17T18:50:46.262Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Kaya, elf, Druid, mossy, whimsical, kind, serene, pointy ears, long hair with small braids, feathers in hair, trustworthy, grounded, low eye contact, inclusive, red hair, forehead jewelry Visual identity: feminine, fierce. Use #4f774f as the primary class detail color and #4e7a27 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Hand Runes; off hand: Small Dagger.",
+            "negativePrompt": "",
+            "primaryColor": "#4f774f",
+            "secondaryColor": "#4e7a27",
+            "tags": [
+              "feminine",
+              "fierce"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Hand Runes",
+            "offHand": "Small Dagger",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314246262_1",
+          "url": "/generated/art/portrait/draft_1784310373789_17t1hlyi-1784314245154-2.png",
+          "seed": 356279773,
+          "createdAt": "2026-07-17T18:50:46.262Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Kaya, elf, Druid, mossy, whimsical, kind, serene, pointy ears, long hair with small braids, feathers in hair, trustworthy, grounded, low eye contact, inclusive, red hair, forehead jewelry Visual identity: feminine, fierce. Use #4f774f as the primary class detail color and #4e7a27 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Hand Runes; off hand: Small Dagger.",
+            "negativePrompt": "",
+            "primaryColor": "#4f774f",
+            "secondaryColor": "#4e7a27",
+            "tags": [
+              "feminine",
+              "fierce"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Hand Runes",
+            "offHand": "Small Dagger",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        }
+      ]
+    },
+    "notes": "",
+    "id": "pc_1784314405624_lbzq",
+    "createdAt": "2026-07-17T18:53:25.624Z",
+    "active": true
+  },
+  {
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "name": "Bob Näslös",
+    "pronouns": "He/it",
+    "player": "Albin",
+    "shell": "table",
+    "pen": "reed",
+    "level": 1,
+    "class": {
+      "id": "core_class_rogue",
+      "name": "Rogue",
+      "domains": [
+        "MIDNIGHT",
+        "GRACE"
+      ]
+    },
+    "subclass": {
+      "id": "core_subclass_nightwalker",
+      "name": "Nightwalker",
+      "spellcastTrait": "Finesse"
+    },
+    "ancestry": {
+      "id": "core_ancestry_goblin",
+      "name": "Goblin"
     },
     "community": {
       "id": "core_community_slyborne",
       "name": "Slyborne"
     },
     "traits": {
-      "Agility": 2,
-      "Strength": 1,
-      "Finesse": 1,
+      "Agility": 1,
+      "Strength": 0,
+      "Finesse": 2,
       "Instinct": 0,
-      "Presence": 0,
+      "Presence": 1,
+      "Knowledge": -1
+    },
+    "evasion": 12,
+    "hpMax": 6,
+    "hp": 0,
+    "stressMax": 6,
+    "stress": 0,
+    "hopeMax": 6,
+    "hope": 0,
+    "armor": {
+      "name": "Gambeson Armor",
+      "score": 3,
+      "feature": "Flexible: +1 to Evasion"
+    },
+    "armorMarked": 0,
+    "thresholds": {
+      "major": 6,
+      "severe": 12
+    },
+    "weapons": {
+      "primary": {
+        "id": "core_weapon_dagger",
+        "name": "Dagger",
+        "type": "PRIMARY_PHYSICAL",
+        "trait": "Finesse",
+        "range": "Melee",
+        "damage": "d8 phy",
+        "burden": "One Handed",
+        "feature": ""
+      },
+      "secondary": {
+        "id": "core_weapon_hand_crossbow",
+        "name": "Hand Crossbow",
+        "type": "SECONDARY",
+        "trait": "Finesse",
+        "range": "Far",
+        "damage": "d6 phy",
+        "burden": "One Handed",
+        "feature": ""
+      }
+    },
+    "inventory": [
+      "A torch",
+      "50 feet of rope",
+      "Basic supplies",
+      "A handful of gold",
+      "Minor Health Potion (clear 1d4 HP)",
+      "A grappling hook",
+      {
+        "id": "paper_1784314617405_cg6b0",
+        "kind": "paper",
+        "paperType": "covenant",
+        "name": "Covenant of Observed Footsteps",
+        "body": "",
+        "author": "Office of Adventuring Licences, Omens & Minor Observations",
+        "createdAt": "2026-07-17T18:56:56.001Z",
+        "signedName": "Bob Näslös",
+        "signedAt": "2026-07-17T18:56:56.001Z",
+        "covenantVersion": 1,
+        "quantity": 1
+      }
+    ],
+    "experiences": [],
+    "background": [
+      {
+        "id": "roots",
+        "q": "Where I come from",
+        "a": "Bob was born into a goblin clan in the mines below a human city. The different goblin clans specialize in different trades to avoid conflict. But rivalry inevitably arises between them. The clan of Bob took on the kind of jobs wealthy humans wanted to keep in the shadows, such as lockpicking and thievery of all kinds. This required secrecy and finesse to avoid trouble. Blending in with humans was a necessary skills for all goblin, for they were often looked down upon."
+      },
+      {
+        "id": "early-memory",
+        "q": "An early memory",
+        "a": "The day a gang of goblins from a rival clan cut off Bobs nose as a warning. He had meddled to deep. However, he never found out their identities. All he remembers is a goblin with a large golden nose-ring with an embedded ruby. After this he lived in shame, and chose to leave his clan and his family."
+      }
+    ],
+    "connections": [],
+    "domainCards": [
+      {
+        "id": "core_domain_card_pick_and_pull",
+        "name": "Pick And Pull",
+        "domain": "MIDNIGHT",
+        "type": "Ability",
+        "level": 1,
+        "recallCost": 0,
+        "text": "You have advantage on action rolls to pick nonmagical locks, disarm nonmagical traps, or steal items from a target (either through stealth or by force).",
+        "location": "loadout"
+      },
+      {
+        "id": "core_domain_card_uncanny_disguise",
+        "name": "Uncanny Disguise",
+        "domain": "MIDNIGHT",
+        "type": "Spell",
+        "level": 1,
+        "recallCost": 0,
+        "text": "When you have a few minutes to prepare, you can mark a Stress to don the facade of any humanoid you can picture clearly in your mind. While disguised, you have advantage on Presence Rolls to avoid scrutiny.\n\nPlace a number of tokens equal to your Spellcast trait on this card. When you take an action while disguised, spend a token from this card. After the action that spends the last token is resolved, the disguise drops.",
+        "location": "loadout"
+      }
+    ],
+    "features": {
+      "hopeFeature": {
+        "name": "Rogue's Dodge",
+        "text": "Spend 3 Hope to gain a +2 bonus to your Evasion until the next time an attack succeeds against you. Otherwise, this bonus lasts until your next rest."
+      },
+      "classFeatures": [
+        {
+          "name": "Cloaked",
+          "text": "Any time you would be Hidden, you are instead Cloaked. In addition to the benefits of the Hidden condition, while Cloaked you remain unseen if you are stationary when an adversary moves to where they would normally see you. After you make an attack or end a move within line of sight of an adversary, you are no longer Cloaked."
+        },
+        {
+          "name": "Sneak Attack",
+          "text": "When you succeed on an attack while Cloaked or while an ally is within Melee range of your target, add a number of d6s equal to your tier to your damage roll.\n\n• Level 1 -> Tier 1\n• Levels 2-4 -> Tier 2\n• Levels 5-7 -> Tier 3\n• Levels 8-10 -> Tier 4"
+        }
+      ],
+      "foundation": [
+        {
+          "name": "Shadow Stepper",
+          "text": "You can move from shadow to shadow. When you move into an area of darkness or a shadow cast by another creature or object, you can mark a Stress to disappear from where you are and reappear inside another shadow within Far range. When you reappear, you are Cloaked."
+        }
+      ],
+      "ancestry": [
+        {
+          "name": "Surefooted",
+          "text": "You ignore disadvantage on Agility Rolls."
+        },
+        {
+          "name": "Danger Sense",
+          "text": "Once per rest, mark a Stress to force an adversary to reroll an attack against you or an ally within Very Close range."
+        }
+      ],
+      "community": [
+        {
+          "name": "Scoundrel",
+          "text": "You have advantage on rolls to negotiate with criminals, detect lies, or find a safe place to hide."
+        }
+      ]
+    },
+    "portrait": "/generated/art/portrait/draft_1784310402707_xzks4nyk-1784314340465-2.png",
+    "portraitPrompt": "A wiry goblin crouches in shadow, his noseless face split by a sly, scheming grin that hints at endless mischief. Large yellow eyes gleam with devious calculation beneath a drawn hood, while big pointy ears twitch toward every whisper. He wears a padded gambeson, its seams touched with faint muted plum, and a rosy blush of dusty red warms the folds of his hood. One hand steadies a shiny dagger, the other a hand crossbow, and stolen trinkets glint at his belt, betraying a lifetime of light-fingered, nightwalking habit. Comically large grin. Very evil. Literally has a grin from ear to ear. His nose has been cut-off leaving just two slits. Green skin.",
+    "appearance": {
+      "primaryColor": "#59435f",
+      "secondaryColor": "#c96f72"
+    },
+    "portraitDirection": {
+      "tags": [],
+      "includeArmor": true,
+      "includeMainHand": true,
+      "includeOffHand": true
+    },
+    "portraitWorkshop": {
+      "fixSeed": false,
+      "stepsModifier": 0,
+      "cfgModifier": 0,
+      "style": "style2",
+      "embellishPrompt": true,
+      "lastSeed": 1209690148,
+      "attempts": [
+        {
+          "id": "portrait_attempt_1784312825976_0",
+          "url": "/generated/art/portrait/draft_1784310402707_xzks4nyk-1784312825231-1.png",
+          "seed": 1871664083,
+          "createdAt": "2026-07-17T18:27:05.975Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. A wiry goblin crouches in shadow, his noseless face split by a sly, scheming grin that hints at endless mischief. Large yellow eyes gleam with devious calculation beneath a drawn hood, while big pointy ears twitch toward every whisper. He wears a padded gambeson, its seams touched with faint muted plum, and a rosy blush of dusty red warms the folds of his hood. One hand steadies a shiny dagger, the other a hand crossbow, and stolen trinkets glint at his belt, betraying a lifetime of light-fingered, nightwalking habit. Use #59435f as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Gambeson Armor; main hand: Dagger; off hand: Hand Crossbow.",
+            "negativePrompt": "",
+            "primaryColor": "#59435f",
+            "secondaryColor": "#c96f72",
+            "tags": [],
+            "armor": "Gambeson Armor",
+            "mainHand": "Dagger",
+            "offHand": "Hand Crossbow",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784312825976_1",
+          "url": "/generated/art/portrait/draft_1784310402707_xzks4nyk-1784312825256-2.png",
+          "seed": 1871664083,
+          "createdAt": "2026-07-17T18:27:05.975Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. A wiry goblin crouches in shadow, his noseless face split by a sly, scheming grin that hints at endless mischief. Large yellow eyes gleam with devious calculation beneath a drawn hood, while big pointy ears twitch toward every whisper. He wears a padded gambeson, its seams touched with faint muted plum, and a rosy blush of dusty red warms the folds of his hood. One hand steadies a shiny dagger, the other a hand crossbow, and stolen trinkets glint at his belt, betraying a lifetime of light-fingered, nightwalking habit. Use #59435f as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Gambeson Armor; main hand: Dagger; off hand: Hand Crossbow.",
+            "negativePrompt": "",
+            "primaryColor": "#59435f",
+            "secondaryColor": "#c96f72",
+            "tags": [],
+            "armor": "Gambeson Armor",
+            "mainHand": "Dagger",
+            "offHand": "Hand Crossbow",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784312973842_0",
+          "url": "/generated/art/portrait/draft_1784310402707_xzks4nyk-1784312973133-1.png",
+          "seed": 2063320799,
+          "createdAt": "2026-07-17T18:29:33.842Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. A wiry goblin crouches in shadow, his noseless face split by a sly, scheming grin that hints at endless mischief. Large yellow eyes gleam with devious calculation beneath a drawn hood, while big pointy ears twitch toward every whisper. He wears a padded gambeson, its seams touched with faint muted plum, and a rosy blush of dusty red warms the folds of his hood. One hand steadies a shiny dagger, the other a hand crossbow, and stolen trinkets glint at his belt, betraying a lifetime of light-fingered, nightwalking habit. Comically large grin. Very evig. Use #59435f as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Gambeson Armor; main hand: Dagger; off hand: Hand Crossbow.",
+            "negativePrompt": "",
+            "primaryColor": "#59435f",
+            "secondaryColor": "#c96f72",
+            "tags": [],
+            "armor": "Gambeson Armor",
+            "mainHand": "Dagger",
+            "offHand": "Hand Crossbow",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784312973842_1",
+          "url": "/generated/art/portrait/draft_1784310402707_xzks4nyk-1784312973145-2.png",
+          "seed": 2063320799,
+          "createdAt": "2026-07-17T18:29:33.842Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. A wiry goblin crouches in shadow, his noseless face split by a sly, scheming grin that hints at endless mischief. Large yellow eyes gleam with devious calculation beneath a drawn hood, while big pointy ears twitch toward every whisper. He wears a padded gambeson, its seams touched with faint muted plum, and a rosy blush of dusty red warms the folds of his hood. One hand steadies a shiny dagger, the other a hand crossbow, and stolen trinkets glint at his belt, betraying a lifetime of light-fingered, nightwalking habit. Comically large grin. Very evig. Use #59435f as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Gambeson Armor; main hand: Dagger; off hand: Hand Crossbow.",
+            "negativePrompt": "",
+            "primaryColor": "#59435f",
+            "secondaryColor": "#c96f72",
+            "tags": [],
+            "armor": "Gambeson Armor",
+            "mainHand": "Dagger",
+            "offHand": "Hand Crossbow",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313074196_0",
+          "url": "/generated/art/portrait/draft_1784310402707_xzks4nyk-1784313073451-1.png",
+          "seed": 68330245,
+          "createdAt": "2026-07-17T18:31:14.196Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. A wiry goblin crouches in shadow, his noseless face split by a sly, scheming grin that hints at endless mischief. Large yellow eyes gleam with devious calculation beneath a drawn hood, while big pointy ears twitch toward every whisper. He wears a padded gambeson, its seams touched with faint muted plum, and a rosy blush of dusty red warms the folds of his hood. One hand steadies a shiny dagger, the other a hand crossbow, and stolen trinkets glint at his belt, betraying a lifetime of light-fingered, nightwalking habit. Comically large grin. Very evil. Literally has a grin from ear to ear Use #59435f as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Gambeson Armor; main hand: Dagger; off hand: Hand Crossbow.",
+            "negativePrompt": "",
+            "primaryColor": "#59435f",
+            "secondaryColor": "#c96f72",
+            "tags": [],
+            "armor": "Gambeson Armor",
+            "mainHand": "Dagger",
+            "offHand": "Hand Crossbow",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313074196_1",
+          "url": "/generated/art/portrait/draft_1784310402707_xzks4nyk-1784313073462-2.png",
+          "seed": 68330245,
+          "createdAt": "2026-07-17T18:31:14.196Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. A wiry goblin crouches in shadow, his noseless face split by a sly, scheming grin that hints at endless mischief. Large yellow eyes gleam with devious calculation beneath a drawn hood, while big pointy ears twitch toward every whisper. He wears a padded gambeson, its seams touched with faint muted plum, and a rosy blush of dusty red warms the folds of his hood. One hand steadies a shiny dagger, the other a hand crossbow, and stolen trinkets glint at his belt, betraying a lifetime of light-fingered, nightwalking habit. Comically large grin. Very evil. Literally has a grin from ear to ear Use #59435f as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Gambeson Armor; main hand: Dagger; off hand: Hand Crossbow.",
+            "negativePrompt": "",
+            "primaryColor": "#59435f",
+            "secondaryColor": "#c96f72",
+            "tags": [],
+            "armor": "Gambeson Armor",
+            "mainHand": "Dagger",
+            "offHand": "Hand Crossbow",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314216560_0",
+          "url": "/generated/art/portrait/draft_1784310402707_xzks4nyk-1784314215832-1.png",
+          "seed": 698824173,
+          "createdAt": "2026-07-17T18:50:16.560Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. A wiry goblin crouches in shadow, his noseless face split by a sly, scheming grin that hints at endless mischief. Large yellow eyes gleam with devious calculation beneath a drawn hood, while big pointy ears twitch toward every whisper. He wears a padded gambeson, its seams touched with faint muted plum, and a rosy blush of dusty red warms the folds of his hood. One hand steadies a shiny dagger, the other a hand crossbow, and stolen trinkets glint at his belt, betraying a lifetime of light-fingered, nightwalking habit. Comically large grin. Very evil. Literally has a grin from ear to ear. His has been cut-off leaving just two slits. He has eyes like two golden globes, almost glowing yellow Use #59435f as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Gambeson Armor; main hand: Dagger; off hand: Hand Crossbow.",
+            "negativePrompt": "",
+            "primaryColor": "#59435f",
+            "secondaryColor": "#c96f72",
+            "tags": [],
+            "armor": "Gambeson Armor",
+            "mainHand": "Dagger",
+            "offHand": "Hand Crossbow",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314216560_1",
+          "url": "/generated/art/portrait/draft_1784310402707_xzks4nyk-1784314215860-2.png",
+          "seed": 698824173,
+          "createdAt": "2026-07-17T18:50:16.560Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. A wiry goblin crouches in shadow, his noseless face split by a sly, scheming grin that hints at endless mischief. Large yellow eyes gleam with devious calculation beneath a drawn hood, while big pointy ears twitch toward every whisper. He wears a padded gambeson, its seams touched with faint muted plum, and a rosy blush of dusty red warms the folds of his hood. One hand steadies a shiny dagger, the other a hand crossbow, and stolen trinkets glint at his belt, betraying a lifetime of light-fingered, nightwalking habit. Comically large grin. Very evil. Literally has a grin from ear to ear. His has been cut-off leaving just two slits. He has eyes like two golden globes, almost glowing yellow Use #59435f as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Gambeson Armor; main hand: Dagger; off hand: Hand Crossbow.",
+            "negativePrompt": "",
+            "primaryColor": "#59435f",
+            "secondaryColor": "#c96f72",
+            "tags": [],
+            "armor": "Gambeson Armor",
+            "mainHand": "Dagger",
+            "offHand": "Hand Crossbow",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314341181_0",
+          "url": "/generated/art/portrait/draft_1784310402707_xzks4nyk-1784314340453-1.png",
+          "seed": 1209690148,
+          "createdAt": "2026-07-17T18:52:21.181Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. A wiry goblin crouches in shadow, his noseless face split by a sly, scheming grin that hints at endless mischief. Large yellow eyes gleam with devious calculation beneath a drawn hood, while big pointy ears twitch toward every whisper. He wears a padded gambeson, its seams touched with faint muted plum, and a rosy blush of dusty red warms the folds of his hood. One hand steadies a shiny dagger, the other a hand crossbow, and stolen trinkets glint at his belt, betraying a lifetime of light-fingered, nightwalking habit. Comically large grin. Very evil. Literally has a grin from ear to ear. His nose has been cut-off leaving just two slits. Green skin. Use #59435f as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Gambeson Armor; main hand: Dagger; off hand: Hand Crossbow.",
+            "negativePrompt": "",
+            "primaryColor": "#59435f",
+            "secondaryColor": "#c96f72",
+            "tags": [],
+            "armor": "Gambeson Armor",
+            "mainHand": "Dagger",
+            "offHand": "Hand Crossbow",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314341181_1",
+          "url": "/generated/art/portrait/draft_1784310402707_xzks4nyk-1784314340465-2.png",
+          "seed": 1209690148,
+          "createdAt": "2026-07-17T18:52:21.181Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. A wiry goblin crouches in shadow, his noseless face split by a sly, scheming grin that hints at endless mischief. Large yellow eyes gleam with devious calculation beneath a drawn hood, while big pointy ears twitch toward every whisper. He wears a padded gambeson, its seams touched with faint muted plum, and a rosy blush of dusty red warms the folds of his hood. One hand steadies a shiny dagger, the other a hand crossbow, and stolen trinkets glint at his belt, betraying a lifetime of light-fingered, nightwalking habit. Comically large grin. Very evil. Literally has a grin from ear to ear. His nose has been cut-off leaving just two slits. Green skin. Use #59435f as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Gambeson Armor; main hand: Dagger; off hand: Hand Crossbow.",
+            "negativePrompt": "",
+            "primaryColor": "#59435f",
+            "secondaryColor": "#c96f72",
+            "tags": [],
+            "armor": "Gambeson Armor",
+            "mainHand": "Dagger",
+            "offHand": "Hand Crossbow",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        }
+      ]
+    },
+    "notes": "",
+    "id": "pc_1784314621189_vf1p",
+    "createdAt": "2026-07-17T18:57:01.189Z",
+    "active": true
+  },
+  {
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "name": "Redneck",
+    "pronouns": "Han",
+    "player": "Amme",
+    "shell": "table",
+    "pen": "reed",
+    "level": 1,
+    "class": {
+      "id": "core_class_seraph",
+      "name": "Seraph",
+      "domains": [
+        "SPLENDOR",
+        "VALOR"
+      ]
+    },
+    "subclass": {
+      "id": "core_subclass_winged_sentinel",
+      "name": "Winged Sentinel",
+      "spellcastTrait": "Strength"
+    },
+    "ancestry": {
+      "id": "core_ancestry_dwarf",
+      "name": "Dwarf"
+    },
+    "community": {
+      "id": "core_community_ridgeborne",
+      "name": "Ridgeborne"
+    },
+    "traits": {
+      "Agility": 1,
+      "Strength": 0,
+      "Finesse": 0,
+      "Instinct": 1,
+      "Presence": 2,
       "Knowledge": -1
     },
     "evasion": 9,
@@ -39,23 +905,842 @@
     "stressMax": 6,
     "stress": 0,
     "hopeMax": 6,
-    "hope": 2,
+    "hope": 3,
     "armor": {
-      "name": "Leather Armor",
-      "score": 3,
-      "feature": ""
+      "name": "Chainmail Armor",
+      "score": 4,
+      "feature": "Heavy: -1 to Evasion"
     },
     "armorMarked": 0,
     "thresholds": {
-      "major": 7,
-      "severe": 14
+      "major": 8,
+      "severe": 16
     },
     "weapons": {
       "primary": {
-        "id": "core_weapon_battleaxe",
-        "name": "Battleaxe",
+        "id": "core_weapon_scepter",
+        "name": "Scepter",
+        "type": "PRIMARY_MAGIC",
+        "trait": "Presence",
+        "range": "Far",
+        "damage": "d6 mag",
+        "burden": "Two Handed",
+        "feature": "Versatile: This weapon can also be used with these statistics—Presence, Melee, d8."
+      },
+      "secondary": null
+    },
+    "inventory": [
+      "A torch",
+      "50 feet of rope",
+      "Basic supplies",
+      "A handful of gold",
+      "Minor Stamina Potion (clear 1d4 Stress)",
+      "A sigil of your god",
+      {
+        "id": "paper_1784314691017_l4ebu",
+        "kind": "paper",
+        "paperType": "covenant",
+        "name": "Covenant of Observed Footsteps",
+        "body": "",
+        "author": "Office of Adventuring Licences, Omens & Minor Observations",
+        "createdAt": "2026-07-17T18:58:09.614Z",
+        "signedName": "Red Neck",
+        "signedAt": "2026-07-17T18:58:09.614Z",
+        "covenantVersion": 1,
+        "quantity": 1
+      }
+    ],
+    "experiences": [],
+    "background": [
+      {
+        "id": "roots",
+        "q": "Where I come from",
+        "a": "Berg kuperat landskap arga mellan berg tank avatar vi går pi styltor"
+      },
+      {
+        "id": "early-memory",
+        "q": "An early memory",
+        "a": "Samt sedan Vi dvärgar fick bygga egen stylta med familj en samt sedan bygga vingar"
+      }
+    ],
+    "connections": [],
+    "domainCards": [
+      {
+        "id": "core_domain_card_mending_touch",
+        "name": "Mending Touch",
+        "domain": "SPLENDOR",
+        "type": "Spell",
+        "level": 1,
+        "recallCost": 1,
+        "text": "You lay your hands upon a creature and channel healing magic to close their wounds. When you can take a few minutes to focus on the target you're helping, you can spend 2 Hope to clear a Hit Point or a Stress on them.\n\nOnce per long rest, when you spend this healing time learning something new about them or revealing something about yourself, you can clear 2 Hit Points or 2 Stress on them instead.",
+        "location": "loadout"
+      },
+      {
+        "id": "core_domain_card_forceful_push",
+        "name": "Forceful Push",
+        "domain": "VALOR",
+        "type": "Ability",
+        "level": 1,
+        "recallCost": 0,
+        "text": "Make an attack with your primary weapon against a target within Melee range. On a success, you deal damage and knock them back to Close range. On a success with Hope, add a d6 to your damage roll.\n\nAdditionally, you can spend a Hope to make them temporarily Vulnerable.",
+        "location": "loadout"
+      }
+    ],
+    "features": {
+      "hopeFeature": {
+        "name": "Life Support",
+        "text": "Spend 3 Hope to clear a Hit Point on an ally within Close range."
+      },
+      "classFeatures": [
+        {
+          "name": "Prayer Dice",
+          "text": "At the beginning of each session, roll a number of d4s equal to your subclass's Spellcast trait and place them on your character sheet in the space provided. These are your Prayer Dice. You can spend any number of Prayer Dice to aid yourself or an ally within Far range. You can use a spent die's value to reduce incoming damage, add to a roll's result after the roll is made, or gain Hope equal to the result. At the end of each session, clear all unspent Prayer Dice."
+        }
+      ],
+      "foundation": [
+        {
+          "name": "Wings of Light",
+          "text": "You can fly. While flying, you can do the following:\n\n• Mark a Stress to pick up and carry another willing creature approximately your size or smaller.\n• Spend a Hope to deal an extra 1d8 damage on a successful attack."
+        }
+      ],
+      "ancestry": [
+        {
+          "name": "Thick Skin",
+          "text": "When you take Minor damage, you can mark 2 Stress instead of marking a Hit Point."
+        },
+        {
+          "name": "Increased Fortitude",
+          "text": "Spend 3 Hope to halve incoming physical damage."
+        }
+      ],
+      "community": [
+        {
+          "name": "Steady",
+          "text": "You have advantage on rolls to traverse dangerous cliffs and ledges, navigate harsh environments, and use your survival knowledge."
+        }
+      ]
+    },
+    "portrait": "/generated/art/portrait/draft_1784309973744_9djfuznw-1784313144759-1.png",
+    "portraitPrompt": "En kortvuxen, ansikte målat i rött, krigmålad , spretigt hår, saknar framtänder, nosring , stabil på jorden , röd trämask hela ansiktet även läppar under mask, för ansiktet , tjock , o vårdad, tufsigt hår , hårig kropp, gorillaliknande. Barbröstad gorilla",
+    "appearance": {
+      "primaryColor": "#b18432",
+      "secondaryColor": "#61187c"
+    },
+    "portraitDirection": {
+      "tags": [],
+      "includeArmor": true,
+      "includeMainHand": true,
+      "includeOffHand": false
+    },
+    "portraitWorkshop": {
+      "fixSeed": false,
+      "stepsModifier": 0,
+      "cfgModifier": 0,
+      "style": "style2",
+      "embellishPrompt": true,
+      "lastSeed": 1728763085,
+      "attempts": [
+        {
+          "id": "portrait_attempt_1784312857124_0",
+          "url": "/generated/art/portrait/draft_1784309973744_9djfuznw-1784312855868-1.png",
+          "seed": 384866616,
+          "createdAt": "2026-07-17T18:27:37.124Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. En kortvuxen, ansikte målat i rött, krigmålad , spretigt hår, saknar framtänder, nosring , stabil på jorden , Use #b18432 as the primary class detail color and #61187c as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#61187c",
+            "tags": [],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784312857124_1",
+          "url": "/generated/art/portrait/draft_1784309973744_9djfuznw-1784312855881-2.png",
+          "seed": 384866616,
+          "createdAt": "2026-07-17T18:27:37.124Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. En kortvuxen, ansikte målat i rött, krigmålad , spretigt hår, saknar framtänder, nosring , stabil på jorden , Use #b18432 as the primary class detail color and #61187c as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#61187c",
+            "tags": [],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313003187_0",
+          "url": "/generated/art/portrait/draft_1784309973744_9djfuznw-1784313002556-1.png",
+          "seed": 1465661907,
+          "createdAt": "2026-07-17T18:30:03.187Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. En kortvuxen, ansikte målat i rött, krigmålad , spretigt hår, saknar framtänder, nosring , stabil på jorden , röd trämask för ansiktet , tjock , o vårdad Use #b18432 as the primary class detail color and #61187c as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#61187c",
+            "tags": [],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313003188_1",
+          "url": "/generated/art/portrait/draft_1784309973744_9djfuznw-1784313002575-2.png",
+          "seed": 1465661907,
+          "createdAt": "2026-07-17T18:30:03.187Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. En kortvuxen, ansikte målat i rött, krigmålad , spretigt hår, saknar framtänder, nosring , stabil på jorden , röd trämask för ansiktet , tjock , o vårdad Use #b18432 as the primary class detail color and #61187c as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#61187c",
+            "tags": [],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313145321_0",
+          "url": "/generated/art/portrait/draft_1784309973744_9djfuznw-1784313144759-1.png",
+          "seed": 1728763085,
+          "createdAt": "2026-07-17T18:32:25.321Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. En kortvuxen, ansikte målat i rött, krigmålad , spretigt hår, saknar framtänder, nosring , stabil på jorden , röd trämask hela ansiktet även läppar under mask, för ansiktet , tjock , o vårdad, tufsigt hår , hårig kropp, gorillaliknande. Barbröstad gorilla Use #b18432 as the primary class detail color and #61187c as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#61187c",
+            "tags": [],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313145321_1",
+          "url": "/generated/art/portrait/draft_1784309973744_9djfuznw-1784313144788-2.png",
+          "seed": 1728763085,
+          "createdAt": "2026-07-17T18:32:25.321Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. En kortvuxen, ansikte målat i rött, krigmålad , spretigt hår, saknar framtänder, nosring , stabil på jorden , röd trämask hela ansiktet även läppar under mask, för ansiktet , tjock , o vårdad, tufsigt hår , hårig kropp, gorillaliknande. Barbröstad gorilla Use #b18432 as the primary class detail color and #61187c as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#61187c",
+            "tags": [],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        }
+      ]
+    },
+    "notes": "",
+    "id": "pc_1784314691416_p83s",
+    "createdAt": "2026-07-17T18:58:11.416Z",
+    "active": true
+  },
+  {
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "name": "Heliga Erik",
+    "pronouns": "He",
+    "player": "Marcus",
+    "shell": "table",
+    "pen": "brush",
+    "level": 1,
+    "class": {
+      "id": "core_class_seraph",
+      "name": "Seraph",
+      "domains": [
+        "SPLENDOR",
+        "VALOR"
+      ]
+    },
+    "subclass": {
+      "id": "core_subclass_divine_wielder",
+      "name": "Divine Wielder",
+      "spellcastTrait": "Strength"
+    },
+    "ancestry": {
+      "id": "core_ancestry_faerie",
+      "name": "Faerie"
+    },
+    "community": {
+      "id": "core_community_wanderborne",
+      "name": "Wanderborne"
+    },
+    "traits": {
+      "Agility": -1,
+      "Strength": 0,
+      "Finesse": 0,
+      "Instinct": 1,
+      "Presence": 1,
+      "Knowledge": 2
+    },
+    "evasion": 9,
+    "hpMax": 7,
+    "hp": 2,
+    "stressMax": 6,
+    "stress": 3,
+    "hopeMax": 6,
+    "hope": 2,
+    "armor": {
+      "name": "Chainmail Armor",
+      "score": 4,
+      "feature": "Heavy: -1 to Evasion"
+    },
+    "armorMarked": 0,
+    "thresholds": {
+      "major": 8,
+      "severe": 16
+    },
+    "weapons": {
+      "primary": {
+        "id": "core_weapon_scepter",
+        "name": "Scepter",
+        "type": "PRIMARY_MAGIC",
+        "trait": "Presence",
+        "range": "Far",
+        "damage": "d6 mag",
+        "burden": "Two Handed",
+        "feature": "Versatile: This weapon can also be used with these statistics—Presence, Melee, d8."
+      },
+      "secondary": null
+    },
+    "inventory": [
+      "A torch",
+      "50 feet of rope",
+      "Basic supplies",
+      "A handful of gold",
+      "Minor Health Potion (clear 1d4 HP)",
+      "A sigil of your god",
+      {
+        "id": "paper_1784315086720_x5959",
+        "kind": "paper",
+        "paperType": "covenant",
+        "name": "Covenant of Observed Footsteps",
+        "body": "",
+        "author": "Office of Adventuring Licences, Omens & Minor Observations",
+        "createdAt": "2026-07-17T19:04:45.314Z",
+        "signedName": "King",
+        "signedAt": "2026-07-17T19:04:45.314Z",
+        "covenantVersion": 1,
+        "quantity": 1
+      }
+    ],
+    "experiences": [],
+    "background": [
+      {
+        "id": "roots",
+        "q": "Where I come from",
+        "a": "As a nomad, henrik travelled the lands to spread the light, guided by an inner voice. \nHe stems from a group of holy missionaries that are set on a similair path."
+      },
+      {
+        "id": "early-memory",
+        "q": "An early memory",
+        "a": "One of Henriks first memories is when he was living as an orphan in a big city, abandoned from his parents that deemed his visions as crazy talk  till the point where he was kicked out on the street in the rain. A mysterious robed man stretched out his hand to Henrik and fed him alm. This man was a highly respected elder within the church that saw the boys strenght in an instant."
+      },
+      {
+        "id": "turning-point",
+        "q": "The moment that changed me",
+        "a": "Henrik was faced with a crazed politician, henrik quickly saw the demonic possesion within the congressman. He was faced with letting the man corrupt the entire city, or slay him where he stands and face the consequence of being shunned by the city. Henrik followed his inner voice and with a mighty swing he cracked the skull of the demon. From that day on, he had to travel as a nomad to clear his name of sin and sspread the light. The church banished him to save face to the public, knowing the hardship they had put on Henrik."
+      },
+      {
+        "id": "road",
+        "q": "Why I took the road",
+        "a": "Banished from the city and the church"
+      },
+      {
+        "id": "beliefs",
+        "q": "What I believe",
+        "a": "Henrik believes in the light, and the guiding inner voice. The robed man taught him to trust it above all else, no matter the hardship. This often puts him in moral dilemmas where the guiding voice makes henrik do questionable choices for the greater \"good\". Like the murder of the congressman possessed by demonic forces."
+      }
+    ],
+    "connections": [],
+    "domainCards": [
+      {
+        "id": "core_domain_card_mending_touch",
+        "name": "Mending Touch",
+        "domain": "SPLENDOR",
+        "type": "Spell",
+        "level": 1,
+        "recallCost": 1,
+        "text": "You lay your hands upon a creature and channel healing magic to close their wounds. When you can take a few minutes to focus on the target you're helping, you can spend 2 Hope to clear a Hit Point or a Stress on them.\n\nOnce per long rest, when you spend this healing time learning something new about them or revealing something about yourself, you can clear 2 Hit Points or 2 Stress on them instead.",
+        "location": "loadout"
+      },
+      {
+        "id": "core_domain_card_reassurance",
+        "name": "Reassurance",
+        "domain": "SPLENDOR",
+        "type": "Ability",
+        "level": 1,
+        "recallCost": 0,
+        "text": "Once per rest, after an ally attempts an action roll but before the consequences take place, you can offer assistance or words of support. When you do, your ally can reroll their dice.",
+        "location": "vault"
+      }
+    ],
+    "features": {
+      "hopeFeature": {
+        "name": "Life Support",
+        "text": "Spend 3 Hope to clear a Hit Point on an ally within Close range."
+      },
+      "classFeatures": [
+        {
+          "name": "Prayer Dice",
+          "text": "At the beginning of each session, roll a number of d4s equal to your subclass's Spellcast trait and place them on your character sheet in the space provided. These are your Prayer Dice. You can spend any number of Prayer Dice to aid yourself or an ally within Far range. You can use a spent die's value to reduce incoming damage, add to a roll's result after the roll is made, or gain Hope equal to the result. At the end of each session, clear all unspent Prayer Dice."
+        }
+      ],
+      "foundation": [
+        {
+          "name": "Spirit Weapon",
+          "text": "When you have an equipped weapon with a range of Melee or Very Close, it can fly from your hand to attack an adversary within Close range and then return to you. You can mark a Stress to target an additional adversary within range with the same attack roll."
+        },
+        {
+          "name": "Sparing Touch",
+          "text": "Once per long rest, touch a creature and clear 2 Hit Points or 2 Stress from them."
+        }
+      ],
+      "ancestry": [
+        {
+          "name": "Luckbender",
+          "text": "Once per session, after you or a willing ally within Close range makes an action roll, you can spend 3 Hope to reroll the Duality Dice."
+        },
+        {
+          "name": "Wings",
+          "text": "You can fly. While flying, you can mark a Stress after an adversary makes an attack against you to gain a +2 bonus to your Evasion against that attack."
+        }
+      ],
+      "community": [
+        {
+          "name": "Nomadic Pack",
+          "text": "Add a Nomadic Pack to your inventory. Once per session, you can spend a Hope to reach into this pack and pull out a mundane item that's useful to your situation. Work with the GM to figure out what item you take out."
+        }
+      ]
+    },
+    "portrait": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314985067-1.png",
+    "portraitPrompt": "Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair, and a magical Queen fairy crown with jewelry, crazy eyes, androgynous male",
+    "appearance": {
+      "primaryColor": "#b18432",
+      "secondaryColor": "#c96f72"
+    },
+    "portraitDirection": {
+      "tags": [
+        "androgynous"
+      ],
+      "includeArmor": true,
+      "includeMainHand": true,
+      "includeOffHand": false
+    },
+    "portraitWorkshop": {
+      "fixSeed": true,
+      "stepsModifier": 0,
+      "cfgModifier": 0,
+      "style": "style1",
+      "embellishPrompt": false,
+      "lastSeed": 787464683,
+      "attempts": [
+        {
+          "id": "portrait_attempt_1784313096551_0",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784313095629-1.png",
+          "seed": 1592518993,
+          "createdAt": "2026-07-17T18:31:36.550Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313096551_1",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784313095720-2.png",
+          "seed": 1592518993,
+          "createdAt": "2026-07-17T18:31:36.550Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313165051_0",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784313164223-1.png",
+          "seed": 64031819,
+          "createdAt": "2026-07-17T18:32:45.051Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313165051_1",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784313164238-2.png",
+          "seed": 64031819,
+          "createdAt": "2026-07-17T18:32:45.051Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314197163_0",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314196238-1.png",
+          "seed": 1473658477,
+          "createdAt": "2026-07-17T18:49:57.162Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314197163_1",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314196269-2.png",
+          "seed": 1473658477,
+          "createdAt": "2026-07-17T18:49:57.162Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314479546_0",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314479325-1.png",
+          "seed": 1870028788,
+          "createdAt": "2026-07-17T18:54:39.546Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair, and a magical Queen fairy crown, Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314479546_1",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314479340-2.png",
+          "seed": 1870028788,
+          "createdAt": "2026-07-17T18:54:39.546Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair, and a magical Queen fairy crown, Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314582692_0",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314582866-1.png",
+          "seed": 671198420,
+          "createdAt": "2026-07-17T18:56:22.692Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair, and a magical Queen fairy crown with jewelry, crazy eyes Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314582693_1",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314582879-2.png",
+          "seed": 671198420,
+          "createdAt": "2026-07-17T18:56:22.692Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair, and a magical Queen fairy crown with jewelry, crazy eyes Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314754842_0",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314753867-1.png",
+          "seed": 787464683,
+          "createdAt": "2026-07-17T18:59:14.842Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair, and a magical Queen fairy crown with jewelry, crazy eyes Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": false
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314754842_1",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314753877-2.png",
+          "seed": 787464683,
+          "createdAt": "2026-07-17T18:59:14.842Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair, and a magical Queen fairy crown with jewelry, crazy eyes Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": false
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314985308_0",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314985067-1.png",
+          "seed": 787464683,
+          "createdAt": "2026-07-17T19:03:05.308Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair, and a magical Queen fairy crown with jewelry, crazy eyes, androgynous male Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": false
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314985308_1",
+          "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314985080-2.png",
+          "seed": 787464683,
+          "createdAt": "2026-07-17T19:03:05.308Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair, and a magical Queen fairy crown with jewelry, crazy eyes, androgynous male Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
+            "negativePrompt": "",
+            "primaryColor": "#b18432",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "Scepter",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": false
+          }
+        }
+      ]
+    },
+    "notes": "",
+    "id": "pc_1784315090465_aouy",
+    "createdAt": "2026-07-17T19:04:50.465Z",
+    "active": true
+  },
+  {
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "name": "Oore",
+    "pronouns": "Han/Honom",
+    "player": "Tyra",
+    "shell": "table",
+    "pen": "brush",
+    "level": 1,
+    "class": {
+      "id": "core_class_wizard",
+      "name": "Wizard",
+      "domains": [
+        "CODEX",
+        "SPLENDOR"
+      ]
+    },
+    "subclass": {
+      "id": "core_subclass_school_of_knowledge",
+      "name": "School Of Knowledge",
+      "spellcastTrait": "Knowledge"
+    },
+    "ancestry": {
+      "id": "core_ancestry_clank",
+      "name": "Clank"
+    },
+    "community": {
+      "id": "core_community_underborne",
+      "name": "Underborne"
+    },
+    "traits": {
+      "Agility": 0,
+      "Strength": 1,
+      "Finesse": -1,
+      "Instinct": 2,
+      "Presence": 1,
+      "Knowledge": 0
+    },
+    "evasion": 11,
+    "hpMax": 5,
+    "hp": 1,
+    "stressMax": 6,
+    "stress": 1,
+    "hopeMax": 6,
+    "hope": 3,
+    "armor": {
+      "name": "Chainmail Armor",
+      "score": 4,
+      "feature": "Heavy: -1 to Evasion"
+    },
+    "armorMarked": 0,
+    "thresholds": {
+      "major": 8,
+      "severe": 16
+    },
+    "weapons": {
+      "primary": {
+        "id": "core_weapon_quarterstaff",
+        "name": "Quarterstaff",
         "type": "PRIMARY_PHYSICAL",
-        "trait": "Strength",
+        "trait": "Instinct",
         "range": "Melee",
         "damage": "d10 phy",
         "burden": "Two Handed",
@@ -68,285 +1753,765 @@
       "50 feet of rope",
       "Basic supplies",
       "A handful of gold",
-      "Minor Health Potion (clear 1d4 HP)",
-      "A secret key"
-    ],
-    "experiences": [
+      "Minor Stamina Potion (clear 1d4 Stress)",
+      "A book you're trying to translate",
       {
-        "name": "Cool guy",
-        "bonus": 2
-      },
-      {
-        "name": "Really cool guy",
-        "bonus": 2
+        "id": "paper_1784315508739_otueq",
+        "kind": "paper",
+        "paperType": "covenant",
+        "name": "Covenant of Observed Footsteps",
+        "body": "",
+        "author": "Office of Adventuring Licences, Omens & Minor Observations",
+        "createdAt": "2026-07-17T19:11:47.303Z",
+        "signedName": "Vide Hamn",
+        "signedAt": "2026-07-17T19:11:47.303Z",
+        "covenantVersion": 1,
+        "quantity": 1
       }
     ],
+    "experiences": [],
     "background": [
       {
-        "q": "Who from your community did you fail to protect, and why do you still think of them?",
-        "a": "Fred, because of the fart"
+        "id": "roots",
+        "q": "Where I come from",
+        "a": "I was made by the people of a small town by the mountains to explore the potential of the nearby cave systems. I spent my life exploring and mapping them, memorizing them, and discovering their secrets. Over time my creators grew bored with me, stopped maintaining my mechanical stone body, as I continued to discover nothing that they seemed to desire. They were not interested in my oddly shaped stones, my pieces of stalachmite  or fossilised bits of species that dies long before our time. They didn't care for my meticoulous maps where any oddity was marked. So they left me to rust, let my stone joints crumble into dust as I use them. Without the purpose of which I was made, I wander aimless in the world, trying to make sense of it. Trying to map anything I see in hopes of learning how to find the ideal route out of my confusion at the world around me."
+      },
+      {
+        "id": "early-memory",
+        "q": "An early memory",
+        "a": "I squeezed myself through a small crevice, feeling the stone of my arms scrape against the stone of the cave wall. I tried to inch further and further, feeling a sense of adrenaline at the possibility of what may lie behind this uncomfortable passage. What wonders may be ahead, that only I have seen. But as the space around me grew smaller, I felt my excitement slowly turn into anxiety. The feeling deepened into stone-cold terror when I realised I could neither move forward or backward. I lay flat, on my stomach, frozen between floor an ceiling. . CONT"
+      },
+      {
+        "id": "turning-point",
+        "q": "The moment that changed me",
+        "a": "I am not useful anymore. I have not done my job. My findings are useless, my craft of no importance. My body is broken and nobody would ever care to mend it with so little return. My creators hurdled me out of my maproom, their words still in the air. I would never see that place again. I would never get to page through my personal altlases again,"
       }
     ],
     "connections": [],
     "domainCards": [
       {
-        "id": "core_domain_card_bare_bones",
-        "name": "Bare Bones",
-        "domain": "VALOR",
-        "type": "Ability",
+        "id": "core_domain_card_bolt_beacon",
+        "name": "Bolt Beacon",
+        "domain": "SPLENDOR",
+        "type": "Spell",
         "level": 1,
-        "recallCost": 0,
-        "text": "When you choose not to equip armor, you have a base Armor Score of 3 + your Strength and use the following as your base damage thresholds:\n\n• Tier 1: 9/19\n• Tier 2: 11/24\n• Tier 3: 13/31\n• Tier 4: 15/38",
+        "recallCost": 1,
+        "text": "Make a Spellcast Roll against a target within Far range. On a success, spend a Hope to send a bolt of shimmering light toward them, dealing d8+2 magic damage using your Proficiency. The target becomes temporarily Vulnerable and glows brightly until this condition is cleared.",
         "location": "loadout"
       },
       {
-        "id": "core_domain_card_forceful_push",
-        "name": "Forceful Push",
-        "domain": "VALOR",
-        "type": "Ability",
+        "id": "core_domain_card_book_of_tyfar",
+        "name": "Book Of Tyfar",
+        "domain": "CODEX",
+        "type": "Grimoire",
         "level": 1,
-        "recallCost": 0,
-        "text": "Make an attack with your primary weapon against a target within Melee range. On a success, you deal damage and knock them back to Close range. On a success with Hope, add a d6 to your damage roll.\n\nAdditionally, you can spend a Hope to make them temporarily Vulnerable.",
+        "recallCost": 2,
+        "text": "Wild Flame: Make a Spellcast Roll against up to three adversaries within Melee range. Targets you succeed against take 2d6 magic damage and must mark a Stress as flames erupt from your hand.\n\nMagic Hand: You conjure a magical hand with the same size and strength as your own within Far range.\n\nMysterious Mist: Make a Spellcast Roll (13) to cast a temporary thick fog that gathers in a stationary area within Very Close range. The fog heavily obscures this area and everything in it.",
+        "location": "loadout"
+      },
+      {
+        "id": "core_domain_card_book_of_illiat",
+        "name": "Book Of Illiat",
+        "domain": "CODEX",
+        "type": "Grimoire",
+        "level": 1,
+        "recallCost": 2,
+        "text": "Slumber: Make a Spellcast Roll against a target within Very Close range. On a success, they're Asleep until they take damage or the GM spends a Fear on their turn to clear this condition.\n\nArcane Barrage: Once per rest, spend any number of Hope and shoot magical projectiles that strike a target of your choice within Close range. Roll a number of d6s equal to the Hope spent and deal that much magic damage to the target.\n\nTelepathy: Spend a Hope to open a line of mental communication with one target you can see. This connection lasts until your next rest or you cast Telepathy again.",
         "location": "loadout"
       }
     ],
     "features": {
       "hopeFeature": {
-        "name": "Frontline Tank",
-        "text": "Spend 3 Hope to clear 2 Armor Slots."
+        "name": "Not This Time",
+        "text": "Spend 3 Hope to force an adversary within Far range to reroll an attack or damage roll."
       },
       "classFeatures": [
         {
-          "name": "Unstoppable",
-          "text": "Once per long rest, you can become Unstoppable. You gain an Unstoppable Die. At level 1, your Unstoppable Die is a d4. Place it on your character sheet in the space provided, starting with the 1 value facing up. After you make a damage roll that deals 1 or more Hit Points to a target, increase the Unstoppable Die value by one. When the die's value would exceed its maximum value or when the scene ends, remove the die and drop out of Unstoppable. At level 5, your Unstoppable Die increases to a d6."
+          "name": "Prestidigitation",
+          "text": "You can perform harmless, subtle magical effects at will. For example, you can change an object's color, create a smell, light a candle, cause a tiny object to float, illuminate a room, or repair a small object."
         },
         {
-          "name": "While Unstoppable, you gain the following benefits:",
-          "text": "• You reduce the severity of physical damage by one threshold (Severe to Major, Major to Minor, Minor to None).\n• You add the current value of the Unstoppable Die to your damage roll.\n• You can't be Restrained or Vulnerable."
+          "name": "Strange Patterns",
+          "text": "Choose a number between 1 and 12. When you roll that number on a Duality Die, gain a Hope or clear a Stress.\n\nYou can change this number when you take a long rest."
         }
       ],
       "foundation": [
         {
-          "name": "Unwavering",
-          "text": "Gain a permanent +1 bonus to your damage thresholds."
+          "name": "Prepared",
+          "text": "Take an additional domain card of your level or lower from a domain you have access to."
         },
         {
-          "name": "Iron Will",
-          "text": "When you take physical damage, you can mark an additional Armor Slot to reduce the severity."
+          "name": "Adept",
+          "text": "When you Utilize an Experience, you can mark a Stress instead of spending a Hope. If you do, double your Experience modifier for that roll."
         }
       ],
       "ancestry": [
         {
-          "name": "Caprine Leap",
-          "text": "You can leap anywhere within Close range as though you were using normal movement, allowing you to vault obstacles, jump across gaps, or scale barriers with ease."
+          "name": "Purposeful Design",
+          "text": "Decide who made you and for what purpose. At character creation, choose one of your Experiences that best aligns with this purpose and gain a permanent +1 bonus to it."
         },
         {
-          "name": "Kick",
-          "text": "When you succeed on an attack against a target within Melee range, you can mark a Stress to kick yourself off them, dealing an extra 2d6 damage and knocking back either yourself or the target to Very Close range."
+          "name": "Efficient",
+          "text": "When you take a short rest, you can choose a long rest move instead of a short rest move."
         }
       ],
       "community": [
         {
-          "name": "Scoundrel",
-          "text": "You have advantage on rolls to negotiate with criminals, detect lies, or find a safe place to hide."
+          "name": "Low-Light Living",
+          "text": "When you're in an area with low light or heavy shadow, you have advantage on rolls to hide, investigate, or perceive details within that area."
         }
       ]
     },
-    "portrait": null,
+    "portrait": "/generated/art/portrait/draft_1784309988536_taregh46-1784315415603-1.png",
+    "portraitPrompt": "Han är skapad av metall och sten, gjord for att utforska grottor och skapa kartor. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Hans hud har texturen av hackad sten. Han är 25 år gammal. Han är skygg, men snäll. Har sin outfit med saker att skapa kartor. Han är skallig med troll-aktiga öron.",
+    "appearance": {
+      "primaryColor": "#465a78",
+      "secondaryColor": "#0b4728"
+    },
+    "portraitDirection": {
+      "tags": [
+        "androgynous",
+        "practical"
+      ],
+      "includeArmor": false,
+      "includeMainHand": false,
+      "includeOffHand": false
+    },
+    "portraitWorkshop": {
+      "fixSeed": false,
+      "stepsModifier": 0,
+      "cfgModifier": 0,
+      "style": "style1",
+      "embellishPrompt": false,
+      "lastSeed": 1348946962,
+      "attempts": [
+        {
+          "id": "portrait_attempt_1784312893828_0",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784312892539-1.png",
+          "seed": 139386485,
+          "createdAt": "2026-07-17T18:28:13.827Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784312893828_1",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784312892555-2.png",
+          "seed": 139386485,
+          "createdAt": "2026-07-17T18:28:13.827Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313051996_0",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784313051908-1.png",
+          "seed": 2067811248,
+          "createdAt": "2026-07-17T18:30:51.996Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Hans är troll-aktig. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784313051996_1",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784313051920-2.png",
+          "seed": 2067811248,
+          "createdAt": "2026-07-17T18:30:51.996Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Hans är troll-aktig. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314132113_0",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784314132388-1.png",
+          "seed": 355864353,
+          "createdAt": "2026-07-17T18:48:52.113Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Hans är troll-aktig. Hans hud har texturen av hackad sten. Han är ung. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314132113_1",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784314132405-2.png",
+          "seed": 355864353,
+          "createdAt": "2026-07-17T18:48:52.113Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Hans är troll-aktig. Hans hud har texturen av hackad sten. Han är ung. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314264462_0",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784314263444-1.png",
+          "seed": 954167611,
+          "createdAt": "2026-07-17T18:51:04.462Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Han är troll-aktig. Hans hud har texturen av hackad sten. Han är ung untan rynkor. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314264462_1",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784314263458-2.png",
+          "seed": 954167611,
+          "createdAt": "2026-07-17T18:51:04.462Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Han är troll-aktig. Hans hud har texturen av hackad sten. Han är ung untan rynkor. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314410358_0",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784314410628-1.png",
+          "seed": 1091396521,
+          "createdAt": "2026-07-17T18:53:30.358Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Han är troll-aktig. Hans hud har texturen av hackad sten. Han är tonåring. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314410358_1",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784314410639-2.png",
+          "seed": 1091396521,
+          "createdAt": "2026-07-17T18:53:30.358Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Han är troll-aktig. Hans hud har texturen av hackad sten. Han är tonåring. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "Chainmail Armor",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314629898_0",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784314630192-1.png",
+          "seed": 193389159,
+          "createdAt": "2026-07-17T18:57:09.898Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Han är troll-aktig. Hans hud har texturen av hackad sten. Han är 25 år. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Har sin outfit med saker att skapa kartor Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314629898_1",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784314630206-2.png",
+          "seed": 193389159,
+          "createdAt": "2026-07-17T18:57:09.898Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Han är troll-aktig. Hans hud har texturen av hackad sten. Han är 25 år. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Har sin outfit med saker att skapa kartor Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314713473_0",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784314713763-1.png",
+          "seed": 1959640646,
+          "createdAt": "2026-07-17T18:58:33.473Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Han är troll-aktig i ansiktet. Hans hud har texturen av hackad sten. Han är ung vuxen. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Har sin outfit med saker att skapa kartor Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314713473_1",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784314713777-2.png",
+          "seed": 1959640646,
+          "createdAt": "2026-07-17T18:58:33.473Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Han är troll-aktig i ansiktet. Hans hud har texturen av hackad sten. Han är ung vuxen. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Har sin outfit med saker att skapa kartor Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314852686_0",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784314852305-1.png",
+          "seed": 2070232436,
+          "createdAt": "2026-07-17T19:00:52.686Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Han är troll-aktig i ansiktet. Hans hud har texturen av hackad sten. Han är ung vuxen. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Har sin outfit med saker att skapa kartor Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": false
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314852686_1",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784314852316-2.png",
+          "seed": 2070232436,
+          "createdAt": "2026-07-17T19:00:52.686Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Han är troll-aktig i ansiktet. Hans hud har texturen av hackad sten. Han är ung vuxen. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Har sin outfit med saker att skapa kartor Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": false
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314968175_0",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784314968441-1.png",
+          "seed": 768942919,
+          "createdAt": "2026-07-17T19:02:48.175Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Han är troll-aktig i ansiktet. Hans hud har texturen av hackad sten. Han är ung vuxen. Han är skygg, men snäll. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Har sin outfit med saker att skapa kartor Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": false
+          }
+        },
+        {
+          "id": "portrait_attempt_1784314968175_1",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784314968487-2.png",
+          "seed": 768942919,
+          "createdAt": "2026-07-17T19:02:48.175Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Han är troll-aktig i ansiktet. Hans hud har texturen av hackad sten. Han är ung vuxen. Han är skygg, men snäll. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Har sin outfit med saker att skapa kartor Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": false
+          }
+        },
+        {
+          "id": "portrait_attempt_1784315048294_0",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784315048586-1.png",
+          "seed": 391856989,
+          "createdAt": "2026-07-17T19:04:08.294Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar.. Hans hud har texturen av hackad sten. Han är ung vuxen. Han är skygg, men snäll. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Har sin outfit med saker att skapa kartor Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": false
+          }
+        },
+        {
+          "id": "portrait_attempt_1784315048294_1",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784315048596-2.png",
+          "seed": 391856989,
+          "createdAt": "2026-07-17T19:04:08.294Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Skapad av metall och sten, gjord for att utforska grottor och skapa kartor av hans skapare. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar.. Hans hud har texturen av hackad sten. Han är ung vuxen. Han är skygg, men snäll. Han vill utforska världen, utforska varje liten vrå och få en överbild så han kan förstå hur allting hänger ihop så han kan relatera till andra levande ting och finna en plats i världen när han inte längre har en anledning att göra den enda sak han är skapad för. Har sin outfit med saker att skapa kartor Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": false
+          }
+        },
+        {
+          "id": "portrait_attempt_1784315193457_0",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784315193756-1.png",
+          "seed": 296143618,
+          "createdAt": "2026-07-17T19:06:33.457Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Han är skapad av metall och sten, gjord for att utforska grottor och skapa kartor. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Hans hud har texturen av hackad sten. Han är 25. Han är skygg, men snäll. Har sin outfit med saker att skapa kartor. Han är skallig med troll-aktiga öron Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": false
+          }
+        },
+        {
+          "id": "portrait_attempt_1784315193457_1",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784315193769-2.png",
+          "seed": 296143618,
+          "createdAt": "2026-07-17T19:06:33.457Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Han är skapad av metall och sten, gjord for att utforska grottor och skapa kartor. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Hans hud har texturen av hackad sten. Han är 25. Han är skygg, men snäll. Har sin outfit med saker att skapa kartor. Han är skallig med troll-aktiga öron Visual identity: androgynous, weathered, uncanny. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "uncanny"
+            ],
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": false
+          }
+        },
+        {
+          "id": "portrait_attempt_1784315415295_0",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784315415603-1.png",
+          "seed": 1348946962,
+          "createdAt": "2026-07-17T19:10:15.294Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Han är skapad av metall och sten, gjord for att utforska grottor och skapa kartor. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Hans hud har texturen av hackad sten. Han är 25 år gammal. Han är skygg, men snäll. Har sin outfit med saker att skapa kartor. Han är skallig med troll-aktiga öron. Visual identity: androgynous, practical. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "practical"
+            ],
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": false
+          }
+        },
+        {
+          "id": "portrait_attempt_1784315415295_1",
+          "url": "/generated/art/portrait/draft_1784309988536_taregh46-1784315415615-2.png",
+          "seed": 1348946962,
+          "createdAt": "2026-07-17T19:10:15.294Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Han är skapad av metall och sten, gjord for att utforska grottor och skapa kartor. Hans mekanik är inte upprätthålld, och stenen i hans leder smulnar och faller isär. Hans ögon är stora och bleka. Han är liten och smal för att ta sig igenom små tunnlar. Hans hud har texturen av hackad sten. Han är 25 år gammal. Han är skygg, men snäll. Har sin outfit med saker att skapa kartor. Han är skallig med troll-aktiga öron. Visual identity: androgynous, practical. Use #465a78 as the primary class detail color and #0b4728 as the secondary favorite-color accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#465a78",
+            "secondaryColor": "#0b4728",
+            "tags": [
+              "androgynous",
+              "practical"
+            ],
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": false
+          }
+        }
+      ]
+    },
     "notes": "",
-    "id": "pc_1783804626876_7i90",
-    "createdAt": "2026-07-11T21:17:06.877Z"
+    "id": "pc_1784315512566_6dpx",
+    "createdAt": "2026-07-17T19:11:52.566Z",
+    "active": true,
+    "conditions": []
   },
   {
-    "name": "Sirad Ashimya",
-    "pronouns": "he/him",
-    "player": "Oscar",
-    "shell": "tome",
-    "pen": "brush",
-    "level": 1,
-    "class": {
-      "id": "core_class_guardian",
-      "name": "Guardian",
-      "domains": [
-        "VALOR",
-        "BLADE"
-      ]
-    },
-    "subclass": {
-      "id": "core_subclass_stalwart",
-      "name": "Stalwart",
-      "spellcastTrait": null
-    },
-    "ancestry": {
-      "id": "core_ancestry_faun",
-      "name": "Faun"
-    },
-    "community": {
-      "id": "core_community_slyborne",
-      "name": "Slyborne"
-    },
-    "traits": {
-      "Agility": 2,
-      "Strength": 1,
-      "Finesse": 1,
-      "Instinct": 0,
-      "Presence": 0,
-      "Knowledge": -1
-    },
-    "evasion": 9,
-    "hpMax": 7,
-    "hp": 0,
-    "stressMax": 6,
-    "stress": 0,
-    "hopeMax": 6,
-    "hope": 2,
-    "armor": {
-      "name": "Leather Armor",
-      "score": 3,
-      "feature": ""
-    },
-    "armorMarked": 0,
-    "thresholds": {
-      "major": 7,
-      "severe": 14
-    },
-    "weapons": {
-      "primary": {
-        "id": "core_weapon_battleaxe",
-        "name": "Battleaxe",
-        "type": "PRIMARY_PHYSICAL",
-        "trait": "Strength",
-        "range": "Melee",
-        "damage": "d10 phy",
-        "burden": "Two Handed",
-        "feature": ""
-      },
-      "secondary": null
-    },
-    "inventory": [
-      {
-        "id": "item_1783851662438_h0gqz",
-        "kind": "mundane",
-        "name": "A torch",
-        "quantity": 1
-      },
-      {
-        "id": "item_1783851662438_8iask",
-        "kind": "mundane",
-        "name": "50 feet of rope",
-        "quantity": 1
-      },
-      {
-        "id": "item_1783851662438_jyekg",
-        "kind": "mundane",
-        "name": "Basic supplies",
-        "quantity": 1
-      },
-      {
-        "id": "item_1783851662438_trirj",
-        "kind": "mundane",
-        "name": "A handful of gold",
-        "quantity": 1,
-        "description": ""
-      },
-      {
-        "id": "item_1783851662438_w6q1h",
-        "kind": "consumable",
-        "catalogId": "core_consumable_minor_health_potion",
-        "notes": "clear 1d4 HP",
-        "quantity": 1
-      },
-      {
-        "id": "item_1783851662438_mnguw",
-        "kind": "mundane",
-        "name": "A secret key",
-        "quantity": 1
-      }
-    ],
-    "experiences": [
-      {
-        "name": "Cool guy",
-        "bonus": 2
-      },
-      {
-        "name": "Really cool guy",
-        "bonus": 2
-      }
-    ],
     "background": [
       {
-        "q": "Who from your community did you fail to protect, and why do you still think of them?",
-        "a": "Fred, because of the fart"
+        "id": "roots",
+        "q": "Where I come from",
+        "a": "I remember the bell above the winter road."
       }
     ],
-    "connections": [],
-    "domainCards": [
-      {
-        "id": "core_domain_card_bare_bones",
-        "name": "Bare Bones",
-        "domain": "VALOR",
-        "type": "Ability",
-        "level": 1,
-        "recallCost": 0,
-        "text": "When you choose not to equip armor, you have a base Armor Score of 3 + your Strength and use the following as your base damage thresholds:\n\n• Tier 1: 9/19\n• Tier 2: 11/24\n• Tier 3: 13/31\n• Tier 4: 15/38",
-        "location": "loadout"
-      },
-      {
-        "id": "core_domain_card_forceful_push",
-        "name": "Forceful Push",
-        "domain": "VALOR",
-        "type": "Ability",
-        "level": 1,
-        "recallCost": 0,
-        "text": "Make an attack with your primary weapon against a target within Melee range. On a success, you deal damage and knock them back to Close range. On a success with Hope, add a d6 to your damage roll.\n\nAdditionally, you can spend a Hope to make them temporarily Vulnerable.",
-        "location": "loadout"
-      }
-    ],
-    "features": {
-      "hopeFeature": {
-        "name": "Frontline Tank",
-        "text": "Spend 3 Hope to clear 2 Armor Slots."
-      },
-      "classFeatures": [
-        {
-          "name": "Unstoppable",
-          "text": "Once per long rest, you can become Unstoppable. You gain an Unstoppable Die. At level 1, your Unstoppable Die is a d4. Place it on your character sheet in the space provided, starting with the 1 value facing up. After you make a damage roll that deals 1 or more Hit Points to a target, increase the Unstoppable Die value by one. When the die's value would exceed its maximum value or when the scene ends, remove the die and drop out of Unstoppable. At level 5, your Unstoppable Die increases to a d6."
-        },
-        {
-          "name": "While Unstoppable, you gain the following benefits:",
-          "text": "• You reduce the severity of physical damage by one threshold (Severe to Major, Major to Minor, Minor to None).\n• You add the current value of the Unstoppable Die to your damage roll.\n• You can't be Restrained or Vulnerable."
-        }
-      ],
-      "foundation": [
-        {
-          "name": "Unwavering",
-          "text": "Gain a permanent +1 bonus to your damage thresholds."
-        },
-        {
-          "name": "Iron Will",
-          "text": "When you take physical damage, you can mark an additional Armor Slot to reduce the severity."
-        }
-      ],
-      "ancestry": [
-        {
-          "name": "Caprine Leap",
-          "text": "You can leap anywhere within Close range as though you were using normal movement, allowing you to vault obstacles, jump across gaps, or scale barriers with ease."
-        },
-        {
-          "name": "Kick",
-          "text": "When you succeed on an attack against a target within Melee range, you can mark a Stress to kick yourself off them, dealing an extra 2d6 damage and knocking back either yourself or the target to Very Close range."
-        }
-      ],
-      "community": [
-        {
-          "name": "Scoundrel",
-          "text": "You have advantage on rolls to negotiate with criminals, detect lies, or find a safe place to hide."
-        }
-      ]
+    "player": "Test",
+    "domainCards": [],
+    "traits": {},
+    "ancestry": {
+      "id": "human",
+      "name": "Human"
     },
-    "portrait": null,
-    "notes": "",
-    "id": "pc_1783851527630_msgq",
-    "createdAt": "2026-07-12T10:18:47.630Z"
+    "features": {},
+    "appearance": {
+      "secondaryColor": "#78a999",
+      "primaryColor": "#9b674d"
+    },
+    "pronouns": "they/them",
+    "connections": [],
+    "experiences": [],
+    "subclass": {
+      "id": "brave",
+      "name": "Call of the Brave"
+    },
+    "inventory": [],
+    "name": "Scratch Hero",
+    "class": {
+      "domains": [
+        "Blade",
+        "Bone"
+      ],
+      "name": "Warrior",
+      "id": "warrior"
+    },
+    "community": {
+      "id": "wildborne",
+      "name": "Wildborne"
+    },
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "id": "pc_1784316505711_3640",
+    "createdAt": "2026-07-17T19:28:25.711Z",
+    "level": 1,
+    "active": false
   }
 ]

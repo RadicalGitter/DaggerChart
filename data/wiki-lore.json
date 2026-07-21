@@ -142,14 +142,17 @@
         "Lore",
         "Beneath"
       ],
-      "body": "The PCs are figments of the Bard's (or a trickster god's) imagination, written into being exactly as created. The players' tome IS his book; they write in the book that wrote them. Rewards were penned on their arrival page and never revised; the audience beyond the fourth wall (Suno listeners) applauds performances the characters can't hear.\n\nThis is the campaign's floor. Nothing on any player surface may state it — only hairline cracks: a first page in a hand nobody claims, a portrait that was always already there. Full design: docs/bards-tome-plan.md.",
+      "body": "The PCs are figures written into being by the Bard exactly as created. The players' tome IS his book; they write in the book that wrote them. Rewards were penned on their arrival page and never revised; the audience beyond the fourth wall (Suno listeners) applauds performances the characters cannot hear.\n\nThe god whose mind contains this world is properly named the Dreamer. The Bard did not arrive by accident: the Dreamer knew that Vessarin, their current muse and well of power, was dying, and invited the Bard into themself. They told him he needed only to wake Vessarin from her dream. The statement concealed the decisive truth: Vessarin was never the true source of creativity. Vesserin'ka is the Dreamer's true muse, but she is not the Dreamer.\n\nThe Bard accepted the stipulation that only the death or wakening of the dreamer could release him. Vessarin died, but her death changed nothing because the bargain's true referent was the god enclosing this place. Trapped and aware that he was deceived, the Bard has made a pact with the Abyss. He is obsessed with finding Vesserin'ka, believing she may provide a path to the Dreamer he is determined to face.\n\nThis is the campaign's floor. Nothing on an ordinary player surface should explain it — only hairline cracks: a first page in a hand nobody claims, a portrait that was always already there. Oore's cartography dispatch deliberately addresses the Dreamer without explaining the name. Preserve the distinctions: Visseren is the world, Vessarin the dead reservoir, Vesserin'ka the true muse, and the Dreamer the god whose mind contains them. Full design: docs/bard-systems.md.",
       "seeAlso": [
         "lore_folk_web",
         "lore_seasons"
       ],
       "keywords": [
         "bard",
-        "trickster",
+        "vessarin",
+        "vesserin'ka",
+        "abyss",
+        "dreamer",
         "meta",
         "fourth wall",
         "tome",

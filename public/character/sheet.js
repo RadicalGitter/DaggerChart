@@ -26,6 +26,7 @@ let loadInFlight = null;
 let loadQueued = false;
 let themeLoadVersion = 0;
 let arrangingModules = false;
+let beautyPreviewConfig = null;
 const themeAudio = new Audio();
 
 const featHtml = (f) => `<div class="featline"><strong>${esc(f.name)}</strong> ${termify(esc(f.text))}</div>`;
@@ -41,6 +42,9 @@ function render() {
   setTelemetryMode("sheet");
   const p = PC;
   document.body.dataset.sheetClass = p.class?.id || "core_class_unknown";
+  if (p.shadowBalance?.position) document.body.dataset.shadowPosition = p.shadowBalance.position;
+  else delete document.body.dataset.shadowPosition;
+  document.body.classList.toggle("beast-sheet-active", p.activePresentation?.kind === "beastform");
   document.documentElement.style.setProperty("--sheet-primary", p.appearance?.primaryColor || "#8b7653");
   document.documentElement.style.setProperty("--sheet-secondary", p.appearance?.secondaryColor || "#9fcdb7");
   const w = p.weapons || {};
@@ -53,14 +57,17 @@ function render() {
       <a class="sheet-root-link" href="/player"><span aria-hidden="true">&#8592;</span> ${esc(t("player.hub.root"))}</a>
       <span class="sheet-tool-title">${esc(t("shell.sheet.name"))}</span>
       <span class="sheet-layout-actions">
+        <button class="sheet-beauty-toggle" id="sheet-beauty-toggle" type="button" title="${esc(t("beauty.open"))}"><span aria-hidden="true">&#10022;</span> <span>${esc(t("beauty.open"))}</span></button>
         <button class="sheet-layout-reset" id="sheet-layout-reset" type="button" hidden>${esc(t("sheet.tool.restore"))}</button>
         <button class="sheet-layout-toggle" id="sheet-layout-toggle" type="button" aria-pressed="false"><span aria-hidden="true">&#9986;</span> <span data-layout-label>${esc(t("sheet.tool.arrange"))}</span></button>
       </span>
     </nav>
     <header class="sheet-head" data-class-name="${esc(p.class.name)}">
-      <div class="sheet-portrait-wrap"><div class="portrait">${p.portrait ? `<img src="${esc(p.portrait)}" alt="">` : esc(p.name[0] || "?")}</div><i aria-hidden="true"></i></div>
+      <span class="beauty-masthead-mark" aria-hidden="true"></span>
+      <span class="beauty-tier-mark" aria-hidden="true"></span>
+      <div class="sheet-portrait-wrap"><div class="portrait">${p.portrait ? `<img src="${esc(p.portrait)}" alt="">` : esc(p.name[0] || "?")}</div><i aria-hidden="true"></i>${p.shadowBalance ? `<span class="shadow-balance-mark">${esc(p.shadowBalance.position)}</span>` : ""}</div>
       <div class="sheet-identity">
-        <div class="sheet-class-kicker">${esc(p.class.name)} · ${esc(t("sheet.tool.record"))}</div>
+        <div class="sheet-class-kicker">${p.activePresentation?.kind === "beastform" ? `Beastform · ${esc(p.class.name)}` : `${esc(p.class.name)} · ${esc(t("sheet.tool.record"))}`}</div>
         <div class="sheet-name-row"><h1>${esc(p.name)}</h1><button class="name-edit" id="rename-character" type="button" aria-label="${esc(t("sheet.renameName"))}" title="${esc(t("sheet.renameName"))}">✎</button></div>
         <div class="muted">${esc(p.ancestry.name)} ${esc(p.class.name)} — ${esc(p.subclass.name)} · ${term("level", t("sheet.level"))} ${p.level}</div>
         <div class="muted" style="font-size:0.85rem;">${esc(p.community.name)}${p.pronouns ? ` · ${esc(p.pronouns)}` : ""}${p.player ? ` · ${esc(p.player)}` : ""}</div>
@@ -68,11 +75,13 @@ function render() {
       </div>
     </header>
 
+    ${beastSheetBanner(p)}
+
     ${sheetNavHtml(p)}
 
     <section class="sheet-anchor" id="sheet-overview">
     <div class="defenses card">
-      <div><div class="value">${p.evasion}</div><div class="smallcaps">${term("evasion", t("vital.evasion"))}</div></div>
+      <div><div class="value">${p.evasion}</div><div class="smallcaps">${term("evasion", t("vital.evasion"))}</div>${beastDelta(p, "evasion")}</div>
       <div><div class="value">${p.armor ? p.armor.score : 0}</div><div class="smallcaps">${term("armor-score", t("vital.armor"))}</div></div>
       <div><div class="value">${p.thresholds.major} / ${p.thresholds.severe}</div><div class="smallcaps">${term("thresholds", t("arms.thresholds"))}</div></div>
     </div>
@@ -85,7 +94,7 @@ function render() {
     </div>
 
     <div class="traits-grid">${TRAITS.map(
-      (tr) => `<div class="trait-tile" style="--trait-accent:${traitAccent(tr)}"><span class="trait-sheet-symbol" aria-hidden="true">${traitGraphic(tr)}</span><div class="v">${p.traits[tr] >= 0 ? "+" : ""}${p.traits[tr]}</div><div class="smallcaps">${term("trait-" + tr.toLowerCase(), tr)}</div></div>`
+      (tr) => `<div class="trait-tile" style="--trait-accent:${traitAccent(tr)}"><span class="trait-sheet-symbol" aria-hidden="true">${traitGraphic(tr)}</span><div class="v">${p.traits[tr] >= 0 ? "+" : ""}${p.traits[tr]}</div><div class="smallcaps">${term("trait-" + tr.toLowerCase(), tr)}</div>${beastDelta(p, "trait", tr)}</div>`
     ).join("")}</div>
     </section>
 
@@ -108,12 +117,14 @@ function render() {
 
     <section class="sheet-section sheet-anchor" id="sheet-cards" data-sheet-module="cards">
       <span class="smallcaps">${term("domain", t("sheet.cards"))}</span>
+      ${p.activePresentation?.kind === "beastform" ? `<p class="beast-unavailable">${esc(t("presentation.domainUnavailable"))}</p>` : ""}
       ${handHtml(p)}
     </section>
 
     <section class="sheet-section sheet-anchor" id="sheet-features" data-sheet-module="features">
       <span class="smallcaps">${t("sheet.features")}</span>
       <div class="card">
+        ${p.activePresentation?.kind === "beastform" ? beastFeaturesHtml(p.activePresentation.form) : ""}
         ${p.features.hopeFeature ? `<div class="smallcaps">${term("hope", t("sheet.hopefeat"))}</div>${featHtml(p.features.hopeFeature)}` : ""}
         <div class="smallcaps">${t("sheet.class")}</div>${(p.features.classFeatures || []).map(featHtml).join("")}
         <div class="smallcaps">${esc(p.subclass.name)}</div>${(p.features.foundation || []).map(featHtml).join("")}
@@ -148,6 +159,7 @@ function render() {
     ${playerFeatureEnabled("music") ? themeHtml(p) : ""}
     </div>
   `;
+  applyBeautyConfig(beautyPreviewConfig || p.sheetBeauty?.active?.config || null);
   wirePips();
   wireHand();
   wireTheme();
@@ -155,6 +167,38 @@ function render() {
   wireSheetNav();
   wireIdentity();
   wireModules();
+  wireBeastSheet();
+}
+
+function beastDelta(p, kind, trait = null) {
+  const canonical = p.activePresentation?.canonical;
+  if (!canonical) return "";
+  const before = kind === "evasion" ? canonical.evasion : canonical.traits?.[trait];
+  const after = kind === "evasion" ? p.evasion : p.traits?.[trait];
+  if (before === after) return "";
+  return `<small class="beast-delta">${before >= 0 && kind === "trait" ? "+" : ""}${before} → ${after >= 0 && kind === "trait" ? "+" : ""}${after}</small>`;
+}
+
+function beastSheetBanner(p) {
+  const active = p.activePresentation;
+  if (active?.kind !== "beastform") return "";
+  const form = active.form;
+  return `<section class="beast-sheet-banner" style="--beast-portrait:${p.portrait ? `url('${String(p.portrait).replace(/[()'"\\]/g, "")}')` : "none"}">
+    <div><span class="smallcaps">Tier ${form.tier} Beastform</span><strong>${esc(form.customization?.name || form.name)}</strong><p>${esc(form.examples.join(", "))}</p></div>
+    <button type="button" id="leave-beastform">Return to Kaya</button>
+  </section>`;
+}
+
+function beastFeaturesHtml(form) {
+  return `<div class="beast-live-rules"><div class="smallcaps">Beastform advantages</div><p>${form.advantages.map(esc).join(" · ")}</p>${form.features.map(featHtml).join("")}</div>`;
+}
+
+function wireBeastSheet() {
+  $("#leave-beastform")?.addEventListener("click", async () => {
+    const response = await fetch(`/api/party/${encodeURIComponent(PC.id)}/presentation/activate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "canonical" }) });
+    if (!response.ok) return;
+    await load();
+  });
 }
 
 function sheetNavHtml(p) {
@@ -299,10 +343,130 @@ function wireModules() {
 
 function closePaperDialog() {
   $("#paper-dialog").hidden = true;
+  beautyPreviewConfig = null;
+  applyBeautyConfig(PC?.sheetBeauty?.active?.config || null);
 }
 
 function wireIdentity() {
   $("#rename-character").onclick = openNameEditor;
+  $("#sheet-beauty-toggle").onclick = openBeautyAtelier;
+}
+
+const BEAUTY_DATA_KEYS = ["beautyActive", "beautyMotif", "beautyFinish", "beautyGrade", "beautyTier", "beautyMemory", "beautyDomains", "beautyCovenant", "beautyConnections"];
+
+function applyBeautyConfig(config) {
+  for (const key of BEAUTY_DATA_KEYS) delete document.body.dataset[key];
+  if (!config) return;
+  document.body.dataset.beautyActive = "true";
+  document.body.dataset.beautyMotif = config.motif || "fieldwork";
+  document.body.dataset.beautyFinish = config.finish || "etched";
+  document.body.dataset.beautyGrade = String(config.grade || 1);
+  document.body.dataset.beautyTier = String(config.tier || 1);
+  const slots = config.slots || {};
+  if (slots.memoryMargin) document.body.dataset.beautyMemory = "true";
+  if (slots.domainSeal) document.body.dataset.beautyDomains = "true";
+  if (slots.covenantSeal) document.body.dataset.beautyCovenant = "true";
+  if (slots.connectionThread) document.body.dataset.beautyConnections = "true";
+  const tier = document.querySelector(".beauty-tier-mark");
+  if (tier) tier.textContent = ["I", "II", "III", "IV"][Math.max(0, Math.min(3, (config.tier || 1) - 1))];
+}
+
+function beautyName(item) {
+  const variant = t(`beauty.variant.${item.variant || item.config?.finish || "etched"}`);
+  const motif = t(`beauty.motif.${item.config?.motif || "fieldwork"}`);
+  return t("beauty.recipeName", { variant, motif });
+}
+
+function beautyUnlocksHtml(unlocks) {
+  return (unlocks || []).map((unlock) => `<li>${esc(t(`beauty.unlock.${unlock}`))}</li>`).join("");
+}
+
+async function beautyMutation(path, payload) {
+  const response = await fetch(`/api/party/${encodeURIComponent(id)}/sheet-beauty/${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  const body = await response.json();
+  if (!response.ok) throw new Error(body.error || t("beauty.error"));
+  PC = body;
+  PC.playerFeatures = setPlayerFeatureContext(PC, PC.id);
+  beautyPreviewConfig = null;
+  render();
+  openBeautyAtelier();
+}
+
+function openBeautyAtelier() {
+  const beauty = PC.sheetBeauty;
+  if (!beauty) return;
+  beautyPreviewConfig = null;
+  applyBeautyConfig(beauty.active?.config || null);
+  const activeId = beauty.activeVersionId;
+  $("#paper-dialog-body").innerHTML = `<section class="paper-editor beauty-atelier">
+    <header class="beauty-atelier-head">
+      <div><span class="beauty-kicker">${esc(t("beauty.kicker"))}</span><h2 id="paper-dialog-title">${esc(t("beauty.title"))}</h2></div>
+      <strong class="beauty-token-count">${esc(t(beauty.available === 1 ? "beauty.token" : "beauty.tokens", { n: beauty.available }))}</strong>
+    </header>
+    <p class="beauty-intro">${esc(t("beauty.intro"))}</p>
+    <div class="beauty-candidates">${beauty.candidates.map((candidate) => `
+      <article class="beauty-candidate" data-beauty-candidate-card="${esc(candidate.id)}">
+        <span class="beauty-swatch beauty-swatch-${esc(candidate.variant)}" aria-hidden="true"></span>
+        <div><strong>${esc(beautyName(candidate))}</strong><span>${esc(t("beauty.pass", { n: candidate.pass }))} · ${esc(t("beauty.grade", { n: candidate.config.grade }))}</span></div>
+        <button type="button" data-beauty-preview="${esc(candidate.id)}">${esc(t("beauty.preview"))}</button>
+      </article>`).join("")}</div>
+    <div class="beauty-preview-actions">
+      <span id="beauty-preview-note">${esc(t("beauty.choosePreview"))}</span>
+      <button id="beauty-commit" type="button" disabled>${esc(beauty.available > 0 ? t("beauty.commit") : t("beauty.noTokens"))}</button>
+    </div>
+    <details class="beauty-unlocks"><summary>${esc(t("beauty.informedBy"))}</summary><ul>${beautyUnlocksHtml(beauty.unlocks)}</ul></details>
+    <section class="beauty-history">
+      <div class="beauty-history-head"><h3>${esc(t("beauty.history"))}</h3><button type="button" data-beauty-restore="" ${activeId ? "" : "disabled"}>${esc(t("beauty.baseline"))}</button></div>
+      ${beauty.versions.length ? `<ol>${beauty.versions.map((version) => `<li class="${version.id === activeId ? "active" : ""}">
+        <div><strong>${esc(beautyName(version))}</strong><span>${esc(t("beauty.pass", { n: version.pass }))} · ${esc(new Date(version.committedAt).toLocaleDateString())}${version.id === activeId ? ` · ${esc(t("beauty.active"))}` : ""}</span></div>
+        <button type="button" data-beauty-history-preview="${esc(version.id)}">${esc(t("beauty.preview"))}</button>
+        <button type="button" data-beauty-restore="${esc(version.id)}" ${version.id === activeId ? "disabled" : ""}>${esc(t("beauty.restore"))}</button>
+      </li>`).join("")}</ol>` : `<p class="beauty-empty">${esc(t("beauty.empty"))}</p>`}
+    </section>
+    <p class="beauty-error" id="beauty-error" role="alert"></p>
+  </section>`;
+  $("#paper-dialog").hidden = false;
+  let selectedCandidate = null;
+  const commit = $("#beauty-commit");
+  for (const button of document.querySelectorAll("[data-beauty-preview]")) {
+    button.onclick = () => {
+      selectedCandidate = beauty.candidates.find((candidate) => candidate.id === button.dataset.beautyPreview);
+      if (!selectedCandidate) return;
+      beautyPreviewConfig = selectedCandidate.config;
+      applyBeautyConfig(beautyPreviewConfig);
+      document.querySelectorAll("[data-beauty-candidate-card]").forEach((card) => card.classList.toggle("selected", card.dataset.beautyCandidateCard === selectedCandidate.id));
+      $("#beauty-preview-note").textContent = t("beauty.previewing", { name: beautyName(selectedCandidate) });
+      commit.disabled = beauty.available < 1;
+    };
+  }
+  for (const button of document.querySelectorAll("[data-beauty-history-preview]")) {
+    button.onclick = () => {
+      const version = beauty.versions.find((candidate) => candidate.id === button.dataset.beautyHistoryPreview);
+      if (!version) return;
+      selectedCandidate = null;
+      commit.disabled = true;
+      beautyPreviewConfig = version.config;
+      applyBeautyConfig(beautyPreviewConfig);
+      $("#beauty-preview-note").textContent = t("beauty.previewing", { name: beautyName(version) });
+    };
+  }
+  commit.onclick = async () => {
+    if (!selectedCandidate) return;
+    commit.disabled = true;
+    try { await beautyMutation("commit", { candidateId: selectedCandidate.id }); }
+    catch (error) { $("#beauty-error").textContent = error.message; commit.disabled = beauty.available < 1; }
+  };
+  for (const button of document.querySelectorAll("[data-beauty-restore]")) {
+    button.onclick = async () => {
+      button.disabled = true;
+      try { await beautyMutation("restore", { versionId: button.dataset.beautyRestore || null }); }
+      catch (error) { $("#beauty-error").textContent = error.message; button.disabled = false; }
+    };
+  }
 }
 
 function openNameEditor() {

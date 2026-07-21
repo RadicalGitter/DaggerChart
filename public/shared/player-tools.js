@@ -1,5 +1,7 @@
 import { t } from "/shared/i18n.js";
 import { playerFeatureEnabled } from "/shared/player-features.js";
+import "/shared/party-cards.js";
+import "/shared/shadow-balance.js";
 // Re-enable the duality-dice import after the physical roller passes live UX review.
 
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) =>
@@ -121,6 +123,7 @@ function install() {
   function openDrawer() {
     if (!playerFeatureEnabled("notes")) return;
     window.dispatchEvent(new CustomEvent("settlement:close-dice"));
+    window.dispatchEvent(new CustomEvent("settlement:close-shadow"));
     refresh();
     if (!currentPcId) return;
     drawer.hidden = false;

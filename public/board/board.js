@@ -251,14 +251,24 @@ function renderNote(body, item) {
   body.innerHTML = `
     <input type="text" class="note-title" placeholder="Title" value="${esc(item.props.title)}">
     <textarea placeholder="Rules, reminders, anything…">${esc(item.props.text)}</textarea>`;
+  const textarea = body.querySelector("textarea");
+  const fitNote = () => {
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.max(90, textarea.scrollHeight)}px`;
+    textarea.style.overflowY = "hidden";
+  };
   body.querySelector(".note-title").addEventListener("input", (e) => {
     item.props.title = e.target.value;
     queueSave();
   });
-  body.querySelector("textarea").addEventListener("input", (e) => {
+  textarea.addEventListener("input", (e) => {
     item.props.text = e.target.value;
+    fitNote();
     queueSave();
   });
+  fitNote();
+  requestAnimationFrame(fitNote);
+  document.fonts?.ready.then(fitNote);
 }
 
 function renderCounter(body, item) {

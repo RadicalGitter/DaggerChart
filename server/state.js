@@ -1,5 +1,9 @@
 // Campaign state: load-on-boot, mutate in memory, persist on every change.
 import { loadJson, saveJson, loadEventTables, snapshot } from "./store.js";
+import { DEFAULT_CARTOGRAPHY, normalizeCartographyDocument } from "./cartography.js";
+import { DEFAULT_LIVE_SESSION, normalizeLiveSessionDocument } from "./live-session.js";
+import { DEFAULT_CHARACTER_PRESENTATIONS, normalizeCharacterPresentations } from "./character-presentations.js";
+import { DEFAULT_SHEET_BEAUTY, normalizeSheetBeautyDocument } from "./sheet-beauty.js";
 import { DEFAULT_PLAYER_FEATURES, normalizePlayerFeatures } from "./player-features.js";
 import { normalizeFolkProfile } from "./folk-profile.js";
 import {
@@ -115,6 +119,11 @@ export const state = {
   notes: loadJson("notes.json", []),
   messages: loadJson("messages.json", []),
   journalDoodles: loadJson("journal-doodles.json", {}),
+  cartography: normalizeCartographyDocument(loadJson("cartography.json", DEFAULT_CARTOGRAPHY)),
+  liveSession: normalizeLiveSessionDocument(loadJson("live-session.json", DEFAULT_LIVE_SESSION)),
+  characterPresentations: normalizeCharacterPresentations(loadJson("character-presentations.json", DEFAULT_CHARACTER_PRESENTATIONS)),
+  sheetBeauty: normalizeSheetBeautyDocument(loadJson("sheet-beauty.json", DEFAULT_SHEET_BEAUTY)),
+  beastforms: loadJson("daggerheart/beastforms.json", { forms: [] }).forms || [],
   feedback: loadJson("feedback.json", []),
   artLibrary: loadJson("art-library.json", { scenes: [] }),
   screen: loadJson("screen.json", { current: null }),
@@ -227,6 +236,10 @@ export function persist() {
   saveJson("notes.json", state.notes);
   saveJson("messages.json", state.messages);
   saveJson("journal-doodles.json", state.journalDoodles);
+  saveJson("cartography.json", state.cartography);
+  saveJson("live-session.json", state.liveSession);
+  saveJson("character-presentations.json", state.characterPresentations);
+  saveJson("sheet-beauty.json", state.sheetBeauty);
   saveJson("feedback.json", state.feedback);
   saveJson("art-library.json", state.artLibrary);
   saveJson("screen.json", state.screen);

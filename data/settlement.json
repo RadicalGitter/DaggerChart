@@ -7,11 +7,11 @@
   },
   "chronicleNotes": "",
   "resources": {
-    "Lumber": 0,
-    "Food": 0,
-    "Morale": 0,
-    "Security": 0,
-    "Supplies": 0
+    "Lumber": 11,
+    "Food": 2,
+    "Morale": 2,
+    "Security": 2,
+    "Supplies": 10
   },
   "buildings": {
     "lumber_camp": {
@@ -22,7 +22,14 @@
       "foremanId": "chr_garrick",
       "spent": [],
       "effects": [],
-      "producedTotal": 0
+      "producedTotal": 0,
+      "constructed": false,
+      "projectCheck": {
+        "status": "pending",
+        "note": "",
+        "updatedAt": "2026-07-17T23:03:28.446Z"
+      },
+      "constructionHistory": []
     },
     "hunters_lodge": {
       "id": "hunters_lodge",
@@ -32,7 +39,14 @@
       "foremanId": "chr_lyra",
       "spent": [],
       "effects": [],
-      "producedTotal": 0
+      "producedTotal": 0,
+      "constructed": false,
+      "projectCheck": {
+        "status": "pending",
+        "note": "",
+        "updatedAt": null
+      },
+      "constructionHistory": []
     },
     "bunkhouse": {
       "id": "bunkhouse",
@@ -42,7 +56,14 @@
       "foremanId": "chr_jory",
       "spent": [],
       "effects": [],
-      "producedTotal": 0
+      "producedTotal": 0,
+      "constructed": false,
+      "projectCheck": {
+        "status": "pending",
+        "note": "",
+        "updatedAt": null
+      },
+      "constructionHistory": []
     },
     "watchtower": {
       "id": "watchtower",
@@ -52,7 +73,14 @@
       "foremanId": "chr_calder",
       "spent": [],
       "effects": [],
-      "producedTotal": 0
+      "producedTotal": 0,
+      "constructed": false,
+      "projectCheck": {
+        "status": "pending",
+        "note": "",
+        "updatedAt": null
+      },
+      "constructionHistory": []
     },
     "storehouse": {
       "id": "storehouse",
@@ -62,7 +90,15 @@
       "foremanId": "chr_ellory",
       "spent": [],
       "effects": [],
-      "producedTotal": 0
+      "producedTotal": 0,
+      "constructed": false,
+      "projectCheck": {
+        "status": "pending",
+        "note": "",
+        "updatedAt": null
+      },
+      "constructionHistory": []
     }
-  }
+  },
+  "constructionVersion": 1
 }

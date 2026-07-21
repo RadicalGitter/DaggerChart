@@ -1,6 +1,6 @@
 const FEATURE_KEYS = [
   "settlement", "folk", "chronicle", "journal", "character", "inventory", "rules",
-  "notes", "dice", "messages", "feedback", "characterCreation", "music", "sessionPools"
+  "notes", "partyCards", "dice", "messages", "feedback", "characterCreation", "music", "sessionPools"
 ];
 
 const DEFAULTS = Object.freeze(Object.fromEntries(FEATURE_KEYS.map((key) => [key, key !== "settlement"])));
