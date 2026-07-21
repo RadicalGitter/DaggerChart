@@ -1,0 +1,4 @@
+interface:
+  display_name: "Character Sheet Beautifier"
+  short_description: "Extend deterministic, versioned character sheet decoration"
+  default_prompt: "Use $sheet-beautifier to add or refine a deterministic character-sheet beautification recipe."
