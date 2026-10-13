@@ -1,4 +1,5 @@
 node_modules/
+.runtime/
 data/backups/
 data/telemetry.json
 *.tmp

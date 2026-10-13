@@ -242,6 +242,10 @@ input:focus, select:focus, textarea:focus { outline-color: var(--creator-gold); 
 .portrait-controls > label { display: block; margin-bottom: .35rem; color: #d3c8b2; font-size: .82rem; }
 .portrait-balance { max-width: 620px; margin: -.1rem 0 .55rem; color: #989485; font-size: .75rem; line-height: 1.45; }
 .portrait-controls textarea { width: 100%; }
+.portrait-controls [hidden] { display: none; }
+body.creator-body .navbtns[hidden], body.creator-body #progress[hidden], body.creator-body .step-number[hidden] { display: none; }
+body.portrait-workshop .creator-workspace { display: block; }
+body.portrait-workshop .step-heading { grid-template-columns: minmax(0, 1fr); }
 .portrait-writing-tools { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem .8rem; margin: .55rem 0 .7rem; }
 .portrait-writing-tools button { min-height: 34px; padding: .35rem .65rem; }
 .portrait-writing-tools small { color: #858e84; font-size: .66rem; }
@@ -276,8 +280,13 @@ input:focus, select:focus, textarea:focus { outline-color: var(--creator-gold); 
 .portrait-pigment small, .portrait-pigment strong { display: block; }
 .portrait-pigment small { color: #868f84; font-size: .61rem; font-variant: small-caps; }
 .portrait-pigment strong { margin-top: .12rem; font-size: .78rem; font-weight: 500; text-transform: uppercase; }
-.portrait-tag-field, .portrait-equipment, .portrait-tuning { margin: .8rem 0; padding: .65rem 0; border: 0; border-top: 1px solid #414a42; }
-.portrait-tag-field legend, .portrait-equipment legend, .portrait-tuning legend { padding-right: .65rem; color: #aaa28f; font-size: .68rem; font-variant: small-caps; }
+.portrait-tag-field, .portrait-equipment, .portrait-tuning, .portrait-reference { min-width: 0; margin: .8rem 0; padding: .65rem 0; border: 0; border-top: 1px solid #414a42; }
+.portrait-tag-field legend, .portrait-equipment legend, .portrait-tuning legend, .portrait-reference legend { padding-right: .65rem; color: #aaa28f; font-size: .68rem; font-variant: small-caps; }
+.portrait-reference > .portrait-balance { margin: .65rem 0; }
+.portrait-reference > label { display: block; margin: .6rem 0 .35rem; color: #d3c8b2; font-size: .75rem; }
+.portrait-reference > input { width: 100%; }
+.portrait-edit-review { margin-top: .8rem; padding: .75rem; border: 1px solid var(--favorite-color); background: #19201c; }
+.portrait-edit-review p { margin: 0 0 .65rem; color: #d3c8b2; font-size: .78rem; }
 .portrait-tags { display: flex; flex-wrap: wrap; gap: .45rem; }
 .portrait-tags button {
   min-height: 34px; padding: .35rem .75rem; border: 1px solid #4c564e; border-radius: 999px;
@@ -295,7 +304,7 @@ input:focus, select:focus, textarea:focus { outline-color: var(--creator-gold); 
 .portrait-tuning-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem 1rem; }
 .portrait-style-group { margin-bottom: .75rem; }
 .portrait-style-group > span { display: block; margin-bottom: .35rem; color: #c9bfa9; font-size: .7rem; }
-.portrait-style-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; max-width: 300px; }
+.portrait-style-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; max-width: 360px; }
 .portrait-style-buttons button {
   height: 42px; border: 1px solid #4a554d; border-radius: 3px; background: #171d1a; color: #b9b29f; font-size: .76rem;
 }

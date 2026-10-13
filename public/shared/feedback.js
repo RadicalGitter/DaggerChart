@@ -1,6 +1,7 @@
 import { t } from "/shared/i18n.js";
 import { playerFeatureEnabled } from "/shared/player-features.js";
 import "/shared/player-home.js";
+import "/shared/player-share.js";
 
 if (new URLSearchParams(location.search).get("embed") !== "1") {
   const style = document.createElement("link");

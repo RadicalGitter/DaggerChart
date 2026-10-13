@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "about": "Source-authored GM adventure preparation. Entire documents are private; only an explicitly selected map can be projected. Edit this file to add adventures. Story outcomes become campaign truth through play, not by being listed here.",
+  "adventures": [
+    {
+      "id": "adventure_alderford",
+      "name": "The Road to Alderford",
+      "summary": "A note carried by a changed raider leads the settlers to a struggling mill village and a lesser tower connected to their own.",
+      "status": "Prepared",
+      "partySize": 3,
+      "level": 1,
+      "duration": "One flexible session; allow time for two new players to create characters",
+      "overview": "A few weeks after the defence of the settlement, a handful of basic houses are standing and daily life is beginning to settle. The party's first expedition discovers neighbours, people who remember the raiders before they changed, and evidence that the Tower of Vesserin belongs to a wider network. Alderford has perhaps fourteen survivors: enough to be a community, too few and too poorly supplied to be secure for the coming months. Make their culture, craft and home matter before asking whether they should leave it.",
+      "hook": {
+        "title": "The note in the coat lining",
+        "text": "The hill is lost. Stop sending people back there.\n\nAlderford still has flour. Take the lower road past the split ash; the bridge will hold if you cross one at a time.\n\nFind out whether anyone there can still wake the little tower. If the road home opens, send word before you take the stores.\n\n— R.",
+        "notes": "Ellory finds this while sorting equipment taken from the defeated raiders; the coat lining explains the delay. Put the charcoal sketch of the settlement from the previous encounter on its reverse. The note is older than today's expedition, not a fresh deadline. Its writer's identity remains open. The hope of a road home need not be correct, and does not establish a cure for the curse. Give them the route without requiring a successful roll to receive the adventure."
+      },
+      "openingScenes": [
+        { "title": "Garrick's beam", "body": "Garrick needs a second pair of hands holding a beam while he fits it. Ask a new character what sort of work they have been doing in these first weeks. Let an ordinary task introduce them through action." },
+        { "title": "Jory's communal meal", "body": "Jory is arranging the first proper meal under a roof. Let him draw someone quiet into the conversation and give the new characters a chance to find a place in the base cast." },
+        { "title": "Ellory's provisions", "body": "Ellory asks someone to count the provisions for a scouting trip and brings out the newly found note. The practical question is whether Alderford is a neighbour, a threat, or a place where help is needed." }
+      ],
+      "scenes": [
+        { "title": "1. Home takes shape", "body": "Play two or three small settlement scenes after character creation. Establish one familiar face or daily routine for each newcomer. The note gives a destination; the party chooses its reason to go." },
+        { "title": "2. The lower road", "body": "Keep travel to roughly half a day. Pass the split ash, an abandoned raider camp and an old maintained road. Show cooking utensils, patched clothes and an unfinished game scratched on a board alongside signs of painful bodily change. Old paving and wagon tracks beyond the village show that other people already live, travel and trade here." },
+        { "title": "3. A handcart at the ford", "body": "Someone is dragging a damaged handcart towards Alderford. Offer a simple chance to help before danger: repair a wheel, carry a load, find safe footing, or talk. A helpful arrival creates a natural welcome; distrust still permits conversation." },
+        { "title": "4. Alderford's last grain", "body": "Mera offers food before asking their business. Ors recognises some of the changed attackers. A small raiding party threatens the village's last loaded grain cart. Let the players organise defence, conceal supplies, bargain, set an ambush, or move people to safety." },
+        { "title": "5. The lesser tower", "body": "Ors can show the tower when asked about the note, before or after the crisis. Its interior is sealed, but an exterior arrival court can be examined. Disturbing the basin briefly reveals the great tower and the settlement's newly built houses in its water. Ors has never seen those houses: 'That's where the road used to end.'" },
+        { "title": "6. A neighbour's answer", "body": "Once immediate danger passes, Mera asks: 'You said you've been building houses. How many people can you take?' Some villagers want to leave; others want to stay. Let shelter, a supply run, rebuilding or an alliance emerge as a choice, then bring the party home with news." }
+      ],
+      "characters": [
+        {
+          "folkId": "chr_1791907868429_fqgj",
+          "name": "Mera",
+          "role": "Miller, Alderford",
+          "body": "Practical, capable and exhausted. Feeds visitors before asking their business. Her family's mill is both her livelihood and the place that holds their history.",
+          "motivation": "Keep the living safe without casually surrendering everything they have built.",
+          "cue": "Give her a task to finish while she talks. Her questions concern meals, repairs and how many people can sleep under a roof."
+        },
+        {
+          "folkId": "chr_1791907868443_02rf",
+          "name": "Ors",
+          "role": "Roadkeeper, Alderford",
+          "body": "An older keeper of routes, fords and waymarks. Knows inherited practical customs around the lesser tower. Recognises former flour customers among the changed raiders.",
+          "motivation": "Keep people connected to safe routes and a world larger than this damaged village.",
+          "cue": "Offer particular memories rather than a lore lecture: 'That one used to come here for flour. Always complained about the measure.'"
+        }
+      ],
+      "rumours": [
+        { "text": "The mill at Alderford used to serve travellers from farther down the road.", "source": "Old waymarks, Ors, abandoned flour sacks", "reliability": "Reliable local knowledge", "notes": "A first indication of a wider inhabited world. Leave the names and politics of distant powers open." },
+        { "text": "Those raiders did not always look like that. We knew some of them.", "source": "Mera or Ors recognising an attacker", "reliability": "Reliable eyewitness memory", "notes": "Their changes followed displacement from the hill. Neither villager can explain the curse's true cause or mechanics." },
+        { "text": "The little tower once stood at the end of a road that you could not walk on the ground.", "source": "Ors's inherited roadkeeper stories", "reliability": "Old tradition; the basin offers fresh evidence", "notes": "Hint at the waypoint connection. Ors knows customs, not the full network or its makers." },
+        { "text": "Some of the changed folk are looking for a way home.", "source": "The pocket note or a surviving raider", "reliability": "A genuine hope, not a promise", "notes": "This does not prove the tower can return displaced people or remove their mutation." },
+        { "text": "Driving them off again will not put the missing hands back at the mill.", "source": "Mera after the immediate crisis", "reliability": "A practical assessment", "notes": "Introduce the longer problem naturally. Alderford needs food, labour, safety or somewhere else to live." }
+      ],
+      "encounters": [
+        { "id": "encounter_ford_handcart", "name": "The broken handcart", "setup": "At the ford, a villager is struggling with a damaged cart.", "objective": "Make first contact through useful action.", "approaches": "Repair, carry, guide, improvise or simply ask what happened.", "notes": "A social and practical encounter. No combat preset is needed; do not make a failed roll block the journey." },
+        { "id": "encounter_alderford_grain", "name": "Alderford's Last Grain", "presetId": "preset_alderford_last_grain", "setup": "Changed raiders approach the last loaded grain cart beside the mill.", "objective": "Protect food and people. The attackers want supplies and an escape route.", "approaches": "Defend the cart, hide it, bargain, prepare an ambush, or evacuate the villagers.", "notes": "Optional gentle Tier 1 combat for three level-1 PCs, including two beginners. A clear objective matters more than killing every attacker. Open the preset preview to read the roster and running notes; start it only when wanted." },
+        { "id": "encounter_tower_basin", "name": "The road in the water", "setup": "The lesser tower's exterior court and basin remain accessible.", "objective": "Discover the connection to the Tower of Vesserin.", "approaches": "Examine the court, ask Ors about its customs, or disturb the basin.", "notes": "A discovery scene, not a forced fight. The reflected new houses are the unmistakable connection. Curiosity should yield a lead even though the interior remains sealed." }
+      ],
+      "places": [
+        { "id": "place_settlement", "name": "The Settlement and the Tower of Vesserin", "description": "A handful of basic timber houses and an emerging palisade beneath the great tower. A home beginning to acquire routines a few weeks after the raider attack.", "discoveries": "The recovered note and the older charcoal sketch of this camp.", "notes": "The protected grave was investigated last session; do not explain its significance or the Bard tonight." },
+        { "id": "place_split_ash", "name": "The Split Ash and Lower Road", "description": "A conspicuous split tree beside a winding older road. Patched paving, worn waymarks and wagon tracks reveal that the route has a history.", "discoveries": "The note's directions are real, and the road continues beyond the settlers' current knowledge.", "notes": "The half-day journey and map arrangement are session-preparation estimates, not an exact hex survey." },
+        { "id": "place_abandoned_camp", "name": "The Abandoned Raider Camp", "description": "Sagging tents, a cold fire, patched clothes and everyday cooking utensils just off the road among the trees.", "discoveries": "An unfinished game scratched on a board; ordinary lives alongside evidence of painful mutation.", "notes": "Humanise the former occupants without excusing their attacks or making all changed people alike." },
+        { "id": "place_ford", "name": "The Ford", "description": "A shallow river crossing with a narrow weathered bridge nearby. A damaged handcart makes the crossing someone's immediate problem.", "discoveries": "Helping opens a conversation with a resident of Alderford.", "notes": "Let a failed attempt cost time, wet belongings or an awkward arrival, rather than closing the route." },
+        { "id": "place_alderford", "name": "Alderford and its Mill", "description": "A small timber village around a watermill. It once served passing travellers; repeated raids have left perhaps fourteen people, too little food and too few working hands.", "discoveries": "Neighbours with valuable craft, local knowledge and lives worth preserving. Some recognise the attackers.", "notes": "Keep the community's future undecided. The last grain cart is the immediate crisis; the shortage of labour and security remains afterwards." },
+        { "id": "place_lesser_tower", "name": "The Lesser Tower", "description": "A smaller old stone courier tower on a low rise beside Alderford. Its sealed entrance overlooks an accessible circular arrival court and a weathered basin.", "discoveries": "The basin briefly reflects the Tower of Vesserin and the settlers' newly built houses, revealing a waypoint connection.", "notes": "The interior and travel function do not open tonight. A missing fitted seal is one possible later lead, still provisional. Ors does not know the Bard or the deeper cosmology." }
+      ],
+      "map": {
+        "file": "alderford-overview.png",
+        "caption": "Alderford and the road from the settlement",
+        "alt": "Illustrated outward journey through the split ash, abandoned camp and ford to Alderford and its lesser tower.",
+        "notes": "A schematic overview of the five outward landmarks. The current settlement and its tower are deliberately off the map, leaving their appearance for the players to decide. Relative positions are a proposed arrangement for this adventure, not an exact surveyed map. Showing it reveals all labelled landmarks, but no private character notes or encounter plans."
+      },
+      "outcomes": [
+        { "title": "Shelter at the settlement", "body": "Some or all villagers accept an invitation. Bring their craft, customs and attachments with them. Do not increase population or move characters automatically; record what the table actually decides." },
+        { "title": "Two communities, one alliance", "body": "Alderford remains inhabited while the party arranges supplies, repairs or a return visit. A defended mill and a new settlement can help one another." },
+        { "title": "An imperfect rescue", "body": "If grain is lost or the party retreats, evacuation or mutual aid remains possible. The village's future becomes more urgent rather than the adventure becoming inaccessible." },
+        { "title": "A road to return to", "body": "The tower gives the group a location and a connection worth investigating later, even without entering it or using the passage tonight." }
+      ],
+      "runningNotes": [
+        { "title": "Flexible stopping points", "body": "If creation and introductions take the evening, stop on reaching Alderford and seeing its predicament. With more time, run the grain crisis and tower discovery. Return home with friends and news rather than forcing every scene." },
+        { "title": "Protect the deeper mysteries", "body": "Keep the Bard's identity, the grave's meaning and the cosmology out of tonight's explanations. The villagers know local effects and inherited practices, not the campaign's deepest truth." },
+        { "title": "Separate observations from hopes", "body": "The raiders were displaced and changed. Their note hopes for a road home. The lesser tower is connected to the great tower. A cure, an open passage, a fitted seal and the writer R's identity remain unresolved." },
+        { "title": "Introduce through action", "body": "Give each beginner a clear chance to contribute before combat. Use ordinary work, a helping hand and a concrete objective; keep the number of speaking NPCs small." }
+      ],
+      "followUps": [
+        "Who wrote the note signed R, and what did they mean by home?",
+        "What will wake the lesser tower's route, and who still knows how to use it?",
+        "Who leaves Alderford, who stays, and what help does each group ask for?",
+        "Where does the maintained road lead beyond Alderford?"
+      ]
+    }
+  ]
+}

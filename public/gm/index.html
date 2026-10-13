@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="/shared/gm-tools.css">
 <link rel="stylesheet" href="/shared/folk-cards.css">
 <link rel="stylesheet" href="party-sheet.css">
+<link rel="stylesheet" href="adventures.css">
 <style>
   html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
   .layout { display: grid; grid-template-columns: 220px 1fr; height: 100vh; min-height: 0; overflow: hidden; }
@@ -35,10 +36,9 @@
   body.board-open main,
   body.music-open main,
   body.party-open main,
-  body.cartography-open main { width: 100%; max-width: none; box-sizing: border-box; }
+  body.adventures-open main { width: 100%; max-width: none; box-sizing: border-box; }
   body.music-open main { padding: .75rem; overflow: hidden; }
   body.party-open main { padding: .75rem; overflow: hidden; }
-  body.cartography-open main { padding: .75rem; overflow: hidden; }
   section[hidden] { display: none; }
 
   /* Downtime runner */
@@ -77,11 +77,12 @@
 
   #sec-folk { --folk-sunset: #c9653d; --folk-sunset-bright: #eda36d; --folk-sunset-deep: #8c3d2d; height: 100%; min-height: 0; }
   body.folk-open main { overflow: hidden; }
-  .folk-workshop { display: grid; grid-template-columns: minmax(0, 2fr) minmax(330px, 1fr); gap: 1.5rem; align-items: stretch; height: 100%; min-height: 0; }
+  /* Three portrait cards a row; the card back (the character itself) takes the rest. */
+  .folk-workshop { display: grid; grid-template-columns: minmax(420px, 1fr) minmax(380px, 1.5fr); gap: 1.5rem; align-items: stretch; height: 100%; min-height: 0; }
   .folk-card-field { min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: .65rem .4rem 2rem .15rem; }
   .folk-card-field-head { display: flex; justify-content: space-between; align-items: end; gap: 1rem; margin-bottom: 1rem; }
   .folk-card-field-head p { max-width: 580px; margin: .2rem 0 0; }
-  .folk-card-field .folk-portrait-grid { grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); }
+  .folk-card-field .folk-portrait-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .folk-card-back {
     min-height: 0; height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 1rem 1rem 1.4rem;
     border: 1px solid var(--rule-strong); border-radius: 4px;
@@ -91,6 +92,15 @@
     box-shadow: 0 12px 26px rgba(52, 42, 28, .13);
   }
   .folk-card-back[hidden] { display: none; }
+  .folk-card-back { container-type: inline-size; }
+  .folk-editor-columns { display: grid; grid-template-columns: 1fr; gap: 0 1.6rem; align-items: start; }
+  .folk-editor-col { min-width: 0; }
+  .folk-editor-col > .smallcaps { margin-top: 1rem; }
+  @container (min-width: 720px) {
+    .folk-editor-columns { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .folk-editor-col #ed-description { min-height: 8rem; }
+    .folk-editor-col #ed-gmnotes { min-height: 10rem; }
+  }
   .folk-card-back-head { display: flex; align-items: center; justify-content: space-between; gap: .7rem; margin-bottom: .8rem; }
   .folk-card-back-head h3 { margin: 0; font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; font-size: 1.35rem; }
   .folk-editor-fields textarea,
@@ -125,6 +135,18 @@
   .folk-portrait-studio { display: grid; gap: .8rem; }
   .folk-portrait-preview { width: min(100%, 230px); aspect-ratio: 3 / 4; display: grid; place-items: center; overflow: hidden; margin: 0 auto; border: 1px solid var(--rule-strong); background: #2d302a; color: #d3bd8d; font: 4rem Georgia, serif; }
   .folk-portrait-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .folk-detail-layout { display: grid; grid-template-columns: minmax(150px, 260px) minmax(0, 1fr); gap: 1.5rem; padding: 1rem; align-items: start; }
+  .folk-detail-portrait { width: 100%; }
+  .folk-detail-content { display: grid; gap: 1rem; min-width: 0; }
+  .folk-detail-content section { border-bottom: 1px solid var(--rule); padding-bottom: .8rem; }
+  .folk-detail-content h4, .folk-detail-content h5 { margin: 0 0 .5rem; }
+  .folk-detail-content h5 { margin-top: .8rem; }
+  .folk-detail-content p, .folk-detail-content ul { margin: .4rem 0; line-height: 1.5; }
+  .folk-detail-prose { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .folk-detail-measures { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: .4rem 1rem; margin: .5rem 0; }
+  .folk-detail-measures > div { display: flex; justify-content: space-between; gap: .5rem; }
+  .folk-detail-measures dd { margin: 0; font-variant-numeric: tabular-nums; }
+  @media (max-width: 640px) { .folk-detail-layout { grid-template-columns: minmax(0, 1fr); } .folk-detail-portrait { max-width: 260px; } }
   .folk-portrait-studio textarea { width: 100%; box-sizing: border-box; }
   .folk-portrait-tools, .folk-portrait-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; }
   .folk-portrait-suggestion { padding: .7rem .8rem; border-left: 3px solid var(--folk-sunset); background: var(--paper); font-size: .82rem; line-height: 1.45; }
@@ -900,8 +922,9 @@
     <a href="#buildings" data-nav="buildings">Buildings</a>
     <a href="#folk" data-nav="folk">Folk</a>
     <a href="#board" data-nav="board">Drafting board</a>
-    <a href="#cartography" data-nav="cartography">Cartography</a>
+    <a href="#adventures" data-nav="adventures">Adventures</a>
     <a href="#music" data-nav="music">Music desk</a>
+    <a href="/gm-remote">Pocket controls</a>
     <a href="#people" data-nav="people">People</a>
     <a href="#places" data-nav="places">Places</a>
     <a href="#images" data-nav="images">Images</a>
@@ -910,6 +933,7 @@
     <a href="#almanac" data-nav="almanac">Almanac</a>
     <a href="#ux" data-nav="ux">UX map</a>
     <a href="#feedback" data-nav="feedback">Feedback</a>
+    <a href="#requests" data-nav="requests">Requests <span class="nav-count" id="request-nav-count" hidden></span></a>
     <a href="#credits" data-nav="credits">Expansions</a>
     <a href="#ledger" data-nav="ledger">Ledger</a>
     <a href="#screen" data-nav="screen">Screen</a>
@@ -996,12 +1020,8 @@
       <iframe class="gm-tool-frame gm-board-frame" src="/board/?embed=1" title="The drafting board"></iframe>
     </section>
 
-    <section class="gm-tool-section cartography-section" id="sec-cartography" hidden>
-      <header class="gm-tool-section-head">
-        <h2>Cartography</h2>
-        <a href="/cartography/?gm=1" target="_blank" rel="noopener">Open full atlas ↗</a>
-      </header>
-      <iframe class="gm-tool-frame gm-cartography-frame" src="/cartography/?gm=1&amp;embed=1" title="The cartography desk"></iframe>
+    <section id="sec-adventures" hidden>
+      <div id="adventure-desk" aria-live="polite"></div>
     </section>
 
     <section class="gm-tool-section music-section" id="sec-music" hidden>
@@ -1227,6 +1247,12 @@
       <h2>Playtest tickets</h2>
       <p class="muted">Reports include the player's annotated screen. Agent handoff instructions live in <code>docs/feedback-triage-agent.md</code>.</p>
       <div class="feedback-grid" id="feedback-grid"></div>
+    </section>
+
+    <section id="sec-requests" hidden>
+      <h2>Table requests <span class="muted" id="request-pending-count" style="font-size:.8rem"></span></h2>
+      <p class="muted">Players may ask to place something visible to them on the presenter screen. Nothing is shown until you approve its preview.</p>
+      <div class="request-grid" id="request-grid"></div>
     </section>
 
     <section id="sec-credits" hidden>

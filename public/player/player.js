@@ -38,7 +38,7 @@ function artifactHtml(id, pc) {
     </span>`;
   }
   if (id === "tome") {
-    return `<span class="aged-tome-art" aria-hidden="true"><i></i><i></i><b class="tome-monogram">${esc(pc?.name?.slice(0, 1).toUpperCase() || "?")}</b></span>`;
+    return `<span class="aged-tome-art" aria-hidden="true"><b class="tome-monogram">${esc(pc?.name?.slice(0, 1).toUpperCase() || "?")}</b></span>`;
   }
   if (id === "book") {
     return `<span class="folio-art" aria-hidden="true">
@@ -59,21 +59,14 @@ function preferredShell(pc) {
 
 function renderIdentity() {
   const pc = currentPC();
-  $("#identity-name").textContent = pc?.name || t("player.hub.choosepc");
-  $("#identity-mark").innerHTML = pc?.portrait
-    ? `<img src="${esc(pc.portrait)}" alt="">`
-    : esc(pc?.name?.slice(0, 1) || "?");
-  $("#identity-menu").innerHTML = [
-    ...identities().map((entry) => `<button type="button" data-pc="${esc(entry.id)}">${esc(entry.name)}${entry.player ? ` · ${esc(entry.player)}` : ""}</button>`),
-    ...(playerFeatureEnabled("characterCreation") ? [`<a href="/create/?return=/player">${esc(t("login.create"))}</a>`] : [])
-  ].join("");
-  for (const button of document.querySelectorAll("[data-pc]")) {
-    button.onclick = () => {
-      setPC(button.dataset.pc);
-      closeIdentityMenu();
-      render();
-    };
-  }
+  $("#hub-character-name").textContent = pc?.name || t("player.hub.atHand");
+  const portrait = $("#hub-portrait");
+  portrait.innerHTML = pc?.portrait ? `<img src="${esc(pc.portrait)}" alt="">` : pc ? esc(pc.name?.slice(0, 1) || "?") : "";
+  if (pc) {
+    portrait.href = `/portrait/?pc=${encodeURIComponent(pc.id)}`;
+    portrait.title = t(pc.portrait ? "portrait.open" : "portrait.add");
+    portrait.setAttribute("aria-label", portrait.title);
+  } else portrait.removeAttribute("href");
 }
 
 function renderViews() {
@@ -129,9 +122,7 @@ function renderEssentials() {
     ? `<a href="/presentation/?pc=${id}"><span aria-hidden="true">◐</span><strong>${esc(t("presentation.tool"))}</strong></a>`
     : "";
   const actions = [
-    playerFeatureEnabled("character") ? `<a href="/character/${id}"><span aria-hidden="true">◇</span><strong>${esc(t("table.character"))}</strong></a>` : "",
     playerFeatureEnabled("character") ? `<a href="/background/${id}"><span aria-hidden="true">⌁</span><strong>${esc(t("background.short"))}</strong></a>` : "",
-    playerFeatureEnabled("notes") ? `<button type="button" data-open-notes><span aria-hidden="true">✎</span><strong>${esc(t("player.notes.open"))}</strong></button>` : "",
     playerFeatureEnabled("journal") ? `<a href="/journal/?pc=${id}"><span aria-hidden="true">▤</span><strong>${esc(t("journal.title"))}</strong></a>` : "",
     playerFeatureEnabled("inventory") ? `<a href="/tome?open=1&amp;section=inventory"><span aria-hidden="true">▧</span><strong>${esc(t("table.inventory"))}</strong></a>` : "",
     playerFeatureEnabled("rules") ? `<a href="/rules"><span aria-hidden="true">⌘</span><strong>${esc(t("rules.title"))}</strong></a>` : "",
@@ -140,7 +131,6 @@ function renderEssentials() {
   ].filter(Boolean);
   $("#essential-actions").innerHTML = actions.join("");
   section.hidden = actions.length === 0;
-  section.querySelector("[data-open-notes]")?.addEventListener("click", () => window.dispatchEvent(new Event("settlement:open-notes")));
 }
 
 function renderGate() {
@@ -165,29 +155,13 @@ function render() {
   clearStalePC();
   data.playerFeatures = setPlayerFeatureContext(data, currentPCId());
   setTelemetryMode(currentPC() ? "views" : "choose-character");
-  document.title = t("player.hub.root");
+  document.title = currentPC() ? `${currentPC().name} — ${t("player.hub.atHand")}` : t("player.hub.choosepc");
   renderIdentity();
   renderEssentials();
   renderViews();
   renderGate();
 }
 
-function closeIdentityMenu() {
-  $("#identity-menu").hidden = true;
-  $("#identity-button").setAttribute("aria-expanded", "false");
-}
-
-$("#identity-button").onclick = () => {
-  const menu = $("#identity-menu");
-  menu.hidden = !menu.hidden;
-  $("#identity-button").setAttribute("aria-expanded", String(!menu.hidden));
-};
-document.addEventListener("pointerdown", (event) => {
-  if (!event.target.closest(".identity-wrap")) closeIdentityMenu();
-});
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") closeIdentityMenu();
-});
 window.addEventListener("storage", (event) => {
   if (["settlement-pc", "settlement-shell"].includes(event.key)) render();
 });

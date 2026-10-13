@@ -16,6 +16,7 @@ const esc = (s) =>
 const TYPE_COST = { Minion: 1, Social: 1, Support: 1, Horde: 2, Ranged: 2, Skulk: 2, Standard: 2, Leader: 3, Bruiser: 4, Solo: 5 };
 
 let BESTIARY = [];
+let PRESETS = [];
 let BESTIARY_SOURCES = [];
 let IDENTITIES = [];
 let RULE_NODES = [];
@@ -66,6 +67,10 @@ style.textContent = `
   #enc-inspector, #enc-rules { min-height: 0; overflow-y: auto; padding: 0.8rem; font-size: 0.88rem; }
   #enc-inspector[hidden], #enc-rules[hidden] { display: none; }
   #enc-inspector h2 { margin: 0 0 0.1rem; font-size: 1.05rem; }
+  #enc-inspector .enc-notes { margin: 0 0 0.9rem; padding: 0.6rem 0.7rem; border-left: 3px solid var(--oxblood); background: rgba(0,0,0,0.035); }
+  #enc-inspector .enc-notes p { margin: 0.3rem 0 0; line-height: 1.45; white-space: pre-wrap; }
+  #enc-preset { max-width: 190px; }
+  #enc-overlay[data-preset-preview] .ce-add { display: none; }
   #enc-inspector .muted { color: var(--ink-faint); font-size: 0.78rem; }
   #enc-inspector .provenance { margin-top: .18rem; color: #8a482f; font-size: .64rem; font-variant: small-caps; }
   #enc-inspector .statline { margin: 0.5rem 0; }
@@ -126,6 +131,9 @@ overlay.innerHTML = `
     <span class="title">The Encounter Stage</span>
     <select id="enc-pick"></select>
     <button class="quiet" id="enc-new">+ New encounter</button>
+    <select id="enc-preset" aria-label="Start an encounter from a preset"></select>
+    <button id="enc-start-preview" hidden>Start this encounter</button>
+    <span id="enc-preview-status" class="muted" hidden>Preset preview · start to add player cards</span>
     <input type="text" id="enc-name" placeholder="Name the encounter" style="width: 170px;">
     <span class="sep"></span>
     <span id="enc-bp"></span>
@@ -170,12 +178,14 @@ async function loadStatic() {
   IDENTITIES = Array.isArray(party) ? party : [];
   RULE_NODES = prepareRuleNodes(rules);
   GM_SCREEN = gmScreen;
+  // Presets are optional: an older server without the route simply offers none.
+  PRESETS = await fetch("/api/encounters/presets").then((r) => (r.ok ? r.json() : [])).catch(() => []);
 }
 
 async function loadEncounters() {
   const doc = await fetch("/api/encounters").then((r) => r.json());
   encounters = doc.encounters || [];
-  if (current) current = encounters.find((e) => e.id === current.id) || null;
+  if (current && !current.isPresetPreview) current = encounters.find((e) => e.id === current.id) || null;
 }
 
 async function loadProjection() {
@@ -185,7 +195,7 @@ async function loadProjection() {
 }
 
 function queueSave() {
-  if (!current) return;
+  if (!current || current.isPresetPreview) return;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     saveTimer = null;
@@ -205,7 +215,8 @@ function queueSave() {
 // ---------- battle points ----------
 function battlePoints() {
   const pcs = current.entities.filter((e) => e.kind === "pc");
-  const budget = pcs.length ? pcs.length * 3 + 2 : 0;
+  const partySize = current.isPresetPreview ? current.partySize : pcs.length;
+  const budget = partySize ? partySize * 3 + 2 : 0;
   let spent = 0;
   let minions = 0;
   for (const entity of current.entities) {
@@ -215,7 +226,7 @@ function battlePoints() {
     if (block.type === "Minion") minions += 1;
     else spent += TYPE_COST[block.type] ?? 2;
   }
-  if (minions) spent += Math.ceil(minions / Math.max(1, pcs.length));
+  if (minions) spent += Math.ceil(minions / Math.max(1, partySize));
   return { budget, spent };
 }
 
@@ -306,6 +317,13 @@ function cardHtml(entity, stageW, engaged) {
 function wireCard(el, entity) {
   el.addEventListener("pointerdown", (event) => {
     if (event.button !== 0) return;
+    if (current?.isPresetPreview) {
+      selectedEntityId = selectedEntityId === entity.id ? null : entity.id;
+      previewAdversaryId = null;
+      renderInspector();
+      renderStage();
+      return;
+    }
     const rect = stage.getBoundingClientRect();
     drag = { entity, moved: false, startX: event.clientX, startY: event.clientY, ox: entity.x, oy: entity.y, rect };
     el.classList.add("dragging");
@@ -361,7 +379,7 @@ function renderBestiary() {
 }
 
 function summon(adversaryId) {
-  if (!current) return;
+  if (!current || current.isPresetPreview) return;
   const block = adversary(adversaryId);
   if (!block) return;
   const count = current.entities.filter((e) => e.kind === "adversary" && e.refId === adversaryId).length;
@@ -446,14 +464,15 @@ function renderInspector() {
   if (!entity && previewAdversaryId) {
     const block = adversary(previewAdversaryId);
     panel.innerHTML = block ? `${statBlockHtml(block)}
-      <div class="actions"><button data-act="summon">Add to the encounter</button></div>` : "";
+      <div class="actions"><button data-act="summon" ${current?.isPresetPreview ? "disabled" : ""}>Add to the encounter</button></div>` : "";
     panel.querySelector("[data-act=summon]")?.addEventListener("click", () => summon(previewAdversaryId));
     wireInspectorRuleTags(panel);
     return;
   }
 
   if (!entity) {
-    panel.innerHTML = `<span id="enc-empty-note">Pick an adversary from the bestiary, or a card on the stage. Slide an enemy card against a character to put them in melee.</span>`;
+    const notes = current?.notes ? `<div class="enc-notes"><strong>Running notes</strong><p>${esc(current.notes)}</p></div>` : "";
+    panel.innerHTML = `${notes}<span id="enc-empty-note">${current?.isPresetPreview ? "Preview the roster and running notes. Start this encounter when you want to add the players and track the fight." : "Pick an adversary from the bestiary, or a card on the stage. Slide an enemy card against a character to put them in melee."}</span>`;
     return;
   }
 
@@ -464,6 +483,7 @@ function renderInspector() {
       <div class="muted">Player character — vitals live on their sheet and the quick table.</div>
       <div class="actions">
         <button class="quiet" data-act="defeat">${entity.defeated ? "Back on their feet" : "Down"}</button>
+        <button class="quiet" data-act="remove">Not at the table tonight</button>
       </div>`;
   } else {
     const block = adversary(entity.refId);
@@ -495,6 +515,13 @@ function renderInspector() {
         queueSave();
       });
     }
+  }
+  if (current?.isPresetPreview) {
+    for (const input of panel.querySelectorAll("input[data-act]")) input.readOnly = true;
+    for (const button of panel.querySelectorAll("button[data-act]")) button.disabled = true;
+    for (const track of panel.querySelectorAll("[data-track]")) track.inert = true;
+    wireInspectorRuleTags(panel);
+    return;
   }
   panel.querySelector("[data-act=defeat]")?.addEventListener("click", () => {
     entity.defeated = !entity.defeated;
@@ -664,17 +691,25 @@ function renderRules() {
 
 // ---------- header ----------
 function renderHeader() {
+  overlay.toggleAttribute("data-preset-preview", Boolean(current?.isPresetPreview));
   const pick = $("#enc-pick");
   pick.innerHTML = encounters.length
     ? encounters.map((e) => `<option value="${esc(e.id)}" ${current?.id === e.id ? "selected" : ""}>${esc(e.name)}</option>`).join("")
     : `<option value="">— no encounters yet —</option>`;
+  if (current?.isPresetPreview) pick.insertAdjacentHTML("afterbegin", `<option value="" selected>Preview: ${esc(current.name)}</option>`);
+  const presetPick = $("#enc-preset");
+  presetPick.hidden = !PRESETS.length;
+  presetPick.innerHTML = `<option value="">+ From a preset…</option>${PRESETS.map((preset) =>
+    `<option value="${esc(preset.id)}" title="${esc(`${preset.summary} ${preset.budget}`.trim())}">${esc(preset.name)}${preset.partySize ? ` · for ${preset.partySize}` : ""}</option>`).join("")}`;
   $("#enc-name").value = current?.name || "";
-  $("#enc-name").disabled = !current;
-  $("#enc-delete").disabled = !current;
+  $("#enc-name").disabled = !current || current.isPresetPreview;
+  $("#enc-delete").disabled = !current || current.isPresetPreview;
+  $("#enc-start-preview").hidden = !current?.isPresetPreview;
+  $("#enc-preview-status").hidden = !current?.isPresetPreview;
 
   const project = $("#enc-project");
   const projected = current && projectedId === current.id;
-  project.disabled = !current;
+  project.disabled = !current || current.isPresetPreview;
   project.setAttribute("aria-pressed", String(Boolean(projected)));
   project.textContent = projected ? "Showing at the table — take it down" : "Show at the table";
 
@@ -694,6 +729,30 @@ function renderAll() {
 }
 
 // ---------- wiring ----------
+$("#enc-start-preview").addEventListener("click", async (event) => {
+  if (!current?.isPresetPreview) return;
+  const button = event.currentTarget;
+  button.disabled = true;
+  try {
+    const response = await fetch("/api/encounters", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ presetId: current.presetId })
+    });
+    if (!response.ok) throw new Error("The encounter could not be started.");
+    const encounter = await response.json();
+    encounters.push(encounter);
+    current = encounter;
+    selectedEntityId = null;
+    previewAdversaryId = null;
+    const url = new URL(location.href);
+    url.searchParams.delete("preset");
+    url.searchParams.set("encounter", encounter.id);
+    history.replaceState(null, "", url);
+    renderAll();
+  } catch (error) {
+    $("#enc-preview-status").textContent = error.message;
+  } finally { button.disabled = false; }
+});
 $("#enc-close").addEventListener("click", () => setOpen(false));
 for (const button of overlay.querySelectorAll("[data-enc-pane-button]")) {
   button.addEventListener("click", () => setCompactPane(button.dataset.encPaneButton));
@@ -715,6 +774,23 @@ $("#enc-new").addEventListener("click", async () => {
   renderAll();
   $("#enc-name").focus();
   $("#enc-name").select();
+});
+$("#enc-preset").addEventListener("change", async (event) => {
+  const presetId = event.target.value;
+  event.target.value = "";
+  if (!presetId) return;
+  const response = await fetch("/api/encounters", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ presetId })
+  });
+  if (!response.ok) return;
+  const encounter = await response.json();
+  encounters.push(encounter);
+  current = encounter;
+  selectedEntityId = null;
+  previewAdversaryId = null;
+  renderAll();
 });
 $("#enc-pick").addEventListener("change", (event) => {
   current = encounters.find((e) => e.id === event.target.value) || null;
@@ -762,6 +838,7 @@ stream.onmessage = () => {
   }, 500);
 };
 
+let initialEncounterLinkApplied = false;
 async function setOpen(next) {
   overlayOpen = next;
   overlay.hidden = !next;
@@ -769,12 +846,33 @@ async function setOpen(next) {
   try {
     if (!BESTIARY.length) await loadStatic();
     await Promise.all([loadEncounters(), loadProjection()]);
+    if (!initialEncounterLinkApplied) {
+      initialEncounterLinkApplied = true;
+      const query = new URLSearchParams(location.search);
+      if (query.get("preset")) {
+        const response = await fetch(`/api/encounters/presets/${encodeURIComponent(query.get("preset"))}`);
+        if (!response.ok) throw new Error("That encounter preset is unavailable.");
+        const preset = await response.json();
+        current = {
+          id: `preview_${preset.id}`, isPresetPreview: true, presetId: preset.id,
+          name: preset.name, notes: preset.notes, partySize: preset.partySize,
+          entities: preset.adversaries.map((entry, index) => ({
+            ...entry, id: `preview_${index}`, kind: "adversary", w: .09,
+            hp: 0, stress: 0, defeated: false
+          }))
+        };
+      } else if (query.get("encounter")) {
+        current = encounters.find((entry) => entry.id === query.get("encounter")) || null;
+      }
+    }
     if (!current) current = encounters[0] || null;
     setCompactPane("field");
     setInspectorMode(inspectorMode);
     renderAll();
   } catch (error) {
     console.error(error);
+    $("#enc-preview-status").hidden = false;
+    $("#enc-preview-status").textContent = error.message;
   }
 }
 

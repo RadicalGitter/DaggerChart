@@ -1,13 +1,93 @@
+/* The way home: a brass-rimmed ribbon hung from the top edge on two cords,
+   centred above every player page. Same object, same place, everywhere. */
 .player-home {
-  position: fixed; z-index: 8500; right: max(14px, env(safe-area-inset-right)); bottom: max(70px, calc(env(safe-area-inset-bottom) + 70px));
-  min-width: 112px; height: 46px; display: flex; align-items: center; justify-content: center; gap: .48rem; box-sizing: border-box; padding: 0 .75rem;
-  color: #e5dfce; border: 1px solid rgba(165, 181, 155, .7); border-radius: 6px; background: rgba(31, 39, 34, .95);
-  box-shadow: 0 5px 18px rgba(0,0,0,.42); font: .82rem Georgia, "Times New Roman", serif; letter-spacing: 0; text-decoration: none;
+  --ph-brass: #d4b679;
+  --ph-brass-deep: #8f7442;
+  --ph-ink: #1a2d23;
+  --ph-ink-deep: #11201a;
+  --ph-text: #efdcaa;
+  --ph-notch: 14px;
+  position: fixed; z-index: 8500; top: max(10px, env(safe-area-inset-top)); left: 50%;
+  transform: translateX(-50%);
+  display: block; color: var(--ph-text); text-decoration: none;
+  filter: drop-shadow(0 5px 9px rgba(0, 0, 0, .55));
+  transition: transform .18s ease, filter .18s ease;
 }
-.player-home > span { color: #bfd0b7; font-size: 1.14rem; line-height: 1; }
-.player-home:hover, .player-home:focus-visible { color: #fff5dc; border-color: #d0ad68; background: #4e4030; outline: none; }
-.player-home-context-tome { bottom: max(5.1rem, calc(env(safe-area-inset-bottom) + 5.1rem)); }
+/* The cords it hangs from. */
+.player-home::before, .player-home::after {
+  content: ""; position: absolute; bottom: 100%; width: 1px; height: 40px;
+  background: linear-gradient(to top, var(--ph-brass), color-mix(in srgb, var(--ph-brass) 20%, transparent));
+}
+.player-home::before { left: 26px; }
+.player-home::after { right: 26px; }
+
+.ph-plate {
+  position: relative; isolation: isolate; height: 40px; min-width: 172px; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  padding: 0 calc(var(--ph-notch) + 18px);
+  background: linear-gradient(100deg, var(--ph-brass-deep), var(--ph-brass) 22%, #f1dca4 50%, var(--ph-brass) 78%, var(--ph-brass-deep));
+  clip-path: polygon(0 0, 100% 0, calc(100% - var(--ph-notch)) 50%, 100% 100%, 0 100%, var(--ph-notch) 50%);
+}
+/* Ink field inside the brass rim, with an engraved rule above and below. */
+.ph-plate::before {
+  content: ""; position: absolute; z-index: -1; inset: 1.5px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - var(--ph-notch) + 1px) 50%, 100% 100%, 0 100%, calc(var(--ph-notch) - 1px) 50%);
+  background:
+    linear-gradient(color-mix(in srgb, var(--ph-brass) 45%, transparent), color-mix(in srgb, var(--ph-brass) 45%, transparent)) top 4px center / calc(100% - 2 * var(--ph-notch) - 14px) 1px no-repeat,
+    linear-gradient(color-mix(in srgb, var(--ph-brass) 45%, transparent), color-mix(in srgb, var(--ph-brass) 45%, transparent)) bottom 4px center / calc(100% - 2 * var(--ph-notch) - 14px) 1px no-repeat,
+    radial-gradient(ellipse at 50% 0%, #2f4d3c, transparent 70%),
+    linear-gradient(180deg, var(--ph-ink), var(--ph-ink-deep));
+  transition: filter .18s ease;
+}
+.ph-glyph { color: var(--ph-brass); font-size: 19px; line-height: 1; transform: translateY(-1px); }
+.ph-plate strong {
+  font: 500 16.5px/1 "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-variant: small-caps; letter-spacing: .06em; white-space: nowrap;
+}
+/* Small brass lozenges at either end of the legend. */
+.ph-lozenge { width: 5px; height: 5px; flex: none; background: var(--ph-brass); transform: rotate(45deg); opacity: .85; }
+
+.player-home:hover, .player-home:focus-visible {
+  transform: translateX(-50%) translateY(2px); color: #fff6dc; outline: none;
+  filter: drop-shadow(0 7px 12px rgba(0, 0, 0, .6)) drop-shadow(0 0 6px rgba(212, 182, 121, .28));
+}
+.player-home:hover .ph-plate::before, .player-home:focus-visible .ph-plate::before { filter: brightness(1.28); }
+.player-home:focus-visible .ph-plate { outline: 2px solid var(--ph-brass); outline-offset: 3px; }
+.player-home:active { transform: translateX(-50%) translateY(3px); }
+
+/* Out of the way while a page shows a modal of its own. */
+body:has(#paper-dialog:not([hidden]), #inventory-dialog:not([hidden]), .feedback-overlay:not([hidden])) .player-home { visibility: hidden; }
+
+/* Trailing room so a scrolling page's last lines clear the corner controls. */
+.corner-clearance { height: 124px; flex: none; pointer-events: none; }
+/* Pages that scroll inside their own panes get the same room in those panes. */
+body[data-home-route="rules"] :is(.rules-index, .article-pane) { padding-bottom: 124px; }
+
+/* Room under the ribbon on pages whose own heading starts near the top. */
+body[data-home-route="character"] .wrap { padding-top: 64px; }
+body[data-home-route="table"] .wrap { padding-top: 66px; }
+body[data-home-route="table-book"] .folio-head { padding-top: 56px; }
+body[data-home-route="rules"] .rules-masthead { padding-top: 56px; }
+@media (min-width: 761px) {
+  /* The rules workbench fills the viewport under its masthead; account for the taller masthead. */
+  body[data-home-route="rules"] .rules-workbench { height: calc(100vh - 154px); min-height: calc(100vh - 154px); }
+}
+body[data-home-route="background"] .memory-room { padding-top: 58px; }
+body[data-home-route="portrait"] .creator-shell { padding-top: 58px; }
+body[data-home-route="presentation"] .studio-head { padding-top: 38px; }
+body[data-home-route="tome"] .tome-viewport { top: 22px; }
+
 @media (max-width: 560px) {
-  .player-home { min-width: 46px; width: 46px; padding: 0; border-radius: 50%; }
-  .player-home strong { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .player-home { top: max(8px, env(safe-area-inset-top)); }
+  .player-home::before { left: 20px; }
+  .player-home::after { right: 20px; }
+  .ph-plate { height: 32px; min-width: 124px; --ph-notch: 10px; padding: 0 calc(var(--ph-notch) + 12px); gap: 7px; }
+  .ph-plate strong { font-size: 14px; }
+  .ph-glyph { font-size: 15px; }
+}
+@media (max-width: 760px) {
+  body[data-home-route="tome"] .tome-viewport { top: 36px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .player-home, .ph-plate::before { transition: none; }
 }

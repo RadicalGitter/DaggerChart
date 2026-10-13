@@ -7,7 +7,7 @@ import { Blob } from "node:buffer";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { ROOT, loadJson, saveJson } from "./store.js";
-import { musicDescription, sunoGenerationPayload } from "./music-payload.js";
+import { musicDescription, sunoExtensionPayload, sunoGenerationPayload } from "./music-payload.js";
 import { renamedCharacterThemeTitle } from "./party-name.js";
 
 const MUSIC_FILE = "music.json";
@@ -35,6 +35,7 @@ const DEFAULT_MUSIC = {
   songs: [],
   playlists: [
     { id: "library", name: "Library", fixed: true, songIds: [] },
+    { id: "generated", name: "Generated", fixed: true, songIds: [] },
     { id: "character_themes", name: "Character Themes", fixed: true, songIds: [] },
     { id: "suno_mirror", name: "Vessa'rin", fixed: true, songIds: [] }
   ],
@@ -96,6 +97,28 @@ function ensureShape() {
   }
   const mirror = music.playlists.find((playlist) => playlist.id === "suno_mirror");
   mirror.name = music.sunoMirror.targetName;
+  backfillGenerated();
+}
+
+// Songs this desk wrote (not imported masters or mirrored Suno library tracks)
+// always belong in the Generated playlist; older ones are picked up here.
+function isGeneratedSong(song) {
+  return song.source === "suno" || song.source === "mock";
+}
+
+function backfillGenerated() {
+  const generated = music.playlists.find((playlist) => playlist.id === "generated");
+  const have = new Set(generated.songIds);
+  const missing = music.songs
+    .filter((song) => isGeneratedSong(song) && !have.has(song.id))
+    .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  if (missing.length) generated.songIds = [...missing.map((song) => song.id), ...generated.songIds];
+}
+
+function addToGenerated(songs) {
+  const generated = music.playlists.find((playlist) => playlist.id === "generated");
+  const fresh = songs.filter((song) => !generated.songIds.includes(song.id)).map((song) => song.id);
+  if (fresh.length) generated.songIds.unshift(...fresh);
 }
 
 function bootstrapLocalMasters() {
@@ -231,6 +254,7 @@ function songView(song, { includePrompt = true } = {}) {
     promptEnvelope: song.promptEnvelope || null,
     settings: song.settings || {},
     provider: song.provider || null,
+    continuation: song.continuation || null,
     createdAt: song.createdAt,
     publishedAt: song.publishedAt || null,
     error: song.error || null,
@@ -240,6 +264,30 @@ function songView(song, { includePrompt = true } = {}) {
   };
   if (includePrompt) view.prompt = song.prompt || "";
   return view;
+}
+
+function modelPerformanceView() {
+  const tasks = new Map();
+  for (const song of music.songs) {
+    const model = song.settings?.model;
+    const taskId = song.provider?.taskId;
+    const submitted = Date.parse(song.provider?.submittedAt || "");
+    const ready = Date.parse(song.provider?.readyAt || "");
+    if (!model || !taskId || !Number.isFinite(submitted) || !Number.isFinite(ready) || ready < submitted) continue;
+    tasks.set(taskId, { model, seconds: Math.round((ready - submitted) / 1000), submitted });
+  }
+  const groups = new Map();
+  for (const sample of tasks.values()) {
+    const group = groups.get(sample.model) || [];
+    group.push(sample);
+    groups.set(sample.model, group);
+  }
+  return [...groups.entries()].map(([model, samples]) => ({
+    model,
+    samples: samples.length,
+    averageSeconds: Math.round(samples.reduce((sum, sample) => sum + sample.seconds, 0) / samples.length),
+    latestSeconds: [...samples].sort((left, right) => right.submitted - left.submitted)[0].seconds
+  })).sort((left, right) => left.averageSeconds - right.averageSeconds);
 }
 
 export function publishedThemeForPc(pcId) {
@@ -257,6 +305,7 @@ export function publishedThemeForPc(pcId) {
 export function musicView(pcs = []) {
   return {
     provider: providerStatus(),
+    modelPerformance: modelPerformanceView(),
     worldTheme: {
       title: WORLD_THEME_TITLE,
       start: WORLD_THEME_START,
@@ -608,6 +657,25 @@ async function beginLiveTask(song, sourceSong) {
   song.provider.taskId = data.taskId;
   song.provider.generationId = data.taskId;
   song.provider.resultIndex = 0;
+  song.provider.submittedAt = now();
+}
+
+async function beginExtensionTask(song, sourceSong, direction) {
+  const payload = sunoExtensionPayload(sourceSong, direction, {
+    model: modelName(sourceSong.settings || {}),
+    callBackUrl: callbackUrl(),
+    modifiers: song.continuation?.modifiers || []
+  });
+  const data = await providerRequest("/api/v1/generate/extend", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+  if (!data?.taskId) throw new Error("Suno API did not return a task ID.");
+  song.status = "rendering";
+  song.provider.taskId = data.taskId;
+  song.provider.generationId = data.taskId;
+  song.provider.resultIndex = 0;
+  song.provider.submittedAt = now();
 }
 
 function extensionFromUrl(value) {
@@ -667,6 +735,7 @@ async function refreshTask(taskId) {
       song = siblingFrom(template, index);
       music.songs.unshift(song);
       library.songIds.unshift(song.id);
+      addToGenerated([song]);
     }
     song.title = cleanText(track.title, 100) || (index ? `${template.title} ${index + 1}` : template.title);
     song.duration = Number(track.duration) || null;
@@ -682,6 +751,7 @@ async function refreshTask(taskId) {
       }
     }
     song.status = audioPath(song) ? "ready" : "rendering";
+    if (song.status === "ready" && !song.provider.readyAt) song.provider.readyAt = now();
     changed = true;
   }
   return changed;
@@ -769,6 +839,8 @@ export async function generateSong({
     song.status = song.audioFile ? "ready" : "waiting";
     if (!song.audioFile) song.error = "No local mock audio is available.";
     song.provider.resultIndex = 0;
+    song.provider.submittedAt = song.createdAt;
+    if (song.status === "ready") song.provider.readyAt = now();
   } else {
     if (!provider.ready) throw new Error("Suno is not configured on this server.");
     await beginLiveTask(song, sourceSong);
@@ -786,6 +858,86 @@ export async function generateSong({
   }
   music.songs.unshift(...drafts);
   library.songIds.unshift(...drafts.map((draft) => draft.id));
+  addToGenerated(drafts);
+  persistMusic();
+  return songView(song);
+}
+
+export async function extendSong(sourceSongId, { direction = "sustain", modifiers = [] } = {}) {
+  const provider = providerStatus();
+  const normalizedDirection = String(direction || "sustain").toLowerCase();
+  if (!["sustain", "escalate", "deescalate"].includes(normalizedDirection)) {
+    throw new Error("Choose sustain, escalate, or de-escalate.");
+  }
+  const cleanModifiers = Array.isArray(modifiers)
+    ? [...new Set(modifiers.map((value) => cleanText(value, 180)).filter(Boolean))].slice(0, 8)
+    : [];
+  const sourceSong = music.songs.find((candidate) => candidate.id === sourceSongId);
+  if (!sourceSong || sourceSong.status !== "ready" || !audioPath(sourceSong)) {
+    throw new Error("Choose a ready song to continue.");
+  }
+  if (provider.mode === "live" && !sourceSong.provider?.audioId) {
+    throw new Error("This song has no Suno source ID. Synced and generated Suno songs can be continued.");
+  }
+  if (provider.mode === "live" && (normalizedDirection !== "sustain" || cleanModifiers.length)
+    && !["V4", "V4_5", "V4_5PLUS", "V4_5ALL", "V5", "V5_5"].includes(sourceSong.settings?.model)) {
+    throw new Error("Suno did not report this source song's model, so only Hold mood is available.");
+  }
+  if (provider.mode === "live" && !provider.ready) throw new Error("Suno is not configured on this server.");
+
+  const directionTitle = normalizedDirection === "escalate"
+    ? "Rising"
+    : normalizedDirection === "deescalate" ? "Receding" : "Continued";
+  const createdAt = now();
+  const song = {
+    id: id("song"),
+    description: sourceSong.description || "",
+    title: cleanText(`${sourceSong.title} - ${directionTitle}`, 100),
+    prompt: sourceSong.prompt || "Continue the composition.",
+    status: "queued",
+    source: provider.mode === "mock" ? "mock" : "suno",
+    mode: "extend",
+    pcId: sourceSong.pcId || null,
+    tagIds: [...(sourceSong.tagIds || [])],
+    selectedTagIds: [...(sourceSong.selectedTagIds || [])],
+    promptEnvelope: sourceSong.promptEnvelope ? structuredClone(sourceSong.promptEnvelope) : null,
+    settings: { ...(sourceSong.settings || {}), model: modelName(sourceSong.settings || {}) },
+    continuation: { sourceSongId: sourceSong.id, direction: normalizedDirection, modifiers: cleanModifiers },
+    audioFile: null,
+    provider: {
+      name: provider.mode === "mock" ? "mock" : "Suno",
+      generationId: null,
+      sourceId: sourceSong.id,
+      sourceAudioId: sourceSong.provider?.audioId || null
+    },
+    createdAt,
+    publishedAt: null
+  };
+
+  if (provider.mode === "mock") {
+    song.audioFile = mockAudioFor(`${song.id}:${sourceSong.id}:${normalizedDirection}`);
+    song.status = song.audioFile ? "ready" : "waiting";
+    if (!song.audioFile) song.error = "No local mock audio is available.";
+    song.provider.resultIndex = 0;
+    song.provider.submittedAt = createdAt;
+    if (song.status === "ready") song.provider.readyAt = now();
+  } else {
+    await beginExtensionTask(song, sourceSong, normalizedDirection);
+  }
+
+  const library = music.playlists.find((playlist) => playlist.id === "library");
+  const drafts = [song];
+  if (provider.mode === "mock") {
+    const alternate = siblingFrom(song, 1);
+    alternate.title = `${song.title} II`;
+    alternate.audioFile = mockAudioFor(`${alternate.id}:${sourceSong.id}:${normalizedDirection}:alternate`);
+    alternate.status = alternate.audioFile ? "ready" : "waiting";
+    if (!alternate.audioFile) alternate.error = "No local mock audio is available.";
+    drafts.push(alternate);
+  }
+  music.songs.unshift(...drafts);
+  library.songIds.unshift(...drafts.map((draft) => draft.id));
+  addToGenerated(drafts);
   persistMusic();
   return songView(song);
 }

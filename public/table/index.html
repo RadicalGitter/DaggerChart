@@ -22,13 +22,6 @@
     color: #e8dfcc;
     font-size: 18px;
   }
-  .view-root {
-    position: fixed; top: 0.55rem; left: 0.7rem; z-index: 98;
-    display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.45rem;
-    color: #bcae91; border: 1px solid #514632; border-radius: 3px;
-    background: rgba(27,22,17,0.86); font-size: 0.72rem; text-decoration: none;
-  }
-  .view-root:hover, .view-root:focus-visible { color: #ead9b8; border-color: #8a7550; }
   .wrap { box-sizing: border-box; width: 100%; max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem; }
   header { text-align: center; margin-bottom: 2rem; }
   header h1 { font-size: 2.2rem; letter-spacing: 0.02em; }
@@ -88,6 +81,8 @@
   .panel { flex: 1 1 auto; min-width: 0; animation: panel-in 0.4s ease 0.18s both; }
   .panel[hidden] { display: none; }
   .bc-sub { font-size: 0.85rem; color: #a89877; }
+  .bc-portrait { display: block; width: 64px; height: 80px; object-fit: cover; object-position: center 25%; border: 1px solid #b7a476; border-radius: 32px 32px 3px 3px; box-shadow: 0 6px 14px rgba(0,0,0,.35); }
+  .deck.banners .bc-portrait { width: 32px; height: 40px; }
 
   /* Journal / sheet / creator live inside the panel, same origin, no chrome. */
   .panel iframe {
@@ -125,14 +120,12 @@
   }
   .steward-door:hover { opacity: 0.85; }
   @media (max-width: 640px) {
-    .view-root { width: 30px; height: 30px; justify-content: center; padding: 0; }
-    .view-root-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
     .wrap { padding: 2.9rem 0.8rem 1.5rem; }
   }
 </style>
+<link rel="stylesheet" href="/shared/player-finish.css">
 </head>
-<body>
-<a class="view-root" href="/player"><span aria-hidden="true">⌂</span><span class="view-root-label" data-i18n="player.hub.views">Views</span></a>
+<body class="player-surface player-deck">
 <div class="wrap">
   <header>
     <h1 id="t-name" role="button" tabindex="0" title="" data-i18n="shell.table.name">The Arcana Deck</h1>

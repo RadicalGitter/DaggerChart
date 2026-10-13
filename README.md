@@ -11,6 +11,15 @@ The reviewed session chronicler is documented in
 [docs/session-retellings.md](docs/session-retellings.md).
 The GM lore index and reveal-one-result tables are documented in
 [docs/almanac.md](docs/almanac.md).
+The GM adventure shelf is documented in [Adventures](docs/adventures.md), with
+**The Road to Alderford** prepared for a three-player introductory expedition.
+
+Player workshop proposals include the
+[Inventor class for Redneck](docs/player-workshops/redneck-inventor-class-draft.md),
+a complete tabletop playtest class, and its
+[Swedish player handout](docs/player-workshops/redneck-inventor-class-sv.md).
+The [reusable class chooser](docs/character-class-choices.md) offers it only to
+Redneck; Amme's confirmation applies the chosen class and subclass to his sheet.
 Working rules for AI-assisted development are in [AGENTS.md](AGENTS.md) and
 [CLAUDE.md](CLAUDE.md). The Music Desk's branching tag board (tri-state tag
 bubbles compiling a prompt) is documented as a reusable pattern in
@@ -27,16 +36,21 @@ npm start          # → http://localhost:4626
 On Windows, double-click **Start The Settlement.vbs** instead: it starts the
 server with no console window and leaves a keeper icon in the system tray —
 right-click it to open the ledger/table or to close the settlement down.
+Oscar's host also starts it automatically at Windows sign-in after a reboot.
+`tools/install-startup.ps1` installs that per-user startup shortcut; pass
+`-Remove` to disable it. See [Remote access](docs/remote-access.md) for controls.
 
 Players on the same Wi-Fi can reach the server at `http://<this-machine's-ip>:4626`.
-There is no auth — the table runs on trust (and the player dashboard is
-whitelisted server-side regardless).
+Players enter directly and choose their character on trust. A configurable
+GM password protects administrative pages and APIs; player payloads remain
+whitelisted server-side. Public and Tailscale addresses, the domain redirect,
+and the launch procedure are in [Remote access](docs/remote-access.md).
 
 ## The surfaces
 
 | Route | Who | What |
 |---|---|---|
-| `/gm` | GM (private) | Console: campaign controls, reviewed session chronicler, rules/private-lore Almanac, reveal-one-result chance tables, correspondence, playtest tickets, local UX map, settlement ledger, and quick tools |
+| `/gm` | GM (private) | Console: prepared Adventures, campaign controls, reviewed session chronicler, rules/private-lore Almanac, reveal-one-result chance tables, correspondence, playtest tickets, local UX map, settlement ledger, and quick tools |
 | `/board` | GM (private) | Named Main/HUD drafting boards with infinite pan/zoom, live stat plates, counters, notes, and pinned camera views |
 | `/login` | players | Trusted-table character chooser: campaign-grouped movable portrait cards and a separate resumable-drafts view. Bare `/` lands here. |
 | `/player` | players | Player root: switch the device's character and choose a focused physical view. |
@@ -47,7 +61,7 @@ whitelisted server-side regardless).
 | `/create` | players | Guided Daggerheart character creation with an active-campaign choice when needed (all SRD data local) |
 | `/character/:id` | one player each | Live character sheet: tap-to-mark HP/Stress/Hope/Armor, Loadout/Vault hand manager |
 | `/journal` | players | Chronicle perspectives and published accounts, revealed people/places, and a season-stamped diary with private or shared notes |
-| `/rules` | everyone | Searchable Daggerheart table reference with grouped browsing, deep links, cross-references, and glossary notes |
+| `/rules` | everyone | Searchable Daggerheart table reference with grouped browsing, per-player pins saved across devices, deep links, cross-references, and glossary notes |
 | `/music` | GM | Music desk: spatial song bubbles, local playlists, a one-collection Suno web mirror, branching prompt tags, and character-theme variations |
 
 Player-facing pages have an EN/SV language toggle (top right, per device) and
@@ -120,7 +134,7 @@ Per the spec's build phases, plus ambitions agreed at the table:
 - **Phase 3 — The Map**: hex overlay on the GM's scanned map (deferred until the scan is available).
 - **Phase 4 — Dice & depth**: the [construction and building improvement flow](docs/construction.md) is live; the in-app 4d6−1d6 reveal and library-building unlock remain deferred.
 - **Board screen**: a mood/status display in front of the table (another whitelisted route, like `/table`).
-- **ComfyUI art workshop**: local portrait and scenic generation accepts tokenized API-format workflows without fixed node IDs; setup lives in [docs/comfyui/README.md](docs/comfyui/README.md).
+- **ComfyUI art workshop**: local portrait and scenic generation accepts tokenized API-format workflows without fixed node IDs. Portraits require a running ComfyUI; unavailable players are directed to ask Oscar at session start. Setup lives in [docs/comfyui/README.md](docs/comfyui/README.md).
 - **Magic item cards**: print-ready card fronts matching the physical deck ("mold" idea — layered paper in a sleeve).
 - **Sheet personalization**: per-class sheet layouts, bookmarkable stats, a draggable shortcut tray.
 

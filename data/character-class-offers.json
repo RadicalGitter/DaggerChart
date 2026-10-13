@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "offers": [
+    {
+      "id": "redneck-inventor-v01",
+      "pcId": "pc_1784314691416_p83s",
+      "version": "0.1",
+      "definitions": [{ "id": "homebrew_class_inventor", "version": "0.1" }],
+      "recommendedTrait": "Presence",
+      "expectedClassId": "core_class_seraph",
+      "expectedSubclassId": "core_subclass_winged_sentinel",
+      "expectedLevel": 1
+    }
+  ]
+}

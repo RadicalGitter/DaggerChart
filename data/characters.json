@@ -66,7 +66,7 @@
     "role": "Foreman, the Hunter's Lodge",
     "status": "alive",
     "description": "Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since.",
-    "portrait": null,
+    "portrait": "/generated/art/portrait/chr_lyra-1791913861504-1.png",
     "publicTraits": true,
     "traits": {
       "Agility": 2,
@@ -86,11 +86,799 @@
     },
     "trustedForWork": true,
     "age": {
-      "band": "unknown",
-      "years": 0
+      "band": "adult",
+      "years": 38
     },
     "connections": [],
-    "experiences": []
+    "experiences": [],
+    "portraitPrompt": "Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since.",
+    "portraitNegativePrompt": "",
+    "portraitDirection": {
+      "tags": [],
+      "primaryColor": "#805447",
+      "secondaryColor": "#6d806f",
+      "equipment": {
+        "armor": {
+          "enabled": true,
+          "text": ""
+        },
+        "mainHand": {
+          "enabled": true,
+          "text": "Bow"
+        },
+        "offHand": {
+          "enabled": true,
+          "text": ""
+        }
+      }
+    },
+    "portraitWorkshop": {
+      "stepsModifier": 0,
+      "cfgModifier": 0,
+      "style": "workflow",
+      "embellishPrompt": true,
+      "fixSeed": false,
+      "lastSeed": 1610705819,
+      "referenceImageUrl": "",
+      "attempts": [
+        {
+          "id": "portrait_attempt_55531007-8898-4f7a-8dca-8a8ca17199db",
+          "url": "/generated/art/portrait/chr_lyra-1791910319631-1.png",
+          "seed": 252317874,
+          "createdAt": "2026-10-13T16:51:59.639Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_20930fcf-4f8f-40a4-b5e2-47da952fe5ab",
+          "url": "/generated/art/portrait/chr_lyra-1791910319638-2.png",
+          "seed": 252317874,
+          "createdAt": "2026-10-13T16:51:59.639Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style2",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_f4300e5d-c0b2-4051-b406-0a133eed82ee",
+          "url": "/generated/art/portrait/chr_lyra-1791910356529-1.png",
+          "seed": 369703225,
+          "createdAt": "2026-10-13T16:52:36.537Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_596b9d39-c5cf-49f5-8692-5e9cdc0130e4",
+          "url": "/generated/art/portrait/chr_lyra-1791910356537-2.png",
+          "seed": 369703225,
+          "createdAt": "2026-10-13T16:52:36.537Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_b03cf5c8-5614-467d-917a-4584d0762df2",
+          "url": "/generated/art/portrait/chr_lyra-1791910416362-1.png",
+          "seed": 361478741,
+          "createdAt": "2026-10-13T16:53:36.370Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 2,
+            "style": "style1",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_afc3a11a-65f7-4a7f-91cf-0a12791a5803",
+          "url": "/generated/art/portrait/chr_lyra-1791910416369-2.png",
+          "seed": 361478741,
+          "createdAt": "2026-10-13T16:53:36.370Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 2,
+            "style": "style1",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_d4b8766b-7d21-4426-8ec3-8c87cd59f9a8",
+          "url": "/generated/art/portrait/chr_lyra-1791910508569-1.png",
+          "seed": 1652128695,
+          "createdAt": "2026-10-13T16:55:08.576Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": -1,
+            "style": "style1",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_b247f492-ed46-42c3-89e0-daffa87e60da",
+          "url": "/generated/art/portrait/chr_lyra-1791910508575-2.png",
+          "seed": 1652128695,
+          "createdAt": "2026-10-13T16:55:08.576Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": -1,
+            "style": "style1",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_bd3b2f2b-0d6a-4b12-ad4d-b5b21c973f56",
+          "url": "/generated/art/portrait/chr_lyra-1791912905004-1.png",
+          "seed": 1668160834,
+          "createdAt": "2026-10-13T17:35:05.010Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": -1,
+            "style": "style1",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_536919f8-3353-4c5d-9935-2cfa17347eb3",
+          "url": "/generated/art/portrait/chr_lyra-1791912905009-2.png",
+          "seed": 1668160834,
+          "createdAt": "2026-10-13T17:35:05.010Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": -1,
+            "style": "style1",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_03e48948-1673-4fa6-b6f6-4496367d24c9",
+          "url": "/generated/art/portrait/chr_lyra-1791912935168-1.png",
+          "seed": 1896262983,
+          "createdAt": "2026-10-13T17:35:35.177Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_0bc4c3e8-eb05-4153-afbf-0d744d156734",
+          "url": "/generated/art/portrait/chr_lyra-1791912935175-2.png",
+          "seed": 1896262983,
+          "createdAt": "2026-10-13T17:35:35.177Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_1e64830f-1b70-42c9-b634-1d9aad09450e",
+          "url": "/generated/art/portrait/chr_lyra-1791912957766-1.png",
+          "seed": 686560669,
+          "createdAt": "2026-10-13T17:35:57.784Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_640c91f0-9f45-45d8-8de7-376b1d9c33c6",
+          "url": "/generated/art/portrait/chr_lyra-1791912957779-2.png",
+          "seed": 686560669,
+          "createdAt": "2026-10-13T17:35:57.784Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_afc78a76-9572-4a6b-9de5-4d8a3d7662c7",
+          "url": "/generated/art/portrait/chr_lyra-1791913000789-1.png",
+          "seed": 889720667,
+          "createdAt": "2026-10-13T17:36:40.797Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_c78a479e-49eb-4cef-94c4-3459b8d5b37b",
+          "url": "/generated/art/portrait/chr_lyra-1791913000795-2.png",
+          "seed": 889720667,
+          "createdAt": "2026-10-13T17:36:40.797Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_e7d59ff3-1faf-47b0-8845-68848455d9f5",
+          "url": "/generated/art/portrait/chr_lyra-1791913393552-1.png",
+          "seed": 2125042411,
+          "createdAt": "2026-10-13T17:43:13.553Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Visible equipment: mainHand: Bow.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": "Bow"
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "Bow",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_dbaffae0-9f11-4714-b2aa-0adbaaa1f4f5",
+          "url": "/generated/art/portrait/chr_lyra-1791913542951-1.png",
+          "seed": 609938420,
+          "createdAt": "2026-10-13T17:45:42.952Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Visible equipment: mainHand: Bow.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": "Bow"
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "Bow",
+            "offHand": "",
+            "stepsModifier": 3,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_037a5d8c-98d4-4bbd-8256-fb83df526d5b",
+          "url": "/generated/art/portrait/chr_lyra-1791913576653-1.png",
+          "seed": 1664145557,
+          "createdAt": "2026-10-13T17:46:16.654Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Visible equipment: mainHand: Bow.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": "Bow"
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "Bow",
+            "offHand": "",
+            "stepsModifier": -2,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_4fccaec8-eddf-4fd0-84e2-a428e172afb1",
+          "url": "/generated/art/portrait/chr_lyra-1791913830494-1.png",
+          "seed": 1206980425,
+          "createdAt": "2026-10-13T17:50:30.495Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Visible equipment: mainHand: Bow.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": "Bow"
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "Bow",
+            "offHand": "",
+            "stepsModifier": -2,
+            "cfgModifier": 0,
+            "style": "style1",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_2c5654c2-aabc-49e8-9bf9-608a9f615778",
+          "url": "/generated/art/portrait/chr_lyra-1791913861504-1.png",
+          "seed": 1610705819,
+          "createdAt": "2026-10-13T17:51:01.505Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Keeps her own counsel and a well-oiled bow. First across the ridge line every morning; the dogs obey her before they obey anyone else. The dogs were her brother's — he did not survive the crossing — and she has fed them from her own plate every night since. Use #805447 as the primary detail color and #6d806f as the secondary accent. Visible equipment: mainHand: Bow.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": "Bow"
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "Bow",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        }
+      ]
+    }
   },
   {
     "id": "chr_jory",
@@ -98,7 +886,7 @@
     "role": "Foreman, the Bunkhouse",
     "status": "alive",
     "description": "Warm, tireless, everyone's friend. Talks a fine plan and swears by his joinery. The bunkhouse fire burns late with his stories, and no one sits alone at it. Always ready to vouch for a stranger, too — the way he vouched for half the passage list back at the harbor.",
-    "portrait": null,
+    "portrait": "/generated/art/portrait/chr_jory-1791914659662-1.png",
     "publicTraits": true,
     "traits": {
       "Agility": 0,
@@ -118,11 +906,88 @@
     },
     "trustedForWork": true,
     "age": {
-      "band": "unknown",
-      "years": 0
+      "band": "middle-aged",
+      "years": 45
     },
     "connections": [],
-    "experiences": []
+    "experiences": [
+      {
+        "id": "exp_mv6zoy3s",
+        "name": "Gift of the Gab"
+      }
+    ],
+    "portraitPrompt": "Warm, tireless, everyone's friend. Talks a fine plan and swears by his joinery. The bunkhouse fire burns late with his stories, and no one sits alone at it. Always ready to vouch for a stranger, too — the way he vouched for half the passage list back at the harbor.",
+    "portraitNegativePrompt": "",
+    "portraitDirection": {
+      "tags": [
+        "androgynous"
+      ],
+      "primaryColor": "#805447",
+      "secondaryColor": "#6d806f",
+      "equipment": {
+        "armor": {
+          "enabled": true,
+          "text": ""
+        },
+        "mainHand": {
+          "enabled": true,
+          "text": ""
+        },
+        "offHand": {
+          "enabled": true,
+          "text": ""
+        }
+      }
+    },
+    "portraitWorkshop": {
+      "stepsModifier": 0,
+      "cfgModifier": 0,
+      "style": "workflow",
+      "embellishPrompt": true,
+      "fixSeed": false,
+      "lastSeed": 2038495226,
+      "referenceImageUrl": "",
+      "attempts": [
+        {
+          "id": "portrait_attempt_39c83d17-cf16-44e9-b469-68ced6f174da",
+          "url": "/generated/art/portrait/chr_jory-1791914659662-1.png",
+          "seed": 2038495226,
+          "createdAt": "2026-10-13T18:04:19.664Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Warm, tireless, everyone's friend. Talks a fine plan and swears by his joinery. The bunkhouse fire burns late with his stories, and no one sits alone at it. Always ready to vouch for a stranger, too — the way he vouched for half the passage list back at the harbor. Visual identity: androgynous. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [
+              "androgynous"
+            ],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        }
+      ]
+    }
   },
   {
     "id": "chr_calder",
@@ -130,7 +995,7 @@
     "role": "Foreman, the Watchtower",
     "status": "alive",
     "description": "A soldier once, somewhere he doesn't name. Sleeps in the afternoon so he can walk the palisade at night. Keeps a list of everything he's seen move in the dark. During the storm on the crossing he went into the water three times for other people, and came out with two of them.",
-    "portrait": null,
+    "portrait": "/generated/art/portrait/chr_calder-1791916347468-1.png",
     "publicTraits": true,
     "traits": {
       "Agility": 1,
@@ -150,11 +1015,79 @@
     },
     "trustedForWork": true,
     "age": {
-      "band": "unknown",
-      "years": 0
+      "band": "middle-aged",
+      "years": 45
     },
     "connections": [],
-    "experiences": []
+    "experiences": [],
+    "portraitPrompt": "A soldier once, somewhere he doesn't name. Sleeps in the afternoon so he can walk the palisade at night. Keeps a list of everything he's seen move in the dark. During the storm on the crossing he went into the water three times for other people, and came out with two of them. 45 years old.",
+    "portraitNegativePrompt": "",
+    "portraitDirection": {
+      "tags": [],
+      "primaryColor": "#805447",
+      "secondaryColor": "#6d806f",
+      "equipment": {
+        "armor": {
+          "enabled": true,
+          "text": "Heavy leather with metal plating"
+        },
+        "mainHand": {
+          "enabled": true,
+          "text": ""
+        },
+        "offHand": {
+          "enabled": true,
+          "text": ""
+        }
+      }
+    },
+    "portraitWorkshop": {
+      "stepsModifier": 0,
+      "cfgModifier": 0,
+      "style": "workflow",
+      "embellishPrompt": true,
+      "fixSeed": false,
+      "lastSeed": 1946310066,
+      "referenceImageUrl": "",
+      "attempts": [
+        {
+          "id": "portrait_attempt_df3ee4bb-1bd2-44ef-9c20-b066694726c1",
+          "url": "/generated/art/portrait/chr_calder-1791916347468-1.png",
+          "seed": 1946310066,
+          "createdAt": "2026-10-13T18:32:27.469Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. A soldier once, somewhere he doesn't name. Sleeps in the afternoon so he can walk the palisade at night. Keeps a list of everything he's seen move in the dark. During the storm on the crossing he went into the water three times for other people, and came out with two of them. 45 years old. Use #805447 as the primary detail color and #6d806f as the secondary accent. Visible equipment: armor: Heavy leather with metal plating.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": "Heavy leather with metal plating"
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "Heavy leather with metal plating",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        }
+      ]
+    }
   },
   {
     "id": "chr_ellory",
@@ -162,7 +1095,7 @@
     "role": "Foreman, the Storehouse",
     "status": "alive",
     "description": "Was a harbor clerk's daughter and it shows: chalk marks on every barrel, a tally for every sack. The settlement eats in winter because Ellory counts in autumn. She keeps the passage manifest from the crossing in a locked drawer — fifty names, she'll tell you, and every one of them her business.",
-    "portrait": null,
+    "portrait": "/generated/art/portrait/chr_ellory-1791916603009-1.png",
     "publicTraits": true,
     "traits": {
       "Agility": 0,
@@ -182,10 +1115,390 @@
     },
     "trustedForWork": true,
     "age": {
-      "band": "unknown",
+      "band": "young",
+      "years": 22
+    },
+    "connections": [],
+    "experiences": [],
+    "portraitPrompt": "Was a harbor clerk's daughter and it shows: chalk marks on every barrel, a tally for every sack. The settlement eats in winter because Ellory counts in autumn. She keeps the passage manifest from the crossing in a locked drawer — fifty names, she'll tell you, and every one of them her business. 22 years old, cute.",
+    "portraitNegativePrompt": "",
+    "portraitDirection": {
+      "tags": [
+        "feminine",
+        "gentle"
+      ],
+      "primaryColor": "#805447",
+      "secondaryColor": "#6d806f",
+      "equipment": {
+        "armor": {
+          "enabled": true,
+          "text": ""
+        },
+        "mainHand": {
+          "enabled": true,
+          "text": ""
+        },
+        "offHand": {
+          "enabled": true,
+          "text": ""
+        }
+      }
+    },
+    "portraitWorkshop": {
+      "stepsModifier": 0,
+      "cfgModifier": 0,
+      "style": "workflow",
+      "embellishPrompt": true,
+      "fixSeed": false,
+      "lastSeed": 2065623857,
+      "referenceImageUrl": "",
+      "attempts": [
+        {
+          "id": "portrait_attempt_2cebc480-fd57-4035-b0b2-2ee1d7953e0c",
+          "url": "/generated/art/portrait/chr_ellory-1791916502182-1.png",
+          "seed": 1008877401,
+          "createdAt": "2026-10-13T18:35:02.184Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Was a harbor clerk's daughter and it shows: chalk marks on every barrel, a tally for every sack. The settlement eats in winter because Ellory counts in autumn. She keeps the passage manifest from the crossing in a locked drawer — fifty names, she'll tell you, and every one of them her business. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_3444e843-7fd0-4843-9e75-c77ca0956be6",
+          "url": "/generated/art/portrait/chr_ellory-1791916565942-1.png",
+          "seed": 1878127012,
+          "createdAt": "2026-10-13T18:36:05.944Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Was a harbor clerk's daughter and it shows: chalk marks on every barrel, a tally for every sack. The settlement eats in winter because Ellory counts in autumn. She keeps the passage manifest from the crossing in a locked drawer — fifty names, she'll tell you, and every one of them her business. 22 years old, cute. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        },
+        {
+          "id": "portrait_attempt_18ee0258-7309-4f50-bc9c-b30b1601cf09",
+          "url": "/generated/art/portrait/chr_ellory-1791916603009-1.png",
+          "seed": 2065623857,
+          "createdAt": "2026-10-13T18:36:43.010Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Was a harbor clerk's daughter and it shows: chalk marks on every barrel, a tally for every sack. The settlement eats in winter because Ellory counts in autumn. She keeps the passage manifest from the crossing in a locked drawer — fifty names, she'll tell you, and every one of them her business. 22 years old, cute. Visual identity: feminine, gentle. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [
+              "feminine",
+              "gentle"
+            ],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "chr_1791907868429_fqgj",
+    "name": "Mera",
+    "role": "Miller, Alderford",
+    "status": "alive",
+    "description": "A practical miller with flour worked into the seams of her sleeves and her hair tied out of the machinery. Hears a worn bearing before anyone else notices it and judges a sack of grain by its weight in her hands. Tired eyes, steady hands, and a habit of making sure visitors have eaten before she asks their business.",
+    "portrait": "/generated/art/portrait/chr_1791907868429_fqgj-1791916663408-1.png",
+    "portraitPrompt": "A practical miller with flour worked into the seams of her sleeves and her hair tied out of the machinery. Hears a worn bearing before anyone else notices it and judges a sack of grain by its weight in her hands. Tired eyes, steady hands, and a habit of making sure visitors have eaten before she asks their business. 40 years old.",
+    "portraitSuggestion": "",
+    "portraitNegativePrompt": "",
+    "portraitDirection": {
+      "tags": [
+        "feminine",
+        "weathered"
+      ],
+      "primaryColor": "#805447",
+      "secondaryColor": "#6d806f",
+      "equipment": {
+        "armor": {
+          "enabled": true,
+          "text": ""
+        },
+        "mainHand": {
+          "enabled": true,
+          "text": ""
+        },
+        "offHand": {
+          "enabled": true,
+          "text": ""
+        }
+      }
+    },
+    "portraitWorkshop": {
+      "stepsModifier": 0,
+      "cfgModifier": 0,
+      "style": "workflow",
+      "embellishPrompt": true,
+      "fixSeed": false,
+      "lastSeed": 182998784,
+      "referenceImageUrl": "",
+      "attempts": [
+        {
+          "id": "portrait_attempt_d53b2e46-9c81-4952-8243-5b45eed51925",
+          "url": "/generated/art/portrait/chr_1791907868429_fqgj-1791916663408-1.png",
+          "seed": 182998784,
+          "createdAt": "2026-10-13T18:37:43.409Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. A practical miller with flour worked into the seams of her sleeves and her hair tied out of the machinery. Hears a worn bearing before anyone else notices it and judges a sack of grain by its weight in her hands. Tired eyes, steady hands, and a habit of making sure visitors have eaten before she asks their business. 40 years old. Visual identity: feminine, weathered. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [
+              "feminine",
+              "weathered"
+            ],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        }
+      ]
+    },
+    "trustedForWork": false,
+    "age": {
+      "band": "middle-aged",
       "years": 0
     },
     "connections": [],
-    "experiences": []
+    "experiences": [
+      {
+        "id": "exp_practiced-craft",
+        "name": "Practiced craft"
+      },
+      {
+        "id": "exp_hardship-endured",
+        "name": "Hardship endured"
+      }
+    ],
+    "publicTraits": false,
+    "traits": {
+      "Agility": 0,
+      "Strength": 1,
+      "Finesse": 2,
+      "Instinct": 1,
+      "Presence": 1,
+      "Knowledge": 2
+    },
+    "aptitudes": {},
+    "hidden": {
+      "inspiration": 0,
+      "penalty": 0,
+      "notes": "Alderford's miller and a practical voice among its survivors. The proposed first expedition finds about fourteen people left after repeated attacks by changed raiders. They have lost enough labour, livestock, and provisions that driving off one more raid will not make the village secure for the coming months.\n\nMera wants the living safe, but the mill was built by her family and leaving it would mean abandoning both her livelihood and the place that holds their history. She is capable and exhausted; portray her through work, small acts of hospitality, and concrete decisions rather than a speech about suffering. Ors is the village roadkeeper; she relies on his knowledge of routes and travellers while he relies on her judgment about food and repairs.\n\nWhen the party arrives, the immediate pressure can be a small raiding party trying to seize the last loaded grain cart. Mera can show what must be protected and who needs help. If the players offer shelter, her question is: \"You said you've been building houses. How many people can you take?\" Some villagers may prefer to stay. Evacuation, supplies, rebuilding, or an alliance are all valid outcomes; joining the players' settlement has not happened yet.\n\nMera knows the attacks and their consequences, not the true workings of the displacement curse or the Bard's secrets. Her milling, grain handling, and mechanical knowledge are what she could contribute to a future shared settlement. She is not yet entrusted with settlement work or assigned as a foreman."
+    }
+  },
+  {
+    "id": "chr_1791907868443_02rf",
+    "name": "Ors",
+    "role": "Roadkeeper, Alderford",
+    "status": "alive",
+    "description": "An older roadkeeper with a weathered coat, a stout walking staff, and a pocket full of bits of cord. Checks the ford before offering directions and remembers where the road last washed away. Gives distances by landmarks, keeps an eye on the weather, and listens to a traveller before deciding which warning they need.",
+    "portrait": "/generated/art/portrait/chr_1791907868443_02rf-1791916739509-1.png",
+    "portraitPrompt": "An older roadkeeper with a weathered coat, a stout walking staff, and a pocket full of bits of cord. Checks the ford before offering directions and remembers where the road last washed away. Gives distances by landmarks, keeps an eye on the weather, and listens to a traveller before deciding which warning they need.",
+    "portraitSuggestion": "",
+    "portraitNegativePrompt": "",
+    "portraitDirection": {
+      "tags": [
+        "feminine",
+        "elegant",
+        "practical"
+      ],
+      "primaryColor": "#805447",
+      "secondaryColor": "#6d806f",
+      "equipment": {
+        "armor": {
+          "enabled": true,
+          "text": ""
+        },
+        "mainHand": {
+          "enabled": true,
+          "text": ""
+        },
+        "offHand": {
+          "enabled": true,
+          "text": ""
+        }
+      }
+    },
+    "portraitWorkshop": {
+      "stepsModifier": 0,
+      "cfgModifier": 0,
+      "style": "workflow",
+      "embellishPrompt": true,
+      "fixSeed": false,
+      "lastSeed": 475709409,
+      "referenceImageUrl": "",
+      "attempts": [
+        {
+          "id": "portrait_attempt_18e877c1-ddf4-4bfc-a73c-16b3b0e211aa",
+          "url": "/generated/art/portrait/chr_1791907868443_02rf-1791916739509-1.png",
+          "seed": 475709409,
+          "createdAt": "2026-10-13T18:38:59.511Z",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. An older roadkeeper with a weathered coat, a stout walking staff, and a pocket full of bits of cord. Checks the ford before offering directions and remembers where the road last washed away. Gives distances by landmarks, keeps an eye on the weather, and listens to a traveller before deciding which warning they need. Visual identity: feminine, elegant, practical. Use #805447 as the primary detail color and #6d806f as the secondary accent. Do not feature equipment.",
+            "negativePrompt": "",
+            "primaryColor": "#805447",
+            "referenceImageUrl": "",
+            "secondaryColor": "#6d806f",
+            "tags": [
+              "feminine",
+              "elegant",
+              "practical"
+            ],
+            "equipment": {
+              "armor": {
+                "enabled": true,
+                "text": ""
+              },
+              "mainHand": {
+                "enabled": true,
+                "text": ""
+              },
+              "offHand": {
+                "enabled": true,
+                "text": ""
+              }
+            },
+            "armor": "",
+            "mainHand": "",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true,
+            "fixSeed": false
+          }
+        }
+      ]
+    },
+    "trustedForWork": false,
+    "age": {
+      "band": "elder",
+      "years": 0
+    },
+    "connections": [],
+    "experiences": [
+      {
+        "id": "exp_long-journey",
+        "name": "Long journey"
+      },
+      {
+        "id": "exp_practiced-craft",
+        "name": "Practiced craft"
+      },
+      {
+        "id": "exp_hardship-endured",
+        "name": "Hardship endured"
+      }
+    ],
+    "publicTraits": false,
+    "traits": {
+      "Agility": 0,
+      "Strength": 0,
+      "Finesse": 1,
+      "Instinct": 2,
+      "Presence": 0,
+      "Knowledge": 2
+    },
+    "aptitudes": {},
+    "hidden": {
+      "inspiration": 0,
+      "penalty": 0,
+      "notes": "Alderford's roadkeeper. Knows nearby routes, the ford, old waymarks, and the practical customs of a milling village that once served passing travellers. He and Mera cooperate to keep the surviving community fed and connected. Let him reveal the inhabited world through particular routes, former customers, and remembered journeys rather than a general lore lecture.\n\nRecognises some of the changed raiders as people who used to buy flour at the mill: \"That one used to come here for flour. Always complained about the measure.\" Their mutation followed their displacement from the hill now occupied by the settlers, as established by Oscar, but Ors cannot explain the curse's true cause or mechanics. Knowing who they were does not excuse what they are doing to Alderford.\n\nKnows the location of the lesser tower beside the village and a few inherited customs concerning its exterior arrival court. It is a waypoint back to the Tower of Vesserin; its interior remains sealed for this first expedition. He can guide curious or helpful visitors there. The proposed discovery is a weathered stone basin whose disturbed water briefly reflects the great tower and the settlers' new houses. Ors has never seen those houses: \"That's where the road used to end.\"\n\nThe reflection is an exterior discovery, not an opened passage. A missing fitted seal is a possible later lead, not a settled explanation of how the tower works. Ors does not know the Bard's identity, the significance of the protected grave, or the world's deeper cosmology. Preserve those mysteries. He is still an Alderford resident; any move to the settlement or role in its work should follow play."
+    }
   }
 ]

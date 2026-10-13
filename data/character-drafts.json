@@ -4,7 +4,7 @@
     "version": 3,
     "step": 7,
     "part": 0,
-    "savedAt": "2026-07-17T20:54:42.414Z",
+    "savedAt": "2026-10-13T16:29:06.606Z",
     "draft": {
       "campaignId": "cmp_mrorhwu2_bazshi",
       "name": "King",
@@ -47,6 +47,10 @@
       "portraitStepsModifier": 0,
       "portraitCfgModifier": 0,
       "portraitStyle": "style1",
+      "portraitKeepLook": false,
+      "portraitReferenceUrl": "",
+      "portraitOriginal": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314196238-1.png",
+      "portraitEditPending": null,
       "portraitEmbellishPrompt": true,
       "portraitAttempts": [
         {
@@ -54,9 +58,12 @@
           "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784313095629-1.png",
           "seed": 1592518993,
           "createdAt": "2026-07-17T18:31:36.550Z",
+          "originalUrl": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784313095629-1.png",
           "request": {
             "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
             "negativePrompt": "",
+            "referenceImageUrl": "",
+            "originalPortraitUrl": "",
             "primaryColor": "#b18432",
             "secondaryColor": "#c96f72",
             "tags": [
@@ -76,9 +83,12 @@
           "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784313095720-2.png",
           "seed": 1592518993,
           "createdAt": "2026-07-17T18:31:36.550Z",
+          "originalUrl": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784313095720-2.png",
           "request": {
             "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
             "negativePrompt": "",
+            "referenceImageUrl": "",
+            "originalPortraitUrl": "",
             "primaryColor": "#b18432",
             "secondaryColor": "#c96f72",
             "tags": [
@@ -98,9 +108,12 @@
           "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784313164223-1.png",
           "seed": 64031819,
           "createdAt": "2026-07-17T18:32:45.051Z",
+          "originalUrl": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784313164223-1.png",
           "request": {
             "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
             "negativePrompt": "",
+            "referenceImageUrl": "",
+            "originalPortraitUrl": "",
             "primaryColor": "#b18432",
             "secondaryColor": "#c96f72",
             "tags": [
@@ -120,9 +133,12 @@
           "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784313164238-2.png",
           "seed": 64031819,
           "createdAt": "2026-07-17T18:32:45.051Z",
+          "originalUrl": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784313164238-2.png",
           "request": {
             "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
             "negativePrompt": "",
+            "referenceImageUrl": "",
+            "originalPortraitUrl": "",
             "primaryColor": "#b18432",
             "secondaryColor": "#c96f72",
             "tags": [
@@ -142,9 +158,12 @@
           "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314196238-1.png",
           "seed": 1473658477,
           "createdAt": "2026-07-17T18:49:57.162Z",
+          "originalUrl": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314196238-1.png",
           "request": {
             "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
             "negativePrompt": "",
+            "referenceImageUrl": "",
+            "originalPortraitUrl": "",
             "primaryColor": "#b18432",
             "secondaryColor": "#c96f72",
             "tags": [
@@ -164,9 +183,12 @@
           "url": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314196269-2.png",
           "seed": 1473658477,
           "createdAt": "2026-07-17T18:49:57.162Z",
+          "originalUrl": "/generated/art/portrait/draft_1784310404899_lhixzfke-1784314196269-2.png",
           "request": {
             "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Religious fanatic, white robes, fairy pink wings, green details here and there, blonde long flowing hair Visual identity: androgynous. Use #b18432 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Chainmail Armor; main hand: Scepter.",
             "negativePrompt": "",
+            "referenceImageUrl": "",
+            "originalPortraitUrl": "",
             "primaryColor": "#b18432",
             "secondaryColor": "#c96f72",
             "tags": [

@@ -170,6 +170,34 @@ button, input { font: inherit; }
 }
 
 .rule-tree { display: grid; gap: 16px; }
+.rule-row { display: grid; grid-template-columns: minmax(0, 1fr) 40px; align-items: stretch; gap: 3px; }
+.rule-row > [data-rule] { min-width: 0; overflow-wrap: anywhere; }
+.rule-pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: #89988e;
+  cursor: pointer;
+}
+.rule-pin svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.rule-pin:hover { color: #f0dfb3; background: #2b332e; border-color: #56635b; }
+.rule-pin[aria-pressed="true"] { color: var(--rules-brass); background: #c6a75d15; }
+.rule-pin[aria-pressed="true"] svg path:first-child { fill: currentColor; fill-opacity: 0.25; }
+.rule-pin:focus-visible, .rule-row > [data-rule]:focus-visible { outline: 2px solid var(--rules-brass); outline-offset: -2px; }
+.rule-pin:disabled { opacity: 0.45; cursor: default; }
+.pinned-rules { padding-bottom: 12px; border-bottom: 1px solid #56634a; }
+.pinned-rules + .tree-group { border-top: 0; }
+.pin-status { margin: 0 3px 12px; color: #c7b888; font-size: 0.75rem; line-height: 1.5; }
+.pin-status[hidden] { display: none; }
+.article-pin-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; margin-top: 18px; }
+.article-pin-actions .pin-status { color: #67533b; margin: 0; }
+.article-pin { gap: 7px; border-color: #a79775; color: #62543a; font-size: 0.8rem; padding: 8px 12px; }
+.article-pin:hover, .article-pin[aria-pressed="true"] { border-color: #8e7138; background: #c6a75d24; color: #634b22; }
 .tree-group { border-top: 1px solid #3c4741; padding-top: 13px; }
 .tree-group:first-child { border-top: 0; padding-top: 0; }
 .tree-group h2 {
@@ -311,6 +339,8 @@ body.embed .rules-shell { min-height: 100vh; }
 #lang-toggle button.on { color: var(--rules-brass); }
 
 @media (max-width: 760px) {
+  .rule-row { grid-template-columns: minmax(0, 1fr) 44px; }
+  .rule-row > button { min-height: 44px; }
   .rules-masthead {
     min-height: 72px;
     grid-template-columns: 42px minmax(0, 1fr) 45px;
@@ -397,6 +427,7 @@ body.embed .rules-shell { min-height: 100vh; }
 }
 
 @media print {
+  .article-pin-actions { display: none; }
   .rules-masthead, .rule-colors, .mobile-switch, .rules-index, .article-back, #feedback-button { display: none !important; }
   .rules-workbench { display: block; min-height: 0; }
   .article-pane { padding: 0; background: #fff; }

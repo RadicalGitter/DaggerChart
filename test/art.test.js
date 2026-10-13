@@ -19,6 +19,11 @@ test("ArtWorkshop hydrates an API graph and collects its saved image", async (t)
   await fs.writeFile(workflow, JSON.stringify(apiGraph));
   let queued = null;
   const server = http.createServer(async (req, res) => {
+    if (req.url === "/system_stats") {
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ system: {}, devices: [] }));
+      return;
+    }
     if (req.method === "POST" && req.url === "/prompt") {
       const chunks = [];
       for await (const chunk of req) chunks.push(chunk);
@@ -66,8 +71,8 @@ test("ArtWorkshop hydrates an API graph and collects its saved image", async (t)
   assert.equal(queued.prompt["2"].inputs.seed, 42);
   assert.equal(queued.prompt["4"].inputs.steps, 11);
   assert.equal(queued.prompt["4"].inputs.cfg, 0.9);
-  assert.equal(queued.prompt["4"].inputs.sampler_name, "dpmpp_3m_sde_gpu");
-  assert.equal(queued.prompt["4"].inputs.scheduler, "beta");
+  assert.equal(queued.prompt["4"].inputs.sampler_name, "euler");
+  assert.equal(queued.prompt["4"].inputs.scheduler, "ays+");
   assert.equal(queued.prompt["1"].inputs.pigments, "#617044 / #c96f72");
   assert.equal(queued.prompt["1"].inputs.tags, "weathered, gentle");
   assert.equal(queued.prompt["1"].inputs.equipment, "Gambeson; Longbow; Dagger");
@@ -77,12 +82,12 @@ test("ArtWorkshop hydrates an API graph and collects its saved image", async (t)
   await workshop.request({
     kind: "portrait", entityId: "pc_two", prompt: "A patient guardian", seed: 43, style: "style1"
   });
-  assert.equal(queued.prompt["4"].inputs.sampler_name, "euler");
-  assert.equal(queued.prompt["4"].inputs.scheduler, "ays+");
+  assert.equal(queued.prompt["4"].inputs.sampler_name, "euler_ancestral");
+  assert.equal(queued.prompt["4"].inputs.scheduler, "sgm_uniform");
 
   await assert.rejects(
     workshop.request({ kind: "portrait", entityId: "pc_three", prompt: "A quiet scholar", style: "style3" }),
-    /Style 1 or Style 2/
+    /Standard or Alternative style/
   );
 });
 

@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "about": "Hand-edited encounter presets for the ⚔ Encounter menu on /board. The server only reads this file. Positions are fractions of the 16:9 stage (x, y from 0 to 1; PCs stand on the left). Budget: 3 × party size + 2 Battle Points, adjusted as the notes say.",
+  "presets": [
+    {
+      "id": "preset_toll_at_the_ford",
+      "name": "Toll at the Ford",
+      "partySize": 3,
+      "budget": "10 of 11 Battle Points (standard)",
+      "summary": "Highway bandits demand a toll at a river crossing. A standard fight with a way to talk or bargain out.",
+      "notes": "Jagged Knife bandits holding a ford. The Lieutenant talks first: a toll of supplies, or blood. Sniper starts Hidden across the water. Lackeys go for packs and mounts, not PCs. Hold More Where That Came From (+3 Lackeys at Far) for when the fight goes too smoothly. Telegraph Coup de Grace by having the Lieutenant point at a Vulnerable PC. They break and flee when the Lieutenant falls or half of them are down; a captured Lackey talks.",
+      "adversaries": [
+        { "refId": "srd_jagged_knife_lieutenant", "label": "Toll-Taker", "x": 0.8, "y": 0.45 },
+        { "refId": "srd_jagged_knife_bandit", "label": "Bandit (left bank)", "x": 0.66, "y": 0.28 },
+        { "refId": "srd_jagged_knife_bandit", "label": "Bandit (right bank)", "x": 0.66, "y": 0.66 },
+        { "refId": "srd_jagged_knife_sniper", "label": "Sniper (reeds)", "x": 0.9, "y": 0.14 },
+        { "refId": "srd_jagged_knife_lackey", "label": "Lackey 1", "x": 0.57, "y": 0.18 },
+        { "refId": "srd_jagged_knife_lackey", "label": "Lackey 2", "x": 0.56, "y": 0.47 },
+        { "refId": "srd_jagged_knife_lackey", "label": "Lackey 3", "x": 0.57, "y": 0.78 }
+      ]
+    },
+    {
+      "id": "preset_pale_wolves",
+      "name": "Pale Wolves at the Treeline",
+      "partySize": 3,
+      "budget": "8 of 12 Battle Points (lighter fight; +1 for no Bruisers, Hordes, Leaders or Solos)",
+      "summary": "A silent pack tests the camp at dusk. Lighter on numbers, dangerous when they gang up.",
+      "notes": "Four Pale Wolves circle wide and come in pairs: Pack Fangs only works with two on one target, so they try to isolate whoever stands apart from the fire. Use Drag Down (Fear) on someone already engaged to haul them toward the dark; that makes a rescue the other PCs must choose. Fire and loud noise make a wolf hesitate (advantage on an action to drive it off). The pack breaks off when two wolves fall. If it runs too short, a fifth wolf arrives from the opposite side (+2 BP).",
+      "adversaries": [
+        { "refId": "adv_pale_wolf", "label": "Pale Wolf (lead)", "x": 0.72, "y": 0.42 },
+        { "refId": "adv_pale_wolf", "label": "Pale Wolf 2", "x": 0.82, "y": 0.2 },
+        { "refId": "adv_pale_wolf", "label": "Pale Wolf 3", "x": 0.83, "y": 0.68 },
+        { "refId": "adv_pale_wolf", "label": "Pale Wolf 4", "x": 0.62, "y": 0.84 }
+      ]
+    },
+    {
+      "id": "preset_alderford_last_grain",
+      "name": "Alderford's Last Grain",
+      "partySize": 3,
+      "budget": "5 of 11 Battle Points (gentle Tier 1 introduction; shorter fight -1, no Bruisers, Hordes, Leaders or Solos +1)",
+      "summary": "Changed raiders try to steal the mill village's last grain cart. Three level-1 PCs can defend, bargain, conceal the stores or help people escape.",
+      "notes": "Assume three level-1 PCs, including two beginners. Reskin these SRD bandits as painfully changed former inhabitants; retain the printed mechanics. This is deliberately under budget. They want flour and a way out, not a fight to the death.\n\nThe mill yard has the loaded cart, stacked sacks for cover, a low roof and a lane leading back to the ford. Open with a demand and a move toward the cart, giving every player a clear chance to act before anyone takes damage. The Crooked Cutter tries to seize the cart; the Bowhand covers the escape lane; three lackeys haul sacks or threaten the cart ropes. Telegraph a climb onto the roof before using From Above. Avoid a Hidden opening shot at a beginner.\n\nUse a four-step Grain Taken countdown only when the attackers make meaningful progress moving the cart or carrying supplies away. Securing the cart or blocking the lane can reverse progress. Do not tick it automatically for every roll with Fear. Protecting food and villagers, negotiation, misdirection and retreat are valid objectives.\n\nWhen the Cutter falls, or the raiders lose their route and a meaningful share of their force, they flee or surrender. A retreating attacker may ask for food. Do not pursue the last HP. If the table wants a little more pressure after everyone has acted, a second Jagged Knife Bandit can arrive from the lane (+2 BP); do not add it just because the players did well. Ors can recognise one attacker as a former flour customer, without explaining the curse.",
+      "adversaries": [
+        { "refId": "srd_jagged_knife_bandit", "label": "Crooked Cutter", "x": 0.66, "y": 0.42 },
+        { "refId": "srd_jagged_knife_sniper", "label": "Changed Bowhand", "x": 0.89, "y": 0.19 },
+        { "refId": "srd_jagged_knife_lackey", "label": "Sack-Hauler", "x": 0.58, "y": 0.25 },
+        { "refId": "srd_jagged_knife_lackey", "label": "Rope-Cutter", "x": 0.57, "y": 0.62 },
+        { "refId": "srd_jagged_knife_lackey", "label": "Lane-Watcher", "x": 0.74, "y": 0.79 }
+      ]
+    },
+    {
+      "id": "preset_where_the_sap_pools",
+      "name": "Where the Sap Pools",
+      "partySize": 3,
+      "budget": "12 of 13 Battle Points (harder; +2 for a harder fight)",
+      "summary": "A glass-quilled boar, walking dead trees and a midge swarm around a pool of black sap. The tougher backup fight.",
+      "notes": "Harder than the other two; use it if the table wants a real test. The boar charges whoever is loudest (Goring Charge pushes them back) and bursts glass when it takes Severe damage, so warn players before it pops. Shamblers are slow and easy to outpace, but their Rooted Grip pins someone in reach of the boar. Fire doubles damage against the Shamblers: leave a lantern, torch or dry brush in the scene. The midge swarm drains Stress with Maddening Drone (Fear); keep it near the pool. Nothing here retreats; the creatures are hurting, not hunting. If the party is in trouble, let them break line of sight and escape uphill; the Shamblers will not follow far from the sap.",
+      "adversaries": [
+        { "refId": "adv_glass_quilled_boar", "label": "Glass-Quilled Boar", "x": 0.74, "y": 0.45 },
+        { "refId": "adv_sap_choked_shambler", "label": "Shambler (north)", "x": 0.86, "y": 0.2 },
+        { "refId": "adv_sap_choked_shambler", "label": "Shambler (south)", "x": 0.86, "y": 0.72 },
+        { "refId": "adv_sap_choked_shambler", "label": "Shambler (pool)", "x": 0.92, "y": 0.46 },
+        { "refId": "adv_black_sap_swarm", "label": "Midge Swarm", "x": 0.64, "y": 0.18 }
+      ]
+    }
+  ]
+}

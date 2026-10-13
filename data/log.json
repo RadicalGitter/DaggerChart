@@ -1,5 +1,23 @@
 [
   {
+    "id": "log_1791916796517_e1b01",
+    "ts": "2026-10-13T18:39:56.517Z",
+    "season": "Spring, Year 1",
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "published": true,
+    "type": "party",
+    "summary": "Musslan takes their place in the settlement."
+  },
+  {
+    "id": "log_1791905154065_1jvcs",
+    "ts": "2026-10-13T15:25:54.065Z",
+    "season": "Spring, Year 1",
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "published": true,
+    "type": "party",
+    "summary": "Haldar takes their place in the settlement."
+  },
+  {
     "id": "log_1784323676928_e0fxn",
     "ts": "2026-07-17T21:27:56.928Z",
     "season": "Spring, Year 1",

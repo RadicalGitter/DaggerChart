@@ -82,9 +82,10 @@ Tier flourish, and information-specific marks. It never generates freeform
 coordinates, so a later treatment matures or replaces an existing slot instead
 of covering it with a new random mark.
 
-Players may preview two stable treatments without cost, commit one by spending
-a beautifying token, and freely restore any committed version or the unadorned
-baseline. Characters begin with two tokens and gain one per level. The active
+Players open it as **Adorn** ("The scribe's bench"). They may try two stable
+treatments on without cost, ink one by spending a **flourish**, and freely
+restore any inked design or the plain baseline. Characters begin with two
+flourishes and gain one per level. The active
 version points into immutable history, while each new candidate is informed by
 the current class, level/Tier, portrait, completed background, Domain cards,
 covenant, and connections. Only completion booleans reach the recipe; prose is

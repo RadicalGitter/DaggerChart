@@ -6,6 +6,7 @@ import { DEFAULT_CHARACTER_PRESENTATIONS, normalizeCharacterPresentations } from
 import { DEFAULT_SHEET_BEAUTY, normalizeSheetBeautyDocument } from "./sheet-beauty.js";
 import { DEFAULT_PLAYER_FEATURES, normalizePlayerFeatures } from "./player-features.js";
 import { normalizeFolkProfile } from "./folk-profile.js";
+import { tidyReferenceNames } from "./display-names.js";
 import {
   STARTER_STORES,
   completeProject as applyConstructionProject,
@@ -113,6 +114,7 @@ export const state = {
   characters: loadJson("characters.json", []),
   pcs: loadJson("pcs.json", []),
   characterDrafts: loadJson("character-drafts.json", []),
+  characterClassOffers: loadJson("character-class-offers.json", { schemaVersion: 1, offers: [] }),
   log: loadJson("log.json", []),
   people: loadJson("people.json", []),
   places: loadJson("places.json", [DEFAULT_VILLAGE]),
@@ -129,8 +131,10 @@ export const state = {
   screen: loadJson("screen.json", { current: null }),
   adversaries: loadJson("adversaries.json", { adversaries: [] }),
   encounters: loadJson("encounters.json", { encounters: [] }),
+  // Hand-edited presets for the encounter menu; read-only, like the bestiary.
+  encounterPresets: loadJson("encounter-presets.json", { presets: [] }),
   tables: loadEventTables(),
-  reference: loadJson("daggerheart/reference.json", null)
+  reference: tidyReferenceNames(loadJson("daggerheart/reference.json", null))
 };
 
 if (!Array.isArray(state.sessions)) state.sessions = [];

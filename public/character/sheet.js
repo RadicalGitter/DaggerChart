@@ -6,6 +6,8 @@ import { traitAccent, traitGraphic } from "/shared/traits.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import { playerFeatureEnabled, setPlayerFeatureContext } from "/shared/player-features.js";
 import { fetchJsonWithRetry } from "/shared/reliable-fetch.js";
+import { openArmsEditor } from "/shared/arms-editor.js";
+import { attachClassChoice, localizedFeature } from "/shared/class-choice.js";
 import "/shared/feedback.js";
 import "/shared/player-tools.js";
 
@@ -29,7 +31,7 @@ let arrangingModules = false;
 let beautyPreviewConfig = null;
 const themeAudio = new Audio();
 
-const featHtml = (f) => `<div class="featline"><strong>${esc(f.name)}</strong> ${termify(esc(f.text))}</div>`;
+const featHtml = (feature) => { const f = localizedFeature(feature); return `<div class="featline"><strong>${esc(f.name)}</strong> ${termify(esc(f.text)).replace(/\n/g, "<br>")}</div>`; };
 const TRAITS = ["Agility", "Strength", "Finesse", "Instinct", "Presence", "Knowledge"];
 
 function pips(kind, marked, max, harm) {
@@ -54,10 +56,10 @@ function render() {
       : "";
   $("#sheet").innerHTML = `
     <nav class="sheet-toolrail" aria-label="${esc(t("sheet.tool.navigation"))}">
-      <a class="sheet-root-link" href="/player"><span aria-hidden="true">&#8592;</span> ${esc(t("player.hub.root"))}</a>
+      <span class="sheet-toolrail-spacer" aria-hidden="true"></span>
       <span class="sheet-tool-title">${esc(t("shell.sheet.name"))}</span>
       <span class="sheet-layout-actions">
-        <button class="sheet-beauty-toggle" id="sheet-beauty-toggle" type="button" title="${esc(t("beauty.open"))}"><span aria-hidden="true">&#10022;</span> <span>${esc(t("beauty.open"))}</span></button>
+        <button class="sheet-beauty-toggle" id="sheet-beauty-toggle" type="button" title="${esc(t("beauty.openHint"))}"><span aria-hidden="true">&#10022;</span> <span>${esc(t("beauty.open"))}</span></button>
         <button class="sheet-layout-reset" id="sheet-layout-reset" type="button" hidden>${esc(t("sheet.tool.restore"))}</button>
         <button class="sheet-layout-toggle" id="sheet-layout-toggle" type="button" aria-pressed="false"><span aria-hidden="true">&#9986;</span> <span data-layout-label>${esc(t("sheet.tool.arrange"))}</span></button>
       </span>
@@ -65,9 +67,9 @@ function render() {
     <header class="sheet-head" data-class-name="${esc(p.class.name)}">
       <span class="beauty-masthead-mark" aria-hidden="true"></span>
       <span class="beauty-tier-mark" aria-hidden="true"></span>
-      <div class="sheet-portrait-wrap"><div class="portrait">${p.portrait ? `<img src="${esc(p.portrait)}" alt="">` : esc(p.name[0] || "?")}</div><i aria-hidden="true"></i>${p.shadowBalance ? `<span class="shadow-balance-mark">${esc(p.shadowBalance.position)}</span>` : ""}</div>
+      <div class="sheet-portrait-wrap"><a class="portrait portrait-editor-link" href="/portrait/?pc=${encodeURIComponent(p.id)}" target="_top" aria-label="${esc(t(p.portrait ? "portrait.open" : "portrait.add"))}" title="${esc(t(p.portrait ? "portrait.open" : "portrait.add"))}">${p.portrait ? `<img src="${esc(p.portrait)}" alt="">` : esc(p.name[0] || "?")}</a>${p.shadowBalance ? `<span class="shadow-balance-mark">${esc(p.shadowBalance.position)}</span>` : ""}</div>
       <div class="sheet-identity">
-        <div class="sheet-class-kicker">${p.activePresentation?.kind === "beastform" ? `Beastform · ${esc(p.class.name)}` : `${esc(p.class.name)} · ${esc(t("sheet.tool.record"))}`}</div>
+        <div class="sheet-class-kicker">${p.activePresentation?.kind === "beastform" ? `${esc(t("presentation.beastTier", { n: p.activePresentation.form?.tier || 1 }))} · ${esc(p.class.name)}` : `${esc(p.class.name)} · ${esc(t("sheet.tool.record"))}`}</div>
         <div class="sheet-name-row"><h1>${esc(p.name)}</h1><button class="name-edit" id="rename-character" type="button" aria-label="${esc(t("sheet.renameName"))}" title="${esc(t("sheet.renameName"))}">✎</button></div>
         <div class="muted">${esc(p.ancestry.name)} ${esc(p.class.name)} — ${esc(p.subclass.name)} · ${term("level", t("sheet.level"))} ${p.level}</div>
         <div class="muted" style="font-size:0.85rem;">${esc(p.community.name)}${p.pronouns ? ` · ${esc(p.pronouns)}` : ""}${p.player ? ` · ${esc(p.player)}` : ""}</div>
@@ -76,6 +78,8 @@ function render() {
     </header>
 
     ${beastSheetBanner(p)}
+
+    <div data-class-choice-slot></div>
 
     ${sheetNavHtml(p)}
 
@@ -107,12 +111,17 @@ function render() {
           ${weaponRow(t("sheet.primary"), w.primary)}${weaponRow(t("sheet.secondary"), w.secondary)}
         </table>
         ${p.armor ? `<div class="featline" style="margin-top:0.6rem;"><strong>${esc(p.armor.name)}</strong> ${termify(esc(p.armor.feature || ""))}</div>` : ""}
+        <div class="inventory-tools arms-tools"><button class="quiet" id="arms-change" type="button">${esc(t("arms.change"))}</button></div>
       </div>
     </section>
 
     <section class="sheet-section" id="sheet-experiences" data-sheet-module="experiences">
       <span class="smallcaps">${term("experience", t("sheet.exp"))}</span>
-      <div class="card">${p.experiences.map((e) => `<div class="featline"><strong>${esc(e.name)}</strong> +${e.bonus}</div>`).join("")}</div>
+      <div class="card">${p.experiences.length
+        ? `${p.experiences.map((e) => `<div class="featline"><strong>${esc(e.name)}</strong> +${e.bonus}</div>`).join("")}
+          <div class="inventory-tools"><button class="quiet" id="experiences-edit" type="button" aria-label="${esc(t("sheet.expEditAria"))}">${esc(t("sheet.expEdit"))}</button></div>`
+        : `<p class="muted">${esc(t("sheet.expNone"))}</p>
+          <div class="inventory-tools"><button class="quiet" id="experiences-add" type="button">${esc(t("sheet.expAdd"))}</button></div>`}</div>
     </section>
 
     <section class="sheet-section sheet-anchor" id="sheet-cards" data-sheet-module="cards">
@@ -128,7 +137,9 @@ function render() {
         ${p.features.hopeFeature ? `<div class="smallcaps">${term("hope", t("sheet.hopefeat"))}</div>${featHtml(p.features.hopeFeature)}` : ""}
         <div class="smallcaps">${t("sheet.class")}</div>${(p.features.classFeatures || []).map(featHtml).join("")}
         <div class="smallcaps">${esc(p.subclass.name)}</div>${(p.features.foundation || []).map(featHtml).join("")}
+        ${(p.features.specialization || []).map(featHtml).join("")}${(p.features.mastery || []).map(featHtml).join("")}
         ${p.subclass.spellcastTrait ? `<div class="featline muted">${term("spellcast", t("sheet.spellcast"))} ${esc(p.subclass.spellcastTrait)}</div>` : ""}
+        ${p.inventor ? `<div class="featline muted"><strong>${esc(t("classChoice.familiar"))}</strong> ${p.inventor.familiarMaterials.map(esc).join(", ")}</div>` : ""}
         <div class="smallcaps">${esc(p.ancestry.name)}</div>${(p.features.ancestry || []).map(featHtml).join("")}
         <div class="smallcaps">${esc(p.community.name)}</div>${(p.features.community || []).map(featHtml).join("")}
       </div>
@@ -184,13 +195,13 @@ function beastSheetBanner(p) {
   if (active?.kind !== "beastform") return "";
   const form = active.form;
   return `<section class="beast-sheet-banner" style="--beast-portrait:${p.portrait ? `url('${String(p.portrait).replace(/[()'"\\]/g, "")}')` : "none"}">
-    <div><span class="smallcaps">Tier ${form.tier} Beastform</span><strong>${esc(form.customization?.name || form.name)}</strong><p>${esc(form.examples.join(", "))}</p></div>
-    <button type="button" id="leave-beastform">Return to Kaya</button>
+    <div><span class="smallcaps">${esc(t("presentation.beastTier", { n: form.tier }))}</span><strong>${esc(form.customization?.name || form.name)}</strong><p>${esc(form.examples.join(", "))}</p></div>
+    <button type="button" id="leave-beastform">${esc(t("presentation.returnTo", { name: p.activePresentation?.canonical?.name || p.name }))}</button>
   </section>`;
 }
 
 function beastFeaturesHtml(form) {
-  return `<div class="beast-live-rules"><div class="smallcaps">Beastform advantages</div><p>${form.advantages.map(esc).join(" · ")}</p>${form.features.map(featHtml).join("")}</div>`;
+  return `<div class="beast-live-rules"><div class="smallcaps">${esc(t("presentation.beastAdvantages"))}</div><p>${form.advantages.map(esc).join(" · ")}</p>${form.features.map(featHtml).join("")}</div>`;
 }
 
 function wireBeastSheet() {
@@ -349,6 +360,15 @@ function closePaperDialog() {
 
 function wireIdentity() {
   $("#rename-character").onclick = openNameEditor;
+  if ($("#experiences-add")) $("#experiences-add").onclick = openExperiencesStarter;
+  if ($("#experiences-edit")) $("#experiences-edit").onclick = openExperiencesEditor;
+  $("#arms-change").onclick = () => openArmsEditor(PC, {
+    onSaved: (updated) => {
+      PC = updated;
+      PC.playerFeatures = setPlayerFeatureContext(PC, PC.id);
+      render();
+    }
+  });
   $("#sheet-beauty-toggle").onclick = openBeautyAtelier;
 }
 
@@ -411,7 +431,7 @@ function openBeautyAtelier() {
     <div class="beauty-candidates">${beauty.candidates.map((candidate) => `
       <article class="beauty-candidate" data-beauty-candidate-card="${esc(candidate.id)}">
         <span class="beauty-swatch beauty-swatch-${esc(candidate.variant)}" aria-hidden="true"></span>
-        <div><strong>${esc(beautyName(candidate))}</strong><span>${esc(t("beauty.pass", { n: candidate.pass }))} · ${esc(t("beauty.grade", { n: candidate.config.grade }))}</span></div>
+        <div><strong>${esc(beautyName(candidate))}</strong><span class="beauty-note">${esc(t(`beauty.note.${candidate.variant}`))}</span><span>${esc(t("beauty.pass", { n: candidate.pass }))} · ${esc(t("beauty.grade", { n: candidate.config.grade }))}</span></div>
         <button type="button" data-beauty-preview="${esc(candidate.id)}">${esc(t("beauty.preview"))}</button>
       </article>`).join("")}</div>
     <div class="beauty-preview-actions">
@@ -509,6 +529,109 @@ function openNameEditor() {
       error.textContent = t("sheet.renameError");
       submit.disabled = false;
     }
+  };
+}
+
+async function saveExperiences(experiences, { gmApproved = false, error, submit }) {
+  submit.disabled = true;
+  try {
+    const response = await fetch(`/api/party/${encodeURIComponent(id)}/experiences`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ experiences, ...(gmApproved ? { gmApproved: true } : {}) })
+    });
+    const body = await response.json();
+    if (!response.ok) {
+      error.textContent = body.error || t("sheet.expError");
+      submit.disabled = false;
+      return;
+    }
+    PC = body;
+    closePaperDialog();
+    render();
+  } catch {
+    error.textContent = t("sheet.expError");
+    submit.disabled = false;
+  }
+}
+
+// A character with no Experiences records its first two here: no approval, each at +2.
+function openExperiencesStarter() {
+  $("#paper-dialog-body").innerHTML = `<form class="paper-editor name-editor" id="experiences-starter">
+    <h2 id="paper-dialog-title">${t("sheet.expAddTitle")}</h2>
+    <p class="rename-intro">${t("sheet.expAddIntro")}</p>
+    <label>${t("sheet.expFirst")}<input id="experience-1" maxlength="80" placeholder="${esc(t("exp.placeholder"))}" autocomplete="off" required></label>
+    <label>${t("sheet.expSecond")}<input id="experience-2" maxlength="80" placeholder="${esc(t("exp.placeholder"))}" autocomplete="off" required></label>
+    <button type="submit">${t("sheet.expAddSave")}</button>
+    <div class="rename-error" id="experience-error" role="alert"></div>
+  </form>`;
+  $("#paper-dialog").hidden = false;
+  $("#experience-1").focus();
+  $("#experiences-starter").onsubmit = (event) => {
+    event.preventDefault();
+    const names = [$("#experience-1").value.trim(), $("#experience-2").value.trim()];
+    const error = $("#experience-error");
+    if (names.some((name) => !name)) {
+      error.textContent = t("sheet.expNameBoth");
+      return;
+    }
+    saveExperiences(names.map((name) => ({ name })), { error, submit: event.submitter });
+  };
+}
+
+const EXPERIENCE_MAX = 6;
+
+function experienceRowsHtml(rows) {
+  return rows.map((row, index) => `<div class="experience-row">
+    <label>${t("sheet.expName")}<input data-exp-name maxlength="80" value="${esc(row.name)}" autocomplete="off" required></label>
+    <label>${t("sheet.expBonus")}<input data-exp-bonus type="number" min="0" max="9" step="1" value="${esc(row.bonus)}" required></label>
+    <button class="quiet grave" type="button" data-exp-remove="${index}" aria-label="${esc(`${t("sheet.expRemove")}: ${row.name}`)}"${rows.length <= 1 ? " disabled" : ""}>${t("sheet.expRemove")}</button>
+  </div>`).join("");
+}
+
+// Changing recorded Experiences asks for the GM's approval, like a change of name.
+function openExperiencesEditor() {
+  let rows = PC.experiences.map((e) => ({ name: e.name, bonus: e.bonus }));
+  $("#paper-dialog-body").innerHTML = `<form class="paper-editor name-editor" id="experiences-editor">
+    <h2 id="paper-dialog-title">${t("sheet.expEditTitle")}</h2>
+    <p class="rename-intro">${t("sheet.expEditIntro")}</p>
+    <div id="experience-rows"></div>
+    <button class="quiet" type="button" id="experience-another">${t("sheet.expAnother")}</button>
+    <label class="gm-approval"><input id="experiences-gm-approved" type="checkbox"><span>${t("sheet.expApproved")}</span></label>
+    <button type="submit">${t("sheet.expSave")}</button>
+    <div class="rename-error" id="experience-error" role="alert"></div>
+  </form>`;
+  $("#paper-dialog").hidden = false;
+  const readRows = () => [...document.querySelectorAll("#experience-rows .experience-row")].map((row) => ({
+    name: row.querySelector("[data-exp-name]").value,
+    bonus: row.querySelector("[data-exp-bonus]").value
+  }));
+  const draw = () => {
+    $("#experience-rows").innerHTML = experienceRowsHtml(rows);
+    $("#experience-another").disabled = rows.length >= EXPERIENCE_MAX;
+    for (const button of document.querySelectorAll("[data-exp-remove]")) {
+      button.onclick = () => {
+        rows = readRows();
+        rows.splice(Number(button.dataset.expRemove), 1);
+        draw();
+      };
+    }
+  };
+  draw();
+  $("#experience-another").onclick = () => {
+    rows = [...readRows(), { name: "", bonus: 2 }];
+    draw();
+    document.querySelector("#experience-rows .experience-row:last-child [data-exp-name]").focus();
+  };
+  document.querySelector("#experience-rows [data-exp-name]").focus();
+  $("#experiences-editor").onsubmit = (event) => {
+    event.preventDefault();
+    const error = $("#experience-error");
+    if (!$("#experiences-gm-approved").checked) {
+      error.textContent = t("sheet.expApprovalRequired");
+      return;
+    }
+    saveExperiences(readRows().map((row) => ({ name: row.name, bonus: Number(row.bonus) })), { gmApproved: true, error, submit: event.submitter });
   };
 }
 
@@ -925,6 +1048,7 @@ async function loadCharacter() {
     document.title = `${PC.name} — The Settlement`;
     render();
     void loadThemes();
+    void attachClassChoice(PC, { host: document.querySelector("[data-class-choice-slot]"), onSaved: async (pc) => { PC = pc; await load(); } });
   } catch (error) {
     if (PC) showReconnectNotice();
     else renderLoadFailure(error);

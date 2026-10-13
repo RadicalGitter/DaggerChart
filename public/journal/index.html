@@ -54,8 +54,6 @@
     pointer-events: none;
   }
   header { text-align: center; margin-bottom: 1.4rem; }
-  .journal-back { position: absolute; z-index: 3; top: 1rem; left: 1.1rem; display: inline-flex; align-items: center; gap: .4rem; color: #c9ba97; text-decoration: none; font-size: .82rem; }
-  .journal-back:hover, .journal-back:focus-visible { color: #fff0c5; }
   header h1 { font-size: 1.7rem; letter-spacing: 0.02em; }
   header::after {
     content: ""; display: block; width: 180px; max-width: 55%; height: 3px;
@@ -69,7 +67,6 @@
 
   /* Embedded in the shell: the shell owns the masthead and identity. */
   body.embed #app header { display: none; }
-  body.embed .journal-back { display: none; }
   body.embed .wrap { padding: 0.8rem 0.4rem 2rem; }
   body.embed #lang-toggle { display: none; }
   header .smallcaps { font-size: 0.95rem; }
@@ -287,8 +284,9 @@
     .tabbar > button[data-tab] { transition: none; }
   }
 </style>
+<link rel="stylesheet" href="/shared/player-finish.css">
 </head>
-<body>
+<body class="player-surface player-journal">
 <div class="wrap">
   <div id="picker" hidden>
     <h1 data-i18n="journal.title">The Journal</h1>
@@ -297,7 +295,6 @@
   </div>
 
   <div id="app" hidden>
-    <a class="journal-back" href="/player"><span aria-hidden="true">←</span><span data-i18n="btn.back">Back</span></a>
     <header>
       <h1 data-i18n="journal.title">The Journal</h1>
       <div class="smallcaps"><span id="j-pc"></span> · <span id="j-season">—</span></div>

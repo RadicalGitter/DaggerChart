@@ -78,7 +78,7 @@ function desiredPanel() {
     if (pc)
       return {
         key: `char:${pc.id}`,
-        html: `<a class="switch-pc" data-switch>${t("journal.notyou")}</a><iframe src="/character/${encodeURIComponent(pc.id)}"></iframe>`
+        html: `<a class="switch-pc" data-switch>${t("journal.notyou")}</a><iframe src="/character/${encodeURIComponent(pc.id)}?embed=1"></iframe>`
       };
     return { key: "picker", html: pickerHtml() };
   }
@@ -259,7 +259,13 @@ function renderFaces() {
     if (el) el.textContent = sec.count(data);
   }
   const pc = myPC();
-  $("#count-character").textContent = pc ? pc.name[0].toUpperCase() : "?";
+  const mark = $("#count-character");
+  mark.textContent = pc ? pc.name[0].toUpperCase() : "?";
+  if (pc?.portrait) {
+    const img = document.createElement("img");
+    img.className = "bc-portrait"; img.alt = ""; img.src = pc.portrait;
+    mark.replaceChildren(img);
+  }
   $("#sub-character").textContent = pc ? pc.name : t("table.whoareyou");
 }
 

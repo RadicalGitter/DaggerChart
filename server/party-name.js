@@ -1,3 +1,4 @@
+import { GM_NAME } from "../public/shared/gm-name.js";
 export const CHARACTER_NAME_LIMIT = 80;
 
 export function normalizeCharacterName(value) {
@@ -21,7 +22,7 @@ export function renamedCharacterThemeTitle(title, previousName, name) {
 }
 
 export function renameCharacter(pc, request) {
-  if (request?.gmApproved !== true) throw new Error("Confirm that the GM approved this name change.");
+  if (request?.gmApproved !== true) throw new Error(`Confirm that ${GM_NAME} approved this name change.`);
   const previousName = pc.name;
   const name = normalizeCharacterName(request.name);
   if (name === previousName) return { previousName, name, changed: false };

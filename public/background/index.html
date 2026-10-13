@@ -19,7 +19,7 @@
 <body>
   <div class="memory-room">
     <header class="studio-head">
-      <a class="back-link" href="/player"><span aria-hidden="true">←</span><span data-i18n="btn.back">Back</span></a>
+      <span aria-hidden="true"></span>
       <div class="studio-title">
         <span class="smallcaps" data-i18n="background.kicker">Remembered life</span>
         <h1 data-i18n="background.title">Background studio</h1>
@@ -53,7 +53,7 @@
           <span class="save-state" id="save-state" role="status"></span>
           <span class="character-count" id="character-count" aria-hidden="true"></span>
           <span class="credit-state" id="credit-state" role="status" hidden></span>
-          <button id="request-credit" type="button" hidden data-i18n="background.credits.request">Ask the steward for more</button>
+          <button id="request-credit" type="button" hidden data-i18n="background.credits.request">Ask Oscar for more</button>
           <button id="draw-muse" type="button" class="quiet" data-hint="bg.muse" data-i18n="background.muse">Draw a muse</button>
           <button id="kindle-sparks" type="button" data-hint="bg.sparks" data-i18n="background.sparks">Kindle sparks</button>
           <button id="ask-expansion" type="button" data-hint="bg.expand" data-i18n="background.ask">Expand this memory</button>
@@ -93,7 +93,7 @@
 
     <section class="load-error" id="load-error" hidden>
       <p data-i18n="background.loadError">This character's memories could not be opened.</p>
-      <a href="/player" data-i18n="btn.back">Back</a>
+      <a href="/player" data-i18n="player.home">Home</a>
     </section>
   </div>
   <script type="module" src="background.js"></script>

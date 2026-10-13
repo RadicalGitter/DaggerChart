@@ -3,11 +3,14 @@ import { CONDITIONS, conditionIcon } from "/shared/conditions.js";
 import { prepareRuleNodes, searchRuleNodes } from "/shared/rules-search.js";
 import { folkPortraitGridHtml, wireFolkPortraitCards } from "/shared/folk-cards.js";
 import { createGmPartySheet } from "./party-sheet.js";
+import { createAdventureDesk } from "./adventures.js";
 
 let S = null; // last fetched gm state
 let selectedBuilding = null;
 let CONSUMABLES = [];
 let FEEDBACK = [];
+let GM_NOTIFICATIONS = [];
+let notificationsLoaded = false;
 let TELEMETRY = { pages: {} };
 let ART_STATUS = { workflows: { portrait: { ready: false, reason: "missing" }, scenic: { ready: false, reason: "missing" } } };
 let ART_LIBRARY = { dimensions: { width: 1536, height: 864, aspect: "16:9" }, taxonomy: { rootIds: [], tags: [] }, characters: [], places: [], scenes: [] };
@@ -15,6 +18,7 @@ let CREDITS = { defaultGrant: 15, accounts: [] };
 let selectedUxRoute = null;
 let imageLibraryView = "characters";
 let selectedFolkId = null;
+let editingFolkId = null;
 let selectedPartyId = localStorage.getItem("settlement-gm-party-selection") || null;
 
 const FOLK_AGE_BANDS = [
@@ -47,6 +51,7 @@ const sceneTagState = {
 
 const $ = (sel) => document.querySelector(sel);
 const partySheet = createGmPartySheet($("#party-gm-sheet"));
+const adventureDesk = createAdventureDesk($("#adventure-desk"), { api, project });
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -72,14 +77,15 @@ async function api(path, opts = {}) {
 }
 
 async function refresh() {
-  const [nextState, items, feedback, telemetry, artStatus, artLibrary, credits] = await Promise.all([
+  const [nextState, items, feedback, telemetry, artStatus, artLibrary, credits, notifications] = await Promise.all([
     api("/api/state"),
     api("/api/items/consumables"),
     api("/api/feedback"),
     api("/api/telemetry").catch(() => ({ pages: {} })),
     api("/api/art/status").catch(() => ART_STATUS),
     api("/api/art/library").catch(() => ART_LIBRARY),
-    api("/api/llm-credits/gm").catch(() => CREDITS)
+    api("/api/llm-credits/gm").catch(() => CREDITS),
+    api("/api/gm-notifications").catch(() => GM_NOTIFICATIONS)
   ]);
   S = nextState;
   CONSUMABLES = items;
@@ -88,6 +94,12 @@ async function refresh() {
   ART_STATUS = artStatus;
   ART_LIBRARY = artLibrary;
   CREDITS = credits;
+  const previousPending = new Set(GM_NOTIFICATIONS.filter((notice) => notice.status === "pending").map((notice) => notice.id));
+  GM_NOTIFICATIONS = notifications;
+  const newRequest = notificationsLoaded
+    ? GM_NOTIFICATIONS.find((notice) => notice.status === "pending" && !previousPending.has(notice.id))
+    : null;
+  notificationsLoaded = true;
   renderNav();
   renderDowntimePicker();
   renderStores();
@@ -103,8 +115,47 @@ async function refresh() {
   renderTown();
   renderScreen();
   renderFeedback();
+  renderRequests();
   renderCredits();
   renderUx();
+  if (newRequest) toast(`${newRequest.actor?.name || "A player"} sent a screen request.`);
+}
+
+function renderRequests() {
+  const pending = GM_NOTIFICATIONS.filter((notice) => notice.status === "pending");
+  const navCount = $("#request-nav-count");
+  navCount.hidden = pending.length === 0;
+  navCount.textContent = pending.length;
+  $("#request-pending-count").textContent = pending.length ? `(${pending.length} waiting)` : "";
+  const ordered = [...GM_NOTIFICATIONS].sort((left, right) => {
+    if ((left.status === "pending") !== (right.status === "pending")) return left.status === "pending" ? -1 : 1;
+    return String(right.createdAt || "").localeCompare(String(left.createdAt || ""));
+  });
+  $("#request-grid").innerHTML = ordered.length ? ordered.map((notice) => {
+    const projection = notice.payload?.projection || {};
+    const preview = projection.type === "image"
+      ? `<figure class="request-image"><img src="${esc(projection.url)}" alt="${esc(projection.caption || notice.summary || "Requested image")}"></figure>`
+      : `<div class="request-text">${esc(projection.body || notice.summary || "")}</div>`;
+    const actions = notice.status === "pending"
+      ? `<div class="request-actions"><button type="button" class="quiet" data-request-dismiss="${esc(notice.id)}">Dismiss</button><button type="button" data-request-approve="${esc(notice.id)}">Show at the table</button></div>`
+      : `<div class="request-resolved">${esc(notice.status)}</div>`;
+    return `<article class="request-sheet ${notice.status}">
+      <header><div><strong>${esc(notice.summary || "Untitled request")}</strong><span>${esc(notice.actor?.name || "A player")} · ${esc(new Date(notice.createdAt).toLocaleString())}</span></div></header>
+      ${preview}${actions}
+    </article>`;
+  }).join("") : `<p class="muted">No player requests have arrived.</p>`;
+  for (const button of document.querySelectorAll("[data-request-approve]")) button.onclick = () => resolveScreenRequest(button.dataset.requestApprove, "approve");
+  for (const button of document.querySelectorAll("[data-request-dismiss]")) button.onclick = () => resolveScreenRequest(button.dataset.requestDismiss, "dismiss");
+}
+
+async function resolveScreenRequest(id, action) {
+  try {
+    await api(`/api/gm-notifications/${encodeURIComponent(id)}/${action}`, { method: "POST" });
+    toast(action === "approve" ? "Shown at the table." : "Request dismissed.");
+    await refresh();
+  } catch (error) {
+    toast(error.message, true);
+  }
 }
 
 function renderFeedback() {
@@ -326,6 +377,7 @@ function describeScreen(cur) {
   if (!cur) return "settlement title";
   switch (cur.type) {
     case "image": return `an image${cur.caption ? ` — “${cur.caption}”` : ""}`;
+    case "adventure-map": return "an adventure map";
     case "text": return `words${cur.title ? ` — “${cur.title}”` : ""}`;
     case "paper": return "a carried paper";
     case "stores": return "the stores";
@@ -356,7 +408,14 @@ function renderNav() {
   $("#ledger-season").textContent = S.settlement.seasonLabel;
 }
 
-function showSection(key) {
+function showSection(route) {
+  const [requestedKey, entityId] = route.split("/");
+  const key = requestedKey === "cartography" ? "adventures" : requestedKey;
+  if (key === "folk" && entityId) {
+    if (selectedFolkId !== entityId) editingFolkId = null;
+    selectedFolkId = entityId;
+    if (S) renderFolk();
+  }
   for (const a of document.querySelectorAll("nav a[data-nav]")) {
     a.classList.toggle("active", a.dataset.nav === key);
   }
@@ -368,7 +427,8 @@ function showSection(key) {
   document.body.classList.toggle("board-open", key === "board");
   document.body.classList.toggle("music-open", key === "music");
   document.body.classList.toggle("party-open", key === "party");
-  document.body.classList.toggle("cartography-open", key === "cartography");
+  document.body.classList.toggle("adventures-open", key === "adventures");
+  if (key === "adventures") adventureDesk.open(entityId || null);
   if (key === "music") {
     requestAnimationFrame(() => {
       document.querySelector(".gm-music-frame")?.contentWindow?.postMessage(
@@ -1036,15 +1096,16 @@ function renderBuildings() {
 // --- folk ---
 const TRAITS = ["Agility", "Strength", "Finesse", "Instinct", "Presence", "Knowledge"];
 const FOLK_PORTRAIT_TAGS = ["masculine", "feminine", "androgynous", "weathered", "elegant", "fierce", "gentle", "uncanny", "practical"];
+const FOLK_PORTRAIT_STEP_MODIFIERS = [-3, -2, -1, 0, 1, 2, 3];
 const FOLK_PORTRAIT_MODIFIERS = [-1, 0, 1, 2];
 
-function portraitModifier(value) {
+function portraitModifier(value, kind = "cfg") {
   const numeric = Number(value);
-  return FOLK_PORTRAIT_MODIFIERS.includes(numeric) ? numeric : 0;
+  return (kind === "steps" ? FOLK_PORTRAIT_STEP_MODIFIERS : FOLK_PORTRAIT_MODIFIERS).includes(numeric) ? numeric : 0;
 }
 
 function portraitStyle(value) {
-  return ["style1", "style2"].includes(String(value)) ? String(value) : "style2";
+  return ["workflow", "style1"].includes(String(value)) ? String(value) : "workflow";
 }
 
 function folkPortraitState(c = {}) {
@@ -1062,7 +1123,7 @@ function folkPortraitState(c = {}) {
       enabled: equipment[key]?.enabled !== false,
       text: String(equipment[key]?.text || "")
     }])),
-    stepsModifier: portraitModifier(workshop.stepsModifier),
+    stepsModifier: portraitModifier(workshop.stepsModifier, "steps"),
     cfgModifier: portraitModifier(workshop.cfgModifier),
     style: portraitStyle(workshop.style),
     embellishPrompt: workshop.embellishPrompt !== false,
@@ -1080,7 +1141,7 @@ function folkPortraitHistoryHtml(c, portrait) {
       const request = attempt.request || {};
       return `<article class="folk-portrait-attempt ${attempt.url === c.portrait ? "selected" : ""}">
         <img src="${esc(attempt.url)}" alt="Portrait attempt ${number}" loading="lazy">
-        <small>Attempt ${number} · ${portraitStyle(request.style) === "style1" ? "Style 1" : "Style 2"} · steps ${portraitModifier(request.stepsModifier) >= 0 ? "+" : ""}${portraitModifier(request.stepsModifier)} · CFG ${portraitModifier(request.cfgModifier) >= 0 ? "+" : ""}${portraitModifier(request.cfgModifier)}</small>
+        <small>Attempt ${number} · ${portraitStyle(request.style) === "style1" ? "Alternative style" : "Standard style"} · steps ${portraitModifier(request.stepsModifier, "steps") >= 0 ? "+" : ""}${portraitModifier(request.stepsModifier, "steps")} · CFG ${portraitModifier(request.cfgModifier) >= 0 ? "+" : ""}${portraitModifier(request.cfgModifier)}</small>
         <div><button type="button" class="quiet" data-folk-portrait-use="${esc(attempt.id)}">Use</button><button type="button" class="quiet" data-folk-portrait-retry="${esc(attempt.id)}">Go again</button></div>
       </article>`;
     }).join("")}</div>`;
@@ -1098,7 +1159,7 @@ function folkPortraitStudioHtml(c) {
     <div class="folk-portrait-studio">
       <div class="folk-portrait-preview">${preview}</div>
       <label>Describe the portrait<textarea id="folk-portrait-prompt" rows="5" maxlength="6000">${esc(portrait.prompt)}</textarea></label>
-      <p class="muted" style="margin:0;font-size:.72rem;">Balance atmosphere and concrete physical details. The portrait is rendered at 1104 × 1472.</p>
+      <p class="muted" style="margin:0;font-size:.72rem;">Balance atmosphere and concrete physical details. The portrait is rendered at 2MP in a 3:4 frame.</p>
       <div class="folk-portrait-tools"><button type="button" class="quiet" id="folk-portrait-suggest" ${adviserReady ? "" : "disabled"}>Ask for suggestion</button><span class="muted" style="font-size:.68rem;">${adviserReady ? "The portrait adviser is ready." : "The portrait adviser is awaiting its key."}</span></div>
       ${portrait.suggestion ? `<aside class="folk-portrait-suggestion"><p>${esc(portrait.suggestion)}</p><button type="button" class="quiet" id="folk-portrait-use-suggestion">Use suggestion</button></aside>` : ""}
       <div class="folk-pigments">
@@ -1108,8 +1169,8 @@ function folkPortraitStudioHtml(c) {
       <fieldset><legend>Visual tags</legend><div class="folk-portrait-tags">${FOLK_PORTRAIT_TAGS.map((tag) => `<button type="button" class="${portrait.tags.includes(tag) ? "selected" : ""}" aria-pressed="${portrait.tags.includes(tag)}" data-folk-portrait-tag="${tag}">${tag}</button>`).join("")}</div></fieldset>
       <fieldset><legend>Visible equipment</legend><div class="folk-portrait-equipment">${Object.entries(equipmentLabel).map(([key, label]) => `<label><input type="checkbox" data-folk-equipment-enabled="${key}" ${portrait.equipment[key].enabled ? "checked" : ""}><span>${label}</span><input type="text" data-folk-equipment-text="${key}" value="${esc(portrait.equipment[key].text)}" maxlength="300" placeholder="Optional"></label>`).join("")}</div></fieldset>
       <fieldset><legend>Generation details</legend><div class="folk-portrait-tuning">
-        <div><span class="muted" style="font-size:.68rem;">Style</span><div class="folk-portrait-choice">${["style1", "style2"].map((style, index) => `<button type="button" data-folk-portrait-style="${style}" class="${portrait.style === style ? "selected" : ""}" aria-pressed="${portrait.style === style}">Style ${index + 1}</button>`).join("")}</div></div>
-        ${[["steps", portrait.stepsModifier], ["cfg", portrait.cfgModifier]].map(([kind, current]) => `<div><span class="muted" style="font-size:.68rem;">${kind === "steps" ? "Steps" : "CFG"}</span><div class="folk-portrait-choice modifiers">${FOLK_PORTRAIT_MODIFIERS.map((value) => `<button type="button" data-folk-portrait-modifier="${kind}" data-value="${value}" class="${current === value ? "selected" : ""}" aria-pressed="${current === value}">${value >= 0 ? "+" : ""}${value}${value === 0 ? "<small>recommended</small>" : ""}</button>`).join("")}</div></div>`).join("")}
+        <div><span class="muted" style="font-size:.68rem;">Style</span><div class="folk-portrait-choice">${["workflow", "style1"].map((style) => `<button type="button" data-folk-portrait-style="${style}" class="${portrait.style === style ? "selected" : ""}" aria-pressed="${portrait.style === style}">${style === "workflow" ? "Standard style" : "Alternative style"}</button>`).join("")}</div></div>
+        ${[["steps", portrait.stepsModifier], ["cfg", portrait.cfgModifier]].map(([kind, current]) => `<div><span class="muted" style="font-size:.68rem;">${kind === "steps" ? "Steps" : "CFG"}</span><div class="folk-portrait-choice modifiers" style="grid-template-columns:repeat(${kind === "steps" ? 7 : 4},minmax(0,1fr))">${(kind === "steps" ? FOLK_PORTRAIT_STEP_MODIFIERS : FOLK_PORTRAIT_MODIFIERS).map((value) => `<button type="button" data-folk-portrait-modifier="${kind}" data-value="${value}" class="${current === value ? "selected" : ""}" aria-pressed="${current === value}">${value >= 0 ? "+" : ""}${value}${value === 0 ? "<small>recommended</small>" : ""}</button>`).join("")}</div></div>`).join("")}
       </div></fieldset>
       <div class="folk-portrait-toggles">
         <label><input type="checkbox" id="folk-portrait-embellish" ${portrait.embellishPrompt ? "checked" : ""}><span><strong>Automatically embellish prompt</strong><br><small class="muted">Let the workflow's LLM expand the art direction.</small></span></label>
@@ -1130,11 +1191,13 @@ function renderFolk() {
     ? folkPortraitGridHtml(folk, { mode: "select", selectedId: selectedFolkId })
     : `<p class="muted">No folk have been entered yet.</p>`;
   wireFolkPortraitCards(grid, { onSelect: (id) => {
+    editingFolkId = null;
     selectedFolkId = id;
     renderFolk();
   } });
   const selected = selectedFolkId === "__new__" ? null : folk.find((person) => person.id === selectedFolkId);
-  if (selected || selectedFolkId === "__new__") renderFolkEditor(selected);
+  if (selectedFolkId === "__new__" || (selected && editingFolkId === selected.id)) renderFolkEditor(selected);
+  else if (selected) renderFolkDetail(selected);
   else $("#folk-editor").hidden = true;
 }
 
@@ -1151,7 +1214,7 @@ function collectFolkPortraitSettings(c) {
     enabled: $(`[data-folk-equipment-enabled="${key}"]`)?.checked !== false,
     text: $(`[data-folk-equipment-text="${key}"]`)?.value.trim() || ""
   }]));
-  const stepsModifier = portraitModifier($("[data-folk-portrait-modifier=steps].selected")?.dataset.value);
+  const stepsModifier = portraitModifier($("[data-folk-portrait-modifier=steps].selected")?.dataset.value, "steps");
   const cfgModifier = portraitModifier($("[data-folk-portrait-modifier=cfg].selected")?.dataset.value);
   const style = portraitStyle($("[data-folk-portrait-style].selected")?.dataset.folkPortraitStyle);
   const prompt = $("#folk-portrait-prompt")?.value.trim() || "";
@@ -1235,6 +1298,7 @@ async function saveFolk(c, { announce = true, refreshAfter = true } = {}) {
   const isNew = !c;
   const saved = await api(isNew ? "/api/characters" : `/api/characters/${c.id}`, { method: isNew ? "POST" : "PUT", body: collectFolkBody(c) });
   selectedFolkId = saved.id;
+  if (announce) editingFolkId = null;
   if (announce) toast(isNew ? `${saved.name} entered the ledger.` : `${saved.name}'s card was updated.`);
   if (refreshAfter) await refresh();
   return saved;
@@ -1247,7 +1311,8 @@ $("#folk-new").addEventListener("click", () => {
 
 function wireFolkEditor(c) {
   $("#ed-cancel").onclick = () => {
-    selectedFolkId = S.characters[0]?.id || null;
+    editingFolkId = null;
+    if (!c) selectedFolkId = S.characters[0]?.id || null;
     renderFolk();
   };
   $("#ed-save").onclick = () => saveFolk(c).catch((error) => toast(error.message, true));
@@ -1427,6 +1492,32 @@ function wireFolkBiographyEditor() {
   drawExperiences();
 }
 
+function renderFolkDetail(person) {
+  const editor = $("#folk-editor");
+  const age = person.age || {};
+  const ageLabel = FOLK_AGE_BANDS.find(([value]) => value === age.band)?.[1] || "Unknown";
+  const connections = (person.connections || []).map((connection) => {
+    const other = S.characters.find((candidate) => candidate.id === connection.folkId);
+    return `${other?.name || "Unknown folk"} · ${connection.kind}`;
+  });
+  const list = (items, empty) => items.length ? `<ul>${items.map((value) => `<li>${esc(value)}</li>`).join("")}</ul>` : `<p class="muted">${empty}</p>`;
+  const prose = (value, empty) => `<p class="folk-detail-prose">${esc(value || empty)}</p>`;
+  editor.hidden = false;
+  editor.innerHTML = `<div class="folk-card-back-head"><div><h3>${esc(person.name)}</h3><span class="muted">${esc(person.role || "No role recorded")} · ${esc(person.status || "alive")}</span></div><div class="folk-editor-actions"><button type="button" class="quiet" id="folk-detail-project">Show at the table</button><button type="button" id="folk-detail-edit">Edit</button></div></div>
+    <div class="folk-detail-layout">
+      <div class="folk-detail-portrait folk-portrait-preview">${person.portrait ? `<img src="${esc(person.portrait)}" alt="${esc(person.name)}">` : `<span aria-hidden="true">${esc(person.name?.slice(0, 1) || "?")}</span>`}</div>
+      <div class="folk-detail-content">
+        <section><h4>Description</h4>${prose(person.description, "No description recorded.")}</section>
+        <section><h4>Life at a glance</h4><p>${esc(ageLabel)}${age.years != null ? ` · ${esc(age.years)} years` : ""}</p><h5>Connections</h5>${list(connections, "No connections recorded.")}<h5>Experiences</h5>${list((person.experiences || []).map((experience) => experience.name), "No formative experiences recorded.")}<p>${person.trustedForWork ? "Trusted to lead settlement work" : "Not assigned work trust"}</p></section>
+        <section><h4>Private GM notes</h4>${prose(person.hidden?.notes, "No private notes recorded.")}</section>
+        <section><h4>Private measures</h4><dl class="folk-detail-measures">${TRAITS.map((trait) => `<div><dt>${esc(trait)}</dt><dd>${esc(person.traits?.[trait] ?? 0)}</dd></div>`).join("")}<div><dt>Inspiration</dt><dd>${esc(person.hidden?.inspiration ?? 0)}</dd></div><div><dt>Penalty</dt><dd>${esc(person.hidden?.penalty ?? 0)}</dd></div></dl><h5>Aptitude by building</h5><dl class="folk-detail-measures">${S.buildings.map((building) => `<div><dt>${esc(building.name)}</dt><dd>${esc(person.aptitudes?.[building.id] ?? 0)}</dd></div>`).join("")}</dl></section>
+      </div>
+    </div>`;
+  editor.scrollTop = 0;
+  $("#folk-detail-edit").onclick = () => { editingFolkId = person.id; renderFolk(); };
+  $("#folk-detail-project").onclick = () => project({ type: "folk", refId: person.id });
+}
+
 function renderFolkEditor(c) {
   const isNew = !c;
   const person = c || { name: "", role: "", status: "alive", description: "", age: { band: "unknown", years: null }, connections: [], experiences: [], traits: {}, aptitudes: {}, trustedForWork: false, hidden: {} };
@@ -1440,24 +1531,31 @@ function renderFolkEditor(c) {
   editor.hidden = false;
   editor.innerHTML = `<div class="folk-card-back-head"><h3>${isNew ? "New folk card" : esc(person.name)}</h3>${isNew ? "" : `<button type="button" class="quiet" id="ed-project">Show at the table</button>`}</div>
     <div class="folk-editor-fields">
-      <div class="formrow"><label>Name</label><input type="text" id="ed-name" value="${esc(person.name)}"></div>
-      <div class="formrow"><label>Role</label><input type="text" id="ed-role" value="${esc(person.role || "")}"></div>
-      <div class="formrow"><label>Status</label><select id="ed-status">${["alive", "dead", "missing"].map((status) => `<option ${person.status === status ? "selected" : ""}>${status}</option>`).join("")}</select></div>
-      <fieldset class="folk-biography"><legend>Life at a glance</legend>
-        <div class="folk-biography-block"><div class="folk-biography-head"><strong>Age</strong></div><div class="folk-age-line"><input type="hidden" id="ed-age-band" value="${esc(age.band)}"><div class="folk-age-palette">${FOLK_AGE_BANDS.map(([value, label]) => `<button type="button" data-folk-age="${value}" class="${age.band === value ? "selected" : ""}" aria-pressed="${age.band === value}">${label}</button>`).join("")}</div><label class="folk-age-years">exact <input type="number" id="ed-age-years" min="0" max="999" value="${age.years ?? ""}" placeholder="—"></label></div></div>
-        <div class="folk-biography-block"><div class="folk-biography-head"><strong>Connections</strong><span class="muted" style="font-size:.68rem;">named bonds, not prose</span></div><input type="hidden" id="ed-connections" value="${esc(JSON.stringify(connections))}"><div class="folk-token-list" id="folk-connection-list">${folkConnectionTokens(connections)}</div><div class="folk-connection-add"><select id="folk-connection-person" aria-label="Connected folk"><option value="">Choose folk</option>${connectionOptions}</select><select id="folk-connection-kind" aria-label="Connection type">${FOLK_CONNECTION_KINDS.map((kind) => `<option value="${kind}">${kind}</option>`).join("")}</select><button type="button" class="quiet" id="folk-connection-add" ${connectionOptions ? "" : "disabled"}>Add</button></div></div>
-        <div class="folk-biography-block"><div class="folk-biography-head"><strong>Experiences</strong><span class="muted" style="font-size:.68rem;">quick beats for later detail</span></div><input type="hidden" id="ed-experiences" value="${esc(JSON.stringify(experiences))}"><div class="folk-experience-palette">${FOLK_EXPERIENCE_PRESETS.map((name) => `<button type="button" data-folk-experience-preset="${esc(name)}">${esc(name)}</button>`).join("")}</div><div class="folk-token-list" id="folk-experience-list">${folkExperienceTokens(experiences)}</div><div class="folk-experience-add"><input type="text" id="folk-experience-custom" maxlength="120" placeholder="Another short experience"><button type="button" class="quiet" id="folk-experience-add">Add</button></div></div>
-      </fieldset>
-      <div class="formrow"><label>Description</label><div style="flex:1"><textarea id="ed-description" rows="4">${esc(person.description || "")}</textarea><small class="muted">Public. Players see this word for word when they turn the card.</small></div></div>
-      <div class="formrow"><label>GM notes</label><div style="flex:1"><textarea id="ed-gmnotes" rows="5">${esc(person.hidden?.notes || "")}</textarea><small class="muted">Private. This never leaves the GM console.</small></div></div>
-      <div class="formrow"><label>Work trust</label><input type="checkbox" id="ed-trusted" ${person.trustedForWork ? "checked" : ""}><span class="muted" style="font-size:.72rem;">eligible to lead settlement work</span></div>
-      <hr class="folk-private-rule"><div class="smallcaps">Private measures</div>
-      <div class="folk-stats-grid">${traitRows}<div class="formrow"><label>Inspiration</label><input type="number" id="ed-inspiration" min="-1" max="2" value="${person.hidden?.inspiration ?? 0}"></div><div class="formrow"><label>Penalty</label><input type="number" id="ed-penalty" value="${person.hidden?.penalty ?? 0}"></div></div>
-      <hr class="folk-private-rule"><div class="smallcaps">Aptitude by building</div><div class="folk-stats-grid">${aptRows || `<span class="muted">No buildings are available.</span>`}</div>
+      <div class="folk-editor-columns">
+      <div class="folk-editor-col">
+        <div class="formrow"><label>Name</label><input type="text" id="ed-name" value="${esc(person.name)}"></div>
+        <div class="formrow"><label>Role</label><input type="text" id="ed-role" value="${esc(person.role || "")}"></div>
+        <div class="formrow"><label>Status</label><select id="ed-status">${["alive", "dead", "missing"].map((status) => `<option ${person.status === status ? "selected" : ""}>${status}</option>`).join("")}</select></div>
+        <div class="formrow"><label>Description</label><div style="flex:1"><textarea id="ed-description" rows="4">${esc(person.description || "")}</textarea><small class="muted">Public. Players see this word for word when they turn the card.</small></div></div>
+        <div class="formrow"><label>GM notes</label><div style="flex:1"><textarea id="ed-gmnotes" rows="5">${esc(person.hidden?.notes || "")}</textarea><small class="muted">Private. This never leaves the GM console.</small></div></div>
+        <div class="formrow"><label>Work trust</label><input type="checkbox" id="ed-trusted" ${person.trustedForWork ? "checked" : ""}><span class="muted" style="font-size:.72rem;">eligible to lead settlement work</span></div>
+      </div>
+      <div class="folk-editor-col">
+        <fieldset class="folk-biography"><legend>Life at a glance</legend>
+          <div class="folk-biography-block"><div class="folk-biography-head"><strong>Age</strong></div><div class="folk-age-line"><input type="hidden" id="ed-age-band" value="${esc(age.band)}"><div class="folk-age-palette">${FOLK_AGE_BANDS.map(([value, label]) => `<button type="button" data-folk-age="${value}" class="${age.band === value ? "selected" : ""}" aria-pressed="${age.band === value}">${label}</button>`).join("")}</div><label class="folk-age-years">exact <input type="number" id="ed-age-years" min="0" max="999" value="${age.years ?? ""}" placeholder="—"></label></div></div>
+          <div class="folk-biography-block"><div class="folk-biography-head"><strong>Connections</strong><span class="muted" style="font-size:.68rem;">named bonds, not prose</span></div><input type="hidden" id="ed-connections" value="${esc(JSON.stringify(connections))}"><div class="folk-token-list" id="folk-connection-list">${folkConnectionTokens(connections)}</div><div class="folk-connection-add"><select id="folk-connection-person" aria-label="Connected folk"><option value="">Choose folk</option>${connectionOptions}</select><select id="folk-connection-kind" aria-label="Connection type">${FOLK_CONNECTION_KINDS.map((kind) => `<option value="${kind}">${kind}</option>`).join("")}</select><button type="button" class="quiet" id="folk-connection-add" ${connectionOptions ? "" : "disabled"}>Add</button></div></div>
+          <div class="folk-biography-block"><div class="folk-biography-head"><strong>Experiences</strong><span class="muted" style="font-size:.68rem;">quick beats for later detail</span></div><input type="hidden" id="ed-experiences" value="${esc(JSON.stringify(experiences))}"><div class="folk-experience-palette">${FOLK_EXPERIENCE_PRESETS.map((name) => `<button type="button" data-folk-experience-preset="${esc(name)}">${esc(name)}</button>`).join("")}</div><div class="folk-token-list" id="folk-experience-list">${folkExperienceTokens(experiences)}</div><div class="folk-experience-add"><input type="text" id="folk-experience-custom" maxlength="120" placeholder="Another short experience"><button type="button" class="quiet" id="folk-experience-add">Add</button></div></div>
+        </fieldset>
+        <div class="smallcaps">Private measures</div>
+        <div class="folk-stats-grid">${traitRows}<div class="formrow"><label>Inspiration</label><input type="number" id="ed-inspiration" min="-1" max="2" value="${person.hidden?.inspiration ?? 0}"></div><div class="formrow"><label>Penalty</label><input type="number" id="ed-penalty" value="${person.hidden?.penalty ?? 0}"></div></div>
+        <hr class="folk-private-rule"><div class="smallcaps">Aptitude by building</div><div class="folk-stats-grid">${aptRows || `<span class="muted">No buildings are available.</span>`}</div>
+      </div>
+      </div>
       ${isNew ? `<p class="muted">Save the card before opening its portrait workshop.</p>` : folkPortraitStudioHtml(person)}
       <div class="folk-editor-actions"><button type="button" id="ed-save">${isNew ? "Add folk" : "Save card"}</button><button type="button" class="quiet" id="ed-cancel">Cancel</button></div>
     </div>`;
   wireFolkEditor(c);
+  editor.scrollTop = 0;
 }
 
 // --- people (the wider world's characters) & places ---

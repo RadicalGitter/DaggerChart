@@ -133,14 +133,15 @@ body:has(#paper-dialog:not([hidden]) .beauty-atelier) > #lang-toggle { visibilit
 .paper-dialog-frame:has(.beauty-atelier) { width: min(520px, 46vw); max-height: 100vh; background: #d8c08c; box-shadow: -18px 0 46px rgba(0,0,0,.42); }
 .paper-dialog-frame:has(.beauty-atelier) .paper-dialog-close { position: sticky; float: right; top: .75rem; right: .75rem; margin: .75rem .75rem -3.25rem 0; }
 .paper-dialog-frame:has(.beauty-atelier) .beauty-atelier { width: 100%; min-height: 100vh; padding: 2rem 1.2rem 1.4rem; box-shadow: none; }
-.beauty-atelier-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; border-bottom: 1px solid rgba(96,67,35,.28); }
+.beauty-atelier-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding-right: 3rem; border-bottom: 1px solid rgba(96,67,35,.28); }
 .beauty-atelier-head h2 { margin: .15rem 0 .8rem; }
 .beauty-kicker { color: #825339; font-size: .66rem; font-variant: small-caps; }
 .beauty-token-count { flex: 0 0 auto; padding: .38rem .5rem; color: #fff4dd; border: 1px solid #c96d42; background: linear-gradient(145deg, #d37a4d, #99462f); font-size: .72rem; }
 .beauty-intro { color: #654a2e; line-height: 1.5; }
-.beauty-candidates { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
+.beauty-candidates { display: grid; grid-template-columns: 1fr; gap: .7rem; }
 .beauty-candidate { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: .65rem; padding: .7rem; border: 1px solid #aa8759; background: rgba(255,249,229,.28); }
 .beauty-candidate.selected { border-color: #d1683d; background: linear-gradient(120deg, rgba(212,113,67,.24), rgba(255,249,229,.35)); box-shadow: inset 0 0 0 1px rgba(255,226,186,.7); }
+.beauty-candidate .beauty-note { margin-top: .22rem; color: #5e4630; font-size: .78rem; font-style: italic; }
 .beauty-candidate div > span, .beauty-history li div > span { display: block; margin-top: .16rem; color: #795f40; font-size: .68rem; }
 .beauty-candidate button, .beauty-history button, .beauty-history-head button { padding: .35rem .48rem; font-size: .7rem; }
 .beauty-swatch { width: 34px; height: 34px; border: 1px solid #7f6546; transform: rotate(45deg); background: rgba(86,62,36,.08); box-shadow: inset 0 0 0 6px rgba(255,248,222,.45); }
@@ -163,8 +164,10 @@ body:has(#paper-dialog:not([hidden]) .beauty-atelier) > #lang-toggle { visibilit
 html.sheet-embedded body::before { border-width: 4px; }
 html.sheet-embedded .wrap { padding: .55rem .72rem 3rem; }
 html.sheet-embedded .sheet-toolrail { grid-template-columns: 1fr auto; margin-bottom: .45rem; }
-html.sheet-embedded .sheet-root-link { display: none; }
 html.sheet-embedded .sheet-tool-title { justify-self: start; }
+/* Inside a shell panel the shell owns the language toggle. */
+html.sheet-embedded #lang-toggle { display: none; }
+html.sheet-embedded .sheet-toolrail-spacer { display: none; }
 html.sheet-embedded .sheet-identity > div:last-child:has(a[href^="/journal"]) { display: none; }
 
 .sheet-head {
@@ -208,11 +211,6 @@ body[data-shadow-position="shadow"] .sheet-portrait-wrap::after {
   width: 100%; height: 100%; border: 5px solid var(--sheet-primary); border-radius: 1px;
   background: color-mix(in srgb, var(--sheet-primary) 65%, #28251f);
   box-shadow: 8px 9px 0 color-mix(in srgb, var(--sheet-secondary) 54%, #8e7046), 12px 15px 22px rgba(57,37,19,.24);
-}
-.sheet-portrait-wrap i {
-  position: absolute; z-index: 3; right: -18px; top: 18%; width: 30px; height: 62%;
-  border-top: 3px solid var(--sheet-secondary); border-bottom: 3px solid var(--sheet-secondary);
-  transform: skewY(-12deg); opacity: .78;
 }
 .sheet-identity { position: relative; z-index: 2; min-width: 0; color: var(--sheet-ink); }
 .sheet-class-kicker { margin-bottom: .55rem; color: var(--sheet-primary); font-size: .72rem; font-variant: small-caps; }
@@ -424,7 +422,6 @@ body[data-sheet-class="core_class_sorcerer"] .sheet-portrait-wrap { transform: r
   .sheet-head::after { right: 3%; bottom: -.35rem; font-size: 2.65rem; }
   .sheet-portrait-wrap { width: 105px; height: 142px; }
   .sheet-head .portrait { border-width: 3px; box-shadow: 5px 6px 0 color-mix(in srgb, var(--sheet-secondary) 54%, #8e7046); }
-  .sheet-portrait-wrap i { right: -10px; width: 18px; }
   .sheet-class-kicker { margin-bottom: .3rem; font-size: .62rem; }
   .sheet-name-row h1, header h1 { font-size: 1.55rem; }
   .sheet-name-row { gap: .25rem; }

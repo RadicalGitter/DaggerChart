@@ -47,7 +47,11 @@ designing anything; it is the source of truth. Code map + API:
 
 ## Decisions already made (don't relitigate)
 
-- One trusted table: no auth, no passwords; players reach the server over LAN.
+- One trusted table: players enter without passwords and choose PCs on trust.
+  The owner expanded access to remote players on 2026-09-29: a configurable
+  GM password protects administrative pages/APIs, while player routes remain
+  public through Tailscale Funnel. No player invitation gate. See
+  `docs/remote-access.md` for the explicit limits and current addresses.
   Bare `/` opens `/login`, an identity chooser rather than a security boundary:
   GM opens `/gm`, projector opens `/screen`, and a PC choice stores
   `settlement-pc` before entering `/player`. See `docs/player-identity.md`.
@@ -117,6 +121,40 @@ designing anything; it is the source of truth. Code map + API:
   Player whitelists and mutations exclude retired PCs, while inventory,
   papers, notes, doodles, and music files remain untouched. There is no PC
   hard-delete endpoint.
+- Players change their own arms and armor through `PUT /api/party/:id/equipment`
+  (`server/equipment.js`, shared dialog `public/shared/arms-editor.js` on the
+  field sheet and the tome's Inventory). Reference entries or hand-written
+  finds; thresholds are recomputed as armor base + level while keeping any
+  extra bonus; marked armor slots clamp to the new score; each change leaves an
+  unpublished GM log line. Stored `evasion` includes the gear's printed
+  "±N to Evasion" modifiers (`public/shared/gear-modifiers.js`); `gearEvasion`
+  records what is applied, so `settleGearEvasion()` is idempotent and runs on
+  equip, on character creation and once at boot for older characters. Trait and
+  Armor Score modifiers on gear (Cumbersome, Very Heavy's Agility, shields) are
+  not automated yet.
+- The `/player` hub has no masthead: it must fit a landscape viewport without
+  scrolling (sizes in `player-finish.css` follow vh); its one way out is
+  **⇄ Change seat** in the bottom-right corner. Every other player page gets
+  one way home: the brass **⌂ Home** ribbon hung at top centre by
+  `shared/player-home.js` (no per-page back links). Pages whose heading starts
+  near the top reserve room under it by route in `shared/player-home.css`.
+- Players see the GM named as **Oscar** everywhere: `GM_NAME` in
+  `public/shared/gm-name.js` feeds i18n's `{gm}` placeholder (every `t()` call
+  and glossary note) and the player-visible server messages. Never write
+  "the GM", "the Keeper" or "the steward" in player-facing copy; the Keeper
+  access door for the GM himself keeps its name.
+- The Tome's Journal spread holds two journal embeds: `?tabs=journal,chronicle`
+  on the left leaf and `?tabs=people,places` on the right. On desktop the book
+  may scale up to 1.6× to use large screens.
+- Scrolling player pages get a 124px `.corner-clearance` spacer from
+  `shared/player-home.js` so their last lines clear the floating corner
+  controls; pages that fit the viewport are untouched, and Rules pads its
+  own panes instead.
+- Encounter presets live in hand-edited `data/encounter-presets.json` (read at
+  boot, never written). `/board` ⚔ Encounter → **+ From a preset…** creates an
+  encounter from one, with its running notes; while a live session runs only its
+  "Who is in play" PCs take the stage, and absent PCs can be removed with
+  **Not at the table tonight**. Workflow: the `encounter-builder` skill.
 - PC inventory uses typed entries with lazy migration from legacy strings.
   Standard Consumables resolve from `data/daggerheart/reference.json`, stack
   to five, and use atomic server-side reactions. Contract and extension rules:
@@ -126,6 +164,13 @@ designing anything; it is the source of truth. Code map + API:
   playlist endpoint. The server validates song UUIDs, derives CDN URLs itself,
   caches MP3s under `Visseren/Suno Mirror`, and never deletes cached audio when
   a song leaves the upstream collection. See `docs/music-integration.md`.
+- The bubble music desk is provisional after live-play navigation friction.
+  Future music "pockets" are named cue groups backed by playlists; a whirlpool
+  is only one possible presentation. `/gm-remote` owns phone playback and an
+  explicit one-ahead Suno continuation queue. Its seven-hex selector separates
+  character/NPC motifs, three-step intensity, scene intent, and world/place;
+  extensions preserve their source model and recorded completion times inform
+  later model-speed decisions.
 - Player feedback tickets are explicit: the bug control captures the current
   viewport for annotation and creates a local ticket. GM triage reads all
   tickets for crosstalk before presenting one problem at a time; see

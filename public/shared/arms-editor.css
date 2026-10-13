@@ -1,0 +1,59 @@
+/* The arms rack dialog: field-journal ink and brass, readable over both the
+   parchment sheet and the aged tome. */
+dialog.arms-editor {
+  width: min(980px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); box-sizing: border-box;
+  margin: auto; padding: 0; overflow: auto; color: #eee7d5;
+  border: 1px solid #b7a47666; border-radius: 4px;
+  background: radial-gradient(ellipse at 15% 0%, #31483c66, transparent 55%), linear-gradient(150deg, #1c2c24, #121d18);
+  box-shadow: 0 30px 80px #000a, inset 0 0 0 6px #0b130f55, inset 0 0 0 7px #c3aa7622;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+}
+dialog.arms-editor::backdrop { background: rgba(6, 10, 8, .78); backdrop-filter: blur(3px); }
+.arms-loading { margin: 0; padding: 2.5rem; color: #b5c0ad; text-align: center; font-style: italic; }
+.arms-form { margin: 0; padding: clamp(18px, 3vw, 30px); }
+.arms-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.arms-kicker { display: block; color: #c6b58e; font: 11px "Segoe UI", system-ui, sans-serif; letter-spacing: .18em; text-transform: uppercase; }
+.arms-head h2 { margin: .3rem 0 0; color: #f2ebd9; font-size: clamp(26px, 3vw, 34px); font-weight: 500; letter-spacing: -.02em; }
+.arms-close {
+  width: 38px; height: 38px; flex: none; padding: 0; color: #d8cba6; cursor: pointer;
+  border: 1px solid #b7a47666; border-radius: 50%; background: transparent; font-size: 1.35rem; line-height: 1;
+}
+.arms-close:hover, .arms-close:focus-visible { color: #fff4d6; border-color: #c3aa76; background: #2a3a30; }
+.arms-intro { max-width: 640px; margin: .6rem 0 1.3rem; color: #b5c0ad; font-size: 15px; line-height: 1.55; }
+.arms-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.arms-slot {
+  min-width: 0; padding: 14px 14px 16px; border: 1px solid #b3ab8533; border-radius: 3px;
+  background: #17271fbf; transition: opacity .2s;
+}
+.arms-slot.is-blocked { opacity: .62; }
+.arms-slot-label { display: block; margin-bottom: 8px; color: #c2b28e; font: 11px "Segoe UI", system-ui, sans-serif; letter-spacing: .15em; text-transform: uppercase; }
+.arms-editor select, .arms-editor input {
+  width: 100%; min-height: 40px; box-sizing: border-box; padding: 7px 10px; color: #f0e8d4;
+  border: 1px solid #7d865d88; border-radius: 3px; background: #0f1a15; font: 15px Georgia, serif;
+}
+.arms-editor select:disabled { opacity: .55; }
+.arms-editor :is(select, input, button):focus-visible { outline: 2px solid #c3aa76; outline-offset: 2px; }
+.arms-editor input::placeholder { color: #8f9a88; }
+.arms-detail { min-height: 64px; margin-top: 10px; }
+.arms-facts { margin: 0; color: #e3d9bd; font-size: 14px; line-height: 1.5; }
+.arms-feature { margin: 6px 0 0; color: #b9c4b1; font-size: 13.5px; line-height: 1.5; }
+.arms-hint { margin: 0; color: #9fab98; font-size: 13px; font-style: italic; line-height: 1.5; }
+.arms-custom { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; }
+.arms-custom label { display: grid; gap: 4px; min-width: 0; color: #b6bfa9; font: 11.5px "Segoe UI", system-ui, sans-serif; }
+.arms-custom .arms-wide { grid-column: 1 / -1; }
+.arms-custom-armor { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.arms-outcome { min-height: 1.4em; margin: 16px 0 0; color: #e3d9bd; font-size: 15px; }
+.arms-outcome strong { color: #f2ebd9; font-size: 18px; font-weight: 600; }
+.arms-was { color: #9fab98; font-size: 13px; font-style: italic; }
+.arms-error { min-height: 1.3em; margin: 14px 0 0; color: #e39a7e; font-size: 14px; }
+.arms-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+.arms-actions button { min-height: 42px; padding: 0 18px; border-radius: 3px; font: 15px Georgia, serif; cursor: pointer; }
+.arms-cancel { color: #d8cba6; border: 1px solid #b7a47666; background: transparent; }
+.arms-cancel:hover, .arms-cancel:focus-visible { color: #fff4d6; background: #2a3a30; }
+.arms-save { color: #20180f; border: 1px solid #d6bc80; background: #c5a35f; }
+.arms-save:hover, .arms-save:focus-visible { background: #d8b673; }
+.arms-save:disabled { opacity: .55; cursor: progress; }
+@media (max-width: 820px) {
+  .arms-slots { grid-template-columns: 1fr; }
+  .arms-detail { min-height: 0; }
+}

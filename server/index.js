@@ -1,12 +1,15 @@
 import express from "express";
+import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import "./env.js";
+import { tableAccess, protectPlayerWrites } from "./access.js";
 import { campaignById, completeBuildingProject, createCampaignId, isActiveCampaign, state, persist, addLog, advanceSeason, resolveDowntime, modifierBreakdown, seasonLabel, setBuildingProjectCheck } from "./state.js";
-import { gmView, tableView, loreView, screenView, partyListView, playerCharacterView, gmMessagesView, playerMessagesView } from "./views.js";
+import { gmView, tableView, loreView, screenView, partyListView, playerCharacterView, playerRulePinsView, playerPortraitWorkshopView, gmMessagesView, playerMessagesView } from "./views.js";
 import { normalizeFolkProfile } from "./folk-profile.js";
 import { loadJson, saveJson } from "./store.js";
+import { adventureById, adventureList, adventureMapPath, projectedAdventureMapPath } from "./adventures.js";
 import almanac from "./almanac.js";
 import { addInventoryItem, consumables, grantConsumable, inventoryEntry, updateInventoryItem, useInventoryItem } from "./inventory.js";
 import { clearTelemetry, recordTelemetryBatch, telemetryView } from "./telemetry.js";
@@ -16,11 +19,15 @@ import { BACKGROUND_FIELD_DEFINITIONS, normalizeBackgroundEntries, suggestBackgr
 import { gmLedgerView, grantCredits, hasCredit, playerCreditView, requestTopOff, spendCredit } from "./llm-credits.js";
 import { startBeacon } from "./beacon.js";
 import { artWorkshop } from "./art.js";
+import { PortraitWorkshopError, portraitRequest, portraitWorkshopData, savePortraitPreferences, stagePcPortrait, reviewPcPortrait } from "./portrait-workshop.js";
 import { resolveDualityRoll } from "./duality-roll.js";
 import { DEFAULT_PLAYER_FEATURES, normalizePlayerFeatures, playerFeaturePatch } from "./player-features.js";
 import { normalizeCharacterName, renameCharacter } from "./party-name.js";
+import { describeExperiences, setExperiences } from "./experiences.js";
 import { normalizeCharacterDraftVersion } from "./character-draft.js";
 import { claimOwedDomainCard, updateOwnedDomainCards } from "./domain-cards.js";
+import { equipCharacter, settleGearEvasion } from "./equipment.js";
+import { GM_NAME } from "../public/shared/gm-name.js";
 import {
   SCENE_DIMENSIONS,
   SCENE_ROOT_IDS,
@@ -35,6 +42,7 @@ import {
   musicView,
   characterThemeView,
   generateSong,
+  extendSong,
   generateCharacterTheme,
   publishCharacterTheme,
   setCharacterThemeIdentity,
@@ -91,6 +99,9 @@ import {
   upsertPersona
 } from "./character-presentations.js";
 import { commitSheetBeauty, restoreSheetBeauty } from "./sheet-beauty.js";
+import { createScreenRequest, gmNotificationsView, notificationById, resolveNotification } from "./gm-notifications.js";
+import { characterClassChoiceView, confirmCharacterClassChoice } from "./character-class-choice.js";
+import { privateClassIdentity } from "./class-choice-definitions.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -102,6 +113,9 @@ const isActivePc = (pc) => pc?.active !== false;
 const isPlayablePc = (pc) => isActivePc(pc) && isActiveCampaign(pc?.campaignId);
 const activePcById = (id) => state.pcs.find((pc) => pc.id === id && isPlayablePc(pc)) || null;
 const currentActivePcs = () => state.pcs.filter((pc) => isPlayablePc(pc) && pc.campaignId === state.campaigns.currentId);
+// Older characters stored class Evasion without their gear's modifiers;
+// settle them once at boot (idempotent: each PC records what it applied).
+if (state.pcs.map(settleGearEvasion).some(Boolean)) persist();
 const SESSION_TEXT_LIMITS = { gmSummary: 12000, gmHighlight: 4000, perspective: 12000, retelling: 30000 };
 const SESSION_TEXT_LABELS = {
   gmSummary: "The factual summary",
@@ -144,12 +158,15 @@ function sessionParticipants(value, campaignId, activeOnly = false) {
 }
 
 const app = express();
+app.use(tableAccess());
 app.use(express.json({ limit: "8mb" }));
+app.use(protectPlayerWrites);
 app.use(almanac); // wiki + roll-to-reveal tables (server/almanac.js)
 app.use("/shared", express.static(path.join(PUBLIC, "shared")));
 app.use("/vendor/dice-box-threejs", express.static(path.join(PUBLIC, "vendor", "dice-box-threejs")));
 app.use("/vendor/html2canvas", express.static(path.join(ROOT, "node_modules", "html2canvas", "dist")));
 app.use("/gm", express.static(path.join(PUBLIC, "gm")));
+app.use("/gm-remote", express.static(path.join(PUBLIC, "gm-remote")));
 app.use("/board", express.static(path.join(PUBLIC, "board")));
 app.use("/login", express.static(path.join(PUBLIC, "login")));
 app.use("/player", express.static(path.join(PUBLIC, "player")));
@@ -159,6 +176,7 @@ app.use("/table", express.static(path.join(PUBLIC, "table")));
 app.use("/table-book", express.static(path.join(PUBLIC, "table-book")));
 app.use("/tome", express.static(path.join(PUBLIC, "tome")));
 app.use("/create", express.static(path.join(PUBLIC, "create")));
+app.use("/portrait", express.static(path.join(PUBLIC, "create")));
 app.use("/character", express.static(path.join(PUBLIC, "character")));
 app.use("/background", express.static(path.join(PUBLIC, "background")));
 app.use("/journal", express.static(path.join(PUBLIC, "journal")));
@@ -216,7 +234,8 @@ function guard(handler) {
       const internal = Boolean(err?.code);
       if (internal) console.error(err);
       res.status(internal ? 500 : 400).json({
-        error: internal ? "The ledger could not be updated." : err.message
+        error: internal ? "The ledger could not be updated." : err.message,
+        ...(err.errorKey?.startsWith("portrait.workshop.") ? { errorKey: err.errorKey } : {})
       });
     }
   };
@@ -227,10 +246,14 @@ function guardAsync(handler) {
     try {
       await handler(req, res);
     } catch (err) {
+      if (err.errorKey === "portrait.unavailable") {
+        return res.status(503).json({ error: err.message, errorKey: err.errorKey, reason: err.reason });
+      }
       const internal = Boolean(err?.code);
       if (internal) console.error(err);
       res.status(internal ? 500 : 400).json({
-        error: internal ? "The ledger could not be updated." : err.message
+        error: internal ? "The ledger could not be updated." : err.message,
+        ...(err.errorKey?.startsWith("portrait.workshop.") ? { errorKey: err.errorKey } : {})
       });
     }
   };
@@ -281,6 +304,31 @@ app.get("/api/rules", (_req, res) => {
 
 app.get("/api/party", (_req, res) => res.json(partyListView()));
 
+app.get("/api/party/:id/rule-pins", guard((req, res) => {
+  const view = playerRulePinsView(req.params.id, rulesCorpus);
+  if (!view) throw new Error("No such active character.");
+  res.set("Cache-Control", "private, no-store").json(view);
+}));
+
+app.put("/api/party/:id/rule-pins", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such active character.");
+  const { ruleId, pinned } = req.body || {};
+  if (typeof ruleId !== "string" || !rulesCorpus.nodes.some((node) => node.id === ruleId)) {
+    throw new Error("Unknown rule.");
+  }
+  if (typeof pinned !== "boolean") throw new Error("Pinned must be true or false.");
+  const pins = new Set(playerRulePinsView(pc.id, rulesCorpus).pins);
+  if (pinned) pins.add(ruleId);
+  else pins.delete(ruleId);
+  // Persist only the owning PC file; pinning does not change the settlement.
+  const next = state.pcs.map((candidate) => candidate.id === pc.id ? { ...candidate, rulePins: [...pins] } : candidate);
+  saveJson("pcs.json", next);
+  state.pcs = next;
+  broadcastEvent("rule-pins", { pcId: pc.id });
+  res.set("Cache-Control", "private, no-store").json(playerRulePinsView(pc.id, rulesCorpus));
+}));
+
 app.get("/api/party/:id/shadow", guard((req, res) => {
   const pc = activePcById(req.params.id);
   if (!pc) throw new Error("No such active character.");
@@ -301,7 +349,7 @@ app.put("/api/party/:id/shadow", guard((req, res) => {
 app.post("/api/party/:id/shadow/invoke", guard((req, res) => {
   const pc = activePcById(req.params.id);
   if (!pc) throw new Error("No such active character.");
-  if (state.session.fear >= 12) throw new Error("The GM Fear pool is full; the shadow cannot create another token.");
+  if (state.session.fear >= 12) throw new Error(`${GM_NAME}'s Fear pool is full; the shadow cannot add another.`);
   const invocation = recordShadowInvocation(state.liveSession, pc.id, pc.campaignId);
   state.session.fear += 1;
   persist();
@@ -482,13 +530,14 @@ app.delete("/api/cartography/sheets/:sheetId", guard((req, res) => {
   res.json(cartographyPlayerView(state.cartography, pc.id, state.pcs));
 }));
 
-app.get("/api/art/status", (_req, res) => res.json({
+app.get("/api/art/status", guardAsync(async (_req, res) => res.json({
   ...artWorkshop.status(),
+  generation: await artWorkshop.availability(),
   suggestions: {
     ready: Boolean(process.env.ANTHROPIC_API_KEY),
     model: process.env.PORTRAIT_SUGGEST_MODEL || process.env.RETELL_MODEL || "claude-opus-4-8"
   }
-}));
+})));
 
 function artLibraryView() {
   const characters = state.pcs
@@ -583,14 +632,13 @@ app.delete("/api/art/scenes/:id", guard((req, res) => {
 }));
 
 app.post("/api/art/portrait/suggest", guardAsync(async (req, res) => {
-  const draftId = String(req.body.draftId || "");
-  if (!/^draft_[a-zA-Z0-9_-]{6,80}$/.test(draftId)) throw new Error("A valid character draft is required.");
-  // Word-weaving credits are charged to the draft during creation.
-  if (!hasCredit(draftId)) {
-    return res.status(402).json({ error: "No expansions left. Ask the steward for more.", credits: playerCreditView(draftId) });
+  const owner = String(req.body.pcId || req.body.draftId || "");
+  if (req.body.pcId ? !activePcById(owner) : !/^draft_[a-zA-Z0-9_-]{6,80}$/.test(owner)) throw new Error("A valid character or draft is required.");
+  if (!hasCredit(owner)) {
+    return res.status(402).json({ error: `No expansions left. Ask ${GM_NAME} for more.`, credits: playerCreditView(owner) });
   }
   const result = await suggestPortrait(req.body.context || {});
-  res.json({ ...result, credits: spendCredit(draftId) });
+  res.json({ ...result, credits: spendCredit(owner) });
 }));
 
 app.post("/api/art/portrait", guardAsync(async (req, res) => {
@@ -599,6 +647,7 @@ app.post("/api/art/portrait", guardAsync(async (req, res) => {
   const result = await artWorkshop.request({
     kind: "portrait",
     entityId: draftId,
+    referenceImageUrl: req.body.referenceImageUrl,
     prompt: req.body.prompt,
     negativePrompt: req.body.negativePrompt,
     seed: req.body.seed,
@@ -667,6 +716,27 @@ app.get("/api/party/:id", guard((req, res) => {
   res.json(pc);
 }));
 
+app.get("/api/party/:id/class-choice", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  res.set("Cache-Control", "private, no-store");
+  res.json(characterClassChoiceView(pc, state.characterClassOffers));
+}));
+
+app.post("/api/party/:id/class-choice", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  const next = confirmCharacterClassChoice(pc, state.characterClassOffers, req.body);
+  if (next !== pc) {
+    // Save before replacing live state, so a write failure cannot close the offer.
+    const pcs = state.pcs.map((entry) => entry.id === pc.id ? next : entry);
+    saveJson("pcs.json", pcs);
+    state.pcs = pcs;
+    broadcast();
+  }
+  res.json(playerCharacterView(pc.id));
+}));
+
 app.post("/api/party/:id/sheet-beauty/commit", guard((req, res) => {
   const pc = activePcById(req.params.id);
   if (!pc) throw new Error("No such character.");
@@ -690,11 +760,18 @@ app.post("/api/party", guard((req, res) => {
   const campaignId = String(req.body?.campaignId || state.campaigns.currentId);
   if (!isActiveCampaign(campaignId)) throw new Error("Choose an active campaign.");
   const pc = { ...req.body, campaignId };
+  delete pc.classChoice;
+  delete pc.classChoiceHistory;
+  delete pc.inventor;
+  if (privateClassIdentity(pc.class?.id, pc.subclass?.id)) {
+    throw new Error("This class is available only through an offered character choice.");
+  }
   pc.name = normalizeCharacterName(pc.name);
   pc.id = `pc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
   pc.createdAt = new Date().toISOString();
   pc.level = pc.level || 1;
   pc.active = true;
+  settleGearEvasion(pc);
   state.pcs.push(pc);
   addLog({ type: "party", campaignId, summary: `${pc.name.trim()} takes their place in the settlement.`, published: true });
   persist();
@@ -721,6 +798,9 @@ app.put("/api/party/:id", guard((req, res) => {
   if (i === -1) throw new Error("No such character.");
   if (Object.hasOwn(req.body, "conditions")) throw new Error("Use the Conditions control.");
   if (Object.hasOwn(req.body, "name")) throw new Error("Use the character name control.");
+  if (Object.hasOwn(req.body, "rulePins")) throw new Error("Use the rule pin control.");
+  if (["classChoice", "classChoiceHistory", "inventor"].some((key) => Object.hasOwn(req.body, key))) throw new Error("Use the class choice control.");
+  if (privateClassIdentity(req.body.class?.id, req.body.subclass?.id)) throw new Error("Use the class choice control.");
   if (Object.hasOwn(req.body, "campaignId") && !isActiveCampaign(req.body.campaignId)) throw new Error("Choose an active campaign.");
   const prev = state.pcs[i];
   const next = { ...prev, ...req.body, id: prev.id };
@@ -766,7 +846,7 @@ app.post("/api/party/:id/background/suggest", guardAsync(async (req, res) => {
   if (!currentText) throw new Error("Write a beginning before asking for an expansion.");
   if (currentText.length > 6000) throw new Error("That memory is too long to expand.");
   if (!hasCredit(pc.id)) {
-    return res.status(402).json({ error: "No expansions left. Ask the steward for more.", credits: playerCreditView(pc.id) });
+    return res.status(402).json({ error: `No expansions left. Ask ${GM_NAME} for more.`, credits: playerCreditView(pc.id) });
   }
   const result = await suggestBackground({
     pc,
@@ -790,7 +870,7 @@ app.post("/api/party/:id/background/spark", guardAsync(async (req, res) => {
   // Sparks are the inspiration aid: they work even on an empty field.
   const currentText = String(req.body?.currentText || "").slice(0, 6000);
   if (!hasCredit(pc.id)) {
-    return res.status(402).json({ error: "No expansions left. Ask the steward for more.", credits: playerCreditView(pc.id) });
+    return res.status(402).json({ error: `No expansions left. Ask ${GM_NAME} for more.`, credits: playerCreditView(pc.id) });
   }
   const result = await suggestSparks({
     pc,
@@ -807,7 +887,7 @@ app.post("/api/party/:id/background/weave", guardAsync(async (req, res) => {
   const memories = playerCharacterView(pc.id).background.filter((entry) => entry?.a?.trim());
   if (!memories.length) throw new Error("Write at least one memory before weaving.");
   if (!hasCredit(pc.id)) {
-    return res.status(402).json({ error: "No expansions left. Ask the steward for more.", credits: playerCreditView(pc.id) });
+    return res.status(402).json({ error: `No expansions left. Ask ${GM_NAME} for more.`, credits: playerCreditView(pc.id) });
   }
   const result = await weaveBackground({
     pc,
@@ -869,6 +949,63 @@ app.put("/api/party/:id/name", guard((req, res) => {
   res.json(playerCharacterView(pc.id));
 }));
 
+// Experiences: a character with none records exactly two (+2 each) freely;
+// any later change needs the GM's approval, like a change of name.
+app.put("/api/party/:id/experiences", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  const result = setExperiences(pc, req.body);
+  if (result.changed) {
+    addLog({
+      type: "party",
+      campaignId: pc.campaignId,
+      summary: result.kind === "start"
+        ? `${pc.name} recorded their starting Experiences: ${describeExperiences(result.after)}.`
+        : `${pc.name}'s Experiences were changed to: ${describeExperiences(result.after)}.`
+    });
+    persist();
+    broadcast();
+  }
+  res.json(playerCharacterView(pc.id));
+}));
+
+const portraitJobs = new Set();
+app.get("/api/party/:id/portrait-workshop", guard((req, res) => {
+  const view = playerPortraitWorkshopView(req.params.id);
+  if (!view) throw new Error("No such character.");
+  res.set("Cache-Control", "private, no-store").json(view);
+}));
+
+app.put("/api/party/:id/portrait-workshop", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  if (req.body.action) {
+    if (portraitJobs.has(pc.id)) throw new PortraitWorkshopError("busy", "A portrait is still being painted.");
+    reviewPcPortrait(pc, req.body);
+  } else savePortraitPreferences(pc, req.body);
+  persist();
+  if (req.body.action && req.body.action !== "discard") broadcast();
+  res.json(playerPortraitWorkshopView(pc.id));
+}));
+
+app.post("/api/party/:id/portrait-workshop", guardAsync(async (req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  if (portraitJobs.has(pc.id) || portraitWorkshopData(pc).pending) throw new PortraitWorkshopError("busy", "Keep or discard the pending portrait first, or wait for the current painting.");
+  const request = portraitRequest(req.body);
+  const previousPortrait = pc.portrait;
+  portraitJobs.add(pc.id);
+  try {
+    const result = await artWorkshop.request({ ...request, kind: "portrait", entityId: pc.id, seed: req.body.seed });
+    const current = activePcById(pc.id);
+    if (!current) throw new Error("No such character.");
+    if (current.portrait !== previousPortrait) throw new PortraitWorkshopError("baselineChanged", "That character's portrait has changed. Reload the workshop.");
+    stagePcPortrait(current, result, request, req.body.sourcePrompt);
+    persist();
+    res.json({ ...result, ...playerPortraitWorkshopView(current.id) });
+  } finally { portraitJobs.delete(pc.id); }
+}));
+
 app.post("/api/party/:id/portrait", guardAsync(async (req, res) => {
   const pc = state.pcs.find((candidate) => candidate.id === req.params.id && isPlayablePc(candidate));
   if (!pc) throw new Error("No such character.");
@@ -878,6 +1015,7 @@ app.post("/api/party/:id/portrait", guardAsync(async (req, res) => {
     kind: "portrait",
     entityId: pc.id,
     prompt: pc.portraitPrompt,
+    referenceImageUrl: req.body.referenceImageUrl,
     negativePrompt: req.body.negativePrompt,
     seed: req.body.seed,
     width: req.body.width,
@@ -914,6 +1052,19 @@ app.put("/api/party/:id/conditions", guard((req, res) => {
   res.json(playerCharacterView(pc.id));
 }));
 
+// Players change their own arms and armor; thresholds follow the armor.
+app.put("/api/party/:id/equipment", guard((req, res) => {
+  const pc = activePcById(req.params.id);
+  if (!pc) throw new Error("No such character.");
+  const summary = equipCharacter(pc, req.body, state.reference);
+  if (summary) {
+    addLog({ type: "party", campaignId: pc.campaignId, summary });
+    persist();
+    broadcast();
+  }
+  res.json(playerCharacterView(pc.id));
+}));
+
 function pcForInventory(id) {
   const pc = activePcById(id);
   if (!pc) throw new Error("No such character.");
@@ -939,7 +1090,7 @@ app.post("/api/party/inventory/paper", guard((req, res) => {
       paperType: "note",
       name: req.body.name,
       body: req.body.body,
-      author: "The Keeper"
+      author: GM_NAME
     }, state.reference);
     return { id: pc.id, name: pc.name, itemId: item.id };
   });
@@ -1003,6 +1154,33 @@ app.post("/api/party/:id/restore", guard((req, res) => {
 
 // --- GM API ---
 app.get("/api/state", (_req, res) => res.json(gmView()));
+
+// Adventure preparation is GM-only. Its image is public only while selected.
+app.get("/api/adventures", (_req, res) => {
+  res.set("Cache-Control", "private, no-store").json({ adventures: adventureList() });
+});
+app.get("/api/adventures/:id/map", (req, res) => {
+  const file = adventureMapPath(adventureById(req.params.id));
+  if (!file) return res.sendStatus(404);
+  res.set("Cache-Control", "private, no-store").sendFile(file);
+});
+app.get("/api/adventures/:id", (req, res) => {
+  const adventure = adventureById(req.params.id);
+  if (!adventure) return res.status(404).json({ error: "Unknown adventure." });
+  res.set("Cache-Control", "private, no-store").json({
+    ...adventure,
+    mapAvailable: Boolean(adventureMapPath(adventure)),
+    characters: (adventure.characters || []).map((entry) => {
+      const folk = state.characters.find((person) => person.id === entry.folkId);
+      return { ...entry, folkId: folk?.id || null, portrait: folk?.portrait || null };
+    })
+  });
+});
+app.get("/api/screen/adventure-map/:id", (req, res) => {
+  const file = projectedAdventureMapPath(state.screen.current, req.params.id);
+  if (!file) return res.sendStatus(404);
+  res.set("Cache-Control", "no-store").sendFile(file);
+});
 
 app.post("/api/campaigns", guard((req, res) => {
   const name = String(req.body?.name || "").trim();
@@ -1146,6 +1324,7 @@ app.post("/api/party/:id/presentation/:refId/portrait", guardAsync(async (req, r
   const result = await artWorkshop.request({
     kind: "portrait",
     entityId: `presentation_${pc.id}_${refId}`,
+    referenceImageUrl: req.body.referenceImageUrl,
     prompt,
     negativePrompt: req.body.negativePrompt,
     seed: req.body.seed,
@@ -1336,6 +1515,12 @@ app.post("/api/music/generate", guardAsync(async (req, res) => {
   const song = await generateSong(req.body || {});
   broadcast();
   res.json(song);
+}));
+
+app.post("/api/music/songs/:id/extend", guardAsync(async (req, res) => {
+  const song = await extendSong(req.params.id, req.body || {});
+  broadcast();
+  res.status(202).json(song);
 }));
 
 app.post("/api/music/themes/:pcId/generate", guardAsync(async (req, res) => {
@@ -1592,7 +1777,7 @@ app.put("/api/characters/:id", guard((req, res) => {
 }));
 
 const folkPortraitModifier = (value) => [-1, 0, 1, 2].includes(Number(value)) ? Number(value) : 0;
-const folkPortraitStyle = (value) => ["style1", "style2"].includes(String(value)) ? String(value) : "style2";
+const folkPortraitStyle = (value) => ["workflow", "style1"].includes(String(value)) ? String(value) : "workflow";
 const folkPortraitText = (value, max) => String(value || "").trim().slice(0, max);
 
 function folkPortraitRequest(body = {}) {
@@ -1601,6 +1786,7 @@ function folkPortraitRequest(body = {}) {
     sourcePrompt: folkPortraitText(body.sourcePrompt || body.prompt, 6_000),
     prompt: folkPortraitText(body.prompt, 8_000),
     negativePrompt: folkPortraitText(body.negativePrompt, 4_000),
+    referenceImageUrl: folkPortraitText(body.referenceImageUrl, 2048),
     primaryColor: folkPortraitText(body.primaryColor, 32),
     secondaryColor: folkPortraitText(body.secondaryColor, 32),
     tags: Array.isArray(body.tags) ? body.tags.slice(0, 20).map((tag) => folkPortraitText(tag, 80)) : [],
@@ -1611,7 +1797,7 @@ function folkPortraitRequest(body = {}) {
     armor: folkPortraitText(body.armor, 300),
     mainHand: folkPortraitText(body.mainHand, 300),
     offHand: folkPortraitText(body.offHand, 300),
-    stepsModifier: folkPortraitModifier(body.stepsModifier),
+    stepsModifier: [-3, -2, -1, 0, 1, 2, 3].includes(Number(body.stepsModifier)) ? Number(body.stepsModifier) : 0,
     cfgModifier: folkPortraitModifier(body.cfgModifier),
     style: folkPortraitStyle(body.style),
     embellishPrompt: body.embellishPrompt !== false,
@@ -1647,6 +1833,7 @@ app.post("/api/characters/:id/portrait", guardAsync(async (req, res) => {
   character.portraitWorkshop = {
     ...(character.portraitWorkshop || {}),
     fixSeed: request.fixSeed,
+    referenceImageUrl: request.referenceImageUrl,
     stepsModifier: request.stepsModifier,
     cfgModifier: request.cfgModifier,
     style: request.style,
@@ -1657,6 +1844,7 @@ app.post("/api/characters/:id/portrait", guardAsync(async (req, res) => {
   const result = await artWorkshop.request({
     kind: "portrait",
     entityId: character.id,
+    referenceImageUrl: request.referenceImageUrl,
     prompt: request.prompt || request.sourcePrompt,
     negativePrompt: request.negativePrompt,
     seed: req.body.seed,
@@ -1682,6 +1870,7 @@ app.post("/api/characters/:id/portrait", guardAsync(async (req, res) => {
     prompt: request.prompt || request.sourcePrompt,
     negativePrompt: request.negativePrompt,
     primaryColor: request.primaryColor,
+    referenceImageUrl: request.referenceImageUrl,
     secondaryColor: request.secondaryColor,
     tags: request.tags,
     equipment: request.equipment,
@@ -1770,6 +1959,7 @@ app.post("/api/people/:id/portrait", guardAsync(async (req, res) => {
   const result = await artWorkshop.request({
     kind: "portrait",
     entityId: person.id,
+    referenceImageUrl: req.body.referenceImageUrl,
     prompt: person.portraitPrompt,
     negativePrompt: req.body.negativePrompt,
     seed: req.body.seed,
@@ -1915,13 +2105,54 @@ function cleanEncounterEntities(raw) {
 
 app.get("/api/encounters", (_req, res) => res.json(state.encounters));
 
+// Presets: hand-edited rosters in data/encounter-presets.json. Only the
+// summary fields reach the menu; adversaries are checked against the bestiary.
+const encounterPresets = () => (state.encounterPresets?.presets || []).filter((preset) => preset?.id && Array.isArray(preset.adversaries));
+
+app.get("/api/encounters/presets", (_req, res) => res.json(encounterPresets().map((preset) => ({
+  id: preset.id,
+  name: String(preset.name || preset.id),
+  summary: String(preset.summary || ""),
+  budget: String(preset.budget || ""),
+  partySize: Number(preset.partySize) || null,
+  count: preset.adversaries.length
+}))));
+
+app.get("/api/encounters/presets/:id", (req, res) => {
+  const preset = encounterPresets().find((entry) => entry.id === req.params.id);
+  if (!preset) return res.status(404).json({ error: "Unknown encounter preset." });
+  res.set("Cache-Control", "private, no-store").json(preset);
+});
+
+function presetEntities(preset) {
+  const adversaryIds = new Set(state.adversaries.adversaries.map((a) => a.id));
+  return preset.adversaries.filter((entry) => adversaryIds.has(entry?.refId)).slice(0, 40).map((entry, index) => ({
+    id: `en_${Date.now().toString(36)}_${index}_${Math.random().toString(36).slice(2, 6)}`,
+    kind: "adversary",
+    refId: entry.refId,
+    label: String(entry.label || state.adversaries.adversaries.find((a) => a.id === entry.refId)?.name || "").slice(0, 60),
+    x: Number.isFinite(entry.x) ? Math.max(0, Math.min(1, entry.x)) : 0.75,
+    y: Number.isFinite(entry.y) ? Math.max(0, Math.min(1, entry.y)) : 0.5,
+    w: 0.09,
+    hp: 0,
+    stress: 0,
+    defeated: false
+  }));
+}
+
 app.post("/api/encounters", guard((req, res) => {
-  const name = String(req.body?.name || "").trim().slice(0, 80) || "Unnamed encounter";
-  const pcs = currentActivePcs();
+  const preset = req.body?.presetId ? encounterPresets().find((entry) => entry.id === req.body.presetId) : null;
+  if (req.body?.presetId && !preset) throw new Error("Unknown encounter preset.");
+  const name = String(req.body?.name || preset?.name || "").trim().slice(0, 80) || "Unnamed encounter";
+  // While a session is in play, only the characters ticked under "Who is in
+  // play" take the stage; otherwise every active character does.
+  const inPlay = liveSessionGmView(state.liveSession, state.campaigns.currentId).clock?.participants || [];
+  const pcs = currentActivePcs().filter((pc) => !inPlay.length || inPlay.includes(pc.id));
   const encounter = {
     id: `enc_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
     name,
     createdAt: new Date().toISOString(),
+    ...(preset ? { presetId: preset.id, notes: String(preset.notes || "").slice(0, 3000) } : {}),
     entities: pcs.map((pc, index) => ({
       id: `en_pc_${pc.id}`,
       kind: "pc",
@@ -1933,7 +2164,7 @@ app.post("/api/encounters", guard((req, res) => {
       hp: 0,
       stress: 0,
       defeated: false
-    }))
+    })).concat(preset ? presetEntities(preset) : [])
   };
   state.encounters.encounters.push(encounter);
   persist();
@@ -1967,35 +2198,79 @@ app.delete("/api/encounters/:id", guard((req, res) => {
 
 app.get("/api/screen", (_req, res) => res.json(screenView(rulesCorpus)));
 
-const SCREEN_TYPES = new Set(["image", "text", "rule", "paper", "stores", "buildings", "folk", "person", "place", "encounter"]);
+const SCREEN_TYPES = new Set(["image", "adventure-map", "text", "rule", "paper", "stores", "buildings", "folk", "person", "place", "encounter"]);
 
-app.put("/api/screen", guard((req, res) => {
-  const { type, refId, url, caption, title, body } = req.body;
+function normalizedScreenMutation(input) {
+  const { type, refId, url, caption, title, body } = input || {};
   if (type === null) {
-    state.screen.current = null;
-  } else {
-    if (!SCREEN_TYPES.has(type)) throw new Error("Unsupported screen type.");
-    if (type === "image" && (!url || !url.trim())) throw new Error("An image needs a URL.");
-    if (type === "text" && !(title || "").trim() && !(body || "").trim()) throw new Error("Write something first.");
-    if (type === "rule" && !rulesCorpus.nodes.find((node) => node.id === refId)) throw new Error("Unknown rule.");
-    if (type === "paper" && !state.pcs.some((pc) => (pc.inventory || []).some((item) => typeof item === "object" && item.id === refId && item.kind === "paper"))) throw new Error("Unknown paper.");
-    if (type === "folk" && !state.characters.find((c) => c.id === refId)) throw new Error("Unknown folk.");
-    if (type === "person" && !state.people.find((p) => p.id === refId)) throw new Error("Unknown person.");
-    if (type === "place" && !state.places.find((p) => p.id === refId)) throw new Error("Unknown place.");
-    if (type === "encounter" && !state.encounters.encounters.find((e) => e.id === refId)) throw new Error("Unknown encounter.");
-    state.screen.current = {
-      type,
-      refId: refId || null,
-      url: (url || "").trim() || null,
-      caption: (caption || "").trim(),
-      title: (title || "").trim(),
-      body: (body || "").trim(),
-      setAt: new Date().toISOString()
-    };
+    return null;
   }
+  if (!SCREEN_TYPES.has(type)) throw new Error("Unsupported screen type.");
+  if (type === "image" && (!url || !url.trim())) throw new Error("An image needs a URL.");
+  if (type === "adventure-map" && !adventureMapPath(adventureById(refId))) throw new Error("That adventure has no available map.");
+  if (type === "text" && !(title || "").trim() && !(body || "").trim()) throw new Error("Write something first.");
+  if (type === "rule" && !rulesCorpus.nodes.find((node) => node.id === refId)) throw new Error("Unknown rule.");
+  if (type === "paper" && !state.pcs.some((pc) => (pc.inventory || []).some((item) => typeof item === "object" && item.id === refId && item.kind === "paper"))) throw new Error("Unknown paper.");
+  if (type === "folk" && !state.characters.find((c) => c.id === refId)) throw new Error("Unknown folk.");
+  if (type === "person" && !state.people.find((p) => p.id === refId)) throw new Error("Unknown person.");
+  if (type === "place" && !state.places.find((p) => p.id === refId)) throw new Error("Unknown place.");
+  if (type === "encounter" && !state.encounters.encounters.find((e) => e.id === refId)) throw new Error("Unknown encounter.");
+  return {
+    type,
+    refId: refId || null,
+    url: (url || "").trim().slice(0, 2000) || null,
+    caption: (caption || "").trim().slice(0, 300),
+    title: (title || "").trim().slice(0, 200),
+    body: (body || "").trim().slice(0, 6000),
+    setAt: new Date().toISOString()
+  };
+}
+
+function setScreenCurrent(input) {
+  state.screen.current = normalizedScreenMutation(input);
   persist();
   broadcast();
+  return state.screen.current;
+}
+
+app.put("/api/screen", guard((req, res) => {
+  setScreenCurrent(req.body);
   res.json({ ok: true, current: state.screen.current });
+}));
+
+// --- reusable GM inbox; player screen requests are its first producer ---
+
+app.get("/api/gm-notifications", (_req, res) => res.json(gmNotificationsView()));
+
+app.post("/api/gm-notifications/screen-requests", guard((req, res) => {
+  const pc = activePcById(String(req.body?.pcId || ""));
+  if (!pc) throw new Error(`Choose an active character before asking ${GM_NAME}.`);
+  const requested = req.body?.projection || {};
+  if (!new Set(["image", "text"]).has(requested.type)) throw new Error("Only an image or visible text can be requested from a player surface.");
+  if (requested.type === "image") {
+    const url = String(requested.url || "").trim();
+    if (!url.startsWith("/") || url.startsWith("//") || url.includes("\\") || url.includes("..")) {
+      throw new Error("Only images served by this table can be requested.");
+    }
+  }
+  const projection = normalizedScreenMutation(requested);
+  const notification = createScreenRequest(pc, req.body, projection);
+  broadcast();
+  res.status(201).json(notification);
+}));
+
+app.post("/api/gm-notifications/:id/approve", guard((req, res) => {
+  const notification = notificationById(req.params.id);
+  if (!notification || notification.kind !== "screen-request") throw new Error("No such screen request.");
+  setScreenCurrent(notification.payload.projection);
+  const resolved = resolveNotification(notification.id, "approved");
+  res.json({ notification: resolved, current: state.screen.current });
+}));
+
+app.post("/api/gm-notifications/:id/dismiss", guard((req, res) => {
+  const resolved = resolveNotification(req.params.id, "dismissed");
+  broadcast();
+  res.json(resolved);
 }));
 
 // --- session perspectives and reviewed retellings ---
@@ -2269,7 +2544,7 @@ app.post("/api/log/:id/publish", guard((req, res) => {
   res.json(row);
 }));
 
-app.listen(PORT, () => {
+const httpServer = app.listen(PORT, () => {
   console.log(`The Settlement is open.`);
   console.log(`  GM console:      http://localhost:${PORT}/gm`);
   console.log(`  Player table:    http://localhost:${PORT}/table`);
@@ -2278,3 +2553,23 @@ app.listen(PORT, () => {
   // Publish the current public address, if a beacon target is configured.
   startBeacon({ port: PORT });
 });
+
+let shuttingDown = false;
+function shutdown() {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  clearInterval(musicPoll);
+  clearInterval(stopPoll);
+  for (const client of clients) client.end();
+  httpServer.close(() => process.exit(0));
+  httpServer.closeIdleConnections?.();
+  setTimeout(() => process.exit(0), 10_000).unref();
+}
+process.once("SIGINT", shutdown);
+process.once("SIGTERM", shutdown);
+// Only the Windows keeper supplies this local filesystem control path.
+const stopPoll = process.env.SETTLEMENT_STOP_FILE ? setInterval(() => {
+  if (!fs.existsSync(process.env.SETTLEMENT_STOP_FILE)) return;
+  shutdown();
+}, 500) : null;
+stopPoll?.unref();

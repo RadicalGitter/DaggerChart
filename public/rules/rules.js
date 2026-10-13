@@ -18,8 +18,127 @@ const state = {
   query: "",
   results: [],
   selectedId: null,
+  pcId: null,
+  pins: new Set(),
+  pinsReady: false,
+  pinBusy: false,
+  pinRequest: 0,
+  pinMessage: "",
   mobilePane: "browse"
 };
+
+const pinIcon = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l-1 6 4 4v2H6v-2l4-4-1-6Z"/><path d="M12 15v6"/></svg>`;
+const selectedPcId = () => localStorage.getItem("settlement-pc") || null;
+
+function pinMarkup(node, { article = false } = {}) {
+  const pinned = state.pins.has(node.id);
+  const label = t(pinned ? "rules.unpinLabel" : "rules.pinLabel", { rule: node.title });
+  const hint = !state.pcId ? t("rules.chooseCharacter") : label;
+  return `<button type="button" class="rule-pin${article ? " article-pin" : ""}" data-pin="${esc(node.id)}" aria-pressed="${pinned}" aria-label="${esc(label)}" title="${esc(hint)}" ${!state.pinsReady || state.pinBusy ? "disabled" : ""}>
+    ${pinIcon}${article ? `<span>${esc(t(pinned ? "rules.unpin" : "rules.pin"))}</span>` : ""}
+  </button>`;
+}
+
+function ruleRowMarkup(node, { search = false } = {}) {
+  return `<div class="rule-row">
+    <button type="button" class="${search ? "search-result" : "rule-link"} ${node.id === state.selectedId ? "active" : ""}" data-rule="${esc(node.id)}">
+      ${search ? `<strong>${esc(node.title)}</strong><span>${node.path.map(esc).join(" / ")}</span>` : esc(node.title)}
+    </button>${pinMarkup(node)}
+  </div>`;
+}
+
+function renderPinControls() {
+  for (const button of document.querySelectorAll("[data-pin]")) {
+    const node = state.byId.get(button.dataset.pin);
+    if (!node) continue;
+    const pinned = state.pins.has(node.id);
+    const label = t(pinned ? "rules.unpinLabel" : "rules.pinLabel", { rule: node.title });
+    button.setAttribute("aria-pressed", String(pinned));
+    button.setAttribute("aria-label", label);
+    button.title = !state.pcId ? t("rules.chooseCharacter") : label;
+    button.disabled = !state.pinsReady || state.pinBusy;
+    const caption = button.querySelector("span");
+    if (caption) caption.textContent = t(pinned ? "rules.unpin" : "rules.pin");
+  }
+  for (const status of document.querySelectorAll(".pin-status")) {
+    status.textContent = state.pinMessage ? t(state.pinMessage) : "";
+    status.hidden = !state.pinMessage;
+  }
+}
+
+async function loadPins() {
+  if (!state.corpus) return;
+  const pcId = selectedPcId();
+  if (pcId === state.pcId && state.pinBusy) return;
+  const request = ++state.pinRequest;
+  const changed = pcId !== state.pcId;
+  if (changed) {
+    state.pcId = pcId;
+    state.pins = new Set();
+    state.pinsReady = false;
+    state.pinBusy = false;
+    renderIndex();
+  }
+  if (!pcId) {
+    state.pinMessage = "rules.chooseCharacter";
+    renderPinControls();
+    return;
+  }
+  if (!state.pinsReady) state.pinMessage = "rules.pinsLoading";
+  renderPinControls();
+  try {
+    const response = await fetch(`/api/party/${encodeURIComponent(pcId)}/rule-pins`, {
+      cache: "no-store", signal: AbortSignal.timeout(5000)
+    });
+    if (!response.ok) throw new Error("Pins request failed.");
+    const body = await response.json();
+    if (request !== state.pinRequest || pcId !== selectedPcId()) return;
+    state.pins = new Set(body.pins.filter((id) => state.byId.has(id)));
+    state.pinsReady = true;
+    state.pinMessage = "";
+    renderIndex();
+  } catch {
+    if (request !== state.pinRequest) return;
+    state.pinMessage = "rules.pinsError";
+    state.pinsReady = false;
+  }
+  renderPinControls();
+}
+
+async function togglePin(button) {
+  const id = button.dataset.pin;
+  const pcId = selectedPcId();
+  if (pcId !== state.pcId) { await loadPins(); return; }
+  if (!state.pinsReady || state.pinBusy || !state.byId.has(id)) return;
+  const inArticle = button.classList.contains("article-pin");
+  const request = ++state.pinRequest;
+  state.pinBusy = true;
+  state.pinMessage = "rules.pinSaving";
+  renderPinControls();
+  try {
+    const response = await fetch(`/api/party/${encodeURIComponent(pcId)}/rule-pins`, {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ruleId: id, pinned: !state.pins.has(id) }),
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!response.ok) throw new Error("Pin save failed.");
+    const body = await response.json();
+    if (request !== state.pinRequest || pcId !== selectedPcId()) return;
+    state.pins = new Set(body.pins.filter((ruleId) => state.byId.has(ruleId)));
+    state.pinMessage = "";
+    renderIndex();
+  } catch {
+    if (request !== state.pinRequest || pcId !== selectedPcId()) return;
+    state.pinMessage = "rules.pinError";
+  } finally {
+    if (request === state.pinRequest) {
+      state.pinBusy = false;
+      renderPinControls();
+      const root = $(inArticle ? "#rule-article" : "#rule-tree");
+      [...root.querySelectorAll("[data-pin]")].find((entry) => entry.dataset.pin === id)?.focus({ preventScroll: true });
+    }
+  }
+}
 
 function bodyMarkup(body) {
   return String(body || "").split(/\n{2,}/).map((block) => {
@@ -45,12 +164,14 @@ function renderArticle() {
   $("#rule-article").innerHTML = `
     <p class="article-kicker">${node.path.map(esc).join(" / ")}</p>
     <h2 tabindex="-1">${esc(node.title)}</h2>
+    <div class="article-pin-actions">${pinMarkup(node, { article: true })}<span class="pin-status" role="status" hidden></span></div>
     <div class="article-rule" aria-hidden="true"><i></i><i></i><i></i></div>
     <div class="article-body">${bodyMarkup(node.body)}</div>
     ${related.length ? `<section class="see-also"><h3>${esc(t("rules.seeAlso"))}</h3><div class="see-also-links">${related.map((entry) => `<button type="button" data-rule="${esc(entry.id)}">${esc(entry.title)}</button>`).join("")}</div></section>` : ""}
     ${sourceMarkup()}`;
   setTelemetryMode(`article:${node.id}`);
-  document.title = `${node.title} - ${t("rules.title")}`;
+  document.title = `${node.title} — ${t("rules.title")}`;
+  renderPinControls();
 }
 
 function treeMarkup(nodes) {
@@ -70,28 +191,30 @@ function treeMarkup(nodes) {
       ${[...subgroups.entries()].map(([subgroup, entries]) => `
         <div class="tree-subgroup">
           <h3>${esc(subgroup)}</h3>
-          ${entries.sort((a, b) => a.title.localeCompare(b.title)).map((node) => `<button type="button" class="rule-link ${node.id === state.selectedId ? "active" : ""}" data-rule="${esc(node.id)}">${esc(node.title)}</button>`).join("")}
+          ${entries.sort((a, b) => a.title.localeCompare(b.title)).map((node) => ruleRowMarkup(node)).join("")}
         </div>`).join("")}
     </section>`).join("");
 }
 
 function searchMarkup(nodes) {
   if (!nodes.length) return `<p class="no-results">${esc(t("rules.noResults"))}</p>`;
-  return `<div class="search-results">${nodes.map((node) => `
-    <button type="button" class="search-result ${node.id === state.selectedId ? "active" : ""}" data-rule="${esc(node.id)}">
-      <strong>${esc(node.title)}</strong>
-      <span>${node.path.map(esc).join(" / ")}</span>
-    </button>`).join("")}</div>`;
+  return `<div class="search-results">${nodes.map((node) => ruleRowMarkup(node, { search: true })).join("")}</div>`;
 }
 
 function renderIndex() {
   state.results = searchRuleNodes(state.nodes, state.query);
-  $("#rule-tree").innerHTML = state.query ? searchMarkup(state.results) : treeMarkup(state.nodes);
+  const pinned = state.results.filter((node) => state.pins.has(node.id));
+  const rest = state.results.filter((node) => !state.pins.has(node.id));
+  state.results = [...pinned, ...rest];
+  const pinnedSection = pinned.length ? `<section class="tree-group pinned-rules"><h2>${esc(t("rules.pinned"))}</h2>${pinned.map((node) => ruleRowMarkup(node, { search: Boolean(state.query) })).join("")}</section>` : "";
+  const remaining = state.query ? (rest.length || !pinned.length ? searchMarkup(rest) : "") : treeMarkup(state.nodes.filter((node) => !state.pins.has(node.id)));
+  $("#rule-tree").innerHTML = pinnedSection + remaining;
   const count = state.results.length;
   $("#index-count").textContent = state.query
     ? t(count === 1 ? "rules.oneMatch" : "rules.matches", { n: count })
     : t("rules.allEntries", { n: state.nodes.length });
   $("#clear-search").hidden = !state.query;
+  renderPinControls();
 }
 
 function setMobilePane(pane) {
@@ -141,6 +264,8 @@ function wireEvents() {
   });
   $("#clear-search").addEventListener("click", () => clearSearch({ focus: true }));
   document.addEventListener("click", (event) => {
+    const pin = event.target.closest("[data-pin]");
+    if (pin) { void togglePin(pin); return; }
     const rule = event.target.closest("[data-rule]");
     if (rule) selectRule(rule.dataset.rule);
   });
@@ -150,6 +275,27 @@ function wireEvents() {
   window.addEventListener("hashchange", () => {
     const id = decodeURIComponent(location.hash.slice(1));
     if (state.byId.has(id) && id !== state.selectedId) selectRule(id, { updateHash: false });
+  });
+  window.addEventListener("storage", (event) => {
+    if (event.key === "settlement-pc" || event.key === null) void loadPins();
+  });
+  window.addEventListener("settlement:identity", () => void loadPins());
+  window.addEventListener("focus", () => void loadPins());
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) void loadPins();
+  });
+  let stream;
+  function connectPinStream() {
+    stream = new EventSource("/api/stream");
+    stream.onmessage = () => void loadPins();
+    stream.addEventListener("rule-pins", (event) => {
+      if (JSON.parse(event.data).pcId === selectedPcId()) void loadPins();
+    });
+  }
+  connectPinStream();
+  window.addEventListener("pagehide", () => stream.close());
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) { connectPinStream(); void loadPins(); }
   });
 }
 
@@ -166,6 +312,7 @@ async function loadRules() {
   renderIndex();
   renderArticle();
   if (state.byId.has(requested)) setMobilePane("article");
+  await loadPins();
 }
 
 initI18n();

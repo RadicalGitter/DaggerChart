@@ -83,13 +83,6 @@ body::after {
   transition: opacity 0.2s;
 }
 .steward-door:hover { opacity: 0.9; }
-.view-root {
-  position: fixed; top: 0.45rem; left: 0.7rem; z-index: 90;
-  display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.45rem;
-  color: #bda77e; border: 1px solid rgba(189,167,126,0.3); border-radius: 3px;
-  background: rgba(28,18,11,0.72); font-size: 0.72rem; text-decoration: none;
-}
-.view-root:hover, .view-root:focus-visible { color: #ead6a7; border-color: rgba(234,214,167,0.58); }
 
 /* ---------- player utility dock: Conditions now, private chat later ---------- */
 .player-dock {
@@ -415,6 +408,7 @@ body::after {
 
 /* embeds: dark pages tipped into the book like plates */
 .paper-scroll.embed { overflow: hidden; inset: 24px 30px 30px 24px; }
+.paper-left .paper-scroll.embed { inset: 44px 24px 30px 30px; }
 .paper-scroll.embed iframe {
   width: 100%; height: calc(100% - 26px); border: 0; border-radius: 3px;
   box-shadow: 0 3px 14px rgba(30, 16, 4, 0.45), 0 0 0 6px rgba(255, 248, 226, 0.35);
@@ -620,8 +614,6 @@ body::after {
 @media (max-width: 760px) {
   .folio-head { padding: 0.55rem 2.8rem 0.45rem; justify-content: center; font-size: 0.78rem; }
   .folio-stores { display: none; }
-  .view-root { width: 30px; height: 30px; justify-content: center; padding: 0; }
-  .view-root-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .tome-viewport { display: block; overflow: auto; }
   .tome-scale { transform-origin: top left; padding: 66px 0 40px; width: max-content; }
   body.tome-open .tome-viewport { overflow-x: hidden; overflow-y: auto; }

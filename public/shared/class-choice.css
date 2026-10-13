@@ -1,0 +1,45 @@
+.class-choice-notice { display: flex; align-items: center; justify-content: space-between; gap: .8rem; margin: .7rem 0; padding: .7rem .9rem; border: 1px solid #8b765355; border-radius: .4rem; background: #8b765318; font-size: .9rem; }
+.class-choice-notice button { flex-shrink: 0; padding: .4rem .65rem; border: 1px solid #8b765388; border-radius: .25rem; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.class-choice-dialog { box-sizing: border-box; width: min(940px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); padding: 0; color: #eee7d6; background: #211e1a; border: 1px solid #9d8760; border-radius: .7rem; box-shadow: 0 18px 80px #0009; font: 16px/1.55 Georgia, serif; }
+.class-choice-dialog::backdrop { background: #080a0cbb; }
+.class-choice-dialog h2, .class-choice-dialog h3, .class-choice-dialog h4 { color: #e6cf9d; line-height: 1.25; }
+.class-choice-dialog h2 { margin: 0; font-size: 1.5rem; }
+.class-choice-dialog h3 { margin: 1.5rem 0 .65rem; font-size: 1.2rem; }
+.class-choice-dialog h4 { margin: 1.1rem 0 .45rem; font-size: 1.03rem; }
+.class-choice-dialog p { margin: .55rem 0 .95rem; }
+.class-choice-dialog small { font-size: .82rem; }
+.class-choice-top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 1.3rem; border-bottom: 1px solid #8b765355; }
+.class-choice-kicker { margin: 0 0 .2rem !important; color: #c8b899; font: .8rem/1.2 system-ui, sans-serif; }
+.class-choice-dialog button { color: inherit; font: inherit; cursor: pointer; }
+.class-choice-top button { padding: .45rem .7rem; border: 1px solid #8b765377; border-radius: .3rem; background: transparent; white-space: nowrap; }
+.class-choice-form { display: flex; flex-direction: column; max-height: calc(100dvh - 130px); margin: 0; }
+.class-choice-scroll { overflow: auto; overscroll-behavior: contain; padding: .4rem 1.3rem 1.2rem; }
+.class-choice-dialog > .class-choice-scroll { max-height: calc(100dvh - 135px); }
+.class-choice-options { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
+.class-choice-options button { text-align: left; padding: .9rem; border: 1px solid #8b765366; border-radius: .4rem; background: #30291f; }
+.class-choice-options button[aria-pressed="true"] { border: 2px solid #d8b675; padding: calc(.9rem - 1px); background: #423623; }
+.class-choice-options button > * { display: block; }
+.class-choice-options button small { margin-top: .4rem; color: #cbbfa8; }
+.class-choice-options button[data-choice="keep-current"] { grid-column: 1 / -1; }
+.class-choice-setup { border: 1px solid #8b765355; border-radius: .4rem; margin: 1rem 0; padding: .9rem; }
+.class-choice-setup legend { color: #e6cf9d; padding: 0 .3rem; }
+.class-choice-setup label { display: grid; gap: .35rem; margin: .65rem 0; }
+.class-choice-setup p { color: #cbbfa8; font-size: .9rem; }
+.class-choice-setup input, .class-choice-setup select { box-sizing: border-box; width: 100%; padding: .6rem; color: #eee7d6; background: #171512; border: 1px solid #8b765377; border-radius: .25rem; font: 1rem system-ui, sans-serif; }
+.class-choice-tier { margin: .65rem 0; padding: .6rem .8rem; border: 1px solid #8b765344; border-radius: .3rem; }
+.class-choice-tier summary { cursor: pointer; color: #e6cf9d; }
+.class-choice-change { padding: 0 .8rem; border-left: 3px solid #9d8760; }
+.class-choice-footer { border-top: 1px solid #8b765355; padding: .8rem 1.3rem; background: #29231c; }
+.class-choice-consent { display: flex; align-items: flex-start; gap: .7rem; font-size: .93rem; }
+.class-choice-consent input { flex: 0 0 auto; width: 1.15rem; height: 1.15rem; margin-top: .15rem; accent-color: #d8b675; }
+.class-choice-confirm { display: block; width: 100%; padding: .65rem; margin-top: .7rem; border: 1px solid #d8b675; border-radius: .3rem; background: #65502d; }
+.class-choice-dialog button:disabled, .class-choice-dialog input:disabled { opacity: .5; cursor: default; }
+.class-choice-dialog :focus-visible, .class-choice-notice :focus-visible { outline: 2px solid #f0d59b; outline-offset: 3px; }
+.class-choice-error { color: #f4b6a1; font-size: .9rem; }
+.class-choice-error:empty { display: none; }
+@media (max-width: 600px) {
+  .class-choice-options { grid-template-columns: 1fr; }
+  .class-choice-top, .class-choice-footer { padding: .8rem; }
+  .class-choice-scroll { padding: .3rem .8rem 1rem; }
+  .class-choice-notice { align-items: flex-start; flex-direction: column; }
+}

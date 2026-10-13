@@ -1,3 +1,11 @@
 {
-  "current": null
+  "current": {
+    "type": "folk",
+    "refId": "chr_lyra",
+    "url": null,
+    "caption": "",
+    "title": "",
+    "body": "",
+    "setAt": "2026-10-13T20:00:25.902Z"
+  }
 }

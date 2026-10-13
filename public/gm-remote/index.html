@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#10130f">
+<title>Pocket Controls - The Settlement</title>
+<link rel="stylesheet" href="/shared/ledger.css">
+<link rel="stylesheet" href="/shared/gm-theme.css">
+<link rel="stylesheet" href="remote.css">
+</head>
+<body>
+<main class="pocket-shell">
+  <header class="pocket-head">
+    <a class="full-console" href="/gm" aria-label="Open the full GM console">&#8249;</a>
+    <div>
+      <span class="smallcaps">Steward's hand</span>
+      <h1>Pocket controls</h1>
+    </div>
+    <div class="connection-state" id="connection-state"><i aria-hidden="true"></i><span>Connecting</span></div>
+  </header>
+
+  <section class="now-band" aria-labelledby="playing-title">
+    <figure class="track-art" id="track-art"><span aria-hidden="true">&#9835;</span></figure>
+    <div class="track-copy">
+      <span class="smallcaps">Now playing</span>
+      <h2 id="playing-title">Nothing playing</h2>
+      <p id="playing-detail">Choose a song from the command wheel.</p>
+    </div>
+    <div class="transport-row">
+      <button class="transport" id="previous-track" type="button" aria-label="Previous track">&#9198;</button>
+      <button class="transport transport-main" id="play-toggle" type="button" aria-label="Play or pause">&#9654;</button>
+      <button class="transport" id="next-track" type="button" aria-label="Next track">&#9197;</button>
+      <button class="transport fade-command" id="fade-out" type="button">Fade</button>
+    </div>
+    <label class="seek-row">
+      <input id="seek" type="range" min="0" max="1000" value="0" aria-label="Seek through the song">
+      <span id="time-label">0:00 / 0:00</span>
+    </label>
+    <label class="volume-row">
+      <span>Volume</span>
+      <input id="volume" type="range" min="0" max="1" step="0.02" value="0.8">
+    </label>
+    <div class="continuation-row">
+      <button class="queue-extension" id="queue-extension" type="button">Queue next</button>
+      <span class="influence-summary" id="influence-summary">No borrowed themes</span>
+    </div>
+    <div class="growth-row">
+      <label><input id="keep-growing" type="checkbox"> Keep one movement ahead</label>
+      <span id="generation-status">Hold keeps the current mood.</span>
+    </div>
+  </section>
+
+  <section class="screen-band" aria-labelledby="screen-title">
+    <div class="screen-mark" aria-hidden="true">&#9672;</div>
+    <div>
+      <span class="smallcaps">Presenter screen</span>
+      <h2 id="screen-title">Settlement title</h2>
+      <p id="screen-detail">The table screen is ready.</p>
+    </div>
+    <button class="request-count" id="request-count" type="button" aria-label="Open player requests" hidden></button>
+  </section>
+
+  <section class="command-stage" id="command-stage" aria-label="Pocket command menu">
+    <div class="command-route" id="command-route">Commands</div>
+    <button class="command-trigger" id="open-commands" type="button" aria-label="Open all pocket commands">&#8943;</button>
+    <div class="music-constellation" id="music-constellation" aria-label="Music direction">
+      <button class="hex hex-characters" type="button" data-open-branch="characters"><span>Characters</span><small id="character-count">0</small></button>
+      <button class="hex hex-npcs" type="button" data-open-branch="npcs"><span>Major NPCs</span><small id="npc-count">0</small></button>
+      <button class="hex hex-ease" type="button" data-direction="deescalate" aria-pressed="false"><span>Ease</span></button>
+      <button class="hex hex-rise" type="button" data-direction="escalate" aria-pressed="false"><span>Rise</span></button>
+      <button class="hex hex-intent" type="button" data-open-branch="intent"><span>Scene intent</span><small id="intent-count">0</small></button>
+      <button class="hex hex-world" type="button" data-open-branch="world"><span>World</span><small id="world-count">0</small></button>
+    </div>
+    <div class="radial-links" id="radial-links" aria-hidden="true"></div>
+    <div class="radial-menu" id="radial-menu"></div>
+    <button class="command-core" id="command-core" type="button" aria-label="Open commands" aria-expanded="false">
+      <strong id="intensity-label">Hold</strong><small>queue</small>
+    </button>
+  </section>
+</main>
+
+<dialog class="request-dialog" id="request-dialog">
+  <form method="dialog">
+    <header>
+      <span class="smallcaps">Player request</span>
+      <h2 id="request-title">Show this at the table?</h2>
+      <p id="request-from"></p>
+    </header>
+    <div class="request-preview" id="request-preview"></div>
+    <div class="request-actions">
+      <button type="button" class="quiet" id="dismiss-request">Dismiss</button>
+      <button type="button" id="approve-request">Show</button>
+    </div>
+  </form>
+</dialog>
+
+<audio id="audio" preload="metadata" playsinline></audio>
+<div class="pocket-toast" id="toast" role="status"></div>
+<script type="module" src="remote.js"></script>
+</body>
+</html>

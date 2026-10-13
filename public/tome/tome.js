@@ -13,8 +13,10 @@ import { sessionPoolsHtml } from "/shared/session-pools.js";
 import { mountPlayerChat } from "/shared/player-chat.js";
 import { setTelemetryMode } from "/shared/telemetry.js";
 import { playerFeatureEnabled, setPlayerFeatureContext } from "/shared/player-features.js";
+import { attachClassChoice, localizedFeature } from "/shared/class-choice.js";
 import "/shared/feedback.js";
 import "/shared/player-tools.js";
+import { openArmsEditor } from "/shared/arms-editor.js";
 
 const $ = (selector) => document.querySelector(selector);
 const esc = (value) =>
@@ -184,7 +186,8 @@ function pickerHtml() {
 }
 
 function featureHtml(feature) {
-  return feature ? `<div class="sheet-feature"><strong>${esc(feature.name)}</strong> ${termify(esc(feature.text))}</div>` : "";
+  feature = localizedFeature(feature);
+  return feature ? `<div class="sheet-feature"><strong>${esc(feature.name)}</strong> ${termify(esc(feature.text)).replace(/\n/g, "<br>")}</div>` : "";
 }
 
 function vitalPips(kind, marked, max) {
@@ -202,7 +205,8 @@ function characterSpreads() {
   const background = (p.background || []).map((b) => `<div class="sheet-note"><strong>${esc(b.q)}</strong><span>${esc(b.a)}</span></div>`).join("");
   const connections = (p.connections || []).map((c) => `<div class="sheet-note"><strong>${esc(c.q)}</strong><span>${esc(c.note)}</span></div>`).join("");
   const left = `<div class="character-sheet-page">
-    <div class="sheet-identity"><div class="sheet-portrait">${p.portrait ? `<img src="${esc(p.portrait)}" alt="">` : esc(p.name[0] || "?")}</div>
+    <div data-class-choice-slot></div>
+    <div class="sheet-identity"><a class="sheet-portrait portrait-editor-link" href="/portrait/?pc=${encodeURIComponent(p.id)}" target="_top" aria-label="${esc(t(p.portrait ? "portrait.open" : "portrait.add"))}" title="${esc(t(p.portrait ? "portrait.open" : "portrait.add"))}">${p.portrait ? `<img src="${esc(p.portrait)}" alt="">` : esc(p.name[0] || "?")}</a>
       <div><h1>${esc(p.name)}</h1><div>${esc(p.ancestry.name)} ${esc(p.class.name)} · ${esc(p.subclass.name)}</div>
       <div class="tome-muted">${esc(p.community.name)} · ${t("sheet.level")} ${p.level}${p.pronouns ? ` · ${esc(p.pronouns)}` : ""}</div></div></div>
     <div class="sheet-traits">${traits}</div>
@@ -214,6 +218,8 @@ function characterSpreads() {
     p.features?.hopeFeature ? `<h2>${t("sheet.hopefeat")}</h2>${featureHtml(p.features.hopeFeature)}` : "",
     `<h2>${t("sheet.class")}</h2>${(p.features?.classFeatures || []).map(featureHtml).join("")}`,
     `<h2>${esc(p.subclass.name)}</h2>${(p.features?.foundation || []).map(featureHtml).join("")}`,
+    `${(p.features?.specialization || []).map(featureHtml).join("")}${(p.features?.mastery || []).map(featureHtml).join("")}`,
+    p.inventor ? `<p>${esc(t("sheet.spellcast"))} ${esc(p.subclass.spellcastTrait)} · ${esc(t("classChoice.familiar"))}: ${p.inventor.familiarMaterials.map(esc).join(", ")}</p>` : "",
     `<div class="sheet-feature-columns"><div><h2>${esc(p.ancestry.name)}</h2>${(p.features?.ancestry || []).map(featureHtml).join("")}</div><div><h2>${esc(p.community.name)}</h2>${(p.features?.community || []).map(featureHtml).join("")}</div></div>`
   ].join("");
   const right = `<div class="character-sheet-page">
@@ -261,7 +267,7 @@ function inventorySpreads() {
   const firstCarried = carriedItems.slice(0, 6).map(carriedItemHtml).join("") || `<p class="tome-empty">${t("inventory.empty")}</p>`;
   const spreads = [{
     key: `inventory:${p.id}:gear`,
-    left: { html: `<h1 class="page-heading">${t("inventory.equipped")}</h1>${equipped}`, volatile: true },
+    left: { html: `<div class="inventory-heading"><h1 class="page-heading">${t("inventory.equipped")}</h1><button class="inventory-add" type="button" data-arms-change>${t("arms.change")}</button></div>${equipped}`, volatile: true },
     right: { html: `<div class="inventory-heading"><h1 class="page-heading">${t("inventory.pack")}</h1><button class="inventory-add" type="button" data-inventory-add>${t("inventory.add")}</button></div>${firstCarried}`, volatile: true }
   }];
   for (const [i, items] of chunks(carriedItems.slice(6), 8).entries()) {
@@ -286,7 +292,15 @@ function inventorySpreads() {
 
 function journalSpreads() {
   const pc = getPC();
-  return [{ key: `journal:${pc || ""}`, left: { html: `${pageHeading(t("journal.title"))}<p class="chapter-copy">${t("journal.sub")}</p>` }, right: { key: `journal:${pc || ""}`, embed: true, html: `<iframe title="${esc(t("journal.title"))}" src="/journal/?embed=1${pc ? `&pc=${encodeURIComponent(pc)}` : ""}"></iframe>` } }];
+  // Both pages hold the journal: what you write on the left, what you have
+  // learned on the right. Each leaf is its own embed with half the bookmarks.
+  const who = pc ? `&pc=${encodeURIComponent(pc)}` : "";
+  const leaf = (side, tabs, tab) => ({
+    key: `journal:${pc || ""}:${side}`,
+    embed: true,
+    html: `<iframe title="${esc(t("journal.title"))}" src="/journal/?embed=1${who}&tabs=${tabs}&tab=${tab}"></iframe>`
+  });
+  return [{ key: `journal:${pc || ""}`, left: leaf("left", "journal,chronicle", "journal"), right: leaf("right", "people,places", "people") }];
 }
 
 function rulesSpreads() {
@@ -343,6 +357,8 @@ function renderSpread(force = false) {
   $("#spread-prev").setAttribute("aria-label", t("table.book.previous"));
   $("#spread-next").setAttribute("aria-label", t("table.book.next"));
   wirePageActions();
+  const choiceHost = document.querySelector("[data-class-choice-slot]");
+  if (choiceHost && characterData) void attachClassChoice(characterData, { host: choiceHost, onSaved: async () => { await refresh(); } }).then(fitCharacterPages);
   fitCharacterPages();
 }
 
@@ -352,6 +368,9 @@ function fitCharacterPages() {
       const page = root.querySelector(".character-sheet-page");
       if (!page) continue;
       page.style.zoom = "";
+      // Phone pages already scroll; preserve readable type instead of shrinking
+      // a long character background to the fixed desktop spread height.
+      if (matchMedia("(max-width: 760px)").matches) continue;
       const scale = Math.min(1, (root.clientHeight - 2) / Math.max(1, page.scrollHeight));
       page.style.zoom = String(scale);
     }
@@ -589,6 +608,9 @@ function wirePageActions() {
   for (const button of document.querySelectorAll("[data-inventory-edit]")) button.onclick = () => openInventoryDialog(characterData.inventory.find((item) => item.id === button.dataset.inventoryEdit));
   for (const button of document.querySelectorAll("[data-paper-open]")) button.onclick = () => openInventoryDialog(characterData.inventory.find((item) => item.id === button.dataset.paperOpen));
   for (const button of document.querySelectorAll("[data-inventory-add]")) button.onclick = () => openInventoryDialog();
+  for (const button of document.querySelectorAll("[data-arms-change]")) button.onclick = () => openArmsEditor(characterData, {
+    onSaved: (pc) => { characterData = pc; renderSpread(true); renderPlayerDock(); }
+  });
 }
 
 function chooseSection(nextIndex) {
@@ -683,15 +705,18 @@ function layoutBook() {
   // Keepsakes now hang from the top edge, so the spread no longer needs side
   // room; instead reserve a little headroom above for the tab row.
   const widthScale = (window.innerWidth - (compact ? 12 : 30)) / 1290;
-  const heightScale = (window.innerHeight - (compact ? 96 : 120)) / 726;
+  // Desktop headroom covers the Home ribbon, the hanging keepsakes and the dock.
+  const heightScale = (window.innerHeight - (compact ? 96 : 160)) / 726;
   const closedObjectScale = (window.innerWidth - 8) / 780;
-  const scale = compact ? Math.min(0.66, heightScale, closedObjectScale) : Math.min(1, widthScale, heightScale);
+  // Large screens: let the book grow into the room instead of floating in it.
+  const scale = compact ? Math.min(0.66, heightScale, closedObjectScale) : Math.min(1.6, widthScale, heightScale);
   const scaler = $("#tome-scale");
   if (compact && bookOpen) {
     scaler.style.zoom = "";
     scaler.style.transform = "none";
     scaler.style.position = "";
     scaler.style.left = "";
+    scaler.style.margin = "";
     scaler.dataset.scale = "1";
     return;
   }
@@ -702,6 +727,11 @@ function layoutBook() {
   scaler.style.transform = compact ? "none" : `scale(${scale})`;
   scaler.style.position = compact ? "relative" : "";
   scaler.style.left = compact ? `${Math.max(0, (1240 * scale - window.innerWidth) / 2)}px` : "";
+  // A transform leaves the 1240×680 layout box in place; between the compact
+  // breakpoint and full width it overflowed and pushed the scaled book right.
+  // Negative margins shrink the box to the viewport so the grid centres it.
+  const viewport = $("#tome-viewport");
+  scaler.style.margin = compact ? "" : `${Math.min(0, (viewport.clientHeight - 680) / 2)}px ${Math.min(0, (viewport.clientWidth - 1240) / 2)}px`;
   scaler.dataset.scale = String(scale);
   centerBookSoon();
 }
@@ -758,6 +788,7 @@ $("#spread-prev").onclick = () => chooseSpread(spreadIndex - 1);
 $("#spread-next").onclick = () => chooseSpread(spreadIndex + 1);
 
 window.addEventListener("keydown", (event) => {
+  if (event.target.closest?.(".class-choice-dialog")) return;
   if (event.key === "Escape" && !$("#inventory-dialog").hidden) {
     closeInventoryDialog();
     return;

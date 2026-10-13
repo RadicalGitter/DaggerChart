@@ -96,8 +96,8 @@ function positionStage(stage, kind) {
   const cards = [...stage.querySelectorAll(".character-card")];
   if (!cards.length || !stage.clientWidth) return;
   const compact = stage.clientWidth < 520;
-  const width = compact ? 116 : (kind === "draft" ? 138 : 156);
-  const height = compact ? 164 : (kind === "draft" ? 186 : 210);
+  const width = compact ? 144 : (kind === "draft" ? 156 : stage.clientWidth >= 1100 ? 200 : 176);
+  const height = Math.round(width * 1.42);
   const columns = Math.max(1, Math.floor((stage.clientWidth - 18) / (width + 18)));
   const rows = Math.max(1, Math.ceil(cards.length / columns));
   stage.style.minHeight = `${Math.max(kind === "draft" ? 220 : 270, rows * (height + 16) + 20)}px`;

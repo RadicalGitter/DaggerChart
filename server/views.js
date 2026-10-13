@@ -10,6 +10,10 @@ import { projectFor } from "./construction.js";
 import { liveSessionGmView, shadowPlayerView } from "./live-session.js";
 import { applyBeastformSheet, playerPresentationView, presentationIdentity } from "./character-presentations.js";
 import { sheetBeautyView } from "./sheet-beauty.js";
+import { cardTitle } from "./display-names.js";
+import { inventorSheetView } from "./class-choice-definitions.js";
+import { adventureById, adventureMapPath } from "./adventures.js";
+import { portraitWorkshopData } from "./portrait-workshop.js";
 
 const PLAYER_CONDITIONS = new Set(["hidden", "restrained", "vulnerable"]);
 const conditionView = (p) => [...new Set(p.conditions || [])].filter((id) => PLAYER_CONDITIONS.has(id));
@@ -22,6 +26,27 @@ const publicCampaigns = () => activeCampaigns().map((campaign) => ({
   playerFeatures: normalizePlayerFeatures(campaign.playerFeatures)
 }));
 const numericView = (value, fallback = 0) => Number.isFinite(value) ? value : fallback;
+
+export function playerPortraitWorkshopView(id) {
+  const pc = activePcs().find((candidate) => candidate.id === id);
+  if (!pc) return null;
+  return {
+    pc: { id: pc.id, name: pc.name, classId: pc.class?.id, subclassId: pc.subclass?.id,
+      ancestryId: pc.ancestry?.id, communityId: pc.community?.id,
+      primaryColor: appearanceView(pc).primaryColor, secondaryColor: appearanceView(pc).secondaryColor,
+      armor: pc.armor?.name || "", mainHand: pc.weapons?.primary?.name || "", offHand: pc.weapons?.secondary?.name || "" },
+    workshop: portraitWorkshopData(pc)
+  };
+}
+
+export function playerRulePinsView(id, corpus) {
+  const pc = activePcs().find((candidate) => candidate.id === id);
+  if (!pc) return null;
+  const known = new Set((corpus?.nodes || []).map((node) => node.id));
+  const pins = Array.isArray(pc.rulePins) ? pc.rulePins : [];
+  return { pins: [...new Set(pins)].filter((ruleId) => typeof ruleId === "string" && known.has(ruleId)) };
+}
+
 const publicProjectView = (project) => project ? ({
   kind: project.kind,
   targetLevel: project.targetLevel,
@@ -57,7 +82,8 @@ const appearanceView = (p) => ({
 
 const featureView = (feature) => feature ? {
   name: feature.name || "",
-  text: feature.text || ""
+  text: feature.text || "",
+  ...(feature.sv ? { sv: { name: feature.sv.name || "", text: feature.sv.text || "" } } : {})
 } : null;
 
 const weaponView = (weapon) => weapon ? {
@@ -150,10 +176,12 @@ export function playerCharacterView(id) {
     pronouns: p.pronouns || "",
     conditions: conditionView(p),
     level: p.level,
-    class: { id: p.class?.id || "", name: p.class?.name || "", domains: [...(p.class?.domains || [])] },
+    inventor: inventorSheetView(p),
+    class: { id: p.class?.id || "", name: p.class?.name || "", ...(p.class?.svName ? { svName: p.class.svName } : {}), domains: [...(p.class?.domains || [])] },
     subclass: {
       id: p.subclass?.id || "",
-      name: p.subclass?.name || "",
+      name: cardTitle(p.subclass?.name || ""),
+      ...(p.subclass?.svName ? { svName: p.subclass.svName } : {}),
       spellcastTrait: p.subclass?.spellcastTrait || null
     },
     ancestry: { id: p.ancestry?.id || "", name: p.ancestry?.name || "" },
@@ -167,7 +195,14 @@ export function playerCharacterView(id) {
     stress: p.stress,
     hopeMax: p.hopeMax,
     hope: p.hope,
-    armor: p.armor ? { name: p.armor.name || "", score: p.armor.score || 0, feature: p.armor.feature || "" } : null,
+    armor: p.armor ? {
+      id: p.armor.id || "",
+      name: p.armor.name || "",
+      score: p.armor.score || 0,
+      feature: p.armor.feature || "",
+      baseMajorThreshold: Number.isInteger(p.armor.baseMajorThreshold) ? p.armor.baseMajorThreshold : null,
+      baseSevereThreshold: Number.isInteger(p.armor.baseSevereThreshold) ? p.armor.baseSevereThreshold : null
+    } : null,
     armorMarked: p.armorMarked || 0,
     thresholds: { major: p.thresholds?.major || 0, severe: p.thresholds?.severe || 0 },
     weapons: {
@@ -180,7 +215,7 @@ export function playerCharacterView(id) {
     connections: (p.connections || []).map((entry) => ({ q: entry.q || "", note: entry.note || "" })),
     domainCards: (p.domainCards || []).map((card) => ({
       id: card.id,
-      name: card.name || "",
+      name: cardTitle(card.name || ""),
       domain: card.domain || "",
       type: card.type || "",
       level: card.level,
@@ -193,6 +228,8 @@ export function playerCharacterView(id) {
       hopeFeature: featureView(p.features?.hopeFeature),
       classFeatures: (p.features?.classFeatures || []).map(featureView).filter(Boolean),
       foundation: (p.features?.foundation || []).map(featureView).filter(Boolean),
+      specialization: (p.features?.specialization || []).map(featureView).filter(Boolean),
+      mastery: (p.features?.mastery || []).map(featureView).filter(Boolean),
       ancestry: (p.features?.ancestry || []).map(featureView).filter(Boolean),
       community: (p.features?.community || []).map(featureView).filter(Boolean)
     }
@@ -257,7 +294,7 @@ export function gmView() {
       active: isActivePc(p),
       level: p.level,
       class: p.class?.name,
-      subclass: p.subclass?.name,
+      subclass: cardTitle(p.subclass?.name || ""),
       ancestry: p.ancestry?.name,
       community: p.community?.name,
       pronouns: p.pronouns || "",
@@ -299,7 +336,7 @@ export function gmView() {
       connections: (p.connections || []).map((entry) => ({ q: entry.q || "", note: entry.note || "" })),
       domainCards: (p.domainCards || []).map((card) => ({
         id: card.id,
-        name: card.name || "",
+        name: cardTitle(card.name || ""),
         domain: card.domain || "",
         type: card.type || "",
         level: card.level,
@@ -336,6 +373,15 @@ export function screenView(rulesCorpus = null) {
   });
   if (!cur) return idle();
   switch (cur.type) {
+    case "adventure-map": {
+      const adventure = adventureById(cur.refId);
+      if (!adventureMapPath(adventure)) return idle();
+      return {
+        type: "image",
+        url: `/api/screen/adventure-map/${encodeURIComponent(adventure.id)}`,
+        caption: String(adventure.map.caption || "").slice(0, 300)
+      };
+    }
     case "image":
       return { type: "image", url: cur.url, caption: cur.caption || "" };
     case "text":
@@ -369,43 +415,22 @@ export function screenView(rulesCorpus = null) {
         type: "buildings",
         buildings: Object.values(state.settlement.buildings).map(publicBuildingView)
       };
+    // Projected cards carry the picture and the name, nothing else: no role,
+    // status, description or location. The table talks; the screen shows.
     case "folk": {
       const c = state.characters.find((x) => x.id === cur.refId);
       if (!c) return idle();
-      return {
-        type: "card",
-        name: c.name,
-        subtitle: c.role || "",
-        description: c.description || "",
-        portrait: c.portrait || null,
-        pill: c.status !== "alive" ? c.status : ""
-      };
+      return { type: "card", name: c.name, portrait: c.portrait || null };
     }
     case "person": {
       const p = state.people.find((x) => x.id === cur.refId);
       if (!p) return idle();
-      const place = p.placeId ? state.places.find((x) => x.id === p.placeId) : null;
-      return {
-        type: "card",
-        name: p.name,
-        subtitle: [p.role, place && place.revealed ? place.name : null].filter(Boolean).join(" · "),
-        description: p.description || "",
-        portrait: p.portrait || null,
-        pill: p.status !== "alive" ? p.status : ""
-      };
+      return { type: "card", name: p.name, portrait: p.portrait || null };
     }
     case "place": {
       const p = state.places.find((x) => x.id === cur.refId);
       if (!p) return idle();
-      return {
-        type: "card",
-        name: p.name,
-        subtitle: p.kind || "",
-        description: p.description || "",
-        portrait: p.portrait || null,
-        pill: "",
-        wide: true
-      };
+      return { type: "card", name: p.name, portrait: p.portrait || null, wide: true };
     }
     case "encounter": {
       const encounter = state.encounters.encounters.find((e) => e.id === cur.refId);

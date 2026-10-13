@@ -1,4 +1,25 @@
 {
   "version": 1,
-  "characters": {}
+  "characters": {
+    "pc_1784314405624_lbzq": {
+      "spent": 0,
+      "activeVersionId": null,
+      "versions": []
+    },
+    "pc_1791905154065_jw4s": {
+      "spent": 0,
+      "activeVersionId": null,
+      "versions": []
+    },
+    "pc_1784314691416_p83s": {
+      "spent": 0,
+      "activeVersionId": null,
+      "versions": []
+    },
+    "pc_1791916796517_ud6s": {
+      "spent": 0,
+      "activeVersionId": null,
+      "versions": []
+    }
+  }
 }

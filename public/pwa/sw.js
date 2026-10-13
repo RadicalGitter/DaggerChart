@@ -12,14 +12,14 @@
 //
 // Bump VERSION after breaking shell changes to discard every cached file.
 
-const VERSION = "v1";
+const VERSION = "v6";
 const SHELL = `settlement-shell-${VERSION}`;
 const DATA = `settlement-data-${VERSION}`;
 
 // Entry pages precached at install so the app opens with the server away.
 const ENTRY_PAGES = [
   "/login/", "/player/", "/table/", "/table-book/", "/tome/",
-  "/journal/", "/character/", "/create/", "/background/", "/rules/",
+  "/journal/", "/character/", "/create/", "/portrait/", "/background/", "/rules/",
   "/manifest.webmanifest"
 ];
 
@@ -27,7 +27,7 @@ const ENTRY_PAGES = [
 const STATIC_PREFIXES = [
   "/shared/", "/pwa/", "/vendor/", "/generated/",
   "/login", "/player", "/table", "/table-book", "/tome",
-  "/journal", "/character", "/create", "/background", "/rules"
+  "/journal", "/character", "/create", "/portrait", "/background", "/rules"
 ];
 
 // Player API reads worth keeping as offline snapshots (matched on pathname;

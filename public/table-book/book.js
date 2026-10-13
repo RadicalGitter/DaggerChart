@@ -139,7 +139,7 @@ function rightPage(section) {
     return {
       key: `character:${pc.id}`,
       embed: true,
-      html: `<a class="switch-pc" data-switch>${t("journal.notyou")}</a><iframe title="${esc(pc.name)}" src="/character/${encodeURIComponent(pc.id)}"></iframe>`
+      html: `<a class="switch-pc" data-switch>${t("journal.notyou")}</a><iframe title="${esc(pc.name)}" src="/character/${encodeURIComponent(pc.id)}?embed=1"></iframe>`
     };
   }
   return { key: "character-picker", html: pickerHtml() };

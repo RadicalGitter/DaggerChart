@@ -64,6 +64,39 @@ request that attempts to send both references.
 
 Removing a song from the desk removes metadata only. It never deletes audio.
 
+## Live continuation
+
+The phone controller at `/gm-remote` can extend the currently playing Suno
+track in three directions: hold its existing mood, escalate, or de-escalate.
+Hold uses the source parameters unchanged. Directed continuation adds a short
+transition instruction while preserving the source prompt and style. Suno
+requires a directed extension to use the source track's model; tracks whose
+model was not captured can therefore only use Hold safely.
+
+The seven-cell constellation separates four questions: who is in the music
+(active characters or major NPCs), how intense it is (Ease, Hold, Rise), what
+the scene means (the existing music-tag roots), and where it is (World).
+Selected motifs become bounded style influences on the next extension. Until
+NPC identities are curated, NPC selections use a plain recurring-motif
+direction based on their public name and role. World currently descends from
+place kind to canonical place; add region and environment layers when those
+relationships exist in world data.
+
+**Keep one movement ahead** is explicit and off by default because enabling it
+spends generation credits. It queues one successor when a track begins and
+plays a ready successor at the end. This is pre-generation, not real-time
+audio synthesis; generation may still finish too late, in which case playback
+continues through the current library. The library records submit-to-ready
+times per model so model choices can be reviewed from actual runs without an
+automatic credit-spending benchmark.
+
+The current bubble desk remains a provisional presentation. After more play,
+review its information architecture, time-to-find-song, queue confidence, and
+visibility of the current cue. A likely functional addition is named
+**pockets**: spatial cue groups backed by ordinary playlists. A whirlpool can
+represent a pocket if bubbles remain, but the playlist contract must not
+depend on that visual treatment.
+
 ## Suno web-library mirror
 
 The configured generation API does not expose the playlists from the user's

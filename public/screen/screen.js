@@ -17,13 +17,10 @@ function html(v) {
   switch (v.type) {
     case "image":
       return `<img src="${esc(v.url)}" alt="">${v.caption ? `<div class="caption">${esc(v.caption)}</div>` : ""}`;
-    case "card":
+    case "card": // picture and name only; the server sends nothing else
       return `
         ${v.portrait ? `<div class="card-portrait ${v.wide ? "wide" : ""}"><img src="${esc(v.portrait)}" alt=""></div>` : ""}
-        <div class="card-name">${esc(v.name)}</div>
-        ${v.subtitle ? `<div class="card-sub">${esc(v.subtitle)}</div>` : ""}
-        ${v.pill ? `<span class="pill">${esc(v.pill)}</span>` : ""}
-        ${v.description ? `<hr class="divider"><p class="card-desc">${esc(v.description)}</p>` : ""}`;
+        <div class="card-name">${esc(v.name)}</div>`;
     case "stores":
       return `
         <div class="idle-season smallcaps">${esc(v.name)} · ${esc(seasonLabel(v.seasonLabel))} · ${t("table.folkcount", { n: v.population })}</div>
@@ -117,7 +114,7 @@ async function render() {
   const next = JSON.stringify(v);
   if (next === lastPayload) return; // don't restart the fade for unrelated updates
   lastPayload = next;
-  stage.className = v.type;
+  stage.className = `view-${v.type}`; // namespaced: ledger.css owns .card and .rule
   stage.innerHTML = html(v);
   stage.style.animation = "none";
   void stage.offsetWidth;

@@ -29,7 +29,7 @@ const pc = (overrides = {}) => ({
 
 const fresh = () => normalizeSheetBeautyDocument(structuredClone(DEFAULT_SHEET_BEAUTY));
 
-test("new characters have two beautifying tokens and gain one per level", () => {
+test("new characters have two flourishes and gain one per level", () => {
   assert.equal(sheetBeautyView(pc(), fresh()).available, 2);
   assert.equal(sheetBeautyView(pc({ level: 4 }), fresh()).available, 5);
   assert.equal(sheetBeautyInternals.tierForLevel(1), 1);

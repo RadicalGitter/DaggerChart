@@ -34,3 +34,28 @@ workflow is understood. The tool should propose editable text for a chosen
 field, show exactly what context will be sent, and require GM review before any
 save. It must not read or send chance-table entries, hidden player material, or
 unrelated lore.
+
+## Music under table pressure
+
+- Treat the bubble desk as provisional. The first session mixed real
+  navigation friction with live bug hunting, so measure time to find a cue,
+  accidental playback, confidence in the queue, and visibility of what is
+  currently playing before choosing a replacement layout.
+- Trial named music pockets as playlist-backed cue groups. If the spatial
+  bubble metaphor survives, pockets may look like named whirlpools; the stored
+  structure remains an ordinary playlist so another interface can replace it.
+- Compare recorded submit-to-ready times for V4.5, V5, and V5.5 after normal
+  use. Do not run automatic benchmarks that consume credits. Extensions must
+  retain the source model, so model speed is chosen when the source is made,
+  not while it is being continued.
+
+## GM notifications and subscriptions
+
+- Player requests to show visible material are the first producer for the
+  reusable GM inbox. Review whether phone interruption timing and desktop
+  queue density are appropriate during play.
+- Later producers may let the GM subscribe to changes in a player's notes or
+  background. Each notice should identify its source, link to it, and include
+  a bounded compact diff where appropriate.
+- Never turn the inbox into a firehose, auto-project a player request, or use a
+  subscription to bypass existing server-side audience whitelists.

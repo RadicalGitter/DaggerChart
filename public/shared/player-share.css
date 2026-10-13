@@ -1,0 +1,31 @@
+.screen-request-dialog {
+  width: min(92vw, 430px);
+  max-height: min(88svh, 680px);
+  padding: 0;
+  color: #eee4d2;
+  border: 1px solid #8a7654;
+  border-radius: 6px;
+  background: #1b1b17;
+  box-shadow: 0 22px 65px rgba(0,0,0,.58);
+}
+.screen-request-dialog::backdrop { background: rgba(8,9,8,.74); backdrop-filter: blur(3px); }
+.screen-request-dialog form { display: grid; gap: .85rem; padding: 1rem; }
+.screen-request-dialog header { border-bottom: 1px solid #4d473a; padding-bottom: .7rem; }
+.screen-request-dialog h2 { margin: 0; color: #f2e8d5; font: 500 1.2rem Georgia, serif; }
+.screen-request-dialog p { margin: .3rem 0 0; color: #aaa08e; font: .82rem/1.45 Georgia, serif; }
+.screen-request-preview {
+  min-height: 120px;
+  max-height: 44svh;
+  overflow: auto;
+  border: 1px solid #514a3c;
+  background: #111410;
+}
+.screen-request-preview img { display: block; width: 100%; max-height: 44svh; object-fit: contain; }
+.screen-request-preview .text { padding: 1rem; white-space: pre-wrap; color: #d8cdb9; font: .9rem/1.55 Georgia, serif; }
+.screen-request-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; }
+.screen-request-actions button { min-height: 46px; margin: 0; }
+.screen-request-status { min-height: 1.25rem; color: #d5b66f; font-size: .78rem; text-align: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .screen-request-dialog[open] { animation: screen-request-arrive .16s ease-out; }
+  @keyframes screen-request-arrive { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+}

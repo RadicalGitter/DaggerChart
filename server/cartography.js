@@ -1,3 +1,4 @@
+import { GM_NAME } from "../public/shared/gm-name.js";
 import fs from "node:fs";
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
@@ -382,7 +383,7 @@ export function cartographyImagePath(sheet) {
 export function updateSheet(document, sheetId, patch = {}, mode = "gm") {
   const sheet = document.sheets.find((candidate) => candidate.id === sheetId);
   if (!sheet) throw new Error("No such map sheet.");
-  if (mode !== "gm" && sheet.createdBy !== "cartographer") throw new Error("Only the Keeper can rename an issued map.");
+  if (mode !== "gm" && sheet.createdBy !== "cartographer") throw new Error(`Only ${GM_NAME} can rename an issued map.`);
   if (Object.hasOwn(patch, "title")) sheet.title = clippedText(patch.title, 120) || sheet.title;
   if (mode === "gm" && Object.hasOwn(patch, "visibility")) {
     sheet.visibility = patch.visibility === "cartographer" ? "cartographer" : "gm";
@@ -600,7 +601,7 @@ export function deleteSheetNote(document, sheetId, noteId) {
 export function deleteSheet(document, sheetId, mode = "gm") {
   const sheet = document.sheets.find((candidate) => candidate.id === sheetId);
   if (!sheet) throw new Error("No such map sheet.");
-  if (mode !== "gm" && sheet.createdBy !== "cartographer") throw new Error("Only the Keeper can remove an issued map.");
+  if (mode !== "gm" && sheet.createdBy !== "cartographer") throw new Error(`Only ${GM_NAME} can remove an issued map.`);
   const imagePath = cartographyImagePath(sheet);
   document.sheets = document.sheets.filter((candidate) => candidate.id !== sheetId);
   if (imagePath && fs.existsSync(imagePath)) fs.unlinkSync(imagePath);

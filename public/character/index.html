@@ -80,6 +80,14 @@
   .name-editor .gm-approval { display: flex; grid-template-columns: none; align-items: flex-start; gap: .55rem; margin: 1rem 0; }
   .name-editor .gm-approval input { width: 18px; height: 18px; flex: 0 0 18px; margin: .1rem 0 0; }
   .name-editor .rename-error { min-height: 1.2rem; margin-top: .6rem; color: #7d281e; }
+  .name-editor .experience-row { display: grid; grid-template-columns: minmax(0, 1fr) 5.5rem auto; gap: .5rem; align-items: end; }
+  .name-editor .experience-row label { margin: .35rem 0; }
+  .name-editor .experience-row button { margin-bottom: .35rem; }
+  .name-editor #experience-another { margin-top: .4rem; }
+  @media (max-width: 480px) {
+    .name-editor .experience-row { grid-template-columns: minmax(0, 1fr) 5rem; }
+    .name-editor .experience-row button { grid-column: 1 / -1; justify-self: start; margin-top: 0; }
+  }
   .cardstack { display: grid; gap: 0.7rem; }
   .sheet-load-error { width: min(460px, 100%); margin: 12vh auto 0; padding: 1.1rem; text-align: center; }
   .sheet-load-error p { margin: 0.45rem 0 1rem; color: #b9aa8a; line-height: 1.5; }
@@ -144,8 +152,9 @@
   @media (prefers-reduced-motion: reduce) { .theme-bubble { animation: none; } .theme-bubble.preview-pulse { animation-duration: 0.01ms; } }
 </style>
 <link rel="stylesheet" href="/character/field-sheet.css">
+<link rel="stylesheet" href="/shared/player-finish.css">
 </head>
-<body>
+<body class="player-surface player-character">
 <div class="wrap" id="sheet"><p class="smallcaps" style="text-align:center;" data-i18n="sheet.loading">Loading your character…</p></div>
 <div class="paper-dialog" id="paper-dialog" hidden>
   <div class="paper-dialog-frame" role="dialog" aria-modal="true" aria-labelledby="paper-dialog-title">

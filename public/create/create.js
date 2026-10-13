@@ -9,6 +9,7 @@ import { classColor, DEFAULT_FAVORITE_COLOR, validDetailColor } from "/shared/cl
 import { setTelemetryMode } from "/shared/telemetry.js";
 import { setPlayerFeatureContext } from "/shared/player-features.js";
 import { domainCardEntitlement } from "/shared/domain-card-rules.js";
+import { stagePortrait, keepPortraitEdit, discardPortraitEdit, restoreOriginalPortrait } from "/shared/portrait-review.js";
 import "/shared/feedback.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -26,11 +27,16 @@ let part = 0;
 let moving = false;
 let draftSaveTimer = null;
 let draftComplete = false;
+let portraitBusy = false;
+let workshopPc = null;
+let preferenceSave = Promise.resolve();
 
 const DRAFT_KEY = "settlement-create-draft";
 const DRAFT_ID_KEY = "settlement-create-draft-id";
 const draftParams = new URLSearchParams(location.search);
-if (draftParams.get("new") === "1") {
+const isPortraitWorkshop = location.pathname.startsWith("/portrait") || draftParams.has("pc");
+const portraitPcId = draftParams.get("pc") || (isPortraitWorkshop ? localStorage.getItem("settlement-pc") : null);
+if (!isPortraitWorkshop && draftParams.get("new") === "1") {
   localStorage.removeItem(DRAFT_KEY);
   localStorage.removeItem(DRAFT_ID_KEY);
   // `new=1` is a one-shot command. Leaving it in the address makes any later
@@ -40,7 +46,7 @@ if (draftParams.get("new") === "1") {
   history.replaceState(null, "", `${location.pathname}${query ? `?${query}` : ""}${location.hash}`);
 }
 const draftId = draftParams.get("draft") || localStorage.getItem(DRAFT_ID_KEY) || `draft_${crypto.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`}`;
-localStorage.setItem(DRAFT_ID_KEY, draftId);
+if (!isPortraitWorkshop) localStorage.setItem(DRAFT_ID_KEY, draftId);
 
 const draft = {
   campaignId: null,
@@ -62,7 +68,11 @@ const draft = {
   portraitFixSeed: false,
   portraitStepsModifier: 0,
   portraitCfgModifier: 0,
-  portraitStyle: "style2",
+  portraitStyle: "workflow",
+  portraitKeepLook: false,
+  portraitReferenceUrl: "",
+  portraitOriginal: null,
+  portraitEditPending: null,
   portraitEmbellishPrompt: true,
   portraitAttempts: [],
   portraitSuggestion: "",
@@ -97,21 +107,22 @@ const PORTRAIT_TAGS = [
   { id: "uncanny", label: "portrait.tag.uncanny", prompt: "uncanny" },
   { id: "practical", label: "portrait.tag.practical", prompt: "practical" }
 ];
+const PORTRAIT_STEP_MODIFIERS = [-3, -2, -1, 0, 1, 2, 3];
 const PORTRAIT_MODIFIERS = [-1, 0, 1, 2];
-const PORTRAIT_STYLES = ["style1", "style2"];
+const PORTRAIT_STYLES = ["workflow", "style1"];
 
-function portraitModifier(value) {
+function portraitModifier(value, kind = "cfg") {
   const numeric = Number(value);
-  return PORTRAIT_MODIFIERS.includes(numeric) ? numeric : 0;
+  return (kind === "steps" ? PORTRAIT_STEP_MODIFIERS : PORTRAIT_MODIFIERS).includes(numeric) ? numeric : 0;
 }
 
-function portraitModifierLabel(value) {
-  const numeric = portraitModifier(value);
+function portraitModifierLabel(value, kind = "cfg") {
+  const numeric = portraitModifier(value, kind);
   return `${numeric >= 0 ? "+" : ""}${numeric}`;
 }
 
 function portraitStyle(value) {
-  return PORTRAIT_STYLES.includes(String(value)) ? String(value) : "style2";
+  return PORTRAIT_STYLES.includes(String(value)) ? String(value) : "workflow";
 }
 
 function portraitStyleLabel(value) {
@@ -122,13 +133,15 @@ function normalizePortraitRequest(request = {}) {
   return {
     prompt: String(request.prompt || "").trim().slice(0, 6_000),
     negativePrompt: String(request.negativePrompt || "").trim().slice(0, 4_000),
+    referenceImageUrl: String(request.referenceImageUrl || "").trim().slice(0, 2048),
+    originalPortraitUrl: String(request.originalPortraitUrl || "").trim().slice(0, 2048),
     primaryColor: String(request.primaryColor || "").trim().slice(0, 32),
     secondaryColor: String(request.secondaryColor || "").trim().slice(0, 32),
     tags: Array.isArray(request.tags) ? request.tags.slice(0, 20).map((tag) => String(tag).slice(0, 80)) : [],
     armor: String(request.armor || "").trim().slice(0, 300),
     mainHand: String(request.mainHand || "").trim().slice(0, 300),
     offHand: String(request.offHand || "").trim().slice(0, 300),
-    stepsModifier: portraitModifier(request.stepsModifier),
+    stepsModifier: portraitModifier(request.stepsModifier, "steps"),
     cfgModifier: portraitModifier(request.cfgModifier),
     style: portraitStyle(request.style),
     embellishPrompt: request.embellishPrompt !== false
@@ -146,6 +159,7 @@ function normalizePortraitAttempts(value) {
       url,
       seed,
       createdAt: String(attempt.createdAt || ""),
+      originalUrl: String(attempt.originalUrl || (attempt.request?.referenceImageUrl ? "" : url)),
       request: normalizePortraitRequest(attempt.request)
     }];
   });
@@ -175,13 +189,13 @@ function assignTrait(name, value) {
 }
 
 function portraitRequestContext() {
-  const primaryColor = classColor(draft.classId);
+  const primaryColor = workshopPc?.primaryColor || classColor(draft.classId);
   const secondaryColor = validDetailColor(draft.favoriteColor);
   const selectedTags = PORTRAIT_TAGS.filter((tag) => draft.portraitTags.includes(tag.id)).map((tag) => tag.prompt);
   const equipment = {
-    armor: draft.portraitEquipment.armor ? arm()?.name || "" : "",
-    mainHand: draft.portraitEquipment.mainHand ? wpn(draft.primaryId)?.name || "" : "",
-    offHand: draft.portraitEquipment.offHand ? wpn(draft.secondaryId)?.name || "" : ""
+    armor: draft.portraitEquipment.armor ? workshopPc?.armor || arm()?.name || "" : "",
+    mainHand: draft.portraitEquipment.mainHand ? workshopPc?.mainHand || wpn(draft.primaryId)?.name || "" : "",
+    offHand: draft.portraitEquipment.offHand ? workshopPc?.offHand || wpn(draft.secondaryId)?.name || "" : ""
   };
   const equipmentText = [
     equipment.armor && `armor: ${equipment.armor}`,
@@ -191,6 +205,10 @@ function portraitRequestContext() {
   const sourceText = draft.portraitTextSource === "suggestion" && draft.portraitSuggestion
     ? draft.portraitSuggestion
     : draft.portraitPrompt;
+  if (draft.portraitKeepLook) return {
+    prompt: sourceText.trim(), primaryColor: "", secondaryColor: "", selectedTags: [],
+    armor: "", mainHand: "", offHand: ""
+  };
   const prompt = [
     "A character portrait balancing atmosphere and concrete physical specifics equally.",
     sourceText.trim(),
@@ -205,6 +223,10 @@ function portraitRequestSnapshot(context = portraitRequestContext()) {
   return normalizePortraitRequest({
     prompt: context.prompt,
     negativePrompt: draft.portraitNegativePrompt,
+    referenceImageUrl: draft.portraitKeepLook ? draft.portraitReferenceUrl : "",
+    originalPortraitUrl: draft.portraitKeepLook
+      ? draft.portraitReferenceUrl === draft.portrait ? draft.portraitOriginal || draft.portrait : draft.portraitReferenceUrl
+      : "",
     primaryColor: context.primaryColor,
     secondaryColor: context.secondaryColor,
     tags: context.selectedTags,
@@ -224,11 +246,13 @@ function collectPortraitFields(root = document) {
   const favorite = root.querySelector("#portrait-favorite-color");
   const fixSeed = root.querySelector("#portrait-fix-seed");
   const embellishPrompt = root.querySelector("#portrait-embellish-prompt");
+  const reference = root.querySelector("#portrait-reference-url");
   if (prompt) draft.portraitPrompt = prompt.value.trim();
   if (negative) draft.portraitNegativePrompt = negative.value.trim();
   if (favorite) draft.favoriteColor = validDetailColor(favorite.value);
   if (fixSeed) draft.portraitFixSeed = fixSeed.checked;
   if (embellishPrompt) draft.portraitEmbellishPrompt = embellishPrompt.checked;
+  if (reference) draft.portraitReferenceUrl = reference.value.trim();
   for (const input of root.querySelectorAll("[data-portrait-equipment]")) {
     draft.portraitEquipment[input.dataset.portraitEquipment] = input.checked;
   }
@@ -243,12 +267,13 @@ function portraitHistoryHtml() {
       <img src="${esc(attempt.url)}" alt="${esc(t("portrait.attempt", { number: attempt.number }))}" loading="lazy" draggable="false">
       <div class="portrait-attempt-copy">
         <strong>${t("portrait.attempt", { number: attempt.number })}</strong>
-        <small>${t("portrait.attemptSettings", { style: portraitStyleLabel(attempt.request.style), steps: portraitModifierLabel(attempt.request.stepsModifier), cfg: portraitModifierLabel(attempt.request.cfgModifier), promptMode: t(attempt.request.embellishPrompt === false ? "portrait.promptModeVerbatim" : "portrait.promptModeEmbellished") })}</small>
+        <small>${t("portrait.attemptSettings", { style: portraitStyleLabel(attempt.request.style), steps: portraitModifierLabel(attempt.request.stepsModifier, "steps"), cfg: portraitModifierLabel(attempt.request.cfgModifier), promptMode: t(attempt.request.embellishPrompt === false ? "portrait.promptModeVerbatim" : "portrait.promptModeEmbellished") })}</small>
         <span>${t("portrait.seedArchived")}</span>
+        ${attempt.request.referenceImageUrl ? `<span>${t("portrait.editedAttempt")}</span>` : ""}
       </div>
       <div class="portrait-attempt-actions">
-        <button class="quiet" type="button" data-portrait-use="${esc(attempt.id)}">${t("portrait.useAttempt")}</button>
-        <button type="button" data-portrait-retry="${esc(attempt.id)}">${t("portrait.goAgain")}</button>
+        <button class="quiet" type="button" data-portrait-use="${esc(attempt.id)}" ${draft.portraitEditPending ? "disabled" : ""}>${t("portrait.useAttempt")}</button>
+        <button type="button" data-portrait-retry="${esc(attempt.id)}" ${draft.portraitEditPending ? "disabled" : ""}>${t("portrait.goAgain")}</button>
       </div>
     </article>`).join("")}</div>
   </section>`;
@@ -257,19 +282,28 @@ function portraitHistoryHtml() {
 function portraitStudioHtml() {
   const ready = ART_STATUS.workflows?.portrait?.ready === true;
   const adviserReady = ART_STATUS.suggestions?.ready === true;
-  const primaryColor = classColor(draft.classId);
+  const primaryColor = workshopPc?.primaryColor || classColor(draft.classId);
   const secondaryColor = validDetailColor(draft.favoriteColor);
-  const offHandAvailable = Boolean(wpn(draft.secondaryId));
+  const offHandAvailable = Boolean(workshopPc?.offHand || wpn(draft.secondaryId));
   const textSource = draft.portraitTextSource === "suggestion" && draft.portraitSuggestion ? "suggestion" : "mine";
-  const preview = draft.portrait
-    ? `<img src="${esc(draft.portrait)}" alt="">`
+  const previewUrl = draft.portraitEditPending?.url || draft.portrait;
+  const preview = previewUrl
+    ? `<img src="${esc(previewUrl)}" alt="">`
     : `<span aria-hidden="true">${esc((draft.name || "?").slice(0, 1).toUpperCase())}</span><small>${t("portrait.empty")}</small>`;
   return `<div class="portrait-studio">
-    <div class="portrait-canvas ${draft.portrait ? "has-image" : ""}" style="--portrait-primary:${primaryColor};--portrait-secondary:${secondaryColor}">${preview}</div>
+    <div><div class="portrait-canvas ${previewUrl ? "has-image" : ""}" style="--portrait-primary:${primaryColor};--portrait-secondary:${secondaryColor}">${preview}</div>
+      ${draft.portraitEditPending ? `<div class="portrait-edit-review" role="status"><p>${t("portrait.reviewEdit")}</p><div class="portrait-actions"><button id="portrait-keep-edit" type="button">${t("portrait.keepEdit")}</button><button id="portrait-discard-edit" class="quiet" type="button">${t("portrait.discardEdit")}</button></div></div>` : ""}
+      ${draft.portraitOriginal && draft.portrait !== draft.portraitOriginal ? `<button id="portrait-restore-original" class="quiet" type="button" ${draft.portraitEditPending ? "disabled" : ""}>${t("portrait.restoreOriginal")}</button>` : ""}
+    </div>
     <div class="portrait-controls">
-      <label for="portrait-prompt">${t("portrait.prompt")}</label>
-      <p class="portrait-balance">${t("portrait.balance")}</p>
+      <label for="portrait-prompt">${t(draft.portraitKeepLook ? "portrait.changes" : "portrait.prompt")}</label>
+      <p class="portrait-balance">${t(draft.portraitKeepLook ? "portrait.changeHelp" : "portrait.balance")}</p>
       <textarea id="portrait-prompt" rows="5" placeholder="${esc([draft.name, anc()?.name, cls()?.name].filter(Boolean).join(", "))}">${esc(draft.portraitPrompt)}</textarea>
+      ${ART_STATUS.workflows?.portrait?.referenceImage ? `<fieldset class="portrait-reference">
+        <legend>${t("portrait.mode")}</legend>
+        <div class="portrait-source-buttons" role="group" aria-label="${t("portrait.mode")}">${["generate", "edit"].map((mode) => `<button type="button" data-portrait-mode="${mode}" class="${draft.portraitKeepLook === (mode === "edit") ? "selected" : ""}" aria-pressed="${draft.portraitKeepLook === (mode === "edit")}" ${draft.portraitEditPending ? "disabled" : ""}>${t(`portrait.mode.${mode}`)}</button>`).join("")}</div>
+        ${draft.portraitKeepLook ? `<p class="portrait-balance">${t("portrait.editHelp")}</p><label for="portrait-reference-url">${t("portrait.referenceUrl")}</label><input id="portrait-reference-url" type="text" value="${esc(draft.portraitReferenceUrl)}" maxlength="2048" placeholder="https://…" ${draft.portraitEditPending ? "disabled" : ""}>` : ""}
+      </fieldset>` : ""}
       <div class="portrait-writing-tools">
         <div class="portrait-source-buttons" role="group" aria-label="${t("portrait.textSource")}">
           <button id="portrait-use-own" type="button" class="${textSource === "mine" ? "selected" : ""}" aria-pressed="${textSource === "mine"}">${t("portrait.useOwn")}</button>
@@ -279,15 +313,15 @@ function portraitStudioHtml() {
         <small>${adviserReady ? t("portrait.suggestReady") : t("portrait.suggestAwaiting")}</small>
       </div>
       ${draft.portraitSuggestion ? `<aside class="portrait-suggestion"><p>${esc(draft.portraitSuggestion)}</p></aside>` : ""}
-      <div class="portrait-pigments">
+      <div class="portrait-pigments" ${draft.portraitKeepLook ? "hidden" : ""}>
         <span class="portrait-pigment"><i style="--pigment:${primaryColor}" aria-hidden="true"></i><span><small>${t("portrait.classColor")}</small><strong>${esc(cls()?.name || "")}</strong></span></span>
         <label class="portrait-pigment" for="portrait-favorite-color"><input id="portrait-favorite-color" type="color" value="${secondaryColor}" aria-label="${t("portrait.favoriteColor")}"><span><small>${t("portrait.favoriteColor")}</small><strong id="portrait-favorite-value">${secondaryColor}</strong></span></label>
       </div>
-      <fieldset class="portrait-tag-field">
+      <fieldset class="portrait-tag-field" ${draft.portraitKeepLook ? "hidden" : ""}>
         <legend>${t("portrait.tags")}</legend>
         <div class="portrait-tags">${PORTRAIT_TAGS.map((tag) => `<button type="button" data-portrait-tag="${tag.id}" class="${draft.portraitTags.includes(tag.id) ? "selected" : ""}" aria-pressed="${draft.portraitTags.includes(tag.id)}">${t(tag.label)}</button>`).join("")}</div>
       </fieldset>
-      <fieldset class="portrait-equipment">
+      <fieldset class="portrait-equipment" ${draft.portraitKeepLook ? "hidden" : ""}>
         <legend>${t("portrait.equipment")}</legend>
         <label><input type="checkbox" data-portrait-equipment="armor" ${draft.portraitEquipment.armor ? "checked" : ""}> <span>${t("portrait.includeArmor")}</span></label>
         <label><input type="checkbox" data-portrait-equipment="mainHand" ${draft.portraitEquipment.mainHand ? "checked" : ""}> <span>${t("portrait.includeMain")}</span></label>
@@ -302,7 +336,7 @@ function portraitStudioHtml() {
         <div class="portrait-tuning-row">
           ${[["steps", "portrait.steps", draft.portraitStepsModifier], ["cfg", "portrait.cfg", draft.portraitCfgModifier]].map(([kind, label, current]) => `<div class="portrait-modifier-group">
             <span>${t(label)}</span>
-            <div class="portrait-modifier-buttons" role="group" aria-label="${t(label)}">${PORTRAIT_MODIFIERS.map((value) => `<button type="button" data-portrait-modifier="${kind}" data-value="${value}" class="${portraitModifier(current) === value ? "selected" : ""} ${value === 0 ? "recommended" : ""}" aria-pressed="${portraitModifier(current) === value}">${portraitModifierLabel(value)}${value === 0 ? `<small>${t("portrait.recommended")}</small>` : ""}</button>`).join("")}</div>
+            <div class="portrait-modifier-buttons" style="grid-template-columns:repeat(${kind === "steps" ? 7 : 4},minmax(0,1fr))" role="group" aria-label="${t(label)}">${(kind === "steps" ? PORTRAIT_STEP_MODIFIERS : PORTRAIT_MODIFIERS).map((value) => `<button type="button" data-portrait-modifier="${kind}" data-value="${value}" class="${portraitModifier(current, kind) === value ? "selected" : ""} ${value === 0 ? "recommended" : ""}" aria-pressed="${portraitModifier(current, kind) === value}">${portraitModifierLabel(value, kind)}${value === 0 ? `<small>${t("portrait.recommended")}</small>` : ""}</button>`).join("")}</div>
           </div>`).join("")}
         </div>
         <label class="portrait-seed-toggle"><input id="portrait-embellish-prompt" type="checkbox" ${draft.portraitEmbellishPrompt ? "checked" : ""}><span><strong>${t("portrait.embellish")}</strong><small>${t("portrait.embellishHelp")}</small></span></label>
@@ -313,31 +347,52 @@ function portraitStudioHtml() {
         <textarea id="portrait-negative" rows="2">${esc(draft.portraitNegativePrompt)}</textarea>
       </details>
       <div class="portrait-actions">
-        <button id="portrait-generate" type="button" ${ready ? "" : "disabled"}>${t("portrait.generate")}</button>
-        ${draft.portrait ? `<button class="quiet" id="portrait-clear" type="button">${t("portrait.clear")}</button>` : ""}
+        <button id="portrait-generate" type="button" ${ready && !draft.portraitEditPending ? "" : "disabled"}>${t(draft.portraitKeepLook ? "portrait.edit" : "portrait.generate")}</button>
+        ${draft.portrait ? `<button class="quiet" id="portrait-clear" type="button" ${draft.portraitEditPending ? "disabled" : ""}>${t("portrait.clear")}</button>` : ""}
       </div>
-      <p class="portrait-status ${ready ? "ready" : ""}">${ready ? t("portrait.ready") : t("portrait.awaiting")}</p>
+      <p class="portrait-status ${ready && ART_STATUS.generation?.ready ? "ready" : ""}" role="status">${ART_STATUS.generation?.ready ? t("portrait.ready") : t("portrait.unavailable")}</p>
     </div>
   </div>${portraitHistoryHtml()}`;
 }
 
 async function generatePortrait(button, request, seed) {
+  if (portraitBusy || draft.portraitEditPending) return;
   const payload = normalizePortraitRequest(request);
   if (!payload.prompt) { $("#warn").textContent = t("portrait.prompt"); return; }
   const originalLabel = button.textContent;
+  portraitBusy = true;
+  for (const control of document.querySelectorAll(".portrait-studio button, .portrait-studio input, .portrait-studio textarea, .portrait-history button, #btn-next, #btn-back")) control.disabled = true;
   button.disabled = true;
   button.textContent = t("portrait.generating");
   $("#warn").textContent = "";
   try {
-    const body = { draftId, ...payload };
+    clearTimeout(draftSaveTimer);
+    await preferenceSave;
+    const body = { ...(isPortraitWorkshop ? { sourcePrompt: draft.portraitPrompt } : { draftId }), ...payload };
     if (Number.isSafeInteger(seed)) body.seed = seed;
-    const response = await fetch("/api/art/portrait", {
+    const response = await fetch(isPortraitWorkshop ? `/api/party/${encodeURIComponent(portraitPcId)}/portrait-workshop` : "/api/art/portrait", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
     const result = await response.json();
-    if (!response.ok) throw new Error(result.error || t("error.generic"));
+    if (!response.ok) {
+      if (result.errorKey === "portrait.unavailable") {
+        ART_STATUS.generation = { ready: false, reason: result.reason };
+        const status = document.querySelector(".portrait-status");
+        if (status) {
+          status.classList.remove("ready");
+          status.textContent = t("portrait.unavailable");
+        }
+      }
+      throw new Error(result.errorKey ? t(result.errorKey) : result.error || t("error.generic"));
+    }
+    if (isPortraitWorkshop) {
+      applyWorkshop(result);
+      ART_STATUS.generation = { ready: true, reason: null };
+      rerender();
+      return;
+    }
     const resultSeed = Number(result.seed);
     const urls = (Array.isArray(result.urls) && result.urls.length ? result.urls : [result.url])
       .map((url) => String(url || ""))
@@ -350,16 +405,22 @@ async function generatePortrait(button, request, seed) {
       url,
       seed: resultSeed,
       createdAt,
+      originalUrl: payload.referenceImageUrl ? payload.originalPortraitUrl || payload.referenceImageUrl : url,
       request: { ...requestCopy, tags: [...requestCopy.tags] }
     }));
     draft.portraitAttempts.push(...additions);
-    draft.portrait = String(result.url || additions[0].url);
-    draft.portraitSeed = resultSeed;
+    stagePortrait(draft, { url: String(result.url || additions[0].url), seed: resultSeed }, payload.referenceImageUrl, additions[0].originalUrl);
+    ART_STATUS.generation = { ready: true, reason: null };
     rerender();
   } catch (error) {
+    rerender();
     $("#warn").textContent = error.message;
     button.disabled = false;
     button.textContent = originalLabel;
+  } finally {
+    portraitBusy = false;
+    $("#btn-next").disabled = false;
+    $("#btn-back").disabled = false;
   }
 }
 
@@ -635,6 +696,16 @@ const steps = [
     },
     wire(root, currentPart = part) {
       if (currentPart === 1) {
+        if (draft.portraitEditPending) for (const control of root.querySelectorAll(".portrait-controls button, .portrait-controls input, .portrait-controls textarea")) control.disabled = true;
+        root.querySelector("#portrait-keep-edit")?.addEventListener("click", () => reviewPortrait("keep", root));
+        root.querySelector("#portrait-discard-edit")?.addEventListener("click", () => reviewPortrait("discard", root));
+        root.querySelector("#portrait-restore-original")?.addEventListener("click", () => reviewPortrait("restore", root));
+        for (const mode of root.querySelectorAll("[data-portrait-mode]")) mode.onclick = () => {
+          collectPortraitFields(root);
+          draft.portraitKeepLook = mode.dataset.portraitMode === "edit";
+          if (draft.portraitKeepLook && !draft.portraitReferenceUrl) draft.portraitReferenceUrl = draft.portrait || "";
+          rerender();
+        };
         for (const tag of root.querySelectorAll("[data-portrait-tag]")) tag.onclick = () => {
           collectPortraitFields(root);
           const id = tag.dataset.portraitTag;
@@ -677,7 +748,7 @@ const steps = [
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                draftId,
+                ...(isPortraitWorkshop ? { pcId: portraitPcId } : { draftId }),
                 context: {
                   name: draft.name,
                   ancestry: anc()?.name || "",
@@ -705,7 +776,7 @@ const steps = [
         };
         for (const modifier of root.querySelectorAll("[data-portrait-modifier]")) modifier.onclick = () => {
           collectPortraitFields(root);
-          const value = portraitModifier(modifier.dataset.value);
+          const value = portraitModifier(modifier.dataset.value, modifier.dataset.portraitModifier);
           if (modifier.dataset.portraitModifier === "steps") draft.portraitStepsModifier = value;
           if (modifier.dataset.portraitModifier === "cfg") draft.portraitCfgModifier = value;
           rerender();
@@ -718,6 +789,7 @@ const steps = [
         const generate = root.querySelector("#portrait-generate");
         generate.onclick = async () => {
           collectPortraitFields(root);
+          if (draft.portraitKeepLook && !draft.portraitReferenceUrl) { $("#warn").textContent = t("portrait.referenceRequired"); return; }
           const sourceText = draft.portraitTextSource === "suggestion" && draft.portraitSuggestion
             ? draft.portraitSuggestion
             : draft.portraitPrompt;
@@ -729,11 +801,15 @@ const steps = [
         const clear = root.querySelector("#portrait-clear");
         if (clear) clear.onclick = () => { draft.portrait = null; rerender(); };
         for (const use of root.querySelectorAll("[data-portrait-use]")) use.onclick = () => {
+          if (draft.portraitEditPending) return;
           const attempt = draft.portraitAttempts.find((candidate) => candidate.id === use.dataset.portraitUse);
           if (!attempt) return;
+          if (isPortraitWorkshop) { void reviewPortrait("select", root, attempt.id); return; }
           collectPortraitFields(root);
           draft.portrait = attempt.url;
           draft.portraitSeed = attempt.seed;
+          draft.portraitOriginal = attempt.originalUrl || attempt.url;
+          draft.portraitReferenceUrl = attempt.url;
           rerender();
         };
         for (const retry of root.querySelectorAll("[data-portrait-retry]")) retry.onclick = async () => {
@@ -748,6 +824,7 @@ const steps = [
     collect(currentPart) {
       if (currentPart === 0 && !PENS.some((p) => p.id === draft.pen)) return t("warn.pen");
       if (currentPart === 1) collectPortraitFields();
+      if (draft.portraitEditPending) return t("portrait.reviewRequired");
     }
   },
   {
@@ -905,6 +982,8 @@ function buildCharacter() {
       cfgModifier: draft.portraitCfgModifier,
       style: draft.portraitStyle,
       embellishPrompt: draft.portraitEmbellishPrompt,
+      referenceImageUrl: draft.portraitKeepLook ? draft.portraitReferenceUrl : "",
+      originalUrl: draft.portraitOriginal,
       lastSeed: Number.isSafeInteger(draft.portraitSeed) ? draft.portraitSeed : null,
       attempts: draft.portraitAttempts.map((attempt) => ({
         ...attempt,
@@ -946,13 +1025,13 @@ function renderCreatorIdentity() {
 function rerender(direction = null) {
   const previousScrollY = window.scrollY;
   const st = steps[step];
-  setTelemetryMode(`step-${step + 1}:part-${part + 1}`);
+  setTelemetryMode(isPortraitWorkshop ? "portrait-workshop" : `step-${step + 1}:part-${part + 1}`);
   part = Math.min(part, partTotal(st) - 1);
   $("#progress").innerHTML = steps
     .map((_, i) => `<span class="dot ${i < step ? "done" : i === step ? "now" : ""}" aria-hidden="true"><i>${i + 1}</i></span>`)
     .join("");
-  const sub = typeof st.sub === "function" ? st.sub(part) : st.sub;
-  const heading = typeof st.title === "function" ? st.title(part) : st.title;
+  const sub = isPortraitWorkshop ? t("portrait.workshopHelp") : typeof st.sub === "function" ? st.sub(part) : st.sub;
+  const heading = isPortraitWorkshop ? t("portrait.workshopTitle") : typeof st.title === "function" ? st.title(part) : st.title;
   const enter = direction === "next" ? " enter-right" : direction === "back" ? " enter-left" : "";
   $("#step").innerHTML = `<div class="step-panel${enter}" data-step="${step + 1}"><header class="step-heading"><span class="step-number">${step + 1}</span><span><h2 class="step-title">${heading}</h2><span class="step-sub">${sub}</span></span></header>${st.render(part)}</div>`;
   $("#warn").textContent = "";
@@ -961,6 +1040,14 @@ function rerender(direction = null) {
   $("#btn-next").hidden = step === steps.length - 1;
   $("#btn-next").textContent = t("btn.next");
   renderSubprogress(st);
+  if (isPortraitWorkshop) {
+    $("#progress").hidden = true;
+    $("#subprogress").hidden = true;
+    $("#btn-back").hidden = true;
+    $("#btn-next").hidden = true;
+    document.querySelector(".navbtns").hidden = true;
+    document.querySelector(".step-number").hidden = true;
+  }
   renderCreatorIdentity();
   const root = $("#step");
   if (st.onPick) {
@@ -1005,6 +1092,7 @@ function animateMove(direction, update) {
 
 $("#btn-back").onclick = () => {
   if (moving || (step === 0 && part === 0)) return;
+  if (draft.portraitEditPending) { $("#warn").textContent = t("portrait.reviewRequired"); return; }
   steps[step].collect?.(part);
   animateMove("back", () => {
     if (part > 0) part -= 1;
@@ -1028,6 +1116,7 @@ $("#btn-next").onclick = async () => {
 };
 
 async function finishCharacter() {
+  if (isPortraitWorkshop) return;
   try {
     const res = await fetch("/api/party", {
       method: "POST",
@@ -1084,6 +1173,21 @@ function signCovenant(event) {
 function stashDraft() {
   if (!REF || draftComplete) return;
   try { steps[step].collect?.(part); } catch { /* half-filled steps still stash */ }
+  if (isPortraitWorkshop) {
+    if (portraitBusy) return;
+    const settings = { ...portraitRequestSnapshot(), sourcePrompt: draft.portraitPrompt, fixSeed: draft.portraitFixSeed, editMode: draft.portraitKeepLook };
+    preferenceSave = preferenceSave.then(async () => {
+      const response = await fetch(`/api/party/${encodeURIComponent(portraitPcId)}/portrait-workshop`, {
+        method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(settings)
+      });
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.errorKey ? t(result.errorKey) : result.error || t("error.generic"));
+      }
+      $("#draft-status").textContent = t("portrait.saved");
+    }).catch((error) => { $("#warn").textContent = error.message; });
+    return;
+  }
   const saved = { id: draftId, version: 3, savedAt: new Date().toISOString(), step, part, draft };
   localStorage.setItem(DRAFT_KEY, JSON.stringify(saved));
   fetch(`/api/character-drafts/${encodeURIComponent(draftId)}`, {
@@ -1116,11 +1220,18 @@ function restoreDraft(serverSaved = null) {
       offHand: draft.portraitEquipment?.offHand !== false
     };
     draft.portraitFixSeed = draft.portraitFixSeed === true;
-    draft.portraitStepsModifier = portraitModifier(draft.portraitStepsModifier);
+    draft.portraitStepsModifier = portraitModifier(draft.portraitStepsModifier, "steps");
     draft.portraitCfgModifier = portraitModifier(draft.portraitCfgModifier);
     draft.portraitStyle = portraitStyle(draft.portraitStyle);
     draft.portraitEmbellishPrompt = draft.portraitEmbellishPrompt !== false;
+    draft.portraitKeepLook = draft.portraitKeepLook === true;
+    draft.portraitReferenceUrl = String(draft.portraitReferenceUrl || "").slice(0, 2048);
     draft.portraitAttempts = normalizePortraitAttempts(draft.portraitAttempts);
+    draft.portraitOriginal = String(draft.portraitOriginal || draft.portrait || "") || null;
+    const pending = draft.portraitEditPending;
+    draft.portraitEditPending = pending && draft.portraitAttempts.some((attempt) => attempt.url === pending.url)
+      ? { url: pending.url, seed: Number(pending.seed), originalUrl: String(pending.originalUrl || draft.portraitOriginal || "") }
+      : null;
     draft.portraitTextSource = draft.portraitTextSource === "suggestion" && draft.portraitSuggestion ? "suggestion" : "mine";
     draft.portraitSeed = draft.portraitSeed !== null && draft.portraitSeed !== "" && Number.isSafeInteger(Number(draft.portraitSeed))
       ? Number(draft.portraitSeed)
@@ -1135,7 +1246,74 @@ function restoreDraft(serverSaved = null) {
 }
 
 // ---------- boot ----------
+function applyWorkshop(view, initial = false) {
+  workshopPc = view.pc;
+  const data = view.workshop;
+  const request = data.request;
+  Object.assign(draft, {
+    name: view.pc.name, classId: view.pc.classId, subclassId: view.pc.subclassId,
+    ancestryId: view.pc.ancestryId, communityId: view.pc.communityId,
+    portrait: data.portrait, portraitPrompt: data.prompt,
+    portraitNegativePrompt: request.negativePrompt, portraitOriginal: data.originalUrl,
+    portraitReferenceUrl: request.referenceImageUrl || data.portrait || "",
+    portraitKeepLook: initial && !data.pending ? Boolean(data.portrait) : data.editMode,
+    portraitSeed: data.lastSeed, portraitFixSeed: data.fixSeed,
+    portraitStepsModifier: request.stepsModifier, portraitCfgModifier: request.cfgModifier,
+    portraitStyle: request.style, portraitEmbellishPrompt: request.embellishPrompt,
+    portraitAttempts: normalizePortraitAttempts(data.attempts), portraitEditPending: data.pending,
+    favoriteColor: view.pc.secondaryColor
+  });
+}
+
+async function reviewPortrait(action, root, attemptId) {
+  if (portraitBusy) return;
+  collectPortraitFields(root);
+  if (!isPortraitWorkshop) {
+    if (action === "keep") keepPortraitEdit(draft);
+    if (action === "discard") discardPortraitEdit(draft);
+    if (action === "restore") restoreOriginalPortrait(draft);
+    rerender();
+    return;
+  }
+  portraitBusy = true;
+  clearTimeout(draftSaveTimer);
+  for (const button of root.querySelectorAll("button")) button.disabled = true;
+  try {
+    await preferenceSave;
+    const response = await fetch(`/api/party/${encodeURIComponent(portraitPcId)}/portrait-workshop`, {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, pendingId: draft.portraitEditPending?.id, attemptId })
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.errorKey ? t(result.errorKey) : result.error || t("error.generic"));
+    applyWorkshop(result);
+    rerender();
+  } catch (error) { rerender(); $("#warn").textContent = error.message; }
+  finally { portraitBusy = false; }
+}
+
 initI18n();
+if (isPortraitWorkshop) {
+  document.body.classList.add("portrait-workshop");
+  $("#draft-reset").hidden = true;
+  const title = document.querySelector('[data-i18n="create.title"]');
+  title.dataset.i18n = "portrait.workshopTitle";
+  title.textContent = t("portrait.workshopTitle");
+  const subtitle = document.querySelector('[data-i18n="create.subtitle"]');
+  subtitle.dataset.i18n = "portrait.workshopHelp";
+  subtitle.textContent = t("portrait.workshopHelp");
+  document.title = t("portrait.workshopTitle");
+  if (!portraitPcId) location.replace("/player");
+  else Promise.all([
+    fetch("/api/reference").then((r) => r.json()),
+    fetch(`/api/party/${encodeURIComponent(portraitPcId)}/portrait-workshop`).then((r) => r.json()),
+    fetch("/api/art/status").then((r) => r.json())
+  ]).then(([ref, view, status]) => {
+    if (view.error || ref.error) throw new Error(view.error || ref.error);
+    REF = ref; ART_STATUS = status; applyWorkshop(view, true);
+    step = 7; part = 1; rerender();
+  }).catch((error) => { $("#warn").textContent = error.message; });
+} else {
 $("#draft-reset").onclick = () => {
   if (!confirm(t("create.startOverConfirm"))) return;
   localStorage.removeItem(DRAFT_KEY);
@@ -1169,3 +1347,4 @@ Promise.all([
   setPlayerFeatureContext({ playerFeatures: CAMPAIGNS.find((campaign) => campaign.id === draft.campaignId)?.playerFeatures });
   rerender();
 });
+}

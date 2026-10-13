@@ -75,13 +75,18 @@
             <button class="paint-stop" id="stop-paint" type="button">Put bucket down</button>
           </div>
         </div>
+        <div class="view-switch" role="group" aria-label="Song layout">
+          <button class="quiet" id="view-list" type="button" aria-pressed="true">List</button>
+          <button class="quiet" id="view-bubbles" type="button" aria-pressed="false">Bubbles</button>
+        </div>
         <button class="quiet" id="arrange-bubbles" title="Return bubbles to an even arrangement">Arrange</button>
         <button class="quiet" id="open-settings">Settings</button>
       </div>
     </header>
-    <div class="bubble-stage" id="bubble-stage" aria-live="polite">
+    <div class="bubble-stage" id="bubble-stage" aria-live="polite" hidden>
       <div class="bubble-empty">Drawing songs from the library...</div>
     </div>
+    <div class="song-list" id="song-list" aria-live="polite"></div>
   </main>
 
   <aside class="forge-column">
@@ -161,9 +166,9 @@
       <button class="transport small" id="prev-track" aria-label="Restart, then previous" title="Restart the song; press again for the previous one">⏮</button>
       <button class="transport" id="play-toggle" aria-label="Play or pause">▶</button>
       <button class="transport small" id="next-track" aria-label="Next in the queue" title="Play the next queued song">⏭</button>
+      <button class="transport small" id="loop-toggle" aria-label="Loop this song" aria-pressed="false" title="Loop this song">↻</button>
       <input id="seek" type="range" min="0" max="1000" value="0" aria-label="Seek">
       <span id="time-label">0:00</span>
-      <button class="transport small" id="loop-toggle" aria-label="Loop">↻</button>
       <button class="quiet" id="fade-out">Fade out</button>
     </div>
     <label class="volume-control"><span>Volume</span><input id="volume" type="range" min="0" max="1" step="0.02" value="0.8"></label>

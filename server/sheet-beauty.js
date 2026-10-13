@@ -156,7 +156,7 @@ export function sheetBeautyView(pc, document) {
 
 export function commitSheetBeauty(pc, document, candidateId, committedAt = new Date().toISOString()) {
   const record = recordFor(document, pc.id);
-  if (record.spent >= tokenEntitlement(pc)) throw new Error("No sheet-beautifying tokens remain.");
+  if (record.spent >= tokenEntitlement(pc)) throw new Error("No flourishes remain; your next level brings another.");
   const candidate = VARIANTS.map((variant) => recipeFor(pc, record, variant))
     .find((item) => item.id === candidateId);
   if (!candidate) throw new Error("That preview is no longer current. Open the atelier again.");

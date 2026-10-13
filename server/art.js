@@ -12,7 +12,7 @@ const fromRoot = (value, fallback) => {
 const DEFAULT_WORKFLOWS = {
   portrait: fromRoot(
     process.env.COMFYUI_CHARACTER_WORKFLOW,
-    path.join("docs", "comfyui", "workflows", "Vessarin Portraits.json")
+    path.join("docs", "comfyui", "workflows", "Qwen2.1-Fantasy-portrait.json")
   ),
   scenic: fromRoot(
     process.env.COMFYUI_SCENIC_WORKFLOW,
@@ -23,8 +23,7 @@ const TOKEN_PATTERN = /\{\{([a-z_]+)\}\}/gi;
 const IMAGE_LIMIT = 32 * 1024 * 1024;
 const MODIFIER_VALUES = new Set([-1, 0, 1, 2]);
 const PORTRAIT_STYLES = Object.freeze({
-  style1: { sampler: "euler", scheduler: "ays+" },
-  style2: { sampler: "dpmpp_3m_sde_gpu", scheduler: "beta" }
+  style1: { sampler: "euler_ancestral", scheduler: "sgm_uniform" }
 });
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -33,7 +32,7 @@ const compactToken = (value, limit = 300) => String(value || "").trim().slice(0,
 const modifierValue = (value) => MODIFIER_VALUES.has(Number(value)) ? Number(value) : 0;
 
 function applySamplerModifiers(graph, stepsModifier, cfgModifier) {
-  const stepOffset = modifierValue(stepsModifier);
+  const stepOffset = [-3, -2, -1, 0, 1, 2, 3].includes(Number(stepsModifier)) ? Number(stepsModifier) : 0;
   const cfgOffset = modifierValue(cfgModifier) * 0.1;
   for (const node of Object.values(graph)) {
     if (!node?.inputs || typeof node.inputs !== "object") continue;
@@ -48,9 +47,10 @@ function applySamplerModifiers(graph, stepsModifier, cfgModifier) {
 }
 
 function applyPortraitStyle(graph, style) {
-  if (style === null || style === undefined || style === "") return graph;
+  // Legacy requests may retain the removed Style 2; use the authored pair.
+  if (style === null || style === undefined || style === "" || style === "workflow" || style === "style2") return graph;
   const selected = PORTRAIT_STYLES[String(style)];
-  if (!selected) throw new Error("Choose portrait Style 1 or Style 2.");
+  if (!selected) throw new Error("Choose Standard or Alternative style.");
   let applied = false;
   for (const node of Object.values(graph)) {
     if (!node?.inputs || typeof node.inputs !== "object") continue;
@@ -82,7 +82,84 @@ function applyPromptEmbellishment(graph, enabled) {
     if (trueUsesLlm === falseUsesLlm) continue;
     node.inputs.switch = enabled ? trueUsesLlm : !trueUsesLlm;
   }
+  // Native Qwen exports have a TextGenerate branch without a lazy switch.
+  if (!enabled) {
+    for (const node of Object.values(graph)) {
+      if (node?.class_type !== "Simple String Combine (WLSH)") continue;
+      const generated = graph[node.inputs.addition?.[0]];
+      if (generated?.class_type === "TextGenerate") {
+        const brief = graph[generated.inputs.prompt?.[0]];
+        // The adviser receives prefix + raw brief; the final combiner already
+        // supplies that prefix, so bypass to the raw brief without duplicating it.
+        const sharesPrefix = brief?.class_type === "Simple String Combine (WLSH)"
+          && JSON.stringify(brief.inputs.input_string) === JSON.stringify(node.inputs.input_string);
+        node.inputs.addition = sharesPrefix ? brief.inputs.addition : generated.inputs.prompt;
+      }
+    }
+  }
   return graph;
+}
+
+function referenceBranches(graph) {
+  return Object.entries(graph).flatMap(([id, node]) => {
+    if (node?.class_type !== "ComfySwitchNode") return [];
+    const loaderId = node.inputs.on_true?.[0];
+    if (graph[loaderId]?.class_type !== "LoadImagesFromURL") return [];
+    const encoders = Object.values(graph).filter((candidate) => candidate?.class_type === "TextEncodeQwenImage21"
+      && Object.values(candidate.inputs).some((input) => Array.isArray(input) && String(input[0]) === id));
+    return encoders.length ? [{ id, node, loaderId, encoders }] : [];
+  });
+}
+
+function applyReferenceImage(graph, url) {
+  const branches = referenceBranches(graph);
+  if (url && !branches.length) throw new Error("This portrait workflow does not support a reference image.");
+  for (const { id, node, loaderId, encoders } of branches) {
+    node.inputs.switch = Boolean(url);
+    graph[loaderId].inputs.url = url;
+    // Disconnect the absent image so a fresh portrait never tries to load a URL.
+    if (!url) for (const encoder of encoders) {
+      for (const [key, input] of Object.entries(encoder.inputs)) {
+        if (Array.isArray(input) && String(input[0]) === id) delete encoder.inputs[key];
+      }
+    }
+  }
+  if (url) {
+    for (const node of Object.values(graph)) {
+      if (node?.class_type !== "TextGenerate") continue;
+      const system = graph[node.inputs.system_prompt?.[0]];
+      if (system?.class_type === "PrimitiveStringMultiline") {
+        system.inputs.value = "Write concise image-editing instructions for an existing fantasy portrait from the user's request. Preserve the subject's identity, face, distinctive features, composition and visual style unless the request explicitly changes them. Describe only the requested changes. Do not invent a new character, clothing, equipment, background or history. Output only the editing instructions.";
+      }
+    }
+    for (const node of Object.values(graph)) {
+      if (node?.class_type !== "Simple String Combine (WLSH)") continue;
+      const prefix = graph[node.inputs.input_string?.[0]];
+      if (prefix?.class_type === "Wildcard Processor") {
+        prefix.inputs.prompt = "Edit the supplied fantasy portrait. Keep the same character, face, distinctive features, framing and art style. Preserve everything except the changes explicitly requested below.";
+      }
+    }
+  }
+  return graph;
+}
+
+function referenceImageValue(value) {
+  const source = String(value || "").trim();
+  if (!source) return "";
+  if (source.length > 2048) throw new Error("The reference image link is too long.");
+  if (/^\/(?:generated\/art\/portrait|portraits)\//.test(source)) {
+    let decoded;
+    try { decoded = decodeURIComponent(source); } catch { throw new Error("Invalid reference image link."); }
+    if (decoded.includes("\\") || decoded.split("/").some((part) => part === "." || part === "..")
+      || !/\.(png|jpe?g|webp)$/i.test(decoded)) throw new Error("Choose a local portrait or an HTTP(S) image link.");
+    return source;
+  }
+  let url;
+  try { url = new URL(source); } catch { throw new Error("Choose a local portrait or an HTTP(S) image link."); }
+  if (!["https:", "http:"].includes(url.protocol) || url.username || url.password) {
+    throw new Error("Choose a local portrait or an HTTP(S) image link.");
+  }
+  return url.href;
 }
 
 function workflowGraph(value) {
@@ -120,13 +197,20 @@ function replaceTokens(value, tokens) {
 
 function outputImages(historyEntry) {
   const images = [];
+  const seen = new Set();
   for (const output of Object.values(historyEntry?.outputs || {})) {
     for (const image of output?.images || []) {
-      if (image?.filename) images.push({
+      // PreviewImage reports a temporary copy of the saved image too.
+      if (!image?.filename || (image.type && image.type !== "output")) continue;
+      const saved = {
         filename: String(image.filename),
         subfolder: String(image.subfolder || ""),
         type: String(image.type || "output")
-      });
+      };
+      const key = JSON.stringify(saved);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      images.push(saved);
     }
   }
   return images;
@@ -138,6 +222,15 @@ function extensionFor(filename, contentType) {
   if (contentType.includes("webp")) return ".webp";
   if (contentType.includes("jpeg")) return ".jpg";
   return ".png";
+}
+
+export class ArtUnavailableError extends Error {
+  constructor(reason) {
+    super("Portrait generation is unavailable right now. Ask Oscar at the start of the session. You can add or regenerate your portrait later.");
+    this.statusCode = 503;
+    this.errorKey = "portrait.unavailable";
+    this.reason = reason;
+  }
 }
 
 export class ArtWorkshop {
@@ -158,7 +251,7 @@ export class ArtWorkshop {
       if (!ensurePromptToken(graph)) {
         return { ready: false, file: path.basename(file), reason: "prompt-token-missing" };
       }
-      return { ready: true, file: path.basename(file), reason: null };
+      return { ready: true, file: path.basename(file), reason: null, referenceImage: referenceBranches(graph).length > 0 };
     } catch (error) {
       return { ready: false, file: path.basename(file), reason: error.message };
     }
@@ -172,6 +265,20 @@ export class ArtWorkshop {
         scenic: this.workflowStatus("scenic")
       }
     };
+  }
+
+  async availability(kind = "portrait") {
+    if (!this.workflowStatus(kind).ready) return { ready: false, reason: "workflow-unavailable" };
+    try {
+      // This read checks the API without submitting a graph or loading models.
+      const response = await this.comfy("system_stats", {}, 2_000);
+      if (!response.ok) return { ready: false, reason: "generator-offline" };
+      const stats = await response.json();
+      if (!stats?.system || !Array.isArray(stats.devices)) return { ready: false, reason: "generator-offline" };
+      return { ready: true, reason: null };
+    } catch {
+      return { ready: false, reason: "generator-offline" };
+    }
   }
 
   loadWorkflow(kind, tokens, embellishPrompt = true) {
@@ -198,19 +305,43 @@ export class ArtWorkshop {
         signal: AbortSignal.timeout(timeoutMs)
       });
     } catch {
-      throw new Error("The portrait workshop could not reach ComfyUI.");
+      throw new ArtUnavailableError("generator-offline");
     }
+  }
+
+  async referenceUrl(source) {
+    if (!source || !source.startsWith("/")) return source;
+    const root = fs.realpathSync(this.publicRoot);
+    let file;
+    try { file = fs.realpathSync(path.join(root, decodeURIComponent(source))); }
+    catch { throw new Error("The reference portrait is no longer available."); }
+    if (!file.startsWith(root + path.sep)) throw new Error("Invalid local reference portrait.");
+    const size = fs.statSync(file).size;
+    if (!size || size > IMAGE_LIMIT) throw new Error("The reference portrait has an invalid size.");
+    const ext = path.extname(file).toLowerCase();
+    const type = ext === ".webp" ? "image/webp" : /\.jpe?g/.test(ext) ? "image/jpeg" : "image/png";
+    const form = new FormData();
+    form.append("image", new Blob([fs.readFileSync(file)], { type }), `visseren_reference_${crypto.randomUUID()}${ext}`);
+    form.append("type", "input");
+    const uploaded = await this.comfy("upload/image", { method: "POST", body: form }, 20_000);
+    if (!uploaded.ok) throw new Error("ComfyUI could not receive the reference portrait.");
+    const image = await uploaded.json();
+    if (!image?.name) throw new Error("ComfyUI did not return a reference portrait filename.");
+    return new URL(`view?${new URLSearchParams({ filename: image.name, subfolder: image.subfolder || "", type: "input" })}`, this.baseUrl).href;
   }
 
   async request({
     kind, entityId, prompt, negativePrompt = "", seed, width, height, stepsModifier = 0, cfgModifier = 0, style,
-    primaryColor = "", secondaryColor = "", tags = [], armor = "", mainHand = "", offHand = "", embellishPrompt = true
+    primaryColor = "", secondaryColor = "", tags = [], armor = "", mainHand = "", offHand = "", embellishPrompt = true,
+    referenceImageUrl = ""
   }) {
     if (kind !== "portrait" && kind !== "scenic") throw new Error("Unknown art workflow.");
     const positive = String(prompt || "").trim();
     const negative = String(negativePrompt || "").trim();
     if (!positive) throw new Error("Write an image prompt first.");
     if (positive.length > 6_000 || negative.length > 4_000) throw new Error("That image prompt is too long.");
+    const reference = referenceImageValue(referenceImageUrl);
+    if (reference && kind !== "portrait") throw new Error("Reference images are supported only for portraits.");
 
     const hasSeed = seed !== null && seed !== undefined && seed !== "" && Number.isSafeInteger(Number(seed));
     const numericSeed = hasSeed ? Number(seed) : crypto.randomInt(0, 2_147_483_647);
@@ -232,6 +363,10 @@ export class ArtWorkshop {
     };
     const graph = applySamplerModifiers(this.loadWorkflow(kind, tokens, embellishPrompt), stepsModifier, cfgModifier);
     if (kind === "portrait") applyPortraitStyle(graph, style);
+    if (reference && !referenceBranches(graph).length) throw new Error("This portrait workflow does not support a reference image.");
+    const availability = await this.availability(kind);
+    if (!availability.ready) throw new ArtUnavailableError(availability.reason);
+    if (kind === "portrait") applyReferenceImage(graph, await this.referenceUrl(reference));
     const clientId = crypto.randomUUID();
     const queued = await this.comfy("prompt", {
       method: "POST",

@@ -39,13 +39,6 @@ body {
   padding: 0.75rem 4rem 0; color: #a99979;
   font-variant: small-caps; letter-spacing: 0.09em;
 }
-.view-root {
-  position: fixed; top: 0.45rem; left: 0.7rem; z-index: 90;
-  display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.45rem;
-  color: #bda77e; border: 1px solid rgba(189,167,126,0.3); border-radius: 3px;
-  background: rgba(28,18,11,0.72); font-size: 0.72rem; text-decoration: none;
-}
-.view-root:hover, .view-root:focus-visible { color: #ead6a7; border-color: rgba(234,214,167,0.58); }
 .folio-season { white-space: nowrap; }
 .folio-stores { display: flex; gap: 1.2rem; flex-wrap: wrap; justify-content: center; }
 .folio-store strong { color: #d8c89f; font-size: 1.05rem; font-weight: 500; margin-right: 0.25rem; }
@@ -384,8 +377,6 @@ body.book-open .book-instruction { opacity: 0; }
   .folio-session-pools { max-width: calc(100vw - 1rem); }
   .book-viewport { height: calc(100vh - 102px); overflow: auto; justify-content: flex-start; padding-left: 12px; }
   .book-scale { transform-origin: top left; }
-  .view-root { width: 30px; height: 30px; justify-content: center; padding: 0; }
-  .view-root-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   body.book-open .book-viewport { height: calc(100vh - 62px); overflow-x: hidden; overflow-y: auto; padding: 54px 0 76px; }
   body.book-open .book-scale { width: 100%; height: auto; }
   body.book-open .tome {

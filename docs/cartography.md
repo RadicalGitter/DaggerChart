@@ -1,5 +1,9 @@
 # Cartography desk
 
+The GM navigation entry is temporarily replaced by [Adventures](adventures.md).
+The atlas routes, saved sheets and appointed player's access remain available;
+the adventure maps are separate prepared images, not atlas submissions.
+
 Oore is the appointed cartographer for the current campaign. His stable PC ID
 is stored in `data/cartography.json`; player navigation derives the atlas tool
 from that ID rather than from the character's editable name.

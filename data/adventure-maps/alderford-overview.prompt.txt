@@ -1,0 +1,35 @@
+Built-in ImageGen, 2026-10-13. Final art direction after Oscar's correction:
+
+Landscape fantasy regional adventure map, warm aged cream parchment, restrained
+ink and muted forest greens/river slate blue, finished hand-illustrated
+bird's-eye rural landscape. Exactly five labelled outward landmarks:
+Split Ash, Abandoned Camp, The Ford, Alderford, Lesser Tower.
+
+The road enters from the upper-left image edge through ordinary wooded hills
+and grassland. It passes a split ash and an abandoned ordinary camp, crosses a
+river by a shallow ford and narrow wooden bridge, and reaches a small timber
+village with a watermill and waterwheel. A lesser cylindrical stone courier
+tower overlooks an accessible circular court and basin on a rise beside the
+village. The road continues beyond the village. Connected route and landmarks;
+schematic relative positions, no exact scale or hex grid.
+
+Do not depict or label the players' current settlement or the Tower of Vesserin.
+Exactly one tower is visible, the Lesser Tower. No home cottages or palisade,
+graves, NPC portraits, monsters, battles, treasure marks, secret lore or extra
+writing. The players will decide what their own settlement looks like.
+
+Applied edit prompt:
+Edit this regional fantasy adventure map. Preserve its parchment
+ink-and-muted-colour hand-illustrated style, all five outward landmarks, their
+accurate existing labels, the ford river bridge, Alderford watermill village,
+and the Lesser Tower courtyard with basin. Remove the entire current home
+settlement from the upper-left: REMOVE its large tower, every cottage and
+palisade, and REMOVE the words 'The Settlement'. Replace that complete
+upper-left hill area with ordinary uninterrupted wooded hills, soft grassland
+and the winding road entering from the upper-left edge of the image. Do not
+depict or label the current settlement anywhere: the players will decide its
+appearance. There must be exactly ONE tower visible anywhere, the existing
+'Lesser Tower' above Alderford. No additional ruins or buildings in the replaced
+area. Keep exactly these five labels and no other writing: 'Split Ash',
+'Abandoned Camp', 'The Ford', 'Alderford', 'Lesser Tower'. Preserve the rest of
+the map's layout and art. This is the final outward journey map only.

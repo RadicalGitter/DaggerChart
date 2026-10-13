@@ -244,6 +244,7 @@ table.ledger tbody tr:hover { background: rgba(209,113,69,.045); }
 .campaign-feature-grid,
 .session-roster label,
 .feedback-ticket,
+.request-sheet,
 .material-outlook,
 .store-adjustment,
 .construction-card,
@@ -345,6 +346,30 @@ table.ledger tbody tr:hover { background: rgba(209,113,69,.045); }
 .folk-portrait-choice button { color: #c7baa2; background: #171a16; }
 .folk-portrait-attempt.selected { border-color: var(--gm-sunset); box-shadow: inset 0 0 0 1px var(--gm-sunset); }
 .folk-card-reveal { color: #d6cbb6; }
+
+.nav-count {
+  display: inline-grid;
+  min-width: 18px;
+  height: 18px;
+  margin-left: .35rem;
+  place-items: center;
+  color: #fff4e2;
+  border: 1px solid #e39867;
+  border-radius: 50%;
+  background: #a94e35;
+  font-size: .58rem;
+  font-variant: normal;
+}
+.request-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .8rem; }
+.request-sheet { display: grid; align-content: start; gap: .7rem; padding: .85rem; border: 1px solid #4d493e; }
+.request-sheet.pending { border-color: #826446; box-shadow: inset 3px 0 #d17145, 0 9px 24px rgba(0,0,0,.2); }
+.request-sheet header strong { display: block; color: #eee4d1; font: 500 1rem Georgia, serif; }
+.request-sheet header span { display: block; margin-top: .15rem; color: #938a7b; font-size: .68rem; }
+.request-image { margin: 0; overflow: hidden; border: 1px solid #46463d; background: #111410; }
+.request-image img { display: block; width: 100%; max-height: 280px; object-fit: contain; }
+.request-text { max-height: 280px; overflow: auto; padding: .8rem; color: #d3c8b4; border: 1px solid #46463d; background: #151814; white-space: pre-wrap; }
+.request-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .45rem; }
+.request-resolved { color: #8f8779; font-size: .68rem; font-variant: small-caps; }
 
 .ux-map-frame { border-color: #504b3f; background: #171a16; box-shadow: inset 0 0 0 6px rgba(199,166,94,.025); }
 .ux-stat { border-color: #45463d; }

@@ -11,35 +11,25 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="stylesheet" href="/shared/native-feel.css">
 <script type="module" src="/shared/pwa.js"></script>
-<title>Player root</title>
+<title>At hand</title>
 <link rel="stylesheet" href="/shared/ledger.css">
 <link rel="stylesheet" href="player.css">
+<link rel="stylesheet" href="/shared/player-finish.css">
 </head>
-<body>
+<body class="player-surface player-hub">
   <div class="hub-shell">
-    <header class="hub-head">
-      <a class="settlement-mark" href="/login">
-        <span class="smallcaps" data-i18n="player.hub.root">Player root</span>
-        <strong data-i18n="player.hub.atTable">At the table</strong>
-      </a>
-      <div class="identity-wrap">
-        <button class="identity-button" id="identity-button" type="button" aria-expanded="false">
-          <span class="identity-mark" id="identity-mark" aria-hidden="true">?</span>
-          <span id="identity-name" data-i18n="player.hub.choosepc">Choose your character</span>
-          <span class="identity-caret" aria-hidden="true">⌄</span>
-        </button>
-        <div class="identity-menu" id="identity-menu" hidden></div>
-      </div>
-    </header>
-
     <main>
       <div class="hub-title">
-        <h1 data-i18n="player.hub.atHand">At hand</h1>
+        <div>
+          <span class="hub-kicker" data-i18n="player.hub.atHand">At hand</span>
+          <h1 id="hub-character-name">At hand</h1>
+        </div>
+        <a class="hub-portrait portrait-editor-link" id="hub-portrait"></a>
       </div>
       <section class="view-choice" id="view-choice" hidden>
         <header>
           <span class="smallcaps" data-i18n="player.hub.views">Views</span>
-          <h2 data-i18n="player.hub.chooseview">Choose a view</h2>
+          <h2><span data-i18n="player.hub.chooseview">Choose a view</span> <span class="view-choice-note" data-i18n="player.hub.chooseviewNote">— Same content, different presentation.</span></h2>
         </header>
         <div class="view-shelf" id="view-shelf" aria-live="polite"></div>
       </section>
@@ -54,9 +44,11 @@
       </section>
     </main>
 
-    <footer class="hub-foot">
-      <a href="/login" data-i18n="player.hub.changeseat">Change seat</a>
-    </footer>
+    <!-- Every other player page hangs a Home ribbon at the top; the hub is home,
+         so its one way out is the seat chooser, kept in the corner. -->
+    <a class="player-seat" href="/login">
+      <span aria-hidden="true">&#8644;</span><strong data-i18n="player.hub.changeseat">Change seat</strong>
+    </a>
   </div>
   <script type="module" src="player.js"></script>
 </body>

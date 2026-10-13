@@ -1,5 +1,12 @@
 # Amme's Inventor Class Workshop
 
+Status update, October 13, 2026: Oscar approved the completed draft as a
+playtest offer and requested its Swedish translation and in-app chooser.
+The [Swedish handout](redneck-inventor-class-sv.md) and
+[class-choice contract](../character-class-choices.md) cover that later phase.
+The original workshop restrictions below remain historical context; the
+authorized offer now applies class changes only after Amme confirms.
+
 This document is safe to share with Amme. It contains only information her
 player knows or supplied during character creation. It is a design brief, not
 an approved class and not permission to change the live character yet.
@@ -279,3 +286,10 @@ questions in simple English:
    or are they Redneck's special type of Inventor?
 
 Wait for her answers before drafting mechanics.
+
+## Class proposal
+
+The responses and Oscar's subsequent Prepared Parts / gathering discussion
+have been developed into the complete
+[Inventor class draft](redneck-inventor-class-draft.md). It remains a
+**Player draft - awaiting GM review**; the proposed rules live in that document.

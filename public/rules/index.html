@@ -15,14 +15,12 @@
 <link rel="stylesheet" href="/shared/ledger.css">
 <link rel="stylesheet" href="/shared/lamplight.css">
 <link rel="stylesheet" href="rules.css">
+<link rel="stylesheet" href="/shared/player-finish.css">
 </head>
-<body>
+<body class="player-surface player-rules">
 <div class="rules-shell" id="rules-shell">
   <header class="rules-masthead">
-    <a class="root-link" href="/player" data-nav="player-root">
-      <span aria-hidden="true">&#8592;</span>
-      <span data-i18n="rules.return">Player root</span>
-    </a>
+    <span aria-hidden="true"></span>
     <div class="rules-heading">
       <span class="smallcaps" data-i18n="rules.kicker">A table reference</span>
       <h1 data-i18n="rules.title">Rules at Hand</h1>
@@ -50,6 +48,7 @@
         </div>
       </div>
       <div class="index-count" id="index-count" aria-live="polite"></div>
+      <p class="pin-status" id="pin-status" role="status" hidden></p>
       <nav class="rule-tree" id="rule-tree" aria-label="Rule entries" data-i18n-aria="rules.entriesLabel"></nav>
     </aside>
 

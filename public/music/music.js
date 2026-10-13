@@ -17,7 +17,9 @@ const PROMPT_ENVELOPE = "tag-board-v1";
 const edgePalette = ["#8ecfd0", "#e7b8c5", "#ead18c", "#a9d2b6", "#c5b6e1", "#efc2ad", "#acc6df"];
 const state = {
   data: { provider: {}, songs: [], playlists: [], characterTags: [] },
-  playlistId: "library",
+  playlistId: "generated",
+  view: (() => { try { return localStorage.getItem("settlement-music-view") === "bubbles" ? "bubbles" : "list"; } catch { return "list"; } })(),
+  seen: new Set(),
   route: [],
   explicit: new Set(),
   excluded: new Set(),
@@ -147,6 +149,30 @@ function songSourceLabel(song) {
     return `world theme ${Math.round(influence * 100)}%`;
   }
   return song.source;
+}
+
+const SEEN_KEY = "settlement-music-seen";
+function loadSeen() {
+  try {
+    const raw = localStorage.getItem(SEEN_KEY);
+    return raw === null ? null : new Set(JSON.parse(raw));
+  } catch {
+    return new Set();
+  }
+}
+function saveSeen() {
+  try { localStorage.setItem(SEEN_KEY, JSON.stringify([...state.seen].slice(-600))); } catch {}
+}
+function isGenerated(song) {
+  return song.source === "suno" || song.source === "mock";
+}
+function isNewSong(song) {
+  return isGenerated(song) && song.status === "ready" && !state.seen.has(song.id);
+}
+function markSeen(songId) {
+  if (state.seen.has(songId)) return;
+  state.seen.add(songId);
+  saveSeen();
 }
 
 function songById(id) {
@@ -598,14 +624,13 @@ function renderPlaylists() {
 }
 
 function sizeBubbleStage(songCount) {
+  // The stage grows with the number of songs so none are crammed out of sight;
+  // the column around it scrolls.
   const stage = $("#bubble-stage");
-  if (window.matchMedia("(max-width: 680px)").matches) {
-    const columns = Math.max(1, Math.floor((stage.clientWidth || 340) / 156));
-    const height = `${Math.max(420, Math.ceil(songCount / columns) * 156 + 28)}px`;
-    if (stage.style.minHeight !== height) stage.style.minHeight = height;
-  } else if (stage.style.minHeight) {
-    stage.style.removeProperty("min-height");
-  }
+  const cell = bubbleSizeProfile().cell + 34;
+  const columns = Math.max(1, Math.floor((stage.clientWidth || 340) / cell));
+  const height = `${Math.max(420, Math.ceil(songCount / columns) * cell + 28)}px`;
+  if (stage.style.minHeight !== height) stage.style.minHeight = height;
 }
 
 function renderBubbles() {
@@ -625,6 +650,11 @@ function renderBubbles() {
   summary.textContent = filterIds.length
     ? `${matchingCount} of ${songs.length} match ${filterIds.length} included ${filterIds.length === 1 ? "tag" : "tags"}`
     : "";
+  syncViewChrome();
+  if (state.view === "list") {
+    renderSongList(songs, filterIds);
+    return;
+  }
   const stage = $("#bubble-stage");
   sizeBubbleStage(songs.length);
   stage.innerHTML = songs.length ? songs.map((song, index) => {
@@ -681,6 +711,77 @@ function renderBubbles() {
   }
   for (const songId of state.popStates.keys()) applyBubblePopState(songId);
   renderPaintTool();
+}
+
+function syncViewChrome() {
+  const list = state.view === "list";
+  $("#song-list").hidden = !list;
+  $("#bubble-stage").hidden = list;
+  $("#view-list").setAttribute("aria-pressed", String(list));
+  $("#view-bubbles").setAttribute("aria-pressed", String(!list));
+  $("#paint-toggle").closest(".paint-wrap").hidden = list;
+  $("#arrange-bubbles").hidden = list;
+  $("#collection-title").closest(".stage-head").querySelector(".smallcaps").textContent = list ? "Newest first" : "Songs on the surface";
+}
+
+const STATUS_LABELS = { queued: "Queued", rendering: "Generating", waiting: "Waiting", syncing: "Syncing", failed: "Failed" };
+
+function listAge(song) {
+  const when = Date.parse(song.createdAt);
+  return Number.isFinite(when) ? historyAge(when) : "";
+}
+
+function renderSongList(songs, filterIds) {
+  const list = $("#song-list");
+  const ordered = [...songs].sort((a, b) => (Date.parse(b.createdAt) || 0) - (Date.parse(a.createdAt) || 0));
+  if (!ordered.length) {
+    list.innerHTML = `<div class="bubble-empty">No songs are in this collection yet.</div>`;
+    return;
+  }
+  const rows = ordered.map((song) => {
+    const ready = song.status === "ready";
+    const songTags = new Set(song.tagIds || []);
+    const misses = filterIds.length && !filterIds.every((id) => songTags.has(id));
+    const placeholder = !ready && /^An untitled cue$|^A new overture$/.test(song.title || "");
+    const title = placeholder ? "Generating…" : song.title;
+    let marker = "";
+    if (!ready) marker = `<span class="song-pill working ${esc(song.status)}"><i aria-hidden="true"></i>${esc(STATUS_LABELS[song.status] || song.status)}</span>`;
+    else if (isNewSong(song)) marker = `<span class="song-pill fresh">New</span>`;
+    const subtitle = song.status === "failed" ? (song.error || "Generation failed") : (song.description || song.prompt || "");
+    return `<div class="song-row ${ready ? "" : "pending"} ${misses ? "tag-miss" : ""} ${song.id === state.playingId ? "playing" : ""}" data-row="${esc(song.id)}" tabindex="0" role="button" aria-label="Play ${esc(song.title)}">
+      <span class="row-play" aria-hidden="true">${song.id === state.playingId ? "♪" : "▶"}</span>
+      <span class="row-main"><strong>${esc(title)}</strong>${marker}<small>${esc(subtitle)}</small></span>
+      <span class="row-source">${esc(songSourceLabel(song))}</span>
+      <span class="row-age">${esc(listAge(song))}</span>
+      <span class="row-time">${song.duration ? formatTime(song.duration) : ""}</span>
+      <span class="row-actions">
+        <button type="button" class="row-btn" data-row-queue="${esc(song.id)}" title="Add to queue" aria-label="Add to queue">+</button>
+        <button type="button" class="row-btn" data-row-menu="${esc(song.id)}" title="More" aria-label="More actions">⋯</button>
+      </span>
+    </div>`;
+  });
+  list.innerHTML = `<div class="song-row song-row-head" aria-hidden="true"><span></span><span>Title</span><span>Source</span><span>Added</span><span>Length</span><span></span></div>${rows.join("")}`;
+  for (const row of list.querySelectorAll("[data-row]")) {
+    const id = row.dataset.row;
+    const open = () => {
+      const song = songById(id);
+      if (!song?.audioUrl) return toast(song?.error || "This draft is still being written.");
+      rememberPop(id);
+      playSong(id);
+    };
+    row.onclick = (event) => { if (!event.target.closest(".row-btn")) open(); };
+    row.onkeydown = (event) => { if (event.key === "Enter") { event.preventDefault(); open(); } };
+    row.oncontextmenu = (event) => { event.preventDefault(); showContextMenu(id, event.clientX, event.clientY); };
+  }
+  for (const button of list.querySelectorAll("[data-row-queue]")) {
+    button.onclick = () => queueSong(button.dataset.rowQueue);
+  }
+  for (const button of list.querySelectorAll("[data-row-menu]")) {
+    button.onclick = () => {
+      const rect = button.getBoundingClientRect();
+      showContextMenu(button.dataset.rowMenu, rect.left, rect.bottom);
+    };
+  }
 }
 
 function paintBubble(songId, bubble) {
@@ -848,6 +949,8 @@ function playSong(songId) {
   const attempt = ++playAttempt;
   resetPlaybackMix();
   state.playingId = songId;
+  markSeen(songId);
+  if (state.view === "list") renderBubbles();
   const nextUrl = new URL(song.audioUrl, location.href).href;
   if (audio.src !== nextUrl) audio.src = song.audioUrl;
   else audio.currentTime = 0;
@@ -870,6 +973,7 @@ function updateTransport() {
   const audio = $("#audio");
   $("#play-toggle").textContent = audio.paused ? "▶" : "❚❚";
   $("#loop-toggle").classList.toggle("on", audio.loop);
+  $("#loop-toggle").setAttribute("aria-pressed", String(audio.loop));
 }
 
 function showContextMenu(songId, x, y) {
@@ -1300,6 +1404,14 @@ function renderIdentities() {
 async function loadMusicData() {
   try {
     state.data = await fetchJsonWithRetry("/api/music", { attempts: 3, timeoutMs: 4500 });
+    if (!state.seenReady) {
+      // First visit on this device: everything already here counts as seen, so
+      // only songs generated from now on carry the New marker.
+      const stored = loadSeen();
+      state.seen = stored || new Set(state.data.songs.filter((song) => song.status === "ready").map((song) => song.id));
+      state.seenReady = true;
+      if (!stored) saveSeen();
+    }
     if (!playlistById(state.playlistId)) state.playlistId = "library";
     if (state.selectedCharacter && !state.data.characterTags.some((entry) => entry.pcId === state.selectedCharacter)) {
       state.selectedCharacter = null;
@@ -1333,6 +1445,15 @@ function load() {
 }
 
 $("#song-search").oninput = renderBubbles;
+for (const [id, view] of [["#view-list", "list"], ["#view-bubbles", "bubbles"]]) {
+  $(id).onclick = () => {
+    if (state.view === view) return;
+    state.view = view;
+    try { localStorage.setItem("settlement-music-view", view); } catch {}
+    renderBubbles();
+    if (view === "bubbles") requestAnimationFrame(revealBubbleField);
+  };
+}
 $("#world-theme-weight").oninput = () => {
   const selected = state.data.characterTags.find((entry) => entry.pcId === state.selectedCharacter);
   renderWorldThemeControl(selected);

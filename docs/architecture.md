@@ -1,27 +1,36 @@
 # Architecture
 
 Boring on purpose: Node + Express, no build step, vanilla ES-module frontend,
-pretty-printed JSON on disk. One machine (the GM's), players connect over LAN.
+pretty-printed JSON on disk. One machine (the GM's), with LAN, private Tailscale,
+and public Funnel access. Players choose identities on trust; the optional GM
+gate protects administrative pages and APIs. See [Remote access](remote-access.md).
 
 ```
 server/
   index.js    routes, SSE stream, static serving
+  access.js   optional GM cookie/password gate, player-route allowlist, browser write-origin checks
   almanac.js  private lore CRUD and reveal-one-result chance-table boundary
+  adventures.js source-authored GM preparation and private map lookup
   music.js    song metadata, playlists, character themes, Suno provider boundary
   retell.js   isolated Anthropic prompt and retry boundary for session accounts
   portrait-suggest.js bounded Anthropic writing aid for portrait briefs
   llm-credits.js per-player budget for the Anthropic writing aids
   beacon.js   env-gated publisher of the server's current public IP/port
   telemetry.js bounded, content-free local UX aggregation
+  gm-notifications.js bounded reusable GM inbox and player screen requests
   state.js    domain logic: roll resolution, modifiers, season, log
   live-session.js campaign play clock and timed private character states
   character-presentations.js canonical identity, disguises, and Beastform overlays
+  character-class-choice.js targeted versioned class offers and explicit confirmation
+  class-choice-definitions.js reviewed class adapters and sheet migrations
+  inventor-definition.js bilingual Inventor playtest rules, outside the public catalog
   sheet-beauty.js deterministic sheet recipes, token entitlement, and immutable versions
   store.js    atomic JSON read/write (unique tmp+rename), timestamped backups
   views.js    audience whitelists for GM, shells, lore, PCs, and messages
 public/
   shared/     themes, i18n, dark GM worktable layer, session pools, GM tools/messages, rules search, player chat/notes, feedback and UX collectors
-  gm/         GM console (campaign/session controls, Almanac, correspondence, quick table, feedback queue, and UX review map)
+  gm/         GM console (Adventures, campaign/session controls, Almanac, correspondence, quick table, feedback queue, and UX review map)
+  gm-remote/  phone-first music player and projector controller with a radial command tree
   login/      trusted-table chooser: movable portrait cards + draft side view
   player/     player root: identity switcher, everyday tools, and visual-tool shelf
   table/      general arcana-card shell over six player sections, including Rules
@@ -29,6 +38,7 @@ public/
   tome/       personal tome: journal, character, inventory, Rules, and private correspondence
   screen/     the projector client (renders whatever the GM casts via /api/screen)
   create/     character creation wizard
+  portrait/   portrait-only alias of the creator, saving previews and accepted art to one existing PC
   character/  live character sheet + hand manager
   background/ post-creation memory studio + explicit AI expansion drafts
   music/      GM music desk: bubble library, prompt tag board, generation controls
@@ -47,6 +57,16 @@ continues in the [Sheet Beautifier skill](../sheet-beautifier/SKILL.md) and its
 [slot contract](../sheet-beautifier/references/slot-contract.md).
 
 ## Server
+
+The GM Folk shelf opens a fixed detail view. Edit opens the existing card form
+and portrait workshop; Save or Cancel returns to the selected detail view.
+
+- **`adventures.js`** — reads hand-edited `data/adventures.json` on request;
+  GM list/detail routes support the Adventures shelf and Folk links. Maps live
+  privately in `data/adventure-maps/`; only the currently projected map can be
+  fetched through the public screen-image endpoint. `screenView()` exposes an
+  image URL and caption only. See [Adventures](adventures.md) for the source
+  contract and read-only encounter-preset links.
 
 - **`store.js`** — `loadJson(name, fallback)` / `saveJson(name, obj)`; writes are
   atomic (write a process-unique `.tmp`, rename). Unique temp names prevent
@@ -126,6 +146,15 @@ continues in the [Sheet Beautifier skill](../sheet-beautifier/SKILL.md) and its
   fixed node IDs, queues them, polls one prompt's history, and copies returned
   images into the gitignored player-static art directory. Portrait and scenic setup is documented in
   [comfyui/README.md](comfyui/README.md).
+  The default portrait graph is Qwen Image 2.1, with an optional
+  `referenceImageUrl` for editing. Local baselines upload to ComfyUI and remote
+  HTTP(S) baselines use its URL loader; reference conditioning is disconnected
+  for fresh generation. Creator review state in `shared/portrait-review.js`
+  keeps edits pending until accepted, advances the baseline on Keep, and
+  retains the original for restoration across draft saves and archived attempts.
+  The adapter probes ComfyUI without loading models before queueing. Public
+  art status separates graph validity from current availability; unavailable
+  players receive an EN/SV session-start instruction.
 - **`art-library.js`** — owns the canonical 1536 × 864 scenic request shape,
   location-name uniqueness, the versioned `tag-board-v1` metadata envelope,
   hierarchical tag compilation, and public GM-library records. Selecting a
@@ -185,9 +214,14 @@ continues in the [Sheet Beautifier skill](../sheet-beautifier/SKILL.md) and its
 | `PUT /api/buildings/:id/check` | record the GM's pending/passed/failed project ruling and optional note |
 | `POST /api/buildings/:id/complete-project` | atomically spend the current construction/upgrade cost after a passed ruling |
 | `POST/PUT /api/characters[/:id]` | folk (NPC) cards incl. hidden layer |
+| `GET /api/adventures[/:id]` | GM-only prepared adventure summaries/detail; read from source on demand |
+| `GET /api/adventures/:id/map` | GM-only adventure image |
+| `GET /api/screen/adventure-map/:id` | public image only while this adventure map is selected for the projector |
+| `GET /api/encounters/presets/:id` | GM-only roster and notes for a read-only preset preview; starting remains an explicit POST |
 | `POST /api/log`, `POST /api/log/:id/publish` | chronicle notes, publish to table |
 | `GET /api/reference` | SRD creation data (classes, ancestries, cards…) |
 | `GET /api/rules` | public searchable rules corpus with source/license metadata; cacheable with ETag/304 |
+| `GET/PUT /api/party/:id/rule-pins` | chosen active PC's rule pins; PUT toggles one known `ruleId` with a boolean `pinned`, preserving other pins |
 | `GET /api/gm/almanac` | combined public rules and private lore pages for the GM console only |
 | `POST/PUT/DELETE /api/gm/almanac/lore[/:id]` | bounded private lore-page authoring; public rules stay read-only |
 | `GET /api/gm/tables` | chance-table names, dice, labels, totals, and seen counts only; never entry text |
@@ -195,6 +229,7 @@ continues in the [Sheet Beautifier skill](../sheet-beautifier/SKILL.md) and its
 | `POST /api/gm/tables/travel/roll` | reveal one danger-tier encounter plus one way-of-travel twist |
 | `GET /api/character-drafts`, `GET/PUT/DELETE /api/character-drafts/:id` | resumable unfinished creator state, listed separately from completed PCs |
 | `GET/POST/PUT/DELETE /api/party[/:id]` | active player characters; DELETE retires without destroying the stored record or keyed data |
+| `GET/POST /api/party/:id/class-choice` | character-targeted private class proposal/guide; explicit confirmation atomically applies the reviewed migration |
 | `PUT /api/party/:id/background` | replace the active PC's bounded, filled background memories |
 | `POST /api/party/:id/background/suggest` | return one editable Anthropic expansion without saving it; charges one word-weaving credit on success, 402 when exhausted |
 | `POST /api/party/:id/background/spark` | three short divergent inspiration seeds for one memory field (works on a blank field); one credit on success, 402 when exhausted |
@@ -212,6 +247,7 @@ continues in the [Sheet Beautifier skill](../sheet-beautifier/SKILL.md) and its
 | `POST /api/party/:id/inventory/:itemId/use` | atomically resolve a reaction and consume one quantity |
 | `GET /api/music` | music desk library, playlists, provider status, and published character sources |
 | `POST /api/music/generate` | create two drafts, or cover a published character source |
+| `POST /api/music/songs/:id/extend` | queue a Suno continuation that holds, escalates, or de-escalates the source mood |
 | `GET /api/music/themes/:pcId` | one player's overture drafts and published theme |
 | `POST /api/music/themes/:pcId/generate` | write another character overture draft |
 | `POST /api/music/themes/:pcId/publish` | publish a ready draft under `Visseren/Character Themes` |
@@ -228,20 +264,26 @@ continues in the [Sheet Beautifier skill](../sheet-beautifier/SKILL.md) and its
 | `GET/PUT /api/board/:name` | named `main` or `hud` board document `{items, pins}` |
 | `GET /api/gm-screen` | static flat SRD quick-reference sections for GM surfaces |
 | `POST/PUT/DELETE /api/people[/:id]` | wider-world NPCs: description public, `hidden.notes` private, `placeId` moves them, `items` carried, `revealed` gates player visibility |
-| `GET /api/art/status` | report local portrait/scenic graph validity and portrait-adviser readiness |
+| `GET /api/art/status` | report local portrait/scenic graph validity, portrait-adviser readiness, and current portrait-generation availability |
 | `GET /api/art/library` | active character portraits, canonical locations, scenic taxonomy, and saved scene records; generation seeds are omitted |
 | `POST /api/art/scenes` | generate 1536 × 864 scenery for one canonical location, preserve every returned variant, and optionally cast the first only after success |
 | `DELETE /api/art/scenes/:id` | remove one scenic library record while keeping its generated image file |
-| `POST /api/art/portrait` | generate an optional 1104 × 1472 portrait for an unfinished character draft; accepts hidden seed reuse, Style 1/2, and `-1..+2` Steps/CFG modifiers |
+| `POST /api/art/portrait` | generate or preview an edit to a 3:4 portrait for an unfinished character draft; accepts `referenceImageUrl`, hidden seed reuse, Standard style or Alternative style, and `-3..+3` Steps and `-1..+2` CFG modifiers |
 | `POST /api/art/portrait/suggest` | ask Anthropic for one editable portrait-brief suggestion |
 | `POST /api/party/:id/portrait` | generate and attach a player-character portrait through ComfyUI |
+| `GET/PUT/POST /api/party/:id/portrait-workshop` | whitelisted per-PC portrait context/history, art preferences, pending generation, and explicit keep/discard/restore/select decisions; active PCs only |
 | `POST /api/people/:id/portrait` | save the prompt, generate, and attach a wider-world portrait through ComfyUI |
 | `POST /api/places/:id/image` | save the prompt, generate, and attach a scenic image through ComfyUI |
 | `POST/PUT/DELETE /api/places[/:id]` | places; the village (`place_village`, `fixed`) cannot be deleted |
 | `GET /api/lore?pc=id` | whitelisted journal payload: revealed people/places, group notes + that PC's personal notes |
 | `GET /api/journal-doodles/:pcId` | the chosen PC's three transparent journal drawing layers |
 | `PUT /api/journal-doodles/:pcId/:page` | save normalized pen/eraser strokes for Journal, People, or Places |
-| `GET/PUT /api/screen` | the table screen: GM projects one thing (image/card/stores/buildings/text, `type: null` darkens); GET resolves through `screenView()` whitelists |
+| `GET/PUT /api/screen` | the table screen: GM projects one thing (image/card/stores/buildings/text, `type: null` darkens); GET resolves through `screenView()` whitelists; folk, person and place cards carry only the picture and the name |
+| `PUT /api/party/:id/experiences` | player-writable. A PC with no Experiences records exactly two (+2 each) freely; any later change replaces the list and needs `gmApproved: true` (same gate as `/name`); each change leaves an unpublished GM log line |
+| `GET /api/gm-notifications` | bounded reusable GM inbox; currently carries player screen requests |
+| `POST /api/gm-notifications/screen-requests` | ask the GM to cast same-origin visible player text or imagery; never projects automatically |
+| `POST /api/gm-notifications/:id/approve` | atomically approve a pending screen request and project its validated payload |
+| `POST /api/gm-notifications/:id/dismiss` | dismiss a pending GM notification |
 | `POST/PUT/DELETE /api/notes[/:id]` | player notes (journal/person/place, group/personal); edits and strikes require the author's `pcId` |
 | `GET/POST/PUT /api/feedback[/:id]` | screenshot ticket queue and GM triage state |
 | `GET/DELETE /api/telemetry`, `POST /api/telemetry/batch` | read/reset GM UX evidence and ingest bounded content-free player batches |
@@ -298,6 +340,24 @@ Consumable reactions; see [inventory.md](inventory.md).
   panel shows one PC thread at a time; the overlay combines live GM-whitelisted
   PC vitals, the dedicated `hud` board, static `gm-screen.json` reference rows,
   and a lazy-loaded rules search with compact article previews.
+- **GM pocket controls:** `/gm-remote` is intentionally narrower than `/gm`.
+  The phone is its own music playback host and uses a hold-and-slide radial
+  tree for songs, playlists, transport, continuation direction, and projector
+  choices. Its idle seven-hex constellation places active character themes
+  and major NPC motifs above; Ease, Hold, and Rise across the middle; and
+  scene intent plus world/place below. Scene intent reuses the music taxonomy;
+  World groups today's canonical places by kind until authored region and
+  environment ancestry exists. Its opt-in one-ahead mode queues one Suno
+  extension while the current movement plays; model timing comes from
+  completed local tasks rather than provider marketing estimates. Projection
+  still mutates only `/api/screen`, so `screenView()` remains the public
+  whitelist boundary. It reads existing GM/music/art endpoints and owns no
+  campaign state of its own.
+- **Player screen requests:** `shared/player-share.*` adds right-click and
+  touch-hold previews to player-visible images and marked content. Confirmation
+  creates a pending GM notification; only GM approval reaches `/api/screen`.
+  The notification envelope deliberately leaves room for later subscriptions
+  and compact diffs without widening player-facing data whitelists.
 - **Player correspondence:** `shared/player-chat.*` mounts in the tome's bottom
   dock for the current `settlement-pc`. It fetches only `/api/messages?pc=`,
   marks the player side read on open, and sends with `Ctrl+Enter`; EN/SV labels
@@ -324,6 +384,16 @@ Consumable reactions; see [inventory.md](inventory.md).
   are reused by the GM hotbar. Desktop uses independently scrolling
   index/article panes; narrow screens switch between Browse and Rule views.
   `/table` and `/tome` keep stable `?embed=1` reference iframes.
+  Players can pin from an index row or the open article. A separate Pinned
+  rules section precedes ordinary entries; searches show only matching pins,
+  preserving the normal ranking within pinned and unpinned results. Pins live
+  in the owning PC's `rulePins` array in `pcs.json`, follow that character
+  across devices, and survive retirement/restoration. Dedicated whitelisted
+  reads return only `{pins}` with `private, no-store`; general party, sheet,
+  lore, and table views omit pins. The public SSE `rule-pins` event carries
+  only the PC ID so open standalone/embedded references refetch their own
+  preferences. No character selected means browsing remains available and
+  pin controls stay disabled. Ownership uses the existing trusted PC chooser.
 - **GM Almanac:** the console reuses the same ranking module over public rules
   and private lore, with source filters and a bounded lore editor. A segmented
   leaf switches to chance-table tools with physical-result inputs, seen-count
@@ -352,6 +422,14 @@ Consumable reactions; see [inventory.md](inventory.md).
   character modules before layout editing is introduced. The proposed
   scissor interaction and communal vector-sketch bin are bounded in
   [character-sheet-vision.md](character-sheet-vision.md).
+- **Custom class offers:** the reusable `shared/class-choice.*` dialog mounts
+  on the standalone sheet and native tome Character spread. GM-authored offers
+  are targeted by PC ID and baseline; reviewed adapters validate and migrate
+  only after explicit player confirmation. The first offer is Inventor v0.1
+  for Redneck, with English/Swedish rules and both subclass progressions.
+  It stays outside `/api/reference` and the creator. Marked resources, gear,
+  cards and identity are retained; future tiers are not granted by level alone.
+  See [character-class-choices.md](character-class-choices.md).
 - **Background studio:** `/background/:id` edits optional, structured memories
   after character creation. Empty fields never enter the stored character or
   sheet. It is meant to be a playground as much as a serious tool, with three

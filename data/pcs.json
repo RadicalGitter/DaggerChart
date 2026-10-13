@@ -36,7 +36,7 @@
       "Presence": 1,
       "Knowledge": 0
     },
-    "evasion": 10,
+    "evasion": 9,
     "hpMax": 6,
     "hp": 1,
     "stressMax": 6,
@@ -462,7 +462,8 @@
     "notes": "",
     "id": "pc_1784314405624_lbzq",
     "createdAt": "2026-07-17T18:53:25.624Z",
-    "active": true
+    "active": true,
+    "gearEvasion": -1
   },
   {
     "campaignId": "cmp_mrorhwu2_bazshi",
@@ -501,7 +502,7 @@
       "Presence": 1,
       "Knowledge": -1
     },
-    "evasion": 12,
+    "evasion": 13,
     "hpMax": 6,
     "hp": 0,
     "stressMax": 6,
@@ -860,7 +861,8 @@
     "notes": "",
     "id": "pc_1784314621189_vf1p",
     "createdAt": "2026-07-17T18:57:01.189Z",
-    "active": true
+    "active": true,
+    "gearEvasion": 1
   },
   {
     "campaignId": "cmp_mrorhwu2_bazshi",
@@ -871,17 +873,20 @@
     "pen": "reed",
     "level": 1,
     "class": {
-      "id": "core_class_seraph",
-      "name": "Seraph",
+      "id": "homebrew_class_inventor",
+      "name": "Inventor",
+      "svName": "Inventor — Uppfinnare",
       "domains": [
         "SPLENDOR",
         "VALOR"
       ]
     },
     "subclass": {
-      "id": "core_subclass_winged_sentinel",
-      "name": "Winged Sentinel",
-      "spellcastTrait": "Strength"
+      "id": "homebrew_subclass_rigger",
+      "name": "Rigger",
+      "svName": "Rigger — Färdbyggare",
+      "spellcastTrait": "Presence",
+      "tier": "foundation"
     },
     "ancestry": {
       "id": "core_ancestry_dwarf",
@@ -899,13 +904,13 @@
       "Presence": 2,
       "Knowledge": -1
     },
-    "evasion": 9,
+    "evasion": 8,
     "hpMax": 7,
     "hp": 0,
     "stressMax": 6,
     "stress": 0,
     "hopeMax": 6,
-    "hope": 3,
+    "hope": 4,
     "armor": {
       "name": "Chainmail Armor",
       "score": 4,
@@ -955,7 +960,7 @@
       {
         "id": "roots",
         "q": "Where I come from",
-        "a": "Berg kuperat landskap arga mellan berg tank avatar vi går pi styltor"
+        "a": "Berg kuperat landskap arga mellan berg tank avatar vi går pi styltor aktar faror på marken. ,\n,vi"
       },
       {
         "id": "early-memory",
@@ -988,19 +993,61 @@
     ],
     "features": {
       "hopeFeature": {
-        "name": "Life Support",
-        "text": "Spend 3 Hope to clear a Hit Point on an ally within Close range."
+        "id": "pull-together",
+        "name": "Pull Together",
+        "text": "On your spotlight, spend 3 Hope to move yourself and up to your Proficiency willing allies within Very Close to a point within Close. Describe a physically possible travel rig. No Parts required. No flight, passing solid obstacles or clearing movement-preventing conditions; normal hazard rolls still apply.",
+        "sv": {
+          "name": "Pull Together — Ta er fram tillsammans",
+          "text": "När du har strålkastarljuset: spendera 3 Hope för att flytta dig själv och upp till lika många villiga allierade som din Proficiency. De ska vara inom Very Close; målet ska vara inom Close. Beskriv en fysiskt möjlig färdanordning. Inga Parts behövs. Ger inte flygning, passage genom fasta hinder eller befrielse från Conditions som hindrar rörelse. Vanliga slag för faror gäller."
+        }
       },
       "classFeatures": [
         {
-          "name": "Prayer Dice",
-          "text": "At the beginning of each session, roll a number of d4s equal to your subclass's Spellcast trait and place them on your character sheet in the space provided. These are your Prayer Dice. You can spend any number of Prayer Dice to aid yourself or an ally within Far range. You can use a spent die's value to reduce incoming damage, add to a roll's result after the roll is made, or gain Hope equal to the result. At the end of each session, clear all unspent Prayer Dice."
+          "id": "prepared-parts",
+          "name": "Prepared Parts",
+          "text": "At session start roll d4s equal to your Inventor trait, minimum one. Keep each die/value as one Part; discard unused dice at session end. Spend each die once: Improvise adds its value to your/ally's action or reaction total within Far after rolling but before consequences; Restore Confidence gives that much Hope within Far, up to the recipient's limit; Prepared Defense costs 1 Part for cover or 2 for blocked sight. Ordinary materials and rests never refill Parts.",
+          "sv": {
+            "name": "Prepared Parts — Förberedda delar",
+            "text": "I början av spelmötet: slå lika många d4 som din Inventor-egenskap, minst en. Spara varje tärning och dess värde som en Part. Oanvända tärningar försvinner vid spelmötets slut. Varje tärning spenderas en gång: Improvise lägger värdet till ditt eller en allierads action roll eller reaction roll inom Far, efter slaget men före följderna. Restore Confidence ger lika mycket Hope inom Far, upp till mottagarens maxgräns. Prepared Defense kostar 1 Part för cover eller 2 för blockerad sikt. Material och vila fyller aldrig på Parts."
+          }
+        },
+        {
+          "id": "prepared-defense",
+          "name": "Prepared Defense: deployment",
+          "text": "On your spotlight, deploy a small stationary defense within physically reachable Close: 1 Part gives disadvantage to attacks through it; 2 block line of sight both ways. One creature your size or smaller, one direction, current scene. Close is placement range, not area. Deployment is your contribution, without a separate attack or interrupt. No damage reduction/Armor Slots. Enemies may go around or spend a suitable spotlight breaking it. Borrowed gear requires consent; packing up never refunds Parts. Read the guide for full limits.",
+          "sv": {
+            "name": "Prepared Defense — Sätt upp ett skydd",
+            "text": "När du har strålkastarljuset: sätt upp ett litet, stillastående skydd på en nåbar plats inom Close. 1 Part ger disadvantage på attacker genom skyddet; 2 blockerar siktlinjen åt båda håll. Grundskyddet rymmer en varelse av din storlek eller mindre, skyddar från ett håll och varar scenen ut. Close är placeringsavståndet, inte ytan. Bygget är ditt bidrag, utan separat attack eller avbrott i en pågående attack. Ger ingen skademinskning eller Armor Slots. Fiender kan gå runt eller använda ett lämpligt tillfälle till att förstöra skyddet. Lånad utrustning kräver medgivande; inga Parts återfås. Se guiden för alla gränser."
+          }
+        },
+        {
+          "id": "scavenge-and-build",
+          "name": "Scavenge and Build",
+          "text": "Start with two specific familiar materials. With a source/time, gather one useful batch on success. Suggested Difficulty: safe familiar no roll; familiar complication 10; unfamiliar 15; strange 20. Fear success still yields material. Build a small mundane item with one practical function in a few minutes; don't reroll the same material assessment. Rapid building during danger requires a Part through Improvise on the action using the tool. Large/intricate/lasting builds use Work on a Project. Testing or study makes new material familiar for tested uses. No automatic healing, stat upgrades or domain powers.",
+          "sv": {
+            "name": "Scavenge and Build — Samla och bygg",
+            "text": "Börja med två bestämda, bekanta material. Med en källa och tid får du en användbar omgång vid framgång. Riktmärken för Difficulty: säkert, bekant material utan slag; bekant med komplikation 10; obekant 15; särskilt främmande 20. Framgång med Fear ger fortfarande materialet. Bygg ett litet, icke-magiskt föremål med en praktisk funktion på några minuter, utan nytt slag för samma materialbedömning. Snabbt bygge under fara kräver en Part genom Improvise på slaget där redskapet används. Stora, komplicerade eller varaktiga byggen använder Work on a Project. Prov eller studier gör nya material bekanta för prövade användningar. Ger ingen automatisk läkning, sifferförbättring eller Domain-kraft."
+          }
         }
       ],
       "foundation": [
         {
-          "name": "Wings of Light",
-          "text": "You can fly. While flying, you can do the following:\n\n• Mark a Stress to pick up and carry another willing creature approximately your size or smaller.\n• Spend a Hope to deal an extra 1d8 damage on a successful attack."
+          "id": "mechanical-wings",
+          "name": "Mechanical Wings",
+          "text": "You can fly using your personal travel rig. While flying, mark one Stress to pick up and carry one willing creature approximately your size or smaller. Ordinary flight costs no Stress or Parts.",
+          "sv": {
+            "name": "Mechanical Wings — Mekaniska vingar",
+            "text": "Du kan flyga med din egen färdanordning. När du flyger kan du markera en Stress för att lyfta och bära en villig varelse av ungefär din storlek eller mindre. Vanlig flygning kostar varken Stress eller Parts."
+          }
+        },
+        {
+          "id": "long-strides",
+          "name": "Long Strides",
+          "text": "With your ground travel rig, mark one Stress to move up to Far instead of Close as part of an action roll. The route must suit the device. Do not add this to other movement extensions; use the greatest permitted distance.",
+          "sv": {
+            "name": "Long Strides — Långa kliv",
+            "text": "När du använder din färdanordning på marken kan du markera en Stress för att förflytta dig upp till Far i stället för Close som en del av ett action roll. Vägen måste passa anordningen. Om flera förmågor förlänger samma förflyttning lägger du inte ihop avstånden; använd det längsta tillåtna avståndet."
+          }
         }
       ],
       "ancestry": [
@@ -1018,7 +1065,9 @@
           "name": "Steady",
           "text": "You have advantage on rolls to traverse dangerous cliffs and ledges, navigate harsh environments, and use your survival knowledge."
         }
-      ]
+      ],
+      "specialization": [],
+      "mastery": []
     },
     "portrait": "/generated/art/portrait/draft_1784309973744_9djfuznw-1784313144759-1.png",
     "portraitPrompt": "En kortvuxen, ansikte målat i rött, krigmålad , spretigt hår, saknar framtänder, nosring , stabil på jorden , röd trämask hela ansiktet även läppar under mask, för ansiktet , tjock , o vårdad, tufsigt hår , hårig kropp, gorillaliknande. Barbröstad gorilla",
@@ -1160,12 +1209,167 @@
             "embellishPrompt": true
           }
         }
-      ]
+      ],
+      "request": {
+        "prompt": "En kortvuxen, ansikte målat i rött, krigmålad , spretigt hår, saknar framtänder, nosring , stabil på jorden , röd trämask hela ansiktet även läppar under mask, för ansiktet , tjock , o vårdad, tufsigt hår , hårig kropp, gorillaliknande. Barbröstad gorilla",
+        "negativePrompt": "",
+        "referenceImageUrl": "/generated/art/portrait/draft_1784309973744_9djfuznw-1784313144759-1.png",
+        "primaryColor": "",
+        "secondaryColor": "",
+        "tags": [],
+        "armor": "",
+        "mainHand": "",
+        "offHand": "",
+        "stepsModifier": 0,
+        "cfgModifier": 0,
+        "style": "workflow",
+        "embellishPrompt": true
+      },
+      "sourcePrompt": "En kortvuxen, ansikte målat i rött, krigmålad , spretigt hår, saknar framtänder, nosring , stabil på jorden , röd trämask hela ansiktet även läppar under mask, för ansiktet , tjock , o vårdad, tufsigt hår , hårig kropp, gorillaliknande. Barbröstad gorilla",
+      "editMode": true
     },
     "notes": "",
     "id": "pc_1784314691416_p83s",
     "createdAt": "2026-07-17T18:58:11.416Z",
-    "active": true
+    "active": true,
+    "gearEvasion": -1,
+    "classChoice": {
+      "offerId": "redneck-inventor-v01",
+      "version": "0.1",
+      "selection": {
+        "choiceId": "homebrew_subclass_rigger",
+        "definitionId": "homebrew_class_inventor",
+        "definitionVersion": "0.1",
+        "trait": "Presence",
+        "familiarMaterials": [
+          "Trä expert",
+          "Futuristisk glas"
+        ]
+      },
+      "confirmedAt": "2026-10-13T18:27:20.051Z",
+      "previous": {
+        "class": {
+          "id": "core_class_seraph",
+          "name": "Seraph",
+          "domains": [
+            "SPLENDOR",
+            "VALOR"
+          ]
+        },
+        "subclass": {
+          "id": "core_subclass_winged_sentinel",
+          "name": "Winged Sentinel",
+          "spellcastTrait": "Strength"
+        },
+        "features": {
+          "hopeFeature": {
+            "name": "Life Support",
+            "text": "Spend 3 Hope to clear a Hit Point on an ally within Close range."
+          },
+          "classFeatures": [
+            {
+              "name": "Prayer Dice",
+              "text": "At the beginning of each session, roll a number of d4s equal to your subclass's Spellcast trait and place them on your character sheet in the space provided. These are your Prayer Dice. You can spend any number of Prayer Dice to aid yourself or an ally within Far range. You can use a spent die's value to reduce incoming damage, add to a roll's result after the roll is made, or gain Hope equal to the result. At the end of each session, clear all unspent Prayer Dice."
+            }
+          ],
+          "foundation": [
+            {
+              "name": "Wings of Light",
+              "text": "You can fly. While flying, you can do the following:\n\n• Mark a Stress to pick up and carry another willing creature approximately your size or smaller.\n• Spend a Hope to deal an extra 1d8 damage on a successful attack."
+            }
+          ],
+          "ancestry": [
+            {
+              "name": "Thick Skin",
+              "text": "When you take Minor damage, you can mark 2 Stress instead of marking a Hit Point."
+            },
+            {
+              "name": "Increased Fortitude",
+              "text": "Spend 3 Hope to halve incoming physical damage."
+            }
+          ],
+          "community": [
+            {
+              "name": "Steady",
+              "text": "You have advantage on rolls to traverse dangerous cliffs and ledges, navigate harsh environments, and use your survival knowledge."
+            }
+          ]
+        }
+      }
+    },
+    "classChoiceHistory": [
+      {
+        "offerId": "redneck-inventor-v01",
+        "version": "0.1",
+        "selection": {
+          "choiceId": "homebrew_subclass_rigger",
+          "definitionId": "homebrew_class_inventor",
+          "definitionVersion": "0.1",
+          "trait": "Presence",
+          "familiarMaterials": [
+            "Trä expert",
+            "Futuristisk glas"
+          ]
+        },
+        "confirmedAt": "2026-10-13T18:27:20.051Z",
+        "previous": {
+          "class": {
+            "id": "core_class_seraph",
+            "name": "Seraph",
+            "domains": [
+              "SPLENDOR",
+              "VALOR"
+            ]
+          },
+          "subclass": {
+            "id": "core_subclass_winged_sentinel",
+            "name": "Winged Sentinel",
+            "spellcastTrait": "Strength"
+          },
+          "features": {
+            "hopeFeature": {
+              "name": "Life Support",
+              "text": "Spend 3 Hope to clear a Hit Point on an ally within Close range."
+            },
+            "classFeatures": [
+              {
+                "name": "Prayer Dice",
+                "text": "At the beginning of each session, roll a number of d4s equal to your subclass's Spellcast trait and place them on your character sheet in the space provided. These are your Prayer Dice. You can spend any number of Prayer Dice to aid yourself or an ally within Far range. You can use a spent die's value to reduce incoming damage, add to a roll's result after the roll is made, or gain Hope equal to the result. At the end of each session, clear all unspent Prayer Dice."
+              }
+            ],
+            "foundation": [
+              {
+                "name": "Wings of Light",
+                "text": "You can fly. While flying, you can do the following:\n\n• Mark a Stress to pick up and carry another willing creature approximately your size or smaller.\n• Spend a Hope to deal an extra 1d8 damage on a successful attack."
+              }
+            ],
+            "ancestry": [
+              {
+                "name": "Thick Skin",
+                "text": "When you take Minor damage, you can mark 2 Stress instead of marking a Hit Point."
+              },
+              {
+                "name": "Increased Fortitude",
+                "text": "Spend 3 Hope to halve incoming physical damage."
+              }
+            ],
+            "community": [
+              {
+                "name": "Steady",
+                "text": "You have advantage on rolls to traverse dangerous cliffs and ledges, navigate harsh environments, and use your survival knowledge."
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "inventor": {
+      "version": "0.1",
+      "familiarMaterials": [
+        "Trä expert",
+        "Futuristisk glas"
+      ]
+    }
   },
   {
     "campaignId": "cmp_mrorhwu2_bazshi",
@@ -1204,7 +1408,7 @@
       "Presence": 1,
       "Knowledge": 2
     },
-    "evasion": 9,
+    "evasion": 8,
     "hpMax": 7,
     "hp": 2,
     "stressMax": 6,
@@ -1679,7 +1883,8 @@
     "notes": "",
     "id": "pc_1784315090465_aouy",
     "createdAt": "2026-07-17T19:04:50.465Z",
-    "active": true
+    "active": true,
+    "gearEvasion": -1
   },
   {
     "campaignId": "cmp_mrorhwu2_bazshi",
@@ -1718,7 +1923,7 @@
       "Presence": 1,
       "Knowledge": 0
     },
-    "evasion": 11,
+    "evasion": 10,
     "hpMax": 5,
     "hp": 1,
     "stressMax": 6,
@@ -2465,7 +2670,8 @@
     "id": "pc_1784315512566_6dpx",
     "createdAt": "2026-07-17T19:11:52.566Z",
     "active": true,
-    "conditions": []
+    "conditions": [],
+    "gearEvasion": -1
   },
   {
     "background": [
@@ -2513,5 +2719,586 @@
     "createdAt": "2026-07-17T19:28:25.711Z",
     "level": 1,
     "active": false
+  },
+  {
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "name": "Haldar",
+    "pronouns": "Han",
+    "player": "Peter Andersson",
+    "shell": "table",
+    "pen": "brush",
+    "level": 1,
+    "class": {
+      "id": "core_class_warrior",
+      "name": "Warrior",
+      "domains": [
+        "BLADE",
+        "BONE"
+      ]
+    },
+    "subclass": {
+      "id": "core_subclass_call_of_the_brave",
+      "name": "Call Of The Brave",
+      "spellcastTrait": null
+    },
+    "ancestry": {
+      "id": "core_ancestry_giant",
+      "name": "Giant"
+    },
+    "community": {
+      "id": "core_community_slyborne",
+      "name": "Slyborne"
+    },
+    "traits": {
+      "Agility": 0,
+      "Strength": 1,
+      "Finesse": 2,
+      "Instinct": 0,
+      "Presence": -1,
+      "Knowledge": 1
+    },
+    "evasion": 10,
+    "hpMax": 6,
+    "hp": 0,
+    "stressMax": 6,
+    "stress": 0,
+    "hopeMax": 6,
+    "hope": 6,
+    "armor": {
+      "name": "Leather Armor",
+      "score": 3,
+      "feature": ""
+    },
+    "armorMarked": 0,
+    "thresholds": {
+      "major": 7,
+      "severe": 14
+    },
+    "weapons": {
+      "primary": {
+        "id": "core_weapon_greatsword",
+        "name": "Greatsword",
+        "type": "PRIMARY_PHYSICAL",
+        "trait": "Strength",
+        "range": "Melee",
+        "damage": "d10 phy",
+        "burden": "Two Handed",
+        "feature": "Massive: -1 to Evasion; on a successful attack, roll an additional damage die and discard the lowest result."
+      },
+      "secondary": null
+    },
+    "inventory": [
+      "A torch",
+      "50 feet of rope",
+      "Basic supplies",
+      "A handful of gold",
+      "Minor Health Potion (clear 1d4 HP)",
+      "The drawing of a lover",
+      {
+        "id": "paper_1791905151980_on3tv",
+        "kind": "paper",
+        "paperType": "covenant",
+        "name": "Covenant of Observed Footsteps",
+        "body": "",
+        "author": "Office of Adventuring Licences, Omens & Minor Observations",
+        "createdAt": "2026-10-13T15:25:50.576Z",
+        "signedName": "Haldar",
+        "signedAt": "2026-10-13T15:25:50.576Z",
+        "covenantVersion": 1,
+        "quantity": 1
+      }
+    ],
+    "experiences": [],
+    "background": [
+      {
+        "id": "roots",
+        "q": "Where I come from",
+        "a": "Norr är ett kallt och hårt land där man förväntas agera rätt och rakt."
+      },
+      {
+        "id": "early-memory",
+        "q": "An early memory",
+        "a": "ett evigt tränande i kamp och styrka. Jättar har ofta hyrts in i olika konfliktsammanhang"
+      },
+      {
+        "id": "turning-point",
+        "q": "The moment that changed me",
+        "a": "När Hildir smög iväg med mig och visade mig hur man spelar luta"
+      },
+      {
+        "id": "road",
+        "q": "Why I took the road",
+        "a": "Enligt mitt folk ska unga ut och vandra och växa i 30 år innan man återvänder till hemmet"
+      },
+      {
+        "id": "longing",
+        "q": "What I want",
+        "a": "Jag vill återvända till Hildir och lämna"
+      },
+      {
+        "id": "fear",
+        "q": "What I fear losing",
+        "a": "Jag slits mellan min absoluta vilja att"
+      }
+    ],
+    "connections": [],
+    "domainCards": [
+      {
+        "id": "core_domain_card_get_back_up",
+        "name": "Get Back Up",
+        "domain": "BLADE",
+        "type": "Ability",
+        "level": 1,
+        "recallCost": 1,
+        "text": "When you take Severe damage, you can mark a Stress to reduce the severity by one threshold.",
+        "location": "loadout"
+      },
+      {
+        "id": "core_domain_card_untouchable",
+        "name": "Untouchable",
+        "domain": "BONE",
+        "type": "Ability",
+        "level": 1,
+        "recallCost": 1,
+        "text": "Gain a bonus to your Evasion equal to half your Agility.",
+        "location": "loadout"
+      }
+    ],
+    "features": {
+      "hopeFeature": {
+        "name": "No Mercy",
+        "text": "Spend 3 Hope to gain a +1 bonus to your attack rolls until your next rest."
+      },
+      "classFeatures": [
+        {
+          "name": "Attack of Opportunity",
+          "text": "If an adversary within Melee range attempts to leave that range, make a reaction roll using a trait of your choice against their Difficulty. Choose one effect on a success, or two if you critically succeed:\n\n• They can't move from where they are.\n• You deal damage to them equal to your primary weapon's damage.\n• You move with them."
+        },
+        {
+          "name": "Combat Training",
+          "text": "You ignore burden when equipping weapons. When you deal physical damage, you gain a bonus to your damage roll equal to your level."
+        }
+      ],
+      "foundation": [
+        {
+          "name": "Courage",
+          "text": "When you fail a roll with Fear, you gain a Hope."
+        },
+        {
+          "name": "Battle Ritual",
+          "text": "Once per long rest, before you attempt something incredibly dangerous or face off against a foe who clearly outmatches you, describe what ritual you perform or preparations you make. When you do, clear 2 Stress and gain 2 Hope."
+        }
+      ],
+      "ancestry": [
+        {
+          "name": "Endurance",
+          "text": "Gain an additional Hit Point slot at character creation."
+        },
+        {
+          "name": "Reach",
+          "text": "Treat any weapon, ability, spell, or other feature that has a Melee range as though it has a Very Close range instead."
+        }
+      ],
+      "community": [
+        {
+          "name": "Scoundrel",
+          "text": "You have advantage on rolls to negotiate with criminals, detect lies, or find a safe place to hide."
+        }
+      ]
+    },
+    "portrait": "/generated/art/portrait/pc_1791905154065_jw4s-1791916812104-1.png",
+    "portraitPrompt": "looks like a bearded tim noonan in fantasy setting. warpaint over eyes. bald head long hair, rugged and slightly gaunt",
+    "appearance": {
+      "primaryColor": "#a44336",
+      "secondaryColor": "#c96f72"
+    },
+    "portraitDirection": {
+      "tags": [
+        "masculine",
+        "fierce",
+        "gentle"
+      ],
+      "includeArmor": true,
+      "includeMainHand": true,
+      "includeOffHand": false
+    },
+    "portraitWorkshop": {
+      "fixSeed": false,
+      "stepsModifier": 0,
+      "cfgModifier": 0,
+      "style": "style2",
+      "embellishPrompt": true,
+      "lastSeed": 637269072,
+      "attempts": [
+        {
+          "id": "portrait_attempt_69defff6-34d8-49bd-b87d-0937536c8d2b",
+          "url": "/generated/art/portrait/pc_1791905154065_jw4s-1791916622528-1.png",
+          "seed": 253150987,
+          "createdAt": "2026-10-13T18:37:02.529Z",
+          "originalUrl": "/generated/art/portrait/pc_1791905154065_jw4s-1791916622528-1.png",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. looks like a bearded tim noonan in fantasy setting. warpaint over eyes Use #a44336 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Leather Armor; main hand: Greatsword.",
+            "negativePrompt": "",
+            "referenceImageUrl": "",
+            "primaryColor": "#a44336",
+            "secondaryColor": "#c96f72",
+            "tags": [],
+            "armor": "Leather Armor",
+            "mainHand": "Greatsword",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_14f79278-afb5-4cf7-ac8e-10f68349e8b2",
+          "url": "/generated/art/portrait/pc_1791905154065_jw4s-1791916707598-1.png",
+          "seed": 1454236630,
+          "createdAt": "2026-10-13T18:38:27.600Z",
+          "originalUrl": "/generated/art/portrait/pc_1791905154065_jw4s-1791916707598-1.png",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. looks like a bearded tim noonan in fantasy setting. warpaint over eyes. bald head an rugged Use #a44336 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Leather Armor; main hand: Greatsword.",
+            "negativePrompt": "",
+            "referenceImageUrl": "",
+            "primaryColor": "#a44336",
+            "secondaryColor": "#c96f72",
+            "tags": [],
+            "armor": "Leather Armor",
+            "mainHand": "Greatsword",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_e1ad3c32-69c2-4745-93d8-6cffe78e481b",
+          "url": "/generated/art/portrait/pc_1791905154065_jw4s-1791916756416-1.png",
+          "seed": 1115709037,
+          "createdAt": "2026-10-13T18:39:16.418Z",
+          "originalUrl": "/generated/art/portrait/pc_1791905154065_jw4s-1791916756416-1.png",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. looks like a bearded tim noonan in fantasy setting. warpaint over eyes. bald head an rugged and slightly gaunt Use #a44336 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Leather Armor; main hand: Greatsword.",
+            "negativePrompt": "",
+            "referenceImageUrl": "",
+            "primaryColor": "#a44336",
+            "secondaryColor": "#c96f72",
+            "tags": [],
+            "armor": "Leather Armor",
+            "mainHand": "Greatsword",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_4aaf8e3c-164d-4e71-acae-bf321491e0b8",
+          "url": "/generated/art/portrait/pc_1791905154065_jw4s-1791916812104-1.png",
+          "seed": 637269072,
+          "createdAt": "2026-10-13T18:40:12.105Z",
+          "originalUrl": "/generated/art/portrait/pc_1791905154065_jw4s-1791916812104-1.png",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. looks like a bearded tim noonan in fantasy setting. warpaint over eyes. bald head long hair, rugged and slightly gaunt Use #a44336 as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Leather Armor; main hand: Greatsword.",
+            "negativePrompt": "",
+            "referenceImageUrl": "",
+            "primaryColor": "#a44336",
+            "secondaryColor": "#c96f72",
+            "tags": [],
+            "armor": "Leather Armor",
+            "mainHand": "Greatsword",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true
+          }
+        }
+      ],
+      "request": {
+        "prompt": "looks like a bearded tim noonan in fantasy setting. warpaint over eyes. bald head long hair, rugged and slightly gaunt",
+        "negativePrompt": "",
+        "referenceImageUrl": "/generated/art/portrait/pc_1791905154065_jw4s-1791916812104-1.png",
+        "primaryColor": "",
+        "secondaryColor": "",
+        "tags": [],
+        "armor": "",
+        "mainHand": "",
+        "offHand": "",
+        "stepsModifier": 0,
+        "cfgModifier": 0,
+        "style": "workflow",
+        "embellishPrompt": true
+      },
+      "sourcePrompt": "looks like a bearded tim noonan in fantasy setting. warpaint over eyes. bald head long hair, rugged and slightly gaunt",
+      "editMode": true,
+      "pending": null,
+      "originalUrl": "/generated/art/portrait/pc_1791905154065_jw4s-1791916812104-1.png"
+    },
+    "notes": "",
+    "id": "pc_1791905154065_jw4s",
+    "createdAt": "2026-10-13T15:25:54.065Z",
+    "active": true,
+    "gearEvasion": -1
+  },
+  {
+    "campaignId": "cmp_mrorhwu2_bazshi",
+    "name": "Musslan",
+    "pronouns": "They",
+    "player": "My Johansson",
+    "shell": "table",
+    "pen": "brush",
+    "level": 1,
+    "class": {
+      "id": "core_class_rogue",
+      "name": "Rogue",
+      "domains": [
+        "MIDNIGHT",
+        "GRACE"
+      ]
+    },
+    "subclass": {
+      "id": "core_subclass_syndicate",
+      "name": "Syndicate",
+      "spellcastTrait": "Finesse"
+    },
+    "ancestry": {
+      "id": "core_ancestry_infernis",
+      "name": "Infernis"
+    },
+    "community": {
+      "id": "core_community_wanderborne",
+      "name": "Wanderborne"
+    },
+    "traits": {
+      "Agility": 2,
+      "Strength": 0,
+      "Finesse": 0,
+      "Instinct": 1,
+      "Presence": 1,
+      "Knowledge": -1
+    },
+    "evasion": 13,
+    "hpMax": 6,
+    "hp": 0,
+    "stressMax": 6,
+    "stress": 0,
+    "hopeMax": 6,
+    "hope": 3,
+    "armor": {
+      "name": "Gambeson Armor",
+      "score": 3,
+      "feature": "Flexible: +1 to Evasion"
+    },
+    "armorMarked": 0,
+    "thresholds": {
+      "major": 6,
+      "severe": 12
+    },
+    "weapons": {
+      "primary": {
+        "id": "core_weapon_shortbow",
+        "name": "Shortbow",
+        "type": "PRIMARY_PHYSICAL",
+        "trait": "Agility",
+        "range": "Far",
+        "damage": "d6 phy",
+        "burden": "Two Handed",
+        "feature": ""
+      },
+      "secondary": null
+    },
+    "inventory": [
+      "A torch",
+      "50 feet of rope",
+      "Basic supplies",
+      "A handful of gold",
+      "Minor Stamina Potion (clear 1d4 Stress)",
+      "A grappling hook",
+      {
+        "id": "paper_1791916794448_xjio0",
+        "kind": "paper",
+        "paperType": "covenant",
+        "name": "Covenant of Observed Footsteps",
+        "body": "",
+        "author": "Office of Adventuring Licences, Omens & Minor Observations",
+        "createdAt": "2026-10-13T18:39:53.038Z",
+        "signedName": "Musslan",
+        "signedAt": "2026-10-13T18:39:53.038Z",
+        "covenantVersion": 1,
+        "quantity": 1
+      }
+    ],
+    "experiences": [],
+    "background": [],
+    "connections": [],
+    "domainCards": [
+      {
+        "id": "core_domain_card_pick_and_pull",
+        "name": "Pick and Pull",
+        "domain": "MIDNIGHT",
+        "type": "Ability",
+        "level": 1,
+        "recallCost": 0,
+        "text": "You have advantage on action rolls to pick nonmagical locks, disarm nonmagical traps, or steal items from a target (either through stealth or by force).",
+        "location": "loadout"
+      },
+      {
+        "id": "core_domain_card_inspirational_words",
+        "name": "Inspirational Words",
+        "domain": "GRACE",
+        "type": "Ability",
+        "level": 1,
+        "recallCost": 1,
+        "text": "Your speech is imbued with power. After a long rest, place a number of tokens on this card equal to your Presence. When you speak with an ally, you can spend a token from this card to give them one benefit from the following options:\n\n• Your ally clears a Stress.\n• Your ally clears a Hit Point.\n• Your ally gains a Hope.\n\nWhen you take a long rest, clear all unspent tokens.",
+        "location": "loadout"
+      }
+    ],
+    "features": {
+      "hopeFeature": {
+        "name": "Rogue's Dodge",
+        "text": "Spend 3 Hope to gain a +2 bonus to your Evasion until the next time an attack succeeds against you. Otherwise, this bonus lasts until your next rest."
+      },
+      "classFeatures": [
+        {
+          "name": "Cloaked",
+          "text": "Any time you would be Hidden, you are instead Cloaked. In addition to the benefits of the Hidden condition, while Cloaked you remain unseen if you are stationary when an adversary moves to where they would normally see you. After you make an attack or end a move within line of sight of an adversary, you are no longer Cloaked."
+        },
+        {
+          "name": "Sneak Attack",
+          "text": "When you succeed on an attack while Cloaked or while an ally is within Melee range of your target, add a number of d6s equal to your tier to your damage roll.\n\n• Level 1 -> Tier 1\n• Levels 2-4 -> Tier 2\n• Levels 5-7 -> Tier 3\n• Levels 8-10 -> Tier 4"
+        }
+      ],
+      "foundation": [
+        {
+          "name": "Well-Connected",
+          "text": "When you arrive in a prominent town or environment, you know somebody who calls this place home. Give them a name, note how you think they could be useful, and choose one fact from the following list:\n\n• They owe me a favor, but they'll be hard to find.\n• They're going to ask for something in exchange.\n• They're always in a great deal of trouble.\n• We used to be together. It's a long story.\n• We didn't part on great terms."
+        }
+      ],
+      "ancestry": [
+        {
+          "name": "Fearless",
+          "text": "When you roll with Fear, you can mark 2 Stress to change it into a roll with Hope instead."
+        },
+        {
+          "name": "Dread Visage",
+          "text": "You have advantage on rolls to intimidate hostile creatures."
+        }
+      ],
+      "community": [
+        {
+          "name": "Nomadic Pack",
+          "text": "Add a Nomadic Pack to your inventory. Once per session, you can spend a Hope to reach into this pack and pull out a mundane item that's useful to your situation. Work with the GM to figure out what item you take out."
+        }
+      ]
+    },
+    "portrait": "/generated/art/portrait/draft_96aa32e7-0497-4b16-86f0-b6fe01f2c621-1791916723705-1.png",
+    "portraitPrompt": "Musslan, Infernis, Rogue. dark hair down to lower back, pointy teeth, tall, slim, one gold earring, dark clothes, focused eyes, feminine and gender neutral look",
+    "appearance": {
+      "primaryColor": "#59435f",
+      "secondaryColor": "#c96f72"
+    },
+    "portraitDirection": {
+      "tags": [
+        "androgynous",
+        "gentle",
+        "weathered"
+      ],
+      "includeArmor": true,
+      "includeMainHand": true,
+      "includeOffHand": false
+    },
+    "portraitWorkshop": {
+      "fixSeed": false,
+      "stepsModifier": 0,
+      "cfgModifier": 0,
+      "style": "workflow",
+      "embellishPrompt": true,
+      "referenceImageUrl": "",
+      "originalUrl": "/generated/art/portrait/draft_96aa32e7-0497-4b16-86f0-b6fe01f2c621-1791916723705-1.png",
+      "lastSeed": 888242695,
+      "attempts": [
+        {
+          "id": "portrait_attempt_94f105e8-213e-4972-99ee-0943daa47a07",
+          "url": "/generated/art/portrait/draft_96aa32e7-0497-4b16-86f0-b6fe01f2c621-1791916550708-1.png",
+          "seed": 174220921,
+          "createdAt": "2026-10-13T18:35:48.999Z",
+          "originalUrl": "/generated/art/portrait/draft_96aa32e7-0497-4b16-86f0-b6fe01f2c621-1791916550708-1.png",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Musslan, Infernis, Rogue. Dark hair, pointy teeth, tall, slim, muscular. one earring, dark clothes, focused and calm eyes, relaxed Visual identity: androgynous, weathered, gentle. Use #59435f as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Gambeson Armor; main hand: Shortbow.",
+            "negativePrompt": "",
+            "referenceImageUrl": "",
+            "originalPortraitUrl": "",
+            "primaryColor": "#59435f",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "gentle"
+            ],
+            "armor": "Gambeson Armor",
+            "mainHand": "Shortbow",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true
+          }
+        },
+        {
+          "id": "portrait_attempt_80067414-3a47-4c88-98ec-3f052b80bab5",
+          "url": "/generated/art/portrait/draft_96aa32e7-0497-4b16-86f0-b6fe01f2c621-1791916723705-1.png",
+          "seed": 888242695,
+          "createdAt": "2026-10-13T18:38:42.076Z",
+          "originalUrl": "/generated/art/portrait/draft_96aa32e7-0497-4b16-86f0-b6fe01f2c621-1791916723705-1.png",
+          "request": {
+            "prompt": "A character portrait balancing atmosphere and concrete physical specifics equally. Musslan, Infernis, Rogue. dark hair down to lower back, pointy teeth, tall, slim, one gold earring, dark clothes, focused eyes, feminine and gender neutral look Visual identity: androgynous, weathered, gentle. Use #59435f as the primary class detail color and #c96f72 as the secondary favorite-color accent. Visible equipment: armor: Gambeson Armor; main hand: Shortbow.",
+            "negativePrompt": "",
+            "referenceImageUrl": "",
+            "originalPortraitUrl": "",
+            "primaryColor": "#59435f",
+            "secondaryColor": "#c96f72",
+            "tags": [
+              "androgynous",
+              "weathered",
+              "gentle"
+            ],
+            "armor": "Gambeson Armor",
+            "mainHand": "Shortbow",
+            "offHand": "",
+            "stepsModifier": 0,
+            "cfgModifier": 0,
+            "style": "workflow",
+            "embellishPrompt": true
+          }
+        }
+      ],
+      "request": {
+        "prompt": "Musslan, Infernis, Rogue. dark hair down to lower back, pointy teeth, tall, slim, one gold earring, dark clothes, focused eyes, feminine and gender neutral look",
+        "negativePrompt": "",
+        "referenceImageUrl": "/generated/art/portrait/draft_96aa32e7-0497-4b16-86f0-b6fe01f2c621-1791916723705-1.png",
+        "primaryColor": "",
+        "secondaryColor": "",
+        "tags": [],
+        "armor": "",
+        "mainHand": "",
+        "offHand": "",
+        "stepsModifier": 0,
+        "cfgModifier": 0,
+        "style": "workflow",
+        "embellishPrompt": true
+      },
+      "sourcePrompt": "Musslan, Infernis, Rogue. dark hair down to lower back, pointy teeth, tall, slim, one gold earring, dark clothes, focused eyes, feminine and gender neutral look",
+      "editMode": true
+    },
+    "notes": "",
+    "id": "pc_1791916796517_ud6s",
+    "createdAt": "2026-10-13T18:39:56.517Z",
+    "active": true,
+    "gearEvasion": 1
   }
 ]

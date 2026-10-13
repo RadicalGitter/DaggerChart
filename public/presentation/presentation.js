@@ -18,12 +18,12 @@ async function api(path, options = {}) {
     body: options.body === undefined ? undefined : JSON.stringify(options.body)
   });
   const payload = response.status === 204 ? null : await response.json();
-  if (!response.ok) throw new Error(payload?.error || "The ledger could not be updated.");
+  if (!response.ok) throw new Error(payload?.errorKey === "portrait.unavailable" ? t("portrait.unavailable") : payload?.error || "The ledger could not be updated.");
   return payload;
 }
 
 function header(titleKey, subtitleKey) {
-  return `<header class="studio-head"><div><span class="beast-kicker">${esc(t("presentation.tool"))}</span><h1>${esc(t(titleKey))}</h1><p>${esc(t(subtitleKey))}</p></div><a class="root-link" href="/player">← ${esc(t("presentation.back"))}</a></header>`;
+  return `<header class="studio-head"><div><span class="beast-kicker">${esc(t("presentation.tool"))}</span><h1>${esc(t(titleKey))}</h1><p>${esc(t(subtitleKey))}</p></div></header>`;
 }
 
 function portrait(item, fallback) {
@@ -56,10 +56,10 @@ function beastDetail(form) {
   const bg = custom.portrait ? `url('${String(custom.portrait).replace(/[()'"\\]/g, "")}')` : "none";
   return `<div class="detail-inner beast-sheet" style="--beast-image:${bg}">
     ${activeRibbon("beastform", form.id)}
-    <span class="beast-kicker">Tier ${form.tier} · ${esc(t("presentation.changed"))}</span>
+    <span class="beast-kicker">Tier ${form.tier} · ${esc(t("presentation.changed", { name: DATA.canonical.name }))}</span>
     <h2>${esc(custom.name || form.name)}</h2>
     <p class="beast-examples">${esc(t("presentation.examples"))}: ${form.examples.map(esc).join(", ")}</p>
-    <table class="change-table"><thead><tr><th></th><th>${esc(t("presentation.canonicalValue"))}</th><th>${esc(t("presentation.formValue"))}</th></tr></thead><tbody>
+    <table class="change-table"><thead><tr><th></th><th>${esc(t("presentation.canonicalValue", { name: DATA.canonical.name }))}</th><th>${esc(t("presentation.formValue"))}</th></tr></thead><tbody>
       <tr><td>Evasion</td><td>${DATA.canonical.evasion}</td><td>${DATA.canonical.evasion + form.evasionBonus} (+${form.evasionBonus})</td></tr>
       ${form.trait ? `<tr><td>${esc(form.trait)}</td><td>${canonicalTrait >= 0 ? "+" : ""}${canonicalTrait}</td><td>${transformedTrait >= 0 ? "+" : ""}${transformedTrait} (+${form.traitBonus})</td></tr>` : ""}
       <tr><td>Attack</td><td>Weapons</td><td>${esc(form.attack.range)} · ${esc(form.attack.trait)} · ${esc(form.attack.damage)}</td></tr>
@@ -158,7 +158,7 @@ async function generatePortrait(refId, promptSelector, buttonSelector) {
   const previous = button.textContent;
   button.disabled = true; button.textContent = t("presentation.generating");
   try {
-    await api(`/api/party/${encodeURIComponent(pcId)}/presentation/${encodeURIComponent(refId)}/portrait`, { method: "POST", body: { prompt: $(promptSelector).value, style: "style2", stepsModifier: 0, cfgModifier: 0, embellishPrompt: true } });
+    await api(`/api/party/${encodeURIComponent(pcId)}/presentation/${encodeURIComponent(refId)}/portrait`, { method: "POST", body: { prompt: $(promptSelector).value, style: "workflow", stepsModifier: 0, cfgModifier: 0, embellishPrompt: true } });
     await reload();
   } catch (error) {
     alert(error.message);

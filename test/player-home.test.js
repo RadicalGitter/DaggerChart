@@ -32,3 +32,14 @@ test("the home control returns to player root without leaking into hubs or embed
   assert.match(source, /"\/login", "\/player", "\/gm", "\/board", "\/screen"/);
   assert.match(source, /window\.self !== window\.top/);
 });
+
+test("one Home ribbon replaces every page's own way back, and the hub carries no banner", () => {
+  assert.match(read("public/shared/player-home.js"), /t\("player\.home"\)/);
+  const ownLinks = /class="(view-root|journal-back|sheet-root-link|back-link)"|data-nav="player-root"/;
+  for (const page of ["public/journal/index.html", "public/table/index.html", "public/table-book/index.html", "public/tome/index.html", "public/background/index.html", "public/rules/index.html", "public/character/sheet.js"]) {
+    assert.doesNotMatch(read(page), ownLinks, `${page} should rely on the shared Home ribbon`);
+  }
+  const hub = read("public/player/index.html");
+  assert.doesNotMatch(hub, /hub-head|hub-intro|hub-foot|player-home/);
+  assert.match(hub, /class="player-seat" href="\/login"/);
+});

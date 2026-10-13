@@ -16,7 +16,7 @@ test("character names are trimmed and bounded", () => {
 
 test("renaming requires explicit GM approval", () => {
   const pc = { name: "Old Name", inventory: [] };
-  assert.throws(() => renameCharacter(pc, { name: "New Name", gmApproved: false }), /GM approved/);
+  assert.throws(() => renameCharacter(pc, { name: "New Name", gmApproved: false }), /Oscar approved/);
   assert.equal(pc.name, "Old Name");
 });
 

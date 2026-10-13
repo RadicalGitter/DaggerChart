@@ -336,9 +336,19 @@ function renderTab() {
   wireDoodleLayer();
 }
 
+// The Tome lays the journal across two pages: ?tabs=journal,chronicle on the
+// left (what you write), ?tabs=people,places on the right (what you learn).
+const ALL_TABS = ["chronicle", "journal", "people", "places"];
+const PAGE_TABS = (() => {
+  const wanted = (new URLSearchParams(location.search).get("tabs") || "").split(",").filter((tab) => ALL_TABS.includes(tab));
+  return wanted.length ? wanted : ALL_TABS;
+})();
+const tabAllowed = (tab) => PAGE_TABS.includes(tab) && (tab !== "chronicle" || playerFeatureEnabled("chronicle"));
+
 function renderAll() {
   const my = me();
-  document.querySelector('[data-tab="chronicle"]').hidden = !playerFeatureEnabled("chronicle");
+  for (const button of document.querySelectorAll(".tabbar [data-tab]")) button.hidden = !tabAllowed(button.dataset.tab);
+  if (!tabAllowed(TAB)) TAB = PAGE_TABS.find(tabAllowed) || "journal";
   $("#j-pc").textContent = my ? my.name : "";
   $("#j-season").textContent = seasonLabel(LORE.seasonLabel);
   renderTab();
@@ -678,8 +688,8 @@ if (params.has("embed")) document.body.classList.add("embed");
     showPicker();
   } else {
     const requestedTab = params.get("tab");
-    if (["chronicle", "journal", "people", "places"].includes(requestedTab)) TAB = requestedTab;
-    else if ((LORE.sessions?.open || []).some((session) => session.canEdit)) TAB = "chronicle";
+    if (ALL_TABS.includes(requestedTab) && PAGE_TABS.includes(requestedTab)) TAB = requestedTab;
+    else if (PAGE_TABS.includes("chronicle") && (LORE.sessions?.open || []).some((session) => session.canEdit)) TAB = "chronicle";
     await fetchDoodles();
     $("#app").hidden = false;
     renderAll();

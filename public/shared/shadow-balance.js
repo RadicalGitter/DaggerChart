@@ -1,3 +1,4 @@
+import { GM_NAME } from "/shared/gm-name.js";
 import { lang } from "/shared/i18n.js";
 
 const phrase = (en, sv) => lang === "sv" ? sv : en;
@@ -66,7 +67,7 @@ function install() {
 
   function reading() {
     if (state.position === "shadow") return phrase(
-      "Shadowward acts gain +1; lightward acts take -1. Invoking the shadow costs 0 Hope and always gives the GM 1 Fear.",
+      `Shadowward acts gain +1; lightward acts take -1. Invoking the shadow costs 0 Hope and always gives ${GM_NAME} 1 Fear.`,
       "Skuggriktade handlingar får +1; ljusriktade handlingar får -1. Att åkalla skuggan kostar 0 Hopp och ger alltid SL 1 Fruktan."
     );
     if (state.position === "light") return phrase(
@@ -167,7 +168,7 @@ function install() {
       if (!response.ok) throw new Error(body.error || phrase("The shadow did not answer.", "Skuggan svarade inte."));
       state = body.shadow;
       loadedAt = Date.now();
-      status.textContent = phrase("Take +1. No Hope was spent; the GM gained 1 Fear.", "Ta +1. Inget Hopp spenderades; SL fick 1 Fruktan.");
+      status.textContent = phrase(`Take +1. No Hope was spent; ${GM_NAME} gained 1 Fear.`, `Ta +1. Inget Hopp spenderades; ${GM_NAME} fick 1 Fruktan.`);
       render();
     } catch (error) {
       status.textContent = error.message;

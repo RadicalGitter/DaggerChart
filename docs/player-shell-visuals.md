@@ -6,6 +6,14 @@ must not fork campaign state or widen what reaches the browser.
 
 ## Current visuals
 
+The entrance, player hub, field sheet, journal, rules, personal tome, and arcana
+deck opt into `public/shared/player-finish.css`: deep green surroundings, warm
+ivory reading surfaces, fine brass borders, and local original SVG engravings.
+The shared finish preserves character colors, saved layouts, feature gates,
+stable embeds, and reduced-motion preferences. The hub portrait comes from the
+existing public identity whitelist. The settlement folio and GM surfaces do not
+load this layer; settlement construction remains outside this visual pass.
+
 ### Player root — `/player`
 
 The login chooser sends a completed PC here. It is a quiet utility hub, not
@@ -46,6 +54,10 @@ items, while detailed Domain cards turn onto further spreads. Journal remains
 the existing spoiler-safe embed. Rules opens the shared reference in a stable
 embed opposite a lightweight chapter plate; the functional page comes first
 on narrow screens.
+
+On phones, character pages keep their normal type size and scroll vertically;
+traits form two rows, and background and feature text use a single column.
+The journal title page becomes a short opening plate above its writing page.
 
 Carried entries are buttons into a parchment editor. Mundane items expose
 freeform name, description, and quantity. Standard Consumables retain their

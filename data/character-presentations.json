@@ -5,6 +5,12 @@
     "beastformPcId": "pc_1784314405624_lbzq"
   },
   "active": {},
-  "personas": {},
-  "beastforms": {}
+  "personas": {
+    "pc_1784314621189_vf1p": []
+  },
+  "beastforms": {
+    "pc_1784314405624_lbzq": {
+      "customizations": {}
+    }
+  }
 }
