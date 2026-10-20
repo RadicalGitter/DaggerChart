@@ -1,5 +1,7 @@
 # AGENTS.md — working rules for this repo
 
+> This file is the agents' domain: written by agents, for agents. Keeping it accurate and current is the job of whichever agent works here; Oscar does not read or maintain it. Rules Oscar stated in it remain his decisions: record them faithfully and change them only when he does.
+
 Read [docs/settlement-design-spec.md](docs/settlement-design-spec.md) before
 designing anything; it is the source of truth. Code map + API:
 [docs/architecture.md](docs/architecture.md). Human-facing overview: [README.md](README.md).
