@@ -183,6 +183,36 @@ designing anything; it is the source of truth. Code map + API:
   consent, retention, access, and whether this should exist at all if the
   project becomes remote, public, or materially larger.** See
   `docs/ux-telemetry.md`.
+- The player surfaces are an installable PWA: manifest/worker/icons in
+  `public/pwa/`, served as `/manifest.webmanifest` and root-scoped `/sw.js`.
+  The worker is network-first with offline cache fallback, snapshots only
+  already-whitelisted player API reads, and never intercepts `/api/stream`,
+  non-GET requests, or GM surfaces. `shared/native-feel.css` + `shared/pwa.js`
+  give player pages installed-app touch behavior; new player pages should
+  include the same head block. Bump `VERSION` in `public/pwa/sw.js` after
+  breaking shell changes.
+- Word-weaving credits (`server/llm-credits.js`, `data/llm-credits.json`) cap
+  the player-reachable Anthropic aids (background expansions, portrait briefs)
+  per PC/draft so out-of-play use never quietly runs up the API bill. Routes
+  check `hasCredit` → 402 when spent, `spendCredit` only after a successful
+  call. Players ask the steward for more; the GM grants from the **Expansions**
+  panel. It's a courtesy meter for the trusted table, not a security boundary —
+  do not treat it as access control.
+- `server/beacon.js` (env-gated, off by default) publishes the server's public
+  IP/port to DuckDNS and/or a private gist so player devices survive a home-IP
+  change. Remote players currently come in through Tailscale Funnel with the GM
+  password protecting admin routes. **Do not port-forward to expose the site
+  directly** until the deferred gate in
+  [docs/remote-access.md](docs/remote-access.md) is met (per-player claim
+  tokens, HTTPS, telemetry review).
+- The combat encounter builder lives on `/board` (⚔ Encounter): bestiary stat
+  blocks in `data/adversaries.json` (RAW Daggerheart format, Visseren-flavored,
+  hand-editable; the server never writes it), saved encounters in
+  `data/encounters.json`. Each entity is one floating card on a shared 16:9
+  stage; melee is derived from card adjacency (enemy against PC) by
+  `public/shared/encounter-stage.js`, identically on the GM board and the
+  projector. Projection goes through the `encounter` screen type and exposes
+  only labels, portraits, positions, and who has fallen — never stats.
 
 - `/screen` is the projector in front of the table (the drafting board owns
   `/board`): it shows exactly one thing, chosen by the GM — a mood image,

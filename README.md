@@ -21,7 +21,7 @@ a complete tabletop playtest class, and its
 The [reusable class chooser](docs/character-class-choices.md) offers it only to
 Redneck; Amme's confirmation applies the chosen class and subclass to his sheet.
 Working rules for AI-assisted development are in [AGENTS.md](AGENTS.md) and
-[CLAUDE.md](CLAUDE.md). The Music Desk's branching tag board (tri-state tag
+[AGENTS.md](AGENTS.md). The Music Desk's branching tag board (tri-state tag
 bubbles compiling a prompt) is documented as a reusable pattern in
 [tag-selector/SKILL.md](tag-selector/SKILL.md), packaged as an AI skill for
 building the same selector on other surfaces.

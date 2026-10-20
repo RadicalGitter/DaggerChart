@@ -79,7 +79,7 @@ Add an object to `presets` in `data/encounter-presets.json`:
   left, so place adversaries at x ≈ 0.55–0.92 and spread y between 0.12 and 0.85.
   Ranged and Hidden creatures go furthest back.
 - Labels are short and tell creatures apart at a glance ("Bandit (left bank)").
-- Notes follow the house tone (CLAUDE.md §Tone): plain, grounded, no
+- Notes follow the house tone (AGENTS.md §Tone): plain, grounded, no
   exclamation marks. Include a retreat or surrender condition so fights end on
   a decision, not on the last hit point, and say when to telegraph big moves.
 - Don't spend the whole budget when an escalation is written into the notes;
@@ -102,4 +102,4 @@ If Oscar wants a printed prep sheet as well, add a Markdown file under
 ## Spoiler rules still apply
 
 Encounter work never needs `data/event-tables/*` or `data/tables/*`. Don't open
-them (CLAUDE.md, Hard rules).
+them (AGENTS.md, Hard rules).

@@ -113,7 +113,7 @@ remains future work; the implemented GM gate does not claim to provide it.
    `http://192.168.x.x` today** — this same fix unlocks that. Easiest path:
    Caddy or a Let's Encrypt cert on the DuckDNS hostname, reverse-proxying to
    Express on 4626. `tailscale cert` is an alternative if staying on Tailscale.
-4. **Telemetry consent review.** CLAUDE.md and `docs/ux-telemetry.md` already
+4. **Telemetry consent review.** AGENTS.md and `docs/ux-telemetry.md` already
    flag that the content-free UX telemetry must be reviewed (consent, retention,
    whether it should exist at all) before the project goes remote or larger.
    Settle that before exposure, not after.

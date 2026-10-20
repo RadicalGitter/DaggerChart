@@ -1,7 +1,7 @@
 # Master plan — agreed features, backend-first
 
 Implementation plans for the next five features, written so any agent can pick
-one up cold. Read [CLAUDE.md](../CLAUDE.md) and
+one up cold. Read [AGENTS.md](../AGENTS.md) and
 [settlement-design-spec.md](settlement-design-spec.md) first; the hard rules
 there (spoiler safety, exact roll math, tone) override anything here.
 
@@ -457,6 +457,6 @@ scrolling.
 ---
 
 *When a feature lands: update [architecture.md](architecture.md) (routes +
-data files), cross off the entry in CLAUDE.md's "What's next", and keep this
+data files), cross off the entry in AGENTS.md's "What's next", and keep this
 file's plan section as documentation of intent — mark it "(built)" rather
 than deleting it.*
